@@ -1,0 +1,43 @@
+[package]
+name = "noisemaker-for-rust"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+description = "Standalone Rust CPU renderer for the Noisemaker effect catalog"
+readme = "README.md"
+repository = "https://github.com/noisefactorllc/noisemaker-for-rust"
+include = [
+    "Cargo.toml",
+    "Cargo.lock",
+    "rust-toolchain.toml",
+    "src/**",
+    "scripts/generate_bundle.py",
+    "scripts/upstream-param-contract.json",
+    "scripts/transpiler/**",
+    "examples/**",
+    "README.md",
+    "docs/EFFECTS.md",
+    "CODE_OF_CONDUCT.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "SECURITY.md",
+    "TRADEMARK.md",
+]
+
+[lib]
+name = "noisemaker_cpu"
+
+[[bin]]
+name = "noisemaker-rs"
+path = "src/bin/noisemaker-rs.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+png = "0.18"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+
+[dev-dependencies]
+sha2 = "0.10"

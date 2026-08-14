@@ -1,0 +1,2911 @@
+{
+  "source": "noisemaker-for-cpu upstream-snapshot.js",
+  "revision": "a024dc3a960cc44af454abc7aebce50456c194e6",
+  "effects": {
+    "classicNoisedeck/bitEffects": {
+      "paramNames": [
+        "mode",
+        "speed",
+        "formula",
+        "n",
+        "scale",
+        "rotation",
+        "colorScheme",
+        "interp",
+        "maskFormula",
+        "tiles",
+        "complexity",
+        "maskColorScheme",
+        "baseHueRange",
+        "hueRotation",
+        "hueRange",
+        "seed"
+      ],
+      "paramAliases": {
+        "loopAmp": "speed"
+      }
+    },
+    "classicNoisedeck/caustic": {
+      "paramNames": [
+        "interp",
+        "noiseScale",
+        "speed",
+        "wrap",
+        "seed",
+        "hueRotation",
+        "hueRange",
+        "intensity"
+      ],
+      "paramAliases": {
+        "loopAmp": "speed"
+      }
+    },
+    "classicNoisedeck/cellNoise": {
+      "paramNames": [
+        "shape",
+        "scale",
+        "cellScale",
+        "smooth",
+        "variation",
+        "speed",
+        "paletteMode",
+        "seed",
+        "colorMode",
+        "palette",
+        "paletteOffset",
+        "cyclePalette",
+        "paletteAmp",
+        "rotatePalette",
+        "paletteFreq",
+        "repeatPalette",
+        "palettePhase",
+        "tex",
+        "texInfluence",
+        "texIntensity"
+      ],
+      "paramAliases": {
+        "cellSmooth": "smooth",
+        "cellVariation": "variation",
+        "loopAmp": "speed"
+      }
+    },
+    "classicNoisedeck/cellRefract": {
+      "paramNames": [
+        "amount",
+        "direction",
+        "wrap",
+        "speed",
+        "shape",
+        "scale",
+        "cellScale",
+        "smooth",
+        "variation",
+        "seed",
+        "kernel",
+        "effectWidth"
+      ],
+      "paramAliases": {
+        "cellSmooth": "smooth",
+        "cellVariation": "variation",
+        "refractAmt": "amount",
+        "refractDir": "direction",
+        "loopAmp": "speed"
+      }
+    },
+    "classicNoisedeck/coalesce": {
+      "paramNames": [
+        "tex",
+        "blendMode",
+        "mix",
+        "refractAAmt",
+        "refractBAmt",
+        "refractADir",
+        "refractBDir"
+      ],
+      "paramAliases": {
+        "mixAmt": "mix"
+      }
+    },
+    "classicNoisedeck/colorLab": {
+      "paramNames": [
+        "colorMode",
+        "palette",
+        "paletteMode",
+        "paletteOffset",
+        "paletteAmp",
+        "paletteFreq",
+        "palettePhase",
+        "cyclePalette",
+        "rotatePalette",
+        "repeatPalette",
+        "hueRotation",
+        "hueRange",
+        "saturation",
+        "invert",
+        "brightness",
+        "contrast",
+        "levels",
+        "dither"
+      ],
+      "paramAliases": {}
+    },
+    "classicNoisedeck/composite": {
+      "paramNames": [
+        "tex",
+        "blendMode",
+        "inputColor",
+        "range",
+        "mix"
+      ],
+      "paramAliases": {
+        "mixAmt": "mix"
+      }
+    },
+    "classicNoisedeck/effects": {
+      "paramNames": [
+        "effect",
+        "effectAmt",
+        "scaleAmt",
+        "rotation",
+        "offsetX",
+        "offsetY",
+        "flip",
+        "intensity",
+        "saturation"
+      ],
+      "paramAliases": {}
+    },
+    "classicNoisedeck/fractal": {
+      "paramNames": [
+        "type",
+        "symmetry",
+        "zoomAmt",
+        "rotation",
+        "speed",
+        "offsetX",
+        "offsetY",
+        "centerX",
+        "centerY",
+        "mode",
+        "iterations",
+        "colorMode",
+        "palette",
+        "paletteMode",
+        "paletteOffset",
+        "paletteAmp",
+        "paletteFreq",
+        "palettePhase",
+        "cyclePalette",
+        "rotatePalette",
+        "repeatPalette",
+        "hueRange",
+        "levels",
+        "bgColor",
+        "bgAlpha",
+        "cutoff"
+      ],
+      "paramAliases": {
+        "fractalType": "type",
+        "backgroundColor": "bgColor",
+        "backgroundOpacity": "bgAlpha"
+      }
+    },
+    "classicNoisedeck/glitch": {
+      "paramNames": [
+        "glitchiness",
+        "aberration",
+        "xChonk",
+        "yChonk",
+        "seed",
+        "scanlinesAmt",
+        "snowAmt",
+        "vignetteAmt",
+        "distortion",
+        "aspectLens"
+      ],
+      "paramAliases": {
+        "aberrationAmt": "aberration"
+      }
+    },
+    "classicNoisedeck/kaleido": {
+      "paramNames": [
+        "sides",
+        "metric",
+        "loopOffset",
+        "loopScale",
+        "speed",
+        "seed",
+        "wrap",
+        "direction",
+        "kernel",
+        "effectWidth"
+      ],
+      "paramAliases": {
+        "kaleido": "sides",
+        "loopAmp": "speed"
+      }
+    },
+    "classicNoisedeck/lensDistortion": {
+      "paramNames": [
+        "shape",
+        "distortion",
+        "aspectLens",
+        "loopScale",
+        "speed",
+        "mode",
+        "aberration",
+        "blendMode",
+        "modulate",
+        "tint",
+        "alpha",
+        "hueRotation",
+        "hueRange",
+        "saturation",
+        "passthru",
+        "vignetteAmt"
+      ],
+      "paramAliases": {
+        "aberrationAmt": "aberration",
+        "opacity": "alpha",
+        "loopAmp": "speed"
+      }
+    },
+    "classicNoisedeck/moodscape": {
+      "paramNames": [
+        "interp",
+        "noiseScale",
+        "speed",
+        "refractAmt",
+        "ridges",
+        "wrap",
+        "seed",
+        "colorMode",
+        "hueRotation",
+        "hueRange",
+        "intensity"
+      ],
+      "paramAliases": {
+        "loopAmp": "speed"
+      }
+    },
+    "classicNoisedeck/noise": {
+      "paramNames": [
+        "type",
+        "octaves",
+        "xScale",
+        "yScale",
+        "ridges",
+        "wrap",
+        "seed",
+        "refractMode",
+        "refractAmt",
+        "loopOffset",
+        "loopScale",
+        "speed",
+        "kaleido",
+        "metric",
+        "paletteMode",
+        "hueRotation",
+        "hueRange",
+        "colorMode",
+        "palette",
+        "cyclePalette",
+        "rotatePalette",
+        "repeatPalette",
+        "paletteOffset",
+        "paletteAmp",
+        "paletteFreq",
+        "palettePhase"
+      ],
+      "paramAliases": {
+        "noiseType": "type",
+        "loopAmp": "speed"
+      }
+    },
+    "classicNoisedeck/noise3d": {
+      "paramNames": [
+        "type",
+        "ridges",
+        "seed",
+        "speed",
+        "scale",
+        "offsetX",
+        "offsetY",
+        "colorMode",
+        "hueRotation",
+        "hueRange"
+      ],
+      "paramAliases": {
+        "noiseScale": "scale",
+        "noiseType": "type"
+      }
+    },
+    "classicNoisedeck/refract": {
+      "paramNames": [
+        "blendMode",
+        "mix",
+        "mode",
+        "amount",
+        "direction",
+        "wrap"
+      ],
+      "paramAliases": {
+        "refractDir": "direction",
+        "mixAmt": "mix"
+      }
+    },
+    "classicNoisedeck/shapeMixer": {
+      "paramNames": [
+        "tex",
+        "blendMode",
+        "loopOffset",
+        "loopScale",
+        "wrap",
+        "seed",
+        "animate",
+        "palette",
+        "paletteMode",
+        "paletteOffset",
+        "paletteAmp",
+        "paletteFreq",
+        "palettePhase",
+        "cyclePalette",
+        "rotatePalette",
+        "repeatPalette",
+        "levels"
+      ],
+      "paramAliases": {}
+    },
+    "classicNoisedeck/shapes": {
+      "paramNames": [
+        "loopAOffset",
+        "loopBOffset",
+        "loopAScale",
+        "loopBScale",
+        "speedA",
+        "speedB",
+        "seed",
+        "wrap",
+        "palette",
+        "paletteMode",
+        "paletteOffset",
+        "paletteAmp",
+        "paletteFreq",
+        "palettePhase",
+        "cyclePalette",
+        "rotatePalette",
+        "repeatPalette"
+      ],
+      "paramAliases": {
+        "loopAAmp": "speedA",
+        "loopBAmp": "speedB"
+      }
+    },
+    "classicNoisedeck/shapes3d": {
+      "paramNames": [
+        "shapeA",
+        "shapeB",
+        "shapeAScale",
+        "shapeBScale",
+        "shapeAThickness",
+        "shapeBThickness",
+        "blendMode",
+        "smoothness",
+        "repetition",
+        "animation",
+        "spacing",
+        "flythroughSpeed",
+        "spin",
+        "spinSpeed",
+        "flip",
+        "flipSpeed",
+        "cameraDist",
+        "bgColor",
+        "bgAlpha",
+        "tex",
+        "weight",
+        "colorMode",
+        "palette",
+        "cyclePalette",
+        "rotatePalette",
+        "repeatPalette",
+        "paletteMode",
+        "paletteOffset",
+        "paletteAmp",
+        "paletteFreq",
+        "palettePhase"
+      ],
+      "paramAliases": {
+        "backgroundColor": "bgColor",
+        "backgroundOpacity": "bgAlpha"
+      }
+    },
+    "classicNoisedeck/splat": {
+      "paramNames": [
+        "enabled",
+        "mode",
+        "scale",
+        "seed",
+        "color",
+        "cutoff",
+        "speed",
+        "useSpecks",
+        "speckMode",
+        "speckScale",
+        "speckSeed",
+        "speckColor",
+        "speckCutoff",
+        "speckSpeed"
+      ],
+      "paramAliases": {
+        "splatColor": "color",
+        "splatCutoff": "cutoff",
+        "splatMode": "mode",
+        "splatScale": "scale",
+        "splatSeed": "seed",
+        "splatSpeed": "speed",
+        "useSplats": "enabled"
+      }
+    },
+    "filter/adjust": {
+      "paramNames": [
+        "mode",
+        "rotation",
+        "hueRange",
+        "saturation",
+        "brightness",
+        "contrast"
+      ],
+      "paramAliases": {}
+    },
+    "filter/bc": {
+      "paramNames": [
+        "brightness",
+        "contrast"
+      ],
+      "paramAliases": {}
+    },
+    "filter/bloom": {
+      "paramNames": [
+        "threshold",
+        "softKnee",
+        "intensity",
+        "radius",
+        "taps",
+        "tint"
+      ],
+      "paramAliases": {}
+    },
+    "filter/blur": {
+      "paramNames": [
+        "radiusX",
+        "radiusY"
+      ],
+      "paramAliases": {}
+    },
+    "filter/bulge": {
+      "paramNames": [
+        "strength",
+        "aspectLens",
+        "wrap",
+        "rotation",
+        "antialias"
+      ],
+      "paramAliases": {}
+    },
+    "filter/celShading": {
+      "paramNames": [
+        "mix",
+        "levels",
+        "gamma",
+        "antialias",
+        "edgeWidth",
+        "edgeThreshold",
+        "edgeColor",
+        "lightDirection",
+        "strength"
+      ],
+      "paramAliases": {
+        "shadingStrength": "strength",
+        "mixAmount": "mix"
+      }
+    },
+    "filter/channel": {
+      "paramNames": [
+        "channel",
+        "scale",
+        "offset"
+      ],
+      "paramAliases": {}
+    },
+    "filter/chroma": {
+      "paramNames": [
+        "targetHue",
+        "range",
+        "feather"
+      ],
+      "paramAliases": {}
+    },
+    "filter/chromaticAberration": {
+      "paramNames": [
+        "aberration",
+        "passthru"
+      ],
+      "paramAliases": {
+        "aberrationAmt": "aberration"
+      }
+    },
+    "filter/chrome": {
+      "paramNames": [
+        "detail",
+        "smoothness",
+        "distortion"
+      ],
+      "paramAliases": {}
+    },
+    "filter/clouds": {
+      "paramNames": [
+        "seed",
+        "scale",
+        "speed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/colorReplace": {
+      "paramNames": [
+        "targetColor",
+        "replaceColor",
+        "sensitivity",
+        "smoothing",
+        "colorMix",
+        "replaceAlpha",
+        "keepAlpha"
+      ],
+      "paramAliases": {}
+    },
+    "filter/colorspace": {
+      "paramNames": [
+        "mode"
+      ],
+      "paramAliases": {}
+    },
+    "filter/convolutionFeedback": {
+      "paramNames": [
+        "sharpenRadius",
+        "sharpenAmount",
+        "blurRadius",
+        "blurAmount",
+        "intensity",
+        "resetState",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "filter/corrupt": {
+      "paramNames": [
+        "intensity",
+        "bandHeight",
+        "sort",
+        "shift",
+        "channelShift",
+        "melt",
+        "scatter",
+        "bits",
+        "speed",
+        "seed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/craquelure": {
+      "paramNames": [
+        "spacing",
+        "depth",
+        "brightness",
+        "seed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/crt": {
+      "paramNames": [
+        "alpha",
+        "speed",
+        "seed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/degauss": {
+      "paramNames": [
+        "displacement",
+        "direction",
+        "seed",
+        "speed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/deriv": {
+      "paramNames": [
+        "amount"
+      ],
+      "paramAliases": {}
+    },
+    "filter/directionalBlur": {
+      "paramNames": [
+        "angle",
+        "distance"
+      ],
+      "paramAliases": {}
+    },
+    "filter/dither": {
+      "paramNames": [
+        "type",
+        "matrixScale",
+        "threshold",
+        "palette",
+        "levels",
+        "mix"
+      ],
+      "paramAliases": {
+        "ditherType": "type",
+        "mixAmount": "mix"
+      }
+    },
+    "filter/edge": {
+      "paramNames": [
+        "kernel",
+        "level",
+        "contourSide",
+        "size",
+        "channel",
+        "amount",
+        "invert",
+        "threshold",
+        "blend",
+        "mix"
+      ],
+      "paramAliases": {}
+    },
+    "filter/emboss": {
+      "paramNames": [
+        "style",
+        "amount",
+        "angle",
+        "height",
+        "colorAmount"
+      ],
+      "paramAliases": {}
+    },
+    "filter/extrude": {
+      "paramNames": [
+        "type",
+        "size",
+        "depth",
+        "depthSource",
+        "solidFront"
+      ],
+      "paramAliases": {}
+    },
+    "filter/feedback": {
+      "paramNames": [
+        "blendMode",
+        "mix",
+        "scaleAmt",
+        "rotation",
+        "refractAAmt",
+        "refractBAmt",
+        "refractADir",
+        "refractBDir",
+        "hueRotation",
+        "intensity",
+        "aberration",
+        "distortion",
+        "resetState",
+        "iterationCount"
+      ],
+      "paramAliases": {
+        "mixAmt": "mix",
+        "aberrationAmt": "aberration"
+      }
+    },
+    "filter/fibers": {
+      "paramNames": [
+        "density",
+        "seed",
+        "alpha"
+      ],
+      "paramAliases": {}
+    },
+    "filter/flipMirror": {
+      "paramNames": [
+        "mode"
+      ],
+      "paramAliases": {}
+    },
+    "filter/fxaa": {
+      "paramNames": [
+        "strength",
+        "sharpness",
+        "threshold"
+      ],
+      "paramAliases": {}
+    },
+    "filter/glowingEdge": {
+      "paramNames": [
+        "shape",
+        "width",
+        "alpha"
+      ],
+      "paramAliases": {}
+    },
+    "filter/glyphMap": {
+      "paramNames": [
+        "cellSize",
+        "seed",
+        "colorMode"
+      ],
+      "paramAliases": {}
+    },
+    "filter/grade": {
+      "paramNames": [
+        "preset",
+        "alpha",
+        "temperature",
+        "tint",
+        "exposure",
+        "contrast",
+        "highlights",
+        "shadows",
+        "whites",
+        "blacks",
+        "saturation",
+        "vibrance",
+        "fadedFilm",
+        "shadowTint",
+        "highlightTint",
+        "splitToneBalance",
+        "curveShadows",
+        "curveMidtones",
+        "curveHighlights",
+        "wheelShadows",
+        "wheelMidtones",
+        "wheelHighlights",
+        "wheelBalance",
+        "hslEnable",
+        "hslHueCenter",
+        "hslHueRange",
+        "hslSatMin",
+        "hslSatMax",
+        "hslLumMin",
+        "hslLumMax",
+        "hslFeather",
+        "hslHueShift",
+        "hslSatAdjust",
+        "hslLumAdjust",
+        "vignetteAmount",
+        "vignetteMidpoint",
+        "vignetteRoundness",
+        "vignetteFeather",
+        "vigHiProtect"
+      ],
+      "paramAliases": {
+        "vignetteHighlightProtect": "vigHiProtect"
+      }
+    },
+    "filter/grain": {
+      "paramNames": [
+        "alpha",
+        "pause"
+      ],
+      "paramAliases": {}
+    },
+    "filter/grime": {
+      "paramNames": [
+        "strength",
+        "seed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/halftone": {
+      "paramNames": [
+        "mode",
+        "pattern",
+        "frequency",
+        "cyanAngle",
+        "magentaAngle",
+        "yellowAngle",
+        "blackAngle",
+        "monoAngle",
+        "sharpness",
+        "inkColor",
+        "paperColor"
+      ],
+      "paramAliases": {}
+    },
+    "filter/hatch": {
+      "paramNames": [
+        "mode",
+        "strokeLength",
+        "direction",
+        "balance",
+        "pressure",
+        "inkColor",
+        "paperColor"
+      ],
+      "paramAliases": {}
+    },
+    "filter/highPass": {
+      "paramNames": [
+        "radius",
+        "mono"
+      ],
+      "paramAliases": {}
+    },
+    "filter/historicPalette": {
+      "paramNames": [
+        "index",
+        "rotation",
+        "offset",
+        "repeat",
+        "alpha",
+        "smoothness"
+      ],
+      "paramAliases": {
+        "paletteIndex": "index"
+      }
+    },
+    "filter/hs": {
+      "paramNames": [
+        "rotation",
+        "hueRange",
+        "saturation"
+      ],
+      "paramAliases": {}
+    },
+    "filter/invert": {
+      "paramNames": [
+        "mode"
+      ],
+      "paramAliases": {}
+    },
+    "filter/lens": {
+      "paramNames": [
+        "displacement",
+        "aspectLens",
+        "antialias"
+      ],
+      "paramAliases": {}
+    },
+    "filter/lensFlare": {
+      "paramNames": [
+        "brightness",
+        "centerX",
+        "centerY",
+        "lensType",
+        "tint"
+      ],
+      "paramAliases": {}
+    },
+    "filter/lensWarp": {
+      "paramNames": [
+        "displacement",
+        "antialias"
+      ],
+      "paramAliases": {}
+    },
+    "filter/lightLeak": {
+      "paramNames": [
+        "alpha",
+        "color",
+        "speed",
+        "seed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/lighting": {
+      "paramNames": [
+        "normalStrength",
+        "smoothing",
+        "diffuseColor",
+        "specularColor",
+        "specularIntensity",
+        "shininess",
+        "ambientColor",
+        "lightDirection",
+        "reflection",
+        "refraction",
+        "aberration",
+        "heightMap"
+      ],
+      "paramAliases": {}
+    },
+    "filter/lowPoly": {
+      "paramNames": [
+        "scale",
+        "seed",
+        "mode",
+        "edgeStrength",
+        "edgeColor",
+        "borderWidth",
+        "lightIntensity",
+        "alpha",
+        "speed"
+      ],
+      "paramAliases": {
+        "freq": "scale",
+        "nth": "mode"
+      }
+    },
+    "filter/median": {
+      "paramNames": [
+        "radius",
+        "threshold"
+      ],
+      "paramAliases": {}
+    },
+    "filter/morphology": {
+      "paramNames": [
+        "mode",
+        "radius",
+        "shape"
+      ],
+      "paramAliases": {}
+    },
+    "filter/mosaicTiles": {
+      "paramNames": [
+        "mode",
+        "tileSize",
+        "groutWidth",
+        "relief",
+        "maxOffset",
+        "gapFill",
+        "backgroundColor",
+        "seed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/motionBlur": {
+      "paramNames": [
+        "amount",
+        "resetState",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "filter/normalMap": {
+      "paramNames": [],
+      "paramAliases": {}
+    },
+    "filter/normalize": {
+      "paramNames": [],
+      "paramAliases": {}
+    },
+    "filter/octaveWarp": {
+      "paramNames": [
+        "freq",
+        "octaves",
+        "displacement",
+        "speed",
+        "seed",
+        "wrap",
+        "antialias"
+      ],
+      "paramAliases": {
+        "frequency": "freq"
+      }
+    },
+    "filter/oilPaint": {
+      "paramNames": [
+        "mode",
+        "size",
+        "detail",
+        "texture",
+        "seed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/osd": {
+      "paramNames": [
+        "alpha",
+        "seed",
+        "speed",
+        "corner"
+      ],
+      "paramAliases": {}
+    },
+    "filter/outline": {
+      "paramNames": [
+        "shape",
+        "thickness",
+        "invert"
+      ],
+      "paramAliases": {}
+    },
+    "filter/palette": {
+      "paramNames": [
+        "index",
+        "rotation",
+        "offset",
+        "repeat",
+        "alpha"
+      ],
+      "paramAliases": {
+        "paletteIndex": "index",
+        "paletteOffset": "offset",
+        "paletteRepeat": "repeat",
+        "paletteRotation": "rotation"
+      }
+    },
+    "filter/parallax": {
+      "paramNames": [
+        "heightMap",
+        "direction",
+        "pivot"
+      ],
+      "paramAliases": {}
+    },
+    "filter/patchwork": {
+      "paramNames": [
+        "squareSize",
+        "relief",
+        "lightAngle"
+      ],
+      "paramAliases": {}
+    },
+    "filter/photocopy": {
+      "paramNames": [
+        "detail",
+        "darkness",
+        "inkColor",
+        "paperColor"
+      ],
+      "paramAliases": {}
+    },
+    "filter/pinch": {
+      "paramNames": [
+        "strength",
+        "aspectLens",
+        "wrap",
+        "rotation",
+        "antialias"
+      ],
+      "paramAliases": {}
+    },
+    "filter/pixelSort": {
+      "paramNames": [
+        "angled",
+        "darkest",
+        "wrap",
+        "alpha"
+      ],
+      "paramAliases": {}
+    },
+    "filter/pixels": {
+      "paramNames": [
+        "size"
+      ],
+      "paramAliases": {}
+    },
+    "filter/plasticWrap": {
+      "paramNames": [
+        "highlight",
+        "detail",
+        "smoothness",
+        "lightDirection"
+      ],
+      "paramAliases": {}
+    },
+    "filter/polar": {
+      "paramNames": [
+        "mode",
+        "scale",
+        "rotation",
+        "speed",
+        "aspectLens",
+        "antialias"
+      ],
+      "paramAliases": {}
+    },
+    "filter/pondRipples": {
+      "paramNames": [
+        "amount",
+        "ridges",
+        "speed",
+        "style",
+        "wrap",
+        "antialias"
+      ],
+      "paramAliases": {}
+    },
+    "filter/posterize": {
+      "paramNames": [
+        "levels",
+        "gamma",
+        "antialias"
+      ],
+      "paramAliases": {}
+    },
+    "filter/prismaticAberration": {
+      "paramNames": [
+        "aberration",
+        "modulate",
+        "hueRotation",
+        "hueRange",
+        "saturation",
+        "passthru"
+      ],
+      "paramAliases": {
+        "aberrationAmt": "aberration"
+      }
+    },
+    "filter/reindex": {
+      "paramNames": [
+        "displacement"
+      ],
+      "paramAliases": {}
+    },
+    "filter/relief": {
+      "paramNames": [
+        "mode",
+        "smoothness",
+        "detail",
+        "lightAngle",
+        "balance",
+        "graininess",
+        "inkColor",
+        "paperColor"
+      ],
+      "paramAliases": {}
+    },
+    "filter/repeat": {
+      "paramNames": [
+        "x",
+        "y",
+        "offsetX",
+        "offsetY",
+        "wrap"
+      ],
+      "paramAliases": {}
+    },
+    "filter/reverb": {
+      "paramNames": [
+        "iterations",
+        "ridges",
+        "alpha",
+        "wrap"
+      ],
+      "paramAliases": {}
+    },
+    "filter/ridge": {
+      "paramNames": [
+        "level"
+      ],
+      "paramAliases": {}
+    },
+    "filter/rotate": {
+      "paramNames": [
+        "rotation",
+        "wrap",
+        "speed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/scale": {
+      "paramNames": [
+        "x",
+        "y",
+        "centerX",
+        "centerY",
+        "wrap"
+      ],
+      "paramAliases": {}
+    },
+    "filter/scanlineError": {
+      "paramNames": [
+        "mode",
+        "timeOffset",
+        "distortion",
+        "noise",
+        "speed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/scatter": {
+      "paramNames": [
+        "radius",
+        "mode",
+        "smoothness",
+        "seed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/scratches": {
+      "paramNames": [
+        "density",
+        "alpha",
+        "seed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/scroll": {
+      "paramNames": [
+        "x",
+        "y",
+        "speedX",
+        "speedY",
+        "wrap"
+      ],
+      "paramAliases": {}
+    },
+    "filter/seamless": {
+      "paramNames": [
+        "blend",
+        "repeat",
+        "curve"
+      ],
+      "paramAliases": {}
+    },
+    "filter/sharpen": {
+      "paramNames": [
+        "amount"
+      ],
+      "paramAliases": {}
+    },
+    "filter/simpleAberration": {
+      "paramNames": [
+        "displacement"
+      ],
+      "paramAliases": {}
+    },
+    "filter/sine": {
+      "paramNames": [
+        "amount",
+        "colorMode"
+      ],
+      "paramAliases": {}
+    },
+    "filter/skew": {
+      "paramNames": [
+        "skew",
+        "rotate",
+        "wrap"
+      ],
+      "paramAliases": {}
+    },
+    "filter/smooth": {
+      "paramNames": [
+        "type",
+        "strength",
+        "threshold",
+        "radius",
+        "samples",
+        "searchSteps"
+      ],
+      "paramAliases": {}
+    },
+    "filter/smoothstep": {
+      "paramNames": [
+        "edge0",
+        "edge1"
+      ],
+      "paramAliases": {}
+    },
+    "filter/snow": {
+      "paramNames": [
+        "alpha",
+        "pause",
+        "density"
+      ],
+      "paramAliases": {}
+    },
+    "filter/sobel": {
+      "paramNames": [
+        "amount",
+        "alpha"
+      ],
+      "paramAliases": {}
+    },
+    "filter/spatter": {
+      "paramNames": [
+        "color",
+        "density",
+        "alpha",
+        "seed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/spinBlur": {
+      "paramNames": [
+        "amount",
+        "centerX",
+        "centerY"
+      ],
+      "paramAliases": {}
+    },
+    "filter/spiral": {
+      "paramNames": [
+        "strength",
+        "speed",
+        "rotation",
+        "wrap",
+        "aspectLens",
+        "antialias"
+      ],
+      "paramAliases": {}
+    },
+    "filter/spookyTicker": {
+      "paramNames": [
+        "rows",
+        "seed",
+        "alpha",
+        "speed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/stamp": {
+      "paramNames": [
+        "smoothness",
+        "balance",
+        "roughness",
+        "inkColor",
+        "paperColor"
+      ],
+      "paramAliases": {}
+    },
+    "filter/step": {
+      "paramNames": [
+        "threshold",
+        "antialias"
+      ],
+      "paramAliases": {}
+    },
+    "filter/stipple": {
+      "paramNames": [
+        "mode",
+        "cellSize",
+        "grainSize",
+        "density",
+        "paperColor",
+        "seed"
+      ],
+      "paramAliases": {}
+    },
+    "filter/strayHair": {
+      "paramNames": [
+        "density",
+        "seed",
+        "alpha"
+      ],
+      "paramAliases": {}
+    },
+    "filter/strokes": {
+      "paramNames": [
+        "mode",
+        "length",
+        "balance",
+        "intensity",
+        "sharpness"
+      ],
+      "paramAliases": {}
+    },
+    "filter/temporalAberration": {
+      "paramNames": [
+        "redDelay",
+        "greenDelay",
+        "blueDelay",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "filter/tetraColorArray": {
+      "paramNames": [
+        "colorMode",
+        "colorCount",
+        "positionMode",
+        "color0",
+        "color1",
+        "color2",
+        "color3",
+        "color4",
+        "color5",
+        "color6",
+        "color7",
+        "pos0",
+        "pos1",
+        "pos2",
+        "pos3",
+        "pos4",
+        "pos5",
+        "pos6",
+        "pos7",
+        "rotation",
+        "repeat",
+        "offset",
+        "alpha",
+        "smoothness"
+      ],
+      "paramAliases": {}
+    },
+    "filter/tetraCosine": {
+      "paramNames": [
+        "colorMode",
+        "offsetR",
+        "offsetG",
+        "offsetB",
+        "ampR",
+        "ampG",
+        "ampB",
+        "freqR",
+        "freqG",
+        "freqB",
+        "phaseR",
+        "phaseG",
+        "phaseB",
+        "rotation",
+        "repeat",
+        "offset",
+        "alpha"
+      ],
+      "paramAliases": {}
+    },
+    "filter/text": {
+      "paramNames": [
+        "text",
+        "font",
+        "size",
+        "posX",
+        "posY",
+        "rotation",
+        "color",
+        "matteColor",
+        "matteOpacity",
+        "justify",
+        "style"
+      ],
+      "paramAliases": {
+        "bgOpacity": "matteOpacity",
+        "bgAlpha": "matteOpacity",
+        "bgColor": "matteColor"
+      }
+    },
+    "filter/texture": {
+      "paramNames": [
+        "mode",
+        "alpha",
+        "scale",
+        "intensity",
+        "contrast",
+        "mono"
+      ],
+      "paramAliases": {}
+    },
+    "filter/threshold": {
+      "paramNames": [
+        "level",
+        "sharpness"
+      ],
+      "paramAliases": {}
+    },
+    "filter/tile": {
+      "paramNames": [
+        "symmetry",
+        "scale",
+        "offsetX",
+        "offsetY",
+        "angle",
+        "repeat",
+        "aspectLens"
+      ],
+      "paramAliases": {}
+    },
+    "filter/tint": {
+      "paramNames": [
+        "color",
+        "alpha",
+        "mode"
+      ],
+      "paramAliases": {}
+    },
+    "filter/translate": {
+      "paramNames": [
+        "x",
+        "y",
+        "wrap"
+      ],
+      "paramAliases": {}
+    },
+    "filter/tunnel": {
+      "paramNames": [
+        "shape",
+        "scale",
+        "speed",
+        "rotation",
+        "center",
+        "aspectLens",
+        "antialias"
+      ],
+      "paramAliases": {}
+    },
+    "filter/unsharpMask": {
+      "paramNames": [
+        "amount",
+        "radius",
+        "threshold"
+      ],
+      "paramAliases": {}
+    },
+    "filter/vaseline": {
+      "paramNames": [
+        "alpha"
+      ],
+      "paramAliases": {}
+    },
+    "filter/vignette": {
+      "paramNames": [
+        "brightness",
+        "alpha"
+      ],
+      "paramAliases": {}
+    },
+    "filter/warp": {
+      "paramNames": [
+        "strength",
+        "scale",
+        "seed",
+        "speed",
+        "wrap",
+        "antialias"
+      ],
+      "paramAliases": {}
+    },
+    "filter/watercolor": {
+      "paramNames": [
+        "detail",
+        "shadowIntensity",
+        "paperTexture"
+      ],
+      "paramAliases": {}
+    },
+    "filter/waves": {
+      "paramNames": [
+        "strength",
+        "scale",
+        "speed",
+        "wrap",
+        "rotation",
+        "antialias"
+      ],
+      "paramAliases": {}
+    },
+    "filter/wind": {
+      "paramNames": [
+        "method",
+        "direction",
+        "strength",
+        "threshold"
+      ],
+      "paramAliases": {}
+    },
+    "filter/wobble": {
+      "paramNames": [
+        "speed",
+        "range",
+        "wrap"
+      ],
+      "paramAliases": {}
+    },
+    "filter/wormhole": {
+      "paramNames": [
+        "kink",
+        "stride",
+        "rotation",
+        "wrap",
+        "alpha"
+      ],
+      "paramAliases": {}
+    },
+    "filter/zoomBlur": {
+      "paramNames": [
+        "strength"
+      ],
+      "paramAliases": {}
+    },
+    "filter3d/flow3d": {
+      "paramNames": [
+        "volumeSize",
+        "behavior",
+        "density",
+        "stride",
+        "strideDeviation",
+        "kink",
+        "intensity",
+        "inputIntensity",
+        "lifetime",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "filter3d/palette3d": {
+      "paramNames": [
+        "volumeSize",
+        "index",
+        "rotation",
+        "offset",
+        "repeat",
+        "alpha"
+      ],
+      "paramAliases": {
+        "paletteIndex": "index",
+        "paletteOffset": "offset",
+        "paletteRepeat": "repeat",
+        "paletteRotation": "rotation"
+      }
+    },
+    "mixer/alphaMask": {
+      "paramNames": [
+        "tex",
+        "mix",
+        "maskMode"
+      ],
+      "paramAliases": {
+        "mixAmt": "mix"
+      }
+    },
+    "mixer/applyMode": {
+      "paramNames": [
+        "tex",
+        "mode",
+        "mix"
+      ],
+      "paramAliases": {
+        "mixAmt": "mix"
+      }
+    },
+    "mixer/blendMode": {
+      "paramNames": [
+        "tex",
+        "mode",
+        "mix"
+      ],
+      "paramAliases": {
+        "mixAmt": "mix"
+      }
+    },
+    "mixer/cellSplit": {
+      "paramNames": [
+        "tex",
+        "invert",
+        "mode",
+        "scale",
+        "edgeWidth",
+        "seed",
+        "speed"
+      ],
+      "paramAliases": {}
+    },
+    "mixer/centerMask": {
+      "paramNames": [
+        "tex",
+        "blendMode",
+        "shape",
+        "hardness",
+        "mix"
+      ],
+      "paramAliases": {
+        "mixAmt": "mix"
+      }
+    },
+    "mixer/channelCombine": {
+      "paramNames": [
+        "rTex",
+        "gTex",
+        "bTex",
+        "rLevel",
+        "gLevel",
+        "bLevel"
+      ],
+      "paramAliases": {}
+    },
+    "mixer/distortion": {
+      "paramNames": [
+        "tex",
+        "mapSource",
+        "mode",
+        "intensity",
+        "wrap",
+        "smoothing",
+        "aberration",
+        "antialias"
+      ],
+      "paramAliases": {}
+    },
+    "mixer/focusBlur": {
+      "paramNames": [
+        "tex",
+        "depthSource",
+        "focalDistance",
+        "aperture",
+        "sampleBias"
+      ],
+      "paramAliases": {}
+    },
+    "mixer/mashup": {
+      "paramNames": [
+        "source",
+        "layers",
+        "smoothness",
+        "layer0_tex",
+        "layer1_tex",
+        "layer2_tex",
+        "layer3_tex",
+        "layer4_tex",
+        "layer5_tex",
+        "layer6_tex",
+        "layer7_tex"
+      ],
+      "paramAliases": {}
+    },
+    "mixer/patternMix": {
+      "paramNames": [
+        "tex",
+        "invert",
+        "type",
+        "scale",
+        "thickness",
+        "smoothness",
+        "rotation"
+      ],
+      "paramAliases": {}
+    },
+    "mixer/shadow": {
+      "paramNames": [
+        "tex",
+        "maskSource",
+        "sourceChannel",
+        "threshold",
+        "color",
+        "blur",
+        "spread",
+        "offsetX",
+        "offsetY",
+        "wrap"
+      ],
+      "paramAliases": {}
+    },
+    "mixer/shapeMask": {
+      "paramNames": [
+        "tex",
+        "invert",
+        "shape",
+        "radius",
+        "edgeSmooth",
+        "rotation",
+        "posX",
+        "posY",
+        "speed"
+      ],
+      "paramAliases": {}
+    },
+    "mixer/split": {
+      "paramNames": [
+        "tex",
+        "invert",
+        "position",
+        "rotation",
+        "softness",
+        "speed"
+      ],
+      "paramAliases": {}
+    },
+    "mixer/thresholdMix": {
+      "paramNames": [
+        "tex",
+        "mode",
+        "quantize",
+        "mapSource",
+        "threshold",
+        "range",
+        "thresholdR",
+        "rangeR",
+        "thresholdG",
+        "rangeG",
+        "thresholdB",
+        "rangeB"
+      ],
+      "paramAliases": {}
+    },
+    "mixer/uvRemap": {
+      "paramNames": [
+        "tex",
+        "mapSource",
+        "channel",
+        "scale",
+        "offset",
+        "wrap"
+      ],
+      "paramAliases": {}
+    },
+    "points/attractor": {
+      "paramNames": [
+        "stateSize",
+        "attractor",
+        "speed",
+        "viewMode",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "points/buddhabrot": {
+      "paramNames": [
+        "stateSize",
+        "mode",
+        "maxIter",
+        "minIter",
+        "centerX",
+        "centerY",
+        "zoom",
+        "iterationCount"
+      ],
+      "paramAliases": {},
+      "paramOverrides": {
+        "maxIter": {
+          "max": 2000
+        }
+      }
+    },
+    "points/dla": {
+      "paramNames": [
+        "stateSize",
+        "anchorDensity",
+        "stride",
+        "inputWeight",
+        "decay",
+        "deposit",
+        "attrition",
+        "matteOpacity",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "points/flock": {
+      "paramNames": [
+        "separation",
+        "alignment",
+        "cohesion",
+        "perceptionRadius",
+        "separationRadius",
+        "maxSpeed",
+        "maxForce",
+        "boundaryMode",
+        "wallMargin",
+        "noiseWeight",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "points/flow": {
+      "paramNames": [
+        "stateSize",
+        "behavior",
+        "stride",
+        "strideDeviation",
+        "kink",
+        "quantize",
+        "inputWeight",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "points/hydraulic": {
+      "paramNames": [
+        "stride",
+        "quantize",
+        "inverse",
+        "inputWeight",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "points/lenia": {
+      "paramNames": [
+        "muK",
+        "sigmaK",
+        "muG",
+        "sigmaG",
+        "repulsion",
+        "dt",
+        "searchRadius",
+        "depositAmount",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "points/life": {
+      "paramNames": [
+        "stateSize",
+        "typeCount",
+        "attractionScale",
+        "repulsionScale",
+        "minRadius",
+        "maxRadius",
+        "maxSpeed",
+        "friction",
+        "boundaryMode",
+        "matrixSeed",
+        "symmetricForces",
+        "useTypeColor",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "points/physarum": {
+      "paramNames": [
+        "moveSpeed",
+        "turnSpeed",
+        "sensorAngle",
+        "sensorDistance",
+        "inputWeight",
+        "deposit",
+        "decay",
+        "resetState",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "points/physical": {
+      "paramNames": [
+        "stateSize",
+        "gravity",
+        "wind",
+        "energy",
+        "drag",
+        "deviation",
+        "wander",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "render/loopBegin": {
+      "paramNames": [
+        "alpha",
+        "intensity",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "render/loopEnd": {
+      "paramNames": [],
+      "paramAliases": {}
+    },
+    "render/pointsBillboardRender": {
+      "paramNames": [
+        "shapeMode",
+        "tex",
+        "blendMode",
+        "depositOpacity",
+        "pointSize",
+        "sizeVariation",
+        "rotationVar",
+        "seed",
+        "density",
+        "intensity",
+        "inputIntensity",
+        "viewMode",
+        "rotateX",
+        "rotateY",
+        "rotateZ",
+        "viewScale",
+        "posX",
+        "posY",
+        "iterationCount"
+      ],
+      "paramAliases": {
+        "rotationVariation": "rotationVar"
+      },
+      "paramOverrides": {
+        "seed": {
+          "max": 1000
+        }
+      }
+    },
+    "render/pointsEmit": {
+      "paramNames": [
+        "stateSize",
+        "layout",
+        "seed",
+        "attrition",
+        "resetState",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "render/pointsRender": {
+      "paramNames": [
+        "density",
+        "intensity",
+        "inputIntensity",
+        "viewMode",
+        "rotateX",
+        "rotateY",
+        "rotateZ",
+        "viewScale",
+        "posX",
+        "posY",
+        "matteOpacity",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "render/render3d": {
+      "paramNames": [
+        "volumeSize",
+        "filtering",
+        "threshold",
+        "invert",
+        "orbitSpeed",
+        "bgColor",
+        "bgAlpha"
+      ],
+      "paramAliases": {}
+    },
+    "render/renderCubemap3d": {
+      "paramNames": [
+        "volumeSize",
+        "filtering",
+        "threshold",
+        "invert",
+        "cubeBasis",
+        "bgColor",
+        "bgAlpha"
+      ],
+      "paramAliases": {}
+    },
+    "render/renderCubemapSurface": {
+      "paramNames": [
+        "volumeSize",
+        "density",
+        "absorption",
+        "emission",
+        "cubeBasis",
+        "bgColor",
+        "bgAlpha"
+      ],
+      "paramAliases": {}
+    },
+    "render/renderLit3d": {
+      "paramNames": [
+        "volumeSize",
+        "shape",
+        "threshold",
+        "invert",
+        "orbitSpeed",
+        "cameraPosition",
+        "bgColor",
+        "bgAlpha",
+        "lightDirection",
+        "diffuseColor",
+        "diffuseIntensity",
+        "specularColor",
+        "specularIntensity",
+        "shininess",
+        "rimIntensity",
+        "rimPower",
+        "ambientColor"
+      ],
+      "paramAliases": {}
+    },
+    "synth/bitwise": {
+      "paramNames": [
+        "operation",
+        "mask",
+        "scale",
+        "rotation",
+        "offsetX",
+        "offsetY",
+        "seed",
+        "speed",
+        "colorMode",
+        "colorOffset"
+      ],
+      "paramAliases": {}
+    },
+    "synth/cell": {
+      "paramNames": [
+        "shape",
+        "scale",
+        "cellScale",
+        "cellSmooth",
+        "variation",
+        "speed",
+        "seed"
+      ],
+      "paramAliases": {
+        "cellVariation": "variation",
+        "loopAmp": "speed"
+      }
+    },
+    "synth/cellularAutomata": {
+      "paramNames": [
+        "tex",
+        "zoom",
+        "ruleIndex",
+        "smoothing",
+        "seed",
+        "speed",
+        "resetState",
+        "weight",
+        "source",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "synth/curl": {
+      "paramNames": [
+        "scale",
+        "octaves",
+        "seed",
+        "ridges",
+        "intensity",
+        "speed",
+        "outputMode"
+      ],
+      "paramAliases": {}
+    },
+    "synth/gabor": {
+      "paramNames": [
+        "scale",
+        "orientation",
+        "bandwidth",
+        "isotropy",
+        "density",
+        "octaves",
+        "speed",
+        "seed"
+      ],
+      "paramAliases": {}
+    },
+    "synth/gradient": {
+      "paramNames": [
+        "type",
+        "rotation",
+        "repeat",
+        "speed",
+        "seed",
+        "color1",
+        "color2",
+        "color3",
+        "color4",
+        "colorCount"
+      ],
+      "paramAliases": {}
+    },
+    "synth/julia": {
+      "paramNames": [
+        "poi",
+        "outputMode",
+        "iterations",
+        "cReal",
+        "cImag",
+        "centerX",
+        "centerY",
+        "rotation",
+        "cPath",
+        "cSpeed",
+        "cRadius",
+        "zoomSpeed",
+        "zoomDepth",
+        "stripeFreq",
+        "trapShape",
+        "lightAngle",
+        "invert"
+      ],
+      "paramAliases": {},
+      "paramOverrides": {
+        "iterations": {
+          "max": 1000
+        }
+      }
+    },
+    "synth/mandala": {
+      "paramNames": [
+        "scale",
+        "rotation",
+        "thickness",
+        "smoothness",
+        "symmetry",
+        "bindu",
+        "shape",
+        "layers",
+        "layerSpacing",
+        "twist",
+        "shapeGrowth",
+        "fgColor",
+        "bgColor",
+        "animation",
+        "speed",
+        "pulseDepth"
+      ],
+      "paramAliases": {}
+    },
+    "synth/mandelbrot": {
+      "paramNames": [
+        "poi",
+        "outputMode",
+        "iterations",
+        "centerX",
+        "centerY",
+        "rotation",
+        "zoomSpeed",
+        "zoomDepth",
+        "stripeFreq",
+        "trapShape",
+        "lightAngle",
+        "invert"
+      ],
+      "paramAliases": {
+        "poiMode": "poi"
+      },
+      "paramOverrides": {
+        "iterations": {
+          "max": 2000
+        }
+      }
+    },
+    "synth/media": {
+      "paramNames": [
+        "position",
+        "tiling",
+        "flip",
+        "scaleAmt",
+        "rotation",
+        "offsetX",
+        "offsetY",
+        "bgColor",
+        "bgAlpha",
+        "imageSize"
+      ],
+      "paramAliases": {
+        "backgroundColor": "bgColor",
+        "backgroundOpacity": "bgAlpha"
+      }
+    },
+    "synth/mnca": {
+      "paramNames": [
+        "tex",
+        "zoom",
+        "seed",
+        "smoothing",
+        "speed",
+        "resetState",
+        "weight",
+        "n1v1",
+        "n1r1",
+        "n1v2",
+        "n1r2",
+        "n1v3",
+        "n1r3",
+        "n1v4",
+        "n1r4",
+        "n2v1",
+        "n2r1",
+        "n2v2",
+        "n2r2",
+        "source",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "synth/modPattern": {
+      "paramNames": [
+        "shape1",
+        "scale1",
+        "repeat1",
+        "shape2",
+        "scale2",
+        "repeat2",
+        "shape3",
+        "scale3",
+        "repeat3",
+        "blend",
+        "smoothing",
+        "animMode",
+        "speed"
+      ],
+      "paramAliases": {}
+    },
+    "synth/navierStokes": {
+      "paramNames": [
+        "tex",
+        "zoom",
+        "iterations",
+        "smoothing",
+        "speed",
+        "dyeDecay",
+        "velocityDecay",
+        "inputForce",
+        "inputDye",
+        "inputIntensity",
+        "resetState",
+        "seed",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "synth/newton": {
+      "paramNames": [
+        "poi",
+        "outputMode",
+        "iterations",
+        "degree",
+        "relaxation",
+        "tolerance",
+        "centerX",
+        "centerY",
+        "rotation",
+        "zoomSpeed",
+        "zoomDepth",
+        "degreeSpeed",
+        "degreeRange",
+        "relaxSpeed",
+        "relaxRange",
+        "invert"
+      ],
+      "paramAliases": {}
+    },
+    "synth/noise": {
+      "paramNames": [
+        "type",
+        "octaves",
+        "scaleX",
+        "scaleY",
+        "seed",
+        "wrap",
+        "ridges",
+        "loopOffset",
+        "loopScale",
+        "speed",
+        "colorMode"
+      ],
+      "paramAliases": {
+        "noiseType": "type",
+        "loopAmp": "speed",
+        "xScale": "scaleX",
+        "yScale": "scaleY"
+      }
+    },
+    "synth/osc2d": {
+      "paramNames": [
+        "oscType",
+        "freq",
+        "speed",
+        "rotation",
+        "seed"
+      ],
+      "paramAliases": {
+        "frequency": "freq"
+      }
+    },
+    "synth/pattern": {
+      "paramNames": [
+        "type",
+        "scale",
+        "thickness",
+        "smoothness",
+        "rotation",
+        "skew",
+        "animation",
+        "speed",
+        "fgColor",
+        "bgColor"
+      ],
+      "paramAliases": {
+        "patternType": "type"
+      }
+    },
+    "synth/perlin": {
+      "paramNames": [
+        "scale",
+        "octaves",
+        "colorMode",
+        "dimensions",
+        "ridges",
+        "warpIterations",
+        "warpScale",
+        "warpIntensity",
+        "seed",
+        "speed"
+      ],
+      "paramAliases": {}
+    },
+    "synth/polygon": {
+      "paramNames": [
+        "sides",
+        "radius",
+        "smooth",
+        "rotation",
+        "fgColor",
+        "fgAlpha",
+        "bgColor",
+        "bgAlpha"
+      ],
+      "paramAliases": {}
+    },
+    "synth/reactionDiffusion": {
+      "paramNames": [
+        "tex",
+        "zoom",
+        "smoothing",
+        "speed",
+        "resetState",
+        "seed",
+        "sourceF",
+        "feed",
+        "sourceK",
+        "kill",
+        "sourceR1",
+        "rate1",
+        "sourceR2",
+        "rate2",
+        "iterations",
+        "weight",
+        "inputIntensity",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "synth/remap": {
+      "paramNames": [
+        "zoneCount",
+        "bgColor",
+        "bgAlpha",
+        "smoothEdge",
+        "zone0_tex",
+        "zone0_count",
+        "zone0_alpha",
+        "zone0_v0",
+        "zone0_v1",
+        "zone0_v2",
+        "zone0_v3",
+        "zone0_v4",
+        "zone0_v5",
+        "zone0_v6",
+        "zone0_v7",
+        "zone0_v8",
+        "zone0_v9",
+        "zone0_v10",
+        "zone0_v11",
+        "zone0_v12",
+        "zone0_v13",
+        "zone0_v14",
+        "zone0_v15",
+        "zone0_v16",
+        "zone0_v17",
+        "zone0_v18",
+        "zone0_v19",
+        "zone0_v20",
+        "zone0_v21",
+        "zone0_v22",
+        "zone0_v23",
+        "zone0_v24",
+        "zone0_v25",
+        "zone0_v26",
+        "zone0_v27",
+        "zone0_v28",
+        "zone0_v29",
+        "zone0_v30",
+        "zone0_v31",
+        "zone1_tex",
+        "zone1_count",
+        "zone1_alpha",
+        "zone1_v0",
+        "zone1_v1",
+        "zone1_v2",
+        "zone1_v3",
+        "zone1_v4",
+        "zone1_v5",
+        "zone1_v6",
+        "zone1_v7",
+        "zone1_v8",
+        "zone1_v9",
+        "zone1_v10",
+        "zone1_v11",
+        "zone1_v12",
+        "zone1_v13",
+        "zone1_v14",
+        "zone1_v15",
+        "zone1_v16",
+        "zone1_v17",
+        "zone1_v18",
+        "zone1_v19",
+        "zone1_v20",
+        "zone1_v21",
+        "zone1_v22",
+        "zone1_v23",
+        "zone1_v24",
+        "zone1_v25",
+        "zone1_v26",
+        "zone1_v27",
+        "zone1_v28",
+        "zone1_v29",
+        "zone1_v30",
+        "zone1_v31",
+        "zone2_tex",
+        "zone2_count",
+        "zone2_alpha",
+        "zone2_v0",
+        "zone2_v1",
+        "zone2_v2",
+        "zone2_v3",
+        "zone2_v4",
+        "zone2_v5",
+        "zone2_v6",
+        "zone2_v7",
+        "zone2_v8",
+        "zone2_v9",
+        "zone2_v10",
+        "zone2_v11",
+        "zone2_v12",
+        "zone2_v13",
+        "zone2_v14",
+        "zone2_v15",
+        "zone2_v16",
+        "zone2_v17",
+        "zone2_v18",
+        "zone2_v19",
+        "zone2_v20",
+        "zone2_v21",
+        "zone2_v22",
+        "zone2_v23",
+        "zone2_v24",
+        "zone2_v25",
+        "zone2_v26",
+        "zone2_v27",
+        "zone2_v28",
+        "zone2_v29",
+        "zone2_v30",
+        "zone2_v31",
+        "zone3_tex",
+        "zone3_count",
+        "zone3_alpha",
+        "zone3_v0",
+        "zone3_v1",
+        "zone3_v2",
+        "zone3_v3",
+        "zone3_v4",
+        "zone3_v5",
+        "zone3_v6",
+        "zone3_v7",
+        "zone3_v8",
+        "zone3_v9",
+        "zone3_v10",
+        "zone3_v11",
+        "zone3_v12",
+        "zone3_v13",
+        "zone3_v14",
+        "zone3_v15",
+        "zone3_v16",
+        "zone3_v17",
+        "zone3_v18",
+        "zone3_v19",
+        "zone3_v20",
+        "zone3_v21",
+        "zone3_v22",
+        "zone3_v23",
+        "zone3_v24",
+        "zone3_v25",
+        "zone3_v26",
+        "zone3_v27",
+        "zone3_v28",
+        "zone3_v29",
+        "zone3_v30",
+        "zone3_v31",
+        "zone4_tex",
+        "zone4_count",
+        "zone4_alpha",
+        "zone4_v0",
+        "zone4_v1",
+        "zone4_v2",
+        "zone4_v3",
+        "zone4_v4",
+        "zone4_v5",
+        "zone4_v6",
+        "zone4_v7",
+        "zone4_v8",
+        "zone4_v9",
+        "zone4_v10",
+        "zone4_v11",
+        "zone4_v12",
+        "zone4_v13",
+        "zone4_v14",
+        "zone4_v15",
+        "zone4_v16",
+        "zone4_v17",
+        "zone4_v18",
+        "zone4_v19",
+        "zone4_v20",
+        "zone4_v21",
+        "zone4_v22",
+        "zone4_v23",
+        "zone4_v24",
+        "zone4_v25",
+        "zone4_v26",
+        "zone4_v27",
+        "zone4_v28",
+        "zone4_v29",
+        "zone4_v30",
+        "zone4_v31",
+        "zone5_tex",
+        "zone5_count",
+        "zone5_alpha",
+        "zone5_v0",
+        "zone5_v1",
+        "zone5_v2",
+        "zone5_v3",
+        "zone5_v4",
+        "zone5_v5",
+        "zone5_v6",
+        "zone5_v7",
+        "zone5_v8",
+        "zone5_v9",
+        "zone5_v10",
+        "zone5_v11",
+        "zone5_v12",
+        "zone5_v13",
+        "zone5_v14",
+        "zone5_v15",
+        "zone5_v16",
+        "zone5_v17",
+        "zone5_v18",
+        "zone5_v19",
+        "zone5_v20",
+        "zone5_v21",
+        "zone5_v22",
+        "zone5_v23",
+        "zone5_v24",
+        "zone5_v25",
+        "zone5_v26",
+        "zone5_v27",
+        "zone5_v28",
+        "zone5_v29",
+        "zone5_v30",
+        "zone5_v31",
+        "zone6_tex",
+        "zone6_count",
+        "zone6_alpha",
+        "zone6_v0",
+        "zone6_v1",
+        "zone6_v2",
+        "zone6_v3",
+        "zone6_v4",
+        "zone6_v5",
+        "zone6_v6",
+        "zone6_v7",
+        "zone6_v8",
+        "zone6_v9",
+        "zone6_v10",
+        "zone6_v11",
+        "zone6_v12",
+        "zone6_v13",
+        "zone6_v14",
+        "zone6_v15",
+        "zone6_v16",
+        "zone6_v17",
+        "zone6_v18",
+        "zone6_v19",
+        "zone6_v20",
+        "zone6_v21",
+        "zone6_v22",
+        "zone6_v23",
+        "zone6_v24",
+        "zone6_v25",
+        "zone6_v26",
+        "zone6_v27",
+        "zone6_v28",
+        "zone6_v29",
+        "zone6_v30",
+        "zone6_v31",
+        "zone7_tex",
+        "zone7_count",
+        "zone7_alpha",
+        "zone7_v0",
+        "zone7_v1",
+        "zone7_v2",
+        "zone7_v3",
+        "zone7_v4",
+        "zone7_v5",
+        "zone7_v6",
+        "zone7_v7",
+        "zone7_v8",
+        "zone7_v9",
+        "zone7_v10",
+        "zone7_v11",
+        "zone7_v12",
+        "zone7_v13",
+        "zone7_v14",
+        "zone7_v15",
+        "zone7_v16",
+        "zone7_v17",
+        "zone7_v18",
+        "zone7_v19",
+        "zone7_v20",
+        "zone7_v21",
+        "zone7_v22",
+        "zone7_v23",
+        "zone7_v24",
+        "zone7_v25",
+        "zone7_v26",
+        "zone7_v27",
+        "zone7_v28",
+        "zone7_v29",
+        "zone7_v30",
+        "zone7_v31"
+      ],
+      "paramAliases": {}
+    },
+    "synth/sacredGeometry": {
+      "paramNames": [
+        "geometry",
+        "scale",
+        "rings",
+        "starPoints",
+        "rotation",
+        "thickness",
+        "smoothness",
+        "fgColor",
+        "bgColor",
+        "animation",
+        "speed",
+        "pulseDepth"
+      ],
+      "paramAliases": {}
+    },
+    "synth/shape": {
+      "paramNames": [
+        "loopAOffset",
+        "loopBOffset",
+        "loopAScale",
+        "loopBScale",
+        "speedA",
+        "speedB",
+        "seed",
+        "wrap"
+      ],
+      "paramAliases": {
+        "loopAAmp": "speedA",
+        "loopBAmp": "speedB"
+      }
+    },
+    "synth/solid": {
+      "paramNames": [
+        "color",
+        "alpha"
+      ],
+      "paramAliases": {}
+    },
+    "synth/subdivide": {
+      "paramNames": [
+        "tex",
+        "mode",
+        "depth",
+        "density",
+        "seed",
+        "fill",
+        "outline",
+        "inputMix",
+        "speed",
+        "wrap"
+      ],
+      "paramAliases": {}
+    },
+    "synth/testPattern": {
+      "paramNames": [
+        "pattern",
+        "gridSize"
+      ],
+      "paramAliases": {}
+    },
+    "synth3d/cell3d": {
+      "paramNames": [
+        "volumeSize",
+        "metric",
+        "scale",
+        "variation",
+        "seed",
+        "colorMode"
+      ],
+      "paramAliases": {
+        "cellVariation": "variation"
+      }
+    },
+    "synth3d/cellularAutomata3d": {
+      "paramNames": [
+        "volumeSize",
+        "seed",
+        "ruleIndex",
+        "neighborMode",
+        "speed",
+        "density",
+        "colorMode",
+        "resetState",
+        "source",
+        "geoSource",
+        "weight",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "synth3d/flythrough3d": {
+      "paramNames": [
+        "volumeSize",
+        "type",
+        "power",
+        "iterations",
+        "bailout",
+        "speed",
+        "voiSize",
+        "seed"
+      ],
+      "paramAliases": {
+        "fractalType": "type"
+      }
+    },
+    "synth3d/fractal3d": {
+      "paramNames": [
+        "volumeSize",
+        "type",
+        "power",
+        "iterations",
+        "bailout",
+        "juliaX",
+        "juliaY",
+        "juliaZ",
+        "colorMode"
+      ],
+      "paramAliases": {
+        "fractalType": "type"
+      }
+    },
+    "synth3d/noise3d": {
+      "paramNames": [
+        "volumeSize",
+        "scale",
+        "octaves",
+        "colorMode",
+        "ridges",
+        "seed",
+        "speed"
+      ],
+      "paramAliases": {}
+    },
+    "synth3d/reactionDiffusion3d": {
+      "paramNames": [
+        "volumeSize",
+        "seed",
+        "iterations",
+        "feed",
+        "kill",
+        "rate1",
+        "rate2",
+        "speed",
+        "colorMode",
+        "resetState",
+        "source",
+        "geoSource",
+        "weight",
+        "iterationCount"
+      ],
+      "paramAliases": {}
+    },
+    "synth3d/shape3d": {
+      "paramNames": [
+        "volumeSize",
+        "colorMode",
+        "loopAOffset",
+        "loopBOffset",
+        "loopAScale",
+        "loopBScale",
+        "speedA",
+        "speedB"
+      ],
+      "paramAliases": {}
+    }
+  }
+}
