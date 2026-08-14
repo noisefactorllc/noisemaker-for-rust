@@ -1,0 +1,32 @@
+{
+  "configVersion": 1,
+  "id": "rust",
+  "series": "0.1",
+  "shaderSource": "kit",
+  "engineSource": "kit",
+  "pageTemplate": false,
+  "subtrees": [
+    { "from": "Cargo.toml", "to": "engine/Cargo.toml" },
+    { "from": "Cargo.lock", "to": "engine/Cargo.lock" },
+    { "from": "src", "to": "engine/src" }
+  ],
+  "licenses": [
+    { "from": "LICENSE", "to": "LICENSES/noisemaker-for-rust-LICENSE.txt" }
+  ],
+  "requireFiles": [
+    "engine/Cargo.toml",
+    "engine/Cargo.lock",
+    "engine/src/lib.rs",
+    "engine/src/bin/noisemaker-rs.rs"
+  ],
+  "forbidDirs": ["shaders"],
+  "inject": {
+    "type": "dsl-file",
+    "target": "program.dsl"
+  },
+  "compat": {
+    "mode": "list",
+    "fromBundleMetadata": "src/generated/catalog.json"
+  },
+  "engineBytesFrom": ["engine/"]
+}
