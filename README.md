@@ -1,3 +1,8 @@
+<!-- repo-hero -->
+<a href="https://noisemaker.app/"><img src="docs/hero.jpg" alt="Noisemaker for CPU (Rust)" width="100%"></a>
+
+<sub>Open source from <a href="https://noisefactor.io">Noise Factor</a> &middot; <a href="https://github.com/noisefactorllc">more projects</a></sub>
+
 # Noisemaker for Rust
 
 Noisemaker for Rust is a standalone CPU renderer for Noisemaker's generated
