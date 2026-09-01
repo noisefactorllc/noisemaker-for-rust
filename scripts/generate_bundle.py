@@ -339,16 +339,80 @@ def generate_bundle(source: os.PathLike[str] | str, output: os.PathLike[str] | s
             shutil.rmtree(staged, ignore_errors=True)
 
 
-def check_generated(output: os.PathLike[str] | str) -> None:
+def _expected_param_contract_provenance(contract_path: Path) -> dict[str, str]:
+    contract = _read_json(contract_path)
+    expected = {
+        "paramContractSource": contract.get("source"),
+        "paramContractRevision": contract.get("revision"),
+    }
+    if not all(isinstance(value, str) and value for value in expected.values()):
+        raise RuntimeError(f"parameter contract provenance is invalid: {contract_path}")
+    return expected
+
+
+def sync_param_contract_provenance(
+    output: os.PathLike[str] | str,
+    contract_path: os.PathLike[str] | str = PARAM_CONTRACT,
+) -> None:
+    output_path = Path(output).resolve()
+    expected = _expected_param_contract_provenance(Path(contract_path).resolve())
+    staged_root = Path(tempfile.mkdtemp(prefix=f".{output_path.name}.provenance-", dir=output_path.parent))
+    staged_output = staged_root / output_path.name
+    backup = None
+    try:
+        shutil.copytree(output_path, staged_output)
+        for name in ("catalog.json", "shaders.json"):
+            path = staged_output / name
+            value = _read_json(path)
+            provenance = value.get("provenance")
+            if not isinstance(provenance, dict):
+                raise RuntimeError(f"generated artifact has no provenance object: {path}")
+            provenance.update(expected)
+            _write_json(path, value)
+        check_generated(staged_output, contract_path, check_document=False)
+        backup = Path(tempfile.mkdtemp(prefix=f".{output_path.name}.backup-", dir=output_path.parent))
+        backup.rmdir()
+        os.replace(output_path, backup)
+        os.replace(staged_output, output_path)
+        obsolete = backup
+        backup = None
+        try:
+            shutil.rmtree(obsolete)
+        except OSError:
+            pass
+    except BaseException:
+        if backup is not None and not output_path.exists():
+            os.replace(backup, output_path)
+        raise
+    finally:
+        shutil.rmtree(staged_root, ignore_errors=True)
+
+
+def check_generated(
+    output: os.PathLike[str] | str,
+    contract_path: os.PathLike[str] | str = PARAM_CONTRACT,
+    *,
+    check_document: bool = True,
+) -> None:
     output_path = Path(output).resolve()
     catalog_path = output_path / "catalog.json"
-    contract = _read_json(PARAM_CONTRACT)
+    contract_path = Path(contract_path).resolve()
+    contract = _read_json(contract_path)
     catalog = _read_json(catalog_path)
     for path in (catalog_path, output_path / "shaders.json", output_path / "bundle-lock.json"):
         value = _read_json(path)
         canonical = json.dumps(value, indent=2, sort_keys=True) + "\n"
         if path.read_text(encoding="utf-8") != canonical:
             raise RuntimeError(f"generated artifact is not canonical: {path}")
+    expected_provenance = _expected_param_contract_provenance(contract_path)
+    for name in ("catalog.json", "shaders.json"):
+        provenance = _read_json(output_path / name).get("provenance", {})
+        for field, expected in expected_provenance.items():
+            if provenance.get(field) != expected:
+                raise RuntimeError(
+                    f"generated {field} drift in {name}: "
+                    f"expected {expected!r}, received {provenance.get(field)!r}"
+                )
     records = contract["effects"]
     if set(catalog.get("effects", {})) != set(records):
         raise RuntimeError("generated catalog differs from parameter contract inventory")
@@ -365,7 +429,8 @@ def check_generated(output: os.PathLike[str] | str) -> None:
                     raise RuntimeError(
                         f"generated parameter override drift for {effect_id}.{name}.{field}"
                     )
-    check_effects_document(catalog)
+    if check_document:
+        check_effects_document(catalog)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -374,16 +439,29 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--check", action="store_true")
     parser.add_argument(
+        "--sync-param-contract-provenance",
+        action="store_true",
+        help="refresh only generated parameter-contract provenance",
+    )
+    parser.add_argument(
         "--write-effects-doc",
         action="store_true",
         help="write docs/EFFECTS.md from the checked-in generated catalog",
     )
     args = parser.parse_args(argv)
     try:
+        exclusive_modes = sum((args.check, args.write_effects_doc, args.sync_param_contract_provenance))
+        if exclusive_modes > 1 or (args.source is not None and args.sync_param_contract_provenance):
+            parser.error(
+                "--check, --write-effects-doc, and --sync-param-contract-provenance "
+                "are mutually exclusive"
+            )
         if args.write_effects_doc:
-            if args.source is not None or args.check:
-                parser.error("--write-effects-doc cannot be combined with --source or --check")
+            if args.source is not None:
+                parser.error("--write-effects-doc cannot be combined with --source")
             write_effects_document(args.out / "catalog.json", EFFECTS_DOCUMENT)
+        elif args.sync_param_contract_provenance:
+            sync_param_contract_provenance(args.out)
         elif args.check and args.source is None:
             check_generated(args.out)
         elif args.source is not None:

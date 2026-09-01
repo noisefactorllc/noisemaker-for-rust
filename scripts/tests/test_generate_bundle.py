@@ -1,16 +1,22 @@
 import hashlib
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.generate_bundle import generate_bundle  # noqa: E402
+from scripts.generate_bundle import (  # noqa: E402
+    check_generated,
+    generate_bundle,
+    sync_param_contract_provenance,
+)
 from scripts.transpiler.typed_ir import emit_typed_ir  # noqa: E402
 
 
@@ -164,6 +170,77 @@ class TypedIrTests(unittest.TestCase):
 
 
 class GeneratorTests(unittest.TestCase):
+    def test_check_generated_rejects_stale_parameter_contract_provenance(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source = fixture_source(root)
+            output = root / "generated"
+            generate_bundle(source, output)
+            contract_path = source / "param-contract.json"
+            contract = json.loads(contract_path.read_text())
+            contract["revision"] = "next-revision"
+            contract_path.write_text(json.dumps(contract), encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "generated paramContractRevision drift"):
+                check_generated(output, contract_path)
+
+    def test_sync_parameter_contract_provenance_updates_both_generated_artifacts(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source = fixture_source(root)
+            output = root / "generated"
+            generate_bundle(source, output)
+            contract_path = source / "param-contract.json"
+            contract = json.loads(contract_path.read_text())
+            contract.update({"source": "next-source", "revision": "next-revision"})
+            contract_path.write_text(json.dumps(contract), encoding="utf-8")
+            sync_param_contract_provenance(output, contract_path)
+            for name in ("catalog.json", "shaders.json"):
+                provenance = json.loads((output / name).read_text())["provenance"]
+                self.assertEqual(provenance["paramContractSource"], "next-source")
+                self.assertEqual(provenance["paramContractRevision"], "next-revision")
+
+    def test_sync_rejects_incompatible_contract_and_preserves_generated_output(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source = fixture_source(root)
+            output = root / "generated"
+            generate_bundle(source, output)
+            original = {name: (output / name).read_bytes() for name in ("catalog.json", "shaders.json")}
+            contract_path = source / "param-contract.json"
+            contract = json.loads(contract_path.read_text())
+            contract["revision"] = "incompatible-revision"
+            contract["effects"]["synth/test"]["paramNames"] = []
+            contract_path.write_text(json.dumps(contract), encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "generated paramNames drift"):
+                sync_param_contract_provenance(output, contract_path)
+            for name, expected in original.items():
+                self.assertEqual((output / name).read_bytes(), expected)
+
+    def test_sync_treats_post_commit_backup_cleanup_as_best_effort(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source = fixture_source(root)
+            output = root / "generated"
+            generate_bundle(source, output)
+            contract_path = source / "param-contract.json"
+            contract = json.loads(contract_path.read_text())
+            contract["revision"] = "next-revision"
+            contract_path.write_text(json.dumps(contract), encoding="utf-8")
+            real_rmtree = shutil.rmtree
+
+            def fail_backup_cleanup(path, *args, **kwargs):
+                if ".generated.backup-" in Path(path).name:
+                    raise OSError("simulated backup cleanup failure")
+                return real_rmtree(path, *args, **kwargs)
+
+            with mock.patch("scripts.generate_bundle.shutil.rmtree", side_effect=fail_backup_cleanup):
+                sync_param_contract_provenance(output, contract_path)
+            catalog = json.loads((output / "catalog.json").read_text())
+            self.assertEqual(catalog["provenance"]["paramContractRevision"], "next-revision")
+            backups = list(root.glob(".generated.backup-*"))
+            self.assertEqual(len(backups), 1)
+            real_rmtree(backups[0])
+
     def test_canonical_parameter_order_and_aliases_are_emitted_from_locked_contract(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
