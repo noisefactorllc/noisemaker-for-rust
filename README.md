@@ -6,8 +6,7 @@
 # Noisemaker for Rust
 
 Noisemaker for Rust is a standalone CPU renderer for Noisemaker's generated
-effect catalog. The Cargo package and command are named `noisemaker-for-rust`
-and `noisemaker-rs`; Rust code imports the library as `noisemaker_cpu`.
+effect catalog. The Cargo package and command are named `noisemaker-for-rust` and `noisemaker-rs`. Rust code imports the library as `noisemaker_cpu`.
 
 The renderer contains the catalog and typed shader IR at compile time. Normal
 library and CLI rendering does not invoke JavaScript, Node.js, Python, a browser,
@@ -71,9 +70,7 @@ noisemaker-rs effect EFFECT [OPTIONS]
 noisemaker-rs effects
 ```
 
-`generate` renders an image generator. `random` is also accepted as its effect;
-it deterministically chooses from the sorted eligible generator pool using
-`--seed` and prints the resolved ID first. `apply` renders an image filter or
+`generate` renders an image generator. It also accepts `random` as the effect. This deterministically selects from the sorted eligible generator pool using `--seed` and prints the resolved ID first. `apply` renders an image filter or
 mixer at the input image dimensions. `run` reads DSL from a file or standard
 input, and `render` is its compatibility alias. `effect` constructs a bounded,
 meaningful program for any catalog domain. `effects` prints all 205 sorted
@@ -94,8 +91,7 @@ Common options are:
 
 `animate` additionally accepts `--frame-count` (50), `--fps` (30), `--speed`
 (1), and `--save-frames DIR`. It calls `ffmpeg` directly with literal arguments.
-If `ffmpeg` is absent, saved frames remain usable; without `--save-frames` the
-command fails with installation guidance.
+If `ffmpeg` is absent, saved frames remain usable. Without `--save-frames`, the command fails with installation guidance.
 
 PNG and MP4 destinations are created through exclusive, unpredictable sibling
 temporary files and renamed only after successful encoding. A failed command
@@ -113,9 +109,7 @@ compile-time choices are listed in [docs/EFFECTS.md](docs/EFFECTS.md).
 
 External-texture effects require `--input` or a matching `--texture` binding.
 Volume work scales cubically with `volumeSize`. Iterated effects default to 60
-steps, so large canvases can be expensive on a scalar CPU renderer. Particle
-filters are meaningful inside a `pointsEmit`/state/`pointsRender` chain; the
-`effect` command constructs that owner path automatically. Loop markers must be
+steps, so large canvases can be expensive on a scalar CPU renderer. Particle filters are meaningful inside a `pointsEmit`/state/`pointsRender` chain. The `effect` command constructs that owner path automatically. Loop markers must be
 paired around the repeated chain.
 
 Coordinates are normalized with the origin at the lower left inside shader
@@ -123,20 +117,13 @@ execution while `Surface` and PNG rows are stored top-down. Colors are linear
 floating-point RGBA internally and clamp/round to RGBA8 during PNG encoding.
 
 Overlay texture generation is cached by a bounded least-recently-used CPU
-cache. `RenderOptions::one_shot` selects Initial or Ready one-shot semantics;
-Ready is the public default.
+cache. `RenderOptions::one_shot` selects Initial or Ready one-shot semantics. Ready is the public default.
 
 Four programs use complete native fragment replacements for semantics that the
 generic typed IR cannot represent directly. Snow uses an exact-key float32
 semantic adapter to preserve the JavaScript CPU port's operation boundaries.
-CRT remains on typed IR but selects one exact-key builtin-semantic adapter for
-its reduced-turn float32 sine, matching the JavaScript CPU port without changing
-`sin` for any other shader. Temporal Aberration preserves the JavaScript
-factory's current true-branch assignment quirk behind its exact program key;
-ordinary typed-IR conditional assignments retain their standard behavior.
-The canonical `hash_uint(uint)` helper uses the JavaScript CPU compiler's
-source-compatibility hash at its exact mangled function target; differently
-named user functions continue to execute their typed-IR bodies.
+CRT remains on typed IR but selects one exact-key builtin-semantic adapter for its reduced-turn float32 sine. This matches the JavaScript CPU port without changing `sin` for any other shader. Temporal Aberration preserves the JavaScript factory's current true-branch assignment quirk behind its exact program key. Ordinary typed-IR conditional assignments retain their standard behavior.
+The canonical `hash_uint(uint)` helper uses the JavaScript CPU compiler's source-compatibility hash at its exact mangled function target. Differently named user functions continue to execute their typed-IR bodies.
 
 Compact CSL syntax is deliberately not implemented. Use the documented chained
 DSL, whose parser provides source locations and catalog-aware validation.
@@ -151,14 +138,11 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check
 ```
 
 Supplying `--source PATH` rebuilds from a source tree containing
-`metadata.json`, `bundle-lock.json`, and `effects.json` or `effects/`. Existing
-shader hashes are immutable; there is no update-lock mode. The packaged
+`metadata.json`, `bundle-lock.json`, and `effects.json` or `effects/`. Existing shader hashes are immutable. There is no update-lock mode. The packaged
 maintainer generator includes its complete `scripts/transpiler` dependency.
 
 Cross-language maintenance parity compares one shared DSL program through the
-built Rust and JavaScript CLIs. It writes exactly one sorted record for every
-catalog effect, uses RGBA8 tolerance 2, reports every unsupported interface with
-a stable reason, and treats timeouts or render errors as failures:
+built Rust and JavaScript CLIs. It writes exactly one sorted record for every catalog effect and uses RGBA8 tolerance 2. It reports every unsupported interface with a stable reason. It treats timeouts or render errors as failures:
 
 ```sh
 python3 scripts/parity.py \
@@ -167,8 +151,7 @@ python3 scripts/parity.py \
 ```
 
 Use `--only ID`, `--timeout SECONDS`, and `--json PATH` for focused or
-machine-readable runs. JavaScript is an offline test oracle only; it is never a
-production runtime dependency.
+machine-readable runs. JavaScript is an offline test oracle only. It is never a production runtime dependency.
 
 ## Contributing and security
 
