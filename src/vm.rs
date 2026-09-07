@@ -74,6 +74,9 @@ pub struct ShaderVm {
     structs: BTreeMap<String, Vec<(String, String)>>,
     function_indices: BTreeMap<String, usize>,
     temporal_aberration_factory_compatibility: bool,
+    javascript_simplex_corner_compatibility: bool,
+    javascript_crt_hash_compatibility: bool,
+    javascript_pattern_smoothstep_compatibility: bool,
     javascript_sine_hash_random_functions: BTreeSet<String>,
     javascript_float_atlas_z_program: bool,
     scopes: Vec<BTreeMap<String, Binding>>,
@@ -119,6 +122,9 @@ impl ShaderVm {
             structs,
             function_indices,
             temporal_aberration_factory_compatibility: false,
+            javascript_simplex_corner_compatibility: false,
+            javascript_crt_hash_compatibility: false,
+            javascript_pattern_smoothstep_compatibility: false,
             javascript_sine_hash_random_functions,
             javascript_float_atlas_z_program,
             scopes: Vec::new(),
@@ -137,6 +143,18 @@ impl ShaderVm {
 
     pub(crate) fn set_temporal_aberration_factory_compatibility(&mut self, enabled: bool) {
         self.temporal_aberration_factory_compatibility = enabled;
+    }
+
+    pub(crate) fn set_javascript_simplex_corner_compatibility(&mut self, enabled: bool) {
+        self.javascript_simplex_corner_compatibility = enabled;
+    }
+
+    pub(crate) fn set_javascript_crt_hash_compatibility(&mut self, enabled: bool) {
+        self.javascript_crt_hash_compatibility = enabled;
+    }
+
+    pub(crate) fn set_javascript_pattern_smoothstep_compatibility(&mut self, enabled: bool) {
+        self.javascript_pattern_smoothstep_compatibility = enabled;
     }
 
     pub fn run_pixel(
@@ -313,7 +331,30 @@ impl ShaderVm {
             Statement::Declaration { declarations } => {
                 for declaration in declarations {
                     let value = if let Some(initializer) = &declaration.initializer {
-                        if self.javascript_float_atlas_z_program
+                        let simplex_corner = self
+                            .javascript_simplex_corner_compatibility
+                            .then(|| javascript_simplex_corner_operands(declaration))
+                            .flatten();
+                        if let Some((uv, index, dot)) = simplex_corner {
+                            let (Value::Vec(uv), Value::Vec(index), Value::Float(dot)) =
+                                (self.eval(uv)?, self.eval(index)?, self.eval(dot)?)
+                            else {
+                                return Err(type_error("simplex corner operand types changed"));
+                            };
+                            if uv.len() != 2 || index.len() != 2 {
+                                return Err(type_error("simplex corner vector width changed"));
+                            }
+                            // The CPU factory evaluates uv - i + dot in Number
+                            // precision, then stores the completed vector in f32.
+                            Value::Vec(
+                                uv.iter()
+                                    .zip(index)
+                                    .map(|(uv, index)| {
+                                        (f64::from(*uv) - f64::from(index) + f64::from(dot)) as f32
+                                    })
+                                    .collect(),
+                            )
+                        } else if self.javascript_float_atlas_z_program
                             && is_javascript_float_atlas_z_declaration(declaration)
                         {
                             let Expression::Binary { left, right, .. } = initializer else {
@@ -438,7 +479,22 @@ impl ShaderVm {
                 Ok(Flow::Next)
             }
             Statement::Return { value } => Ok(Flow::Return(if let Some(value) = value {
-                self.eval(value)?
+                let hash = self
+                    .javascript_crt_hash_compatibility
+                    .then(|| javascript_crt_hash_operands(value))
+                    .flatten();
+                if let Some((sine, scale)) = hash {
+                    let (Value::Float(sine), Value::Float(scale)) =
+                        (self.eval(sine)?, self.eval(scale)?)
+                    else {
+                        return Err(type_error("CRT hash operand types changed"));
+                    };
+                    // fract consumes the Number product before float32 storage.
+                    let product = f64::from(sine) * f64::from(scale);
+                    Value::Float((product - product.floor()) as f32)
+                } else {
+                    self.eval(value)?
+                }
             } else {
                 Value::Void
             })),
@@ -446,6 +502,33 @@ impl ShaderVm {
             Statement::Continue => Ok(Flow::Continue),
             Statement::Discard => Ok(Flow::Discard),
         }
+    }
+
+    fn eval_number_expression(&mut self, expression: &Expression) -> Result<f64, VmError> {
+        if let Expression::Binary {
+            value_type,
+            operator,
+            left,
+            right,
+        } = expression
+        {
+            if value_type.0 == "float" && matches!(operator.as_str(), "+" | "-" | "*") {
+                self.tick()?;
+                let left = self.eval_number_expression(left)?;
+                let right = self.eval_number_expression(right)?;
+                return Ok(match operator.as_str() {
+                    "+" => left + right,
+                    "-" => left - right,
+                    _ => left * right,
+                });
+            }
+        }
+        let Value::Float(value) = self.eval(expression)? else {
+            return Err(type_error(
+                "canonical Number expression requires float operands",
+            ));
+        };
+        Ok(f64::from(value))
     }
 
     fn eval(&mut self, expression: &Expression) -> Result<Value, VmError> {
@@ -676,6 +759,15 @@ impl ShaderVm {
             Expression::Call {
                 target, arguments, ..
             } if target.starts_with("builtin:") => {
+                if self.javascript_pattern_smoothstep_compatibility
+                    && is_javascript_stripe_smoothstep(expression)
+                {
+                    let edge0 = self.eval_number_expression(&arguments[0])?;
+                    let edge1 = self.eval_number_expression(&arguments[1])?;
+                    let value = self.eval_number_expression(&arguments[2])?;
+                    let t = ((value - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
+                    return Ok(Value::Float((t * t * (3.0 - 2.0 * t)) as f32));
+                }
                 let values = arguments
                     .iter()
                     .map(|arg| self.eval(arg))
@@ -685,6 +777,17 @@ impl ShaderVm {
             Expression::Call {
                 target, arguments, ..
             } => {
+                if self.javascript_crt_hash_compatibility
+                    && target == "random_scalar__float"
+                    && self.function_indices.get(target).is_some_and(|index| {
+                        is_javascript_crt_random_scalar(&self.program.functions[*index])
+                    })
+                {
+                    if let Some(argument) = javascript_crt_seed_argument(arguments) {
+                        let seed = self.eval_number_expression(argument)?;
+                        return Ok(Value::Float(javascript_crt_random_scalar(seed)));
+                    }
+                }
                 let values = arguments
                     .iter()
                     .map(|argument| self.eval(argument))
@@ -1116,6 +1219,288 @@ fn is_javascript_sine_hash_random(function: &Function) -> bool {
         && is_exact_float_literal(right, "43758.5453123", 43_758.545_312_3)
 }
 
+fn javascript_simplex_corner_operands(
+    declaration: &VariableDefinition,
+) -> Option<(&Expression, &Expression, &Expression)> {
+    if declaration.name != "x0"
+        || declaration.value_type.0 != "vec2"
+        || declaration.array_size.is_some()
+    {
+        return None;
+    }
+    let Expression::Binary {
+        value_type,
+        operator,
+        left,
+        right,
+    } = declaration.initializer.as_ref()?
+    else {
+        return None;
+    };
+    let Expression::Binary {
+        value_type: difference_type,
+        operator: difference_operator,
+        left: uv,
+        right: index,
+    } = left.as_ref()
+    else {
+        return None;
+    };
+    let Expression::Call {
+        value_type: dot_type,
+        name,
+        target,
+        arguments,
+    } = right.as_ref()
+    else {
+        return None;
+    };
+    let [dot_index, swizzle] = arguments.as_slice() else {
+        return None;
+    };
+    let Expression::Member {
+        value_type: swizzle_type,
+        object,
+        field,
+    } = swizzle
+    else {
+        return None;
+    };
+    let local = |expression: &Expression, expected_name: &str, expected_type: &str| {
+        matches!(expression, Expression::Identifier { value_type, name, storage }
+            if value_type.0 == expected_type && name == expected_name
+                && *storage == StorageClass::Local)
+    };
+    (value_type.0 == "vec2"
+        && operator == "+"
+        && difference_type.0 == "vec2"
+        && difference_operator == "-"
+        && local(uv, "uv", "vec2")
+        && local(index, "i", "vec2")
+        && dot_type.0 == "float"
+        && name == "dot"
+        && target == "builtin:dot"
+        && local(dot_index, "i", "vec2")
+        && swizzle_type.0 == "vec2"
+        && field == "xx"
+        && local(object, "C", "vec4"))
+    .then_some((uv, index, right))
+}
+
+fn javascript_crt_hash_operands(expression: &Expression) -> Option<(&Expression, &Expression)> {
+    javascript_fract_sine_product(
+        expression,
+        "dot_value",
+        StorageClass::Local,
+        "43758.5453",
+        43_758.545_3,
+    )
+}
+
+fn javascript_fract_sine_product<'a>(
+    expression: &'a Expression,
+    input_name: &str,
+    input_storage: StorageClass,
+    scale_source: &str,
+    scale_value: f64,
+) -> Option<(&'a Expression, &'a Expression)> {
+    let Expression::Call {
+        value_type,
+        name,
+        target,
+        arguments,
+    } = expression
+    else {
+        return None;
+    };
+    let [
+        Expression::Binary {
+            value_type: product_type,
+            operator,
+            left,
+            right,
+        },
+    ] = arguments.as_slice()
+    else {
+        return None;
+    };
+    let Expression::Call {
+        value_type: sine_type,
+        name: sine_name,
+        target: sine_target,
+        arguments: sine_arguments,
+    } = left.as_ref()
+    else {
+        return None;
+    };
+    let [
+        Expression::Identifier {
+            value_type: dot_type,
+            name: dot_name,
+            storage,
+        },
+    ] = sine_arguments.as_slice()
+    else {
+        return None;
+    };
+    (value_type.0 == "float"
+        && name == "fract"
+        && target == "builtin:fract"
+        && product_type.0 == "float"
+        && operator == "*"
+        && sine_type.0 == "float"
+        && sine_name == "sin"
+        && sine_target == "builtin:sin"
+        && dot_type.0 == "float"
+        && dot_name == input_name
+        && *storage == input_storage
+        && is_exact_float_literal(right, scale_source, scale_value))
+    .then_some((left, right))
+}
+
+fn is_javascript_crt_random_scalar(function: &Function) -> bool {
+    let [parameter] = function.parameters.as_slice() else {
+        return false;
+    };
+    let [
+        Statement::Return {
+            value: Some(expression),
+        },
+    ] = function.body.as_slice()
+    else {
+        return false;
+    };
+    function.name == "random_scalar"
+        && function.mangled_name == "random_scalar__float"
+        && function.return_type.0 == "float"
+        && parameter.name == "seed"
+        && parameter.value_type.0 == "float"
+        && parameter.qualifier == ParameterQualifier::In
+        && javascript_fract_sine_product(
+            expression,
+            "seed",
+            StorageClass::Parameter,
+            "43758.5453123",
+            43_758.545_312_3,
+        )
+        .is_some()
+}
+
+fn is_scalar_identifier(
+    expression: &Expression,
+    expected_name: &str,
+    expected_storage: StorageClass,
+) -> bool {
+    matches!(expression, Expression::Identifier { value_type, name, storage }
+        if value_type.0 == "float" && name == expected_name && *storage == expected_storage)
+}
+
+fn javascript_crt_seed_argument(arguments: &[Expression]) -> Option<&Expression> {
+    let [
+        argument @ Expression::Binary {
+            value_type,
+            operator,
+            left,
+            right,
+        },
+    ] = arguments
+    else {
+        return None;
+    };
+    (value_type.0 == "float"
+        && operator == "+"
+        && is_scalar_identifier(left, "seed_base", StorageClass::Local)
+        && [
+            ("0.37", 0.37),
+            ("0.73", 0.73),
+            ("1.91", 1.91),
+            ("3.17", 3.17),
+        ]
+        .iter()
+        .any(|(source, value)| is_exact_float_literal(right, source, *value)))
+    .then_some(argument)
+}
+
+fn javascript_crt_random_scalar(seed: f64) -> f32 {
+    const TAU: f32 = std::f64::consts::TAU as f32;
+    const INV_TAU: f32 = (1.0 / std::f64::consts::TAU) as f32;
+    const SCALE: f32 = f32::from_bits(0x472a_ee8c);
+    // Keep the Number argument through the canonical CRT sine adapter's
+    // first float32 store. The sine result is float32; its product is Number.
+    let turns = (seed * f64::from(INV_TAU)) as f32;
+    let phase = f64::from(turns) - f64::from(turns).floor();
+    let sine = (phase * f64::from(TAU)).sin() as f32;
+    let product = f64::from(sine) * f64::from(SCALE);
+    (product - product.floor()) as f32
+}
+
+fn javascript_stripe_edge<'a>(
+    expression: &'a Expression,
+    endpoint_operator: &str,
+) -> Option<&'a str> {
+    let Expression::Binary {
+        value_type,
+        operator,
+        left,
+        right,
+    } = expression
+    else {
+        return None;
+    };
+    let Expression::Binary {
+        value_type: center_type,
+        operator: center_operator,
+        left: half,
+        right: product,
+    } = left.as_ref()
+    else {
+        return None;
+    };
+    let Expression::Binary {
+        value_type: product_type,
+        operator: product_operator,
+        left: thickness,
+        right: factor,
+    } = product.as_ref()
+    else {
+        return None;
+    };
+    (value_type.0 == "float"
+        && operator == endpoint_operator
+        && is_scalar_identifier(right, "smoothness", StorageClass::Uniform)
+        && center_type.0 == "float"
+        && matches!(center_operator.as_str(), "+" | "-")
+        && is_exact_float_literal(half, "0.5", 0.5)
+        && product_type.0 == "float"
+        && product_operator == "*"
+        && is_scalar_identifier(thickness, "t", StorageClass::Parameter)
+        && is_exact_float_literal(factor, "0.5", 0.5))
+    .then_some(center_operator)
+}
+
+fn is_javascript_stripe_smoothstep(expression: &Expression) -> bool {
+    let Expression::Call {
+        value_type,
+        name,
+        target,
+        arguments,
+    } = expression
+    else {
+        return false;
+    };
+    let [edge0, edge1, value] = arguments.as_slice() else {
+        return false;
+    };
+    let Some(center_operator) = javascript_stripe_edge(edge0, "-") else {
+        return false;
+    };
+    value_type.0 == "float"
+        && name == "smoothstep"
+        && target == "builtin:smoothstep"
+        && javascript_stripe_edge(edge1, "+") == Some(center_operator)
+        && is_scalar_identifier(value, "stripe", StorageClass::Local)
+}
+
 fn is_exact_float_literal(expression: &Expression, source: &str, value: f64) -> bool {
     matches!(
         expression,
@@ -1295,6 +1680,193 @@ fn write_lane<T>(values: &mut [T], index: usize, replacement: T) -> Result<(), V
 mod tests {
     use super::*;
     use crate::catalog::{Type, shader_bundle};
+
+    #[test]
+    fn canonical_simplex_corner_defers_only_the_matched_vector_storage() {
+        let program = &shader_bundle().unwrap().programs["classicNoisedeck/noise:noise"].ir;
+        let function = program
+            .functions
+            .iter()
+            .find(|f| f.name == "simplexValue")
+            .unwrap();
+        let mut corners = Vec::new();
+        visit_declarations(&function.body, &mut |declaration| {
+            if javascript_simplex_corner_operands(declaration).is_some() {
+                corners.push(declaration.clone());
+            }
+        });
+        assert_eq!(corners.len(), 1);
+        let declaration = corners.pop().unwrap();
+        let mut different_name = declaration.clone();
+        different_name.name = "other".into();
+        assert!(javascript_simplex_corner_operands(&different_name).is_none());
+
+        for (enabled, expected_y) in [(false, 0.347_549_44), (true, 0.347_549_92)] {
+            let mut vm = ShaderVm::new(program, Runtime::new()).unwrap();
+            vm.set_javascript_simplex_corner_compatibility(enabled);
+            vm.push();
+            vm.execute(&function.body[0]).unwrap(); // Canonical C constants.
+            vm.define("uv", Value::Vec(vec![50.881_943, -0.826_388_84]), true)
+                .unwrap();
+            vm.define("i", Value::Vec(vec![69.0, 17.0]), true).unwrap();
+            vm.execute(&Statement::Declaration {
+                declarations: vec![declaration.clone()],
+            })
+            .unwrap();
+            assert_eq!(
+                vm.read_root("x0").unwrap(),
+                &Value::Vec(vec![0.055_881_5, expected_y])
+            );
+        }
+    }
+
+    #[test]
+    fn canonical_crt_hash_defers_the_product_until_after_fract() {
+        let program = &shader_bundle().unwrap().programs["filter/crt:crt"].ir;
+        let function = program
+            .functions
+            .iter()
+            .find(|f| f.name == "hash3")
+            .unwrap();
+        let statement = function.body.last().unwrap();
+        let Statement::Return {
+            value: Some(expression),
+        } = statement
+        else {
+            panic!("hash3 return shape changed");
+        };
+        assert!(javascript_crt_hash_operands(expression).is_some());
+        for (enabled, expected) in [(false, 0.186_279_3), (true, 0.186_235_38)] {
+            let mut runtime = Runtime::new();
+            runtime.set_reduced_turn_sine(true);
+            let mut vm = ShaderVm::new(program, runtime).unwrap();
+            vm.set_javascript_crt_hash_compatibility(enabled);
+            vm.push();
+            vm.define("dot_value", Value::Float(0.050_370_004), true)
+                .unwrap();
+            let Flow::Return(value) = vm.execute(statement).unwrap() else {
+                panic!("hash3 did not return");
+            };
+            assert_eq!(value, Value::Float(expected));
+        }
+    }
+
+    #[test]
+    fn canonical_crt_seed_precision_rejects_changed_calls_and_function_bodies() {
+        let program = &shader_bundle().unwrap().programs["filter/crt:crt"].ir;
+        let mut call = None;
+        for function in &program.functions {
+            visit_declarations(&function.body, &mut |declaration| {
+                if declaration.name == "simplex_value" {
+                    call = declaration.initializer.clone();
+                }
+            });
+        }
+        let call = call.expect("canonical CRT simplex_value initializer");
+        let evaluate = |program: &ProgramIr, expression: &Expression, enabled| {
+            let mut runtime = Runtime::new();
+            runtime.set_reduced_turn_sine(true);
+            let mut vm = ShaderVm::new(program, runtime).unwrap();
+            vm.set_javascript_crt_hash_compatibility(enabled);
+            vm.push();
+            vm.define("seed_base", Value::Float(90.0), true).unwrap();
+            vm.eval(expression).unwrap()
+        };
+        assert_ne!(
+            evaluate(program, &call, false),
+            evaluate(program, &call, true)
+        );
+
+        let mut changed_call = call.clone();
+        let Expression::Call { arguments, .. } = &mut changed_call else {
+            panic!("CRT seed initializer is no longer a call");
+        };
+        let Expression::Binary { right, .. } = &mut arguments[0] else {
+            panic!("CRT seed argument is no longer an addition");
+        };
+        **right = Expression::Literal {
+            value_type: Type("float".into()),
+            value: serde_json::json!(0.74),
+            source: Some("0.74".into()),
+        };
+        assert!(javascript_crt_seed_argument(arguments).is_none());
+        assert_eq!(
+            evaluate(program, &changed_call, true),
+            evaluate(program, &changed_call, false)
+        );
+
+        let mut changed_program = program.clone();
+        let function = changed_program
+            .functions
+            .iter_mut()
+            .find(|function| function.mangled_name == "random_scalar__float")
+            .unwrap();
+        function.body = vec![Statement::Return {
+            value: Some(Expression::Literal {
+                value_type: Type("float".into()),
+                value: serde_json::json!(0.375),
+                source: Some("0.375".into()),
+            }),
+        }];
+        assert_eq!(evaluate(&changed_program, &call, true), Value::Float(0.375));
+    }
+
+    #[test]
+    fn canonical_pattern_precision_rejects_changed_smoothstep_arguments() {
+        let program = &shader_bundle().unwrap().programs["synth/pattern:pattern"].ir;
+        let function = program
+            .functions
+            .iter()
+            .find(|function| function.mangled_name == "stripes__vec2_float")
+            .unwrap();
+        let mut call = None;
+        visit_declarations(&function.body, &mut |declaration| {
+            if declaration.name == "edge1" {
+                call = declaration.initializer.clone();
+            }
+        });
+        let call = call.expect("canonical pattern edge1 initializer");
+        let evaluate = |expression: &Expression, enabled| {
+            let mut vm = ShaderVm::new(program, Runtime::new()).unwrap();
+            vm.set_javascript_pattern_smoothstep_compatibility(enabled);
+            vm.push();
+            for (name, value) in [("t", 0.5), ("smoothness", 0.02), ("stripe", 0.25)] {
+                vm.define(name, Value::Float(value), true).unwrap();
+            }
+            vm.eval(expression).unwrap()
+        };
+        assert_eq!(evaluate(&call, false), Value::Float(0.499_999_73));
+        assert_eq!(evaluate(&call, true), Value::Float(0.5));
+
+        let mut changed_value = call.clone();
+        let Expression::Call { arguments, .. } = &mut changed_value else {
+            panic!("pattern edge1 initializer is no longer a call");
+        };
+        arguments[2] = Expression::Literal {
+            value_type: Type("float".into()),
+            value: serde_json::json!(0.25),
+            source: Some("0.25".into()),
+        };
+        assert!(!is_javascript_stripe_smoothstep(&changed_value));
+        assert_eq!(
+            evaluate(&changed_value, true),
+            evaluate(&changed_value, false)
+        );
+
+        let mut changed_edge = call.clone();
+        let Expression::Call { arguments, .. } = &mut changed_edge else {
+            unreachable!();
+        };
+        let Expression::Binary { operator, .. } = &mut arguments[0] else {
+            panic!("pattern edge0 is no longer a binary expression");
+        };
+        *operator = "+".into();
+        assert!(!is_javascript_stripe_smoothstep(&changed_edge));
+        assert_eq!(
+            evaluate(&changed_edge, true),
+            evaluate(&changed_edge, false)
+        );
+    }
 
     fn visit_declarations<'a>(
         statements: &'a [Statement],

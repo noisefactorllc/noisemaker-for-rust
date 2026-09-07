@@ -19,7 +19,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG_PATH = ROOT / "src/generated/catalog.json"
-TOLERANCE = 2
+TOLERANCE = 0
 OVERLAY_INTERFACE_UNSUPPORTED = {
     "filter/fibers",
     "filter/scratches",
@@ -247,7 +247,7 @@ def _metrics(rust: bytes, js: bytes) -> dict:
         "max_delta": maximum,
         "mean_delta": sum(deltas) / len(deltas) if deltas else 0.0,
         "differing_channels": sum(delta != 0 for delta in deltas),
-        "channels_over_2": sum(delta > TOLERANCE for delta in deltas),
+        "channels_over_2": sum(delta > 2 for delta in deltas),
         "pass": maximum <= TOLERANCE,
     }
 

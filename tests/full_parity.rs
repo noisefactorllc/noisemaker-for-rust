@@ -55,7 +55,7 @@ fn parity_schema_mode_has_exact_sorted_205_record_denominator_and_metrics() {
         Some(report["compared"].as_u64().unwrap() + report["unsupported"].as_u64().unwrap())
     );
     assert_eq!(report["failed"], 0);
-    assert_eq!(report["tolerance"], 2);
+    assert_eq!(report["tolerance"], 0);
     let results = report["results"].as_array().unwrap();
     assert_eq!(results.len(), 205);
     let ids = results

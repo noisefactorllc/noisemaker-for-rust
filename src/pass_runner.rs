@@ -317,6 +317,15 @@ pub fn execute_pass(
         vm.set_temporal_aberration_factory_compatibility(
             render_pass.key.as_deref() == Some("filter/temporalAberration:temporalAberration"),
         );
+        vm.set_javascript_simplex_corner_compatibility(
+            render_pass.key.as_deref() == Some("classicNoisedeck/noise:noise"),
+        );
+        vm.set_javascript_crt_hash_compatibility(
+            render_pass.key.as_deref() == Some("filter/crt:crt"),
+        );
+        vm.set_javascript_pattern_smoothstep_compatibility(
+            render_pass.key.as_deref() == Some("synth/pattern:pattern"),
+        );
         let mut outputs = ShaderOutputs::new();
         for storage_y in 0..pass_height {
             let shader_y = pass_height - storage_y;

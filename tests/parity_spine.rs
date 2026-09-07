@@ -40,10 +40,15 @@ fn options() -> RenderOptions {
 }
 
 fn rust_effect(effect: &str) -> Surface {
-    let inputs = if effect == "filter/invert" {
+    let inputs = if matches!(effect, "filter/invert" | "filter/crt") {
+        let color = if effect == "filter/crt" {
+            [85, 136, 204, 255]
+        } else {
+            [51, 102, 153, 191]
+        };
         BTreeMap::from([(
             "inputTex".into(),
-            Surface::from_rgba8(8, 8, &[51, 102, 153, 191].repeat(64)).unwrap(),
+            Surface::from_rgba8(8, 8, &color.repeat(64)).unwrap(),
         )])
     } else {
         BTreeMap::new()
@@ -69,8 +74,13 @@ fn js_effect(effect: &str, javascript_oracle: &Path) -> Surface {
     let input_path = std::env::temp_dir().join(format!("noisemaker-rust-parity-input-{nonce}.png"));
     let mut command = Command::new("node");
     command.arg(javascript_oracle.join("bin/noisemaker-cpu.js"));
-    if effect == "filter/invert" {
-        let input = Surface::from_rgba8(8, 8, &[51, 102, 153, 191].repeat(64)).unwrap();
+    if matches!(effect, "filter/invert" | "filter/crt") {
+        let color = if effect == "filter/crt" {
+            [85, 136, 204, 255]
+        } else {
+            [51, 102, 153, 191]
+        };
+        let input = Surface::from_rgba8(8, 8, &color.repeat(64)).unwrap();
         fs::write(&input_path, encode_png(&input).unwrap()).unwrap();
         command.args(["apply", effect]).arg(&input_path);
     } else {
@@ -97,7 +107,18 @@ fn js_effect(effect: &str, javascript_oracle: &Path) -> Surface {
 
 #[test]
 #[ignore = "requires a noisemaker-for-cpu checkout; set NOISEMAKER_JS_CPU_DIR and use --ignored"]
-fn three_effect_js_oracle_parity_has_at_most_two_byte_delta() {
+fn precision_boundaries_are_byte_exact() {
+    let javascript_oracle = javascript_oracle_dir();
+    for effect in ["classicNoisedeck/noise", "filter/crt", "synth/pattern"] {
+        let rust = rust_effect(effect).to_rgba8();
+        let js = js_effect(effect, &javascript_oracle).to_rgba8();
+        assert_eq!(rust, js, "{effect}: canonical attachment bytes differ");
+    }
+}
+
+#[test]
+#[ignore = "requires a noisemaker-for-cpu checkout; set NOISEMAKER_JS_CPU_DIR and use --ignored"]
+fn three_effect_js_oracle_parity_is_byte_exact() {
     let javascript_oracle = javascript_oracle_dir();
     for effect in ["synth/solid", "filter/invert", "synth/noise"] {
         let rust = rust_effect(effect).to_rgba8();
@@ -111,7 +132,7 @@ fn three_effect_js_oracle_parity_has_at_most_two_byte_delta() {
             .max_by_key(|(_, delta)| *delta)
             .unwrap();
         assert!(
-            delta <= 2,
+            delta == 0,
             "{effect}: max delta {delta} at channel {index}: Rust={}, JS={}",
             rust[index],
             js[index]

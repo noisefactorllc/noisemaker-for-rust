@@ -142,7 +142,7 @@ Supplying `--source PATH` rebuilds from a source tree containing
 maintainer generator includes its complete `scripts/transpiler` dependency.
 
 Cross-language maintenance parity compares one shared DSL program through the
-built Rust and JavaScript CLIs. It writes exactly one sorted record for every catalog effect and uses RGBA8 tolerance 2. It reports every unsupported interface with a stable reason. It treats timeouts or render errors as failures:
+built Rust and JavaScript CLIs. It writes exactly one sorted record for every catalog effect and requires exact RGBA8 bytes (zero tolerance). It reports every unsupported interface with a stable reason. It treats timeouts or render errors as failures:
 
 ```sh
 python3 scripts/parity.py \
