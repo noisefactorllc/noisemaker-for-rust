@@ -5,6 +5,8 @@
 
 # Noisemaker for Rust
 
+> This package supports the "Export Shader Pipeline" feature in Noisedeck.app. The feature runs shader compositions on other platforms. Noise Factor derives this package from the upstream Noisemaker Engine project and tests it for pixel-level parity.
+
 Noisemaker for Rust is a standalone CPU renderer for Noisemaker's generated
 effect catalog. The Cargo package and command are named `noisemaker-for-rust` and `noisemaker-rs`. Rust code imports the library as `noisemaker_cpu`.
 
