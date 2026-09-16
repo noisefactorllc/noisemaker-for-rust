@@ -54,6 +54,17 @@ fn integer(uniforms: &BTreeMap<String, Value>, name: &str) -> Result<i32, Render
     Ok(scalar(uniforms, name)? as i32)
 }
 
+/// Like `scalar`, but a missing uniform yields `default` instead of an
+/// error -- for uniforms a caller (e.g. pointsRender's `deposit` pass) may
+/// not always wire in.
+fn scalar_or(uniforms: &BTreeMap<String, Value>, name: &str, default: f32) -> Result<f32, RenderError> {
+    if uniforms.contains_key(name) {
+        scalar(uniforms, name)
+    } else {
+        Ok(default)
+    }
+}
+
 fn input<'a>(
     pass: &RenderPass,
     resources: &'a BTreeMap<String, Surface>,
@@ -124,16 +135,37 @@ pub fn scatter_point_pixel(
     Some(((storage_row * i64::from(destination_width) + gl_col) * 4) as usize)
 }
 
+/// Port of deposit.wgsl's vertex-stage world->clip projection, shared by
+/// pointsRender and pointsBillboardRender. Returns
+/// `[clip_x, clip_y, camera_depth, camera_distance, projected_scale]`, or
+/// `None` if the point is behind the near plane in perspective view
+/// (viewMode 2) -- the caller must cull on `None` the same way the reference
+/// culls before emitting a vertex. `camera_depth`/`camera_distance`/
+/// `projected_scale` are only meaningful when viewMode != 0 (ortho/
+/// perspective); flat view returns the reference's fixed camera_depth=80,
+/// camera_distance=0, projected_scale=1.
+///
+/// Y orientation: this function has never flipped Y in any mode (unlike the
+/// WGSL reference, which flips clip_y explicitly) -- some other stage of this
+/// port's pipeline already compensates. Preserved into the new perspective
+/// branch for consistency with flat/ortho rather than matching the WGSL
+/// literally and risking a double-flip regression.
 pub fn compute_clip_center(
     x: f32,
     y: f32,
     z: f32,
     uniforms: &BTreeMap<String, Value>,
-) -> Result<[f32; 2], RenderError> {
-    if integer(uniforms, "viewMode")? == 0 {
-        return Ok([x * 2.0 - 1.0, y * 2.0 - 1.0]);
+    dest_width: u32,
+    dest_height: u32,
+) -> Result<Option<[f32; 5]>, RenderError> {
+    let view_mode = integer(uniforms, "viewMode")?;
+    if view_mode == 0 {
+        return Ok(Some([x * 2.0 - 1.0, y * 2.0 - 1.0, 80.0, 0.0, 1.0]));
     }
-    let is_2d = z.abs() < 1.0 && (0.0..=1.0).contains(&x) && (0.0..=1.0).contains(&y);
+    let is_2d = view_mode == 1
+        && z.abs() < 1.0
+        && (0.0..=1.0).contains(&x)
+        && (0.0..=1.0).contains(&y);
     let (mut px, mut py, mut pz) = (x, y, z);
     if is_2d {
         px -= 0.5;
@@ -145,17 +177,35 @@ pub fn compute_clip_center(
     let (x1, y1, z1) = (px, py * cos_x - pz * sin_x, py * sin_x + pz * cos_x);
     let rotate_y = scalar(uniforms, "rotateY")?;
     let (cos_y, sin_y) = (rotate_y.cos(), rotate_y.sin());
-    let (x2, y2) = (x1 * cos_y + z1 * sin_y, y1);
+    let (x2, y2, z2) = (x1 * cos_y + z1 * sin_y, y1, -x1 * sin_y + z1 * cos_y);
     let rotate_z = scalar(uniforms, "rotateZ")?;
     let (cos_z, sin_z) = (rotate_z.cos(), rotate_z.sin());
     let fx = x2 * cos_z - y2 * sin_z + scalar(uniforms, "posX")?;
     let fy = x2 * sin_z + y2 * cos_z + scalar(uniforms, "posY")?;
+    let fz = z2 + scalar_or(uniforms, "posZ", 0.0)?;
+    let camera_depth = 80.0 - fz;
+    let camera_distance = (fx * fx + fy * fy + camera_depth * camera_depth).sqrt();
     let scale = scalar(uniforms, "viewScale")?;
-    Ok(if is_2d {
+    if view_mode == 2 {
+        if camera_depth <= 0.1 {
+            return Ok(None);
+        }
+        let field_of_view = scalar_or(uniforms, "fieldOfView", 60.0)?.clamp(10.0, 150.0);
+        let focal_length = 1.0 / (field_of_view * 0.00872664626).tan();
+        let mut clip_x = fx * focal_length * scale / camera_depth;
+        if dest_width != 0 {
+            clip_x *= dest_height as f32 / dest_width as f32;
+        }
+        let clip_y = fy * focal_length * scale / camera_depth;
+        let projected_scale = 80.0 * focal_length * scale / (1.732050808 * camera_depth);
+        return Ok(Some([clip_x, clip_y, camera_depth, camera_distance, projected_scale]));
+    }
+    let [clip_x, clip_y] = if is_2d {
         [fx * 3.5 * scale, fy * 3.5 * scale]
     } else {
         [fx / 40.0 * scale, fy / 40.0 * scale]
-    })
+    };
+    Ok(Some([clip_x, clip_y, camera_depth, camera_distance, 1.0]))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -350,8 +400,18 @@ fn points_render(
         if position[3] < 0.5 {
             return Ok(());
         }
-        let [clip_x, clip_y] =
-            compute_clip_center(position[0], position[1], position[2], uniforms)?;
+        let Some([clip_x, clip_y, _camera_depth, _camera_distance, _projected_scale]) =
+            compute_clip_center(
+                position[0],
+                position[1],
+                position[2],
+                uniforms,
+                destination.width(),
+                destination.height(),
+            )?
+        else {
+            return Ok(());
+        };
         let Some(offset) = scatter_point_pixel(
             clip_x,
             clip_y,
@@ -608,10 +668,39 @@ fn billboard(
         if position[3] < 0.5 {
             return Ok(());
         }
-        let color = texel_fetch_agent(rgba, sx, sy);
-        let center = compute_clip_center(position[0], position[1], position[2], uniforms)?;
-        let size =
-            point_size * (1.0 - size_variation * (billboard_hash(vertex as f32, seed) - 0.5));
+        let mut color = texel_fetch_agent(rgba, sx, sy);
+        let Some([center_x, center_y, _camera_depth, camera_distance, projected_scale]) =
+            compute_clip_center(
+                position[0],
+                position[1],
+                position[2],
+                uniforms,
+                destination_width,
+                destination_height,
+            )?
+        else {
+            return Ok(());
+        };
+        let center = [center_x, center_y];
+        // Distance-based size/brightness fade (viewMode ortho or perspective
+        // only; flat mode's fixed camera_distance=0 makes both no-ops).
+        let mut size_fade = 1.0;
+        let size_distance = f64::from(scalar_or(uniforms, "sizeDistance", 0.0)?);
+        if size_distance > 0.0 {
+            size_fade = 1.0 - smoothstep_f64(0.0, size_distance, f64::from(camera_distance));
+        }
+        let brightness_distance = f64::from(scalar_or(uniforms, "brightnessDistance", 0.0)?);
+        if brightness_distance > 0.0 {
+            let brightness_fade =
+                1.0 - smoothstep_f64(0.0, brightness_distance, f64::from(camera_distance));
+            for channel in 0..4 {
+                color[channel] = (f64::from(color[channel]) * brightness_fade) as f32;
+            }
+        }
+        let size = point_size
+            * f64::from(projected_scale)
+            * size_fade
+            * (1.0 - size_variation * (billboard_hash(vertex as f32, seed) - 0.5));
         if size <= 0.0 {
             return Ok(());
         }

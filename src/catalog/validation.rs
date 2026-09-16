@@ -52,6 +52,7 @@ const BUILTINS: &[(&str, &[usize])] = &[
     ("smoothstep", &[3]),
     ("sqrt", &[1]),
     ("step", &[2]),
+    ("tan", &[1]),
     ("tanh", &[1]),
     ("texelFetch", &[3]),
     ("texture", &[2]),
@@ -1122,7 +1123,7 @@ fn builtin_return_type(name: &str, arguments: &[String]) -> Result<String, Strin
         }
         "cross" | "normalize" | "reflect" | "refract" | "abs" | "acos" | "ceil" | "cos"
         | "dFdx" | "dFdy" | "degrees" | "exp" | "floor" | "fract" | "fwidth" | "inversesqrt"
-        | "log" | "log2" | "radians" | "round" | "sign" | "sin" | "sqrt" | "tanh" => {
+        | "log" | "log2" | "radians" | "round" | "sign" | "sin" | "sqrt" | "tan" | "tanh" => {
             Ok(first.clone())
         }
         "step" => Ok(arguments[1].clone()),

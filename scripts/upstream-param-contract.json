@@ -1643,7 +1643,8 @@
       "paramNames": [
         "tex",
         "mix",
-        "maskMode"
+        "maskMode",
+        "baseTex"
       ],
       "paramAliases": {
         "mixAmt": "mix"
@@ -1995,6 +1996,12 @@
         "viewScale",
         "posX",
         "posY",
+        "posZ",
+        "fieldOfView",
+        "sizeDistance",
+        "brightnessDistance",
+        "aperture",
+        "focalDistance",
         "iterationCount"
       ],
       "paramAliases": {
@@ -2030,6 +2037,8 @@
         "posX",
         "posY",
         "matteOpacity",
+        "posZ",
+        "fieldOfView",
         "iterationCount"
       ],
       "paramAliases": {}
@@ -2904,6 +2913,52 @@
         "loopBScale",
         "speedA",
         "speedB"
+      ],
+      "paramAliases": {}
+    },
+    "synth3d/heightmap3d": {
+      "paramNames": [
+        "heightTex",
+        "tex",
+        "volumeSize",
+        "heightScale",
+        "baseHeight"
+      ],
+      "paramAliases": {}
+    },
+    "render/renderLandscape3d": {
+      "paramNames": [
+        "volumeSize",
+        "threshold",
+        "densitySource",
+        "zoom",
+        "panX",
+        "panY",
+        "lightDirection",
+        "ambient",
+        "diffuseIntensity",
+        "specularIntensity",
+        "bgColor",
+        "bgAlpha",
+        "viewMode",
+        "rotateX",
+        "rotateY",
+        "rotateZ",
+        "viewScale",
+        "posX",
+        "posY",
+        "posZ",
+        "fieldOfView"
+      ],
+      "paramAliases": {}
+    },
+    "points/heightGrid": {
+      "paramNames": [
+        "heightTex",
+        "diffuseTex",
+        "gridScale",
+        "heightScale",
+        "heightOffset"
       ],
       "paramAliases": {}
     }

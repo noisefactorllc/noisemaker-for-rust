@@ -2,9 +2,14 @@
   "effects": {
     "classicNoisedeck/bitEffects": {
       "domain": "image",
+      "externalTexture": null,
       "func": "bitEffects",
+      "iterated": false,
       "kind": "generator",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "loopAmp": "speed"
       },
@@ -318,9 +323,14 @@
     },
     "classicNoisedeck/caustic": {
       "domain": "image",
+      "externalTexture": null,
       "func": "caustic",
+      "iterated": false,
       "kind": "generator",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "loopAmp": "speed"
       },
@@ -457,9 +467,14 @@
     },
     "classicNoisedeck/cellNoise": {
       "domain": "image",
+      "externalTexture": null,
       "func": "cellNoise",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "cellSmooth": "smooth",
         "cellVariation": "variation",
@@ -783,9 +798,14 @@
     },
     "classicNoisedeck/cellRefract": {
       "domain": "image",
+      "externalTexture": null,
       "func": "cellRefract",
+      "iterated": false,
       "kind": "filter",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "cellSmooth": "smooth",
         "cellVariation": "variation",
@@ -992,9 +1012,14 @@
     },
     "classicNoisedeck/coalesce": {
       "domain": "image",
+      "externalTexture": null,
       "func": "coalesce",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "mixAmt": "mix"
       },
@@ -1133,9 +1158,14 @@
     },
     "classicNoisedeck/colorLab": {
       "domain": "image",
+      "externalTexture": null,
       "func": "colorLab",
+      "iterated": false,
       "kind": "filter",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "colorMode",
@@ -1422,9 +1452,14 @@
     },
     "classicNoisedeck/composite": {
       "domain": "image",
+      "externalTexture": null,
       "func": "composite",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "mixAmt": "mix"
       },
@@ -1528,9 +1563,14 @@
     },
     "classicNoisedeck/effects": {
       "domain": "image",
+      "externalTexture": null,
       "func": "effects",
+      "iterated": false,
       "kind": "filter",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "effect",
@@ -1701,9 +1741,14 @@
     },
     "classicNoisedeck/fractal": {
       "domain": "image",
+      "externalTexture": null,
       "func": "fractal",
+      "iterated": false,
       "kind": "generator",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "backgroundColor": "bgColor",
         "backgroundOpacity": "bgAlpha",
@@ -2099,9 +2144,14 @@
     },
     "classicNoisedeck/glitch": {
       "domain": "image",
+      "externalTexture": null,
       "func": "glitch",
+      "iterated": false,
       "kind": "filter",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "aberrationAmt": "aberration"
       },
@@ -2249,9 +2299,14 @@
     },
     "classicNoisedeck/kaleido": {
       "domain": "image",
+      "externalTexture": null,
       "func": "kaleido",
+      "iterated": false,
       "kind": "filter",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "kaleido": "sides",
         "loopAmp": "speed"
@@ -2486,9 +2541,14 @@
     },
     "classicNoisedeck/lensDistortion": {
       "domain": "image",
+      "externalTexture": null,
       "func": "lensDistortion",
+      "iterated": false,
       "kind": "filter",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "aberrationAmt": "aberration",
         "loopAmp": "speed",
@@ -2729,9 +2789,14 @@
     },
     "classicNoisedeck/moodscape": {
       "domain": "image",
+      "externalTexture": null,
       "func": "moodscape",
+      "iterated": false,
       "kind": "generator",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "loopAmp": "speed"
       },
@@ -2912,9 +2977,14 @@
     },
     "classicNoisedeck/noise": {
       "domain": "image",
+      "externalTexture": null,
       "func": "noise",
+      "iterated": false,
       "kind": "generator",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "loopAmp": "speed",
         "noiseType": "type"
@@ -3355,9 +3425,14 @@
     },
     "classicNoisedeck/noise3d": {
       "domain": "image",
+      "externalTexture": null,
       "func": "noise3d",
+      "iterated": false,
       "kind": "generator",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "noiseScale": "scale",
         "noiseType": "type"
@@ -3535,9 +3610,14 @@
     },
     "classicNoisedeck/refract": {
       "domain": "image",
+      "externalTexture": null,
       "func": "refract",
+      "iterated": false,
       "kind": "filter",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "mixAmt": "mix",
         "refractDir": "direction"
@@ -3661,9 +3741,14 @@
     },
     "classicNoisedeck/shapeMixer": {
       "domain": "image",
+      "externalTexture": null,
       "func": "shapeMixer",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "tex",
@@ -3958,9 +4043,14 @@
     },
     "classicNoisedeck/shapes": {
       "domain": "image",
+      "externalTexture": null,
       "func": "shapes",
+      "iterated": false,
       "kind": "generator",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "loopAAmp": "speedA",
         "loopBAmp": "speedB"
@@ -4322,9 +4412,14 @@
     },
     "classicNoisedeck/shapes3d": {
       "domain": "image",
+      "externalTexture": null,
       "func": "shapes3d",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "backgroundColor": "bgColor",
         "backgroundOpacity": "bgAlpha"
@@ -4828,9 +4923,14 @@
     },
     "classicNoisedeck/splat": {
       "domain": "image",
+      "externalTexture": null,
       "func": "splat",
+      "iterated": false,
       "kind": "filter",
       "namespace": "classicNoisedeck",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "splatColor": "color",
         "splatCutoff": "cutoff",
@@ -5111,9 +5211,14 @@
     },
     "filter/adjust": {
       "domain": "image",
+      "externalTexture": null,
       "func": "adjust",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "mode",
@@ -5220,9 +5325,14 @@
     },
     "filter/bc": {
       "domain": "image",
+      "externalTexture": null,
       "func": "bc",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "brightness",
@@ -5269,9 +5379,14 @@
     },
     "filter/bloom": {
       "domain": "image",
+      "externalTexture": null,
       "func": "bloom",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "threshold",
@@ -5408,9 +5523,14 @@
     },
     "filter/blur": {
       "domain": "image",
+      "externalTexture": null,
       "func": "blur",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "radiusX",
@@ -5478,9 +5598,14 @@
     },
     "filter/bulge": {
       "domain": "image",
+      "externalTexture": null,
       "func": "bulge",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "strength",
@@ -5563,9 +5688,14 @@
     },
     "filter/celShading": {
       "domain": "image",
+      "externalTexture": null,
       "func": "celShading",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "mixAmount": "mix",
         "shadingStrength": "strength"
@@ -5753,9 +5883,14 @@
     },
     "filter/channel": {
       "domain": "image",
+      "externalTexture": null,
       "func": "channel",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "channel",
@@ -5810,9 +5945,14 @@
     },
     "filter/chroma": {
       "domain": "image",
+      "externalTexture": null,
       "func": "chroma",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "targetHue",
@@ -5874,9 +6014,14 @@
     },
     "filter/chromaticAberration": {
       "domain": "image",
+      "externalTexture": null,
       "func": "chromaticAberration",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "aberrationAmt": "aberration"
       },
@@ -5925,9 +6070,14 @@
     },
     "filter/chrome": {
       "domain": "image",
+      "externalTexture": null,
       "func": "chrome",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "detail",
@@ -6020,9 +6170,14 @@
     },
     "filter/clouds": {
       "domain": "image",
+      "externalTexture": null,
       "func": "clouds",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "seed",
@@ -6090,9 +6245,14 @@
     },
     "filter/colorReplace": {
       "domain": "image",
+      "externalTexture": null,
       "func": "colorReplace",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "targetColor",
@@ -6208,9 +6368,14 @@
     },
     "filter/colorspace": {
       "domain": "image",
+      "externalTexture": null,
       "func": "colorspace",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "mode"
@@ -6248,10 +6413,14 @@
     },
     "filter/convolutionFeedback": {
       "domain": "image",
+      "externalTexture": null,
       "func": "convolutionFeedback",
       "iterated": true,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "sharpenRadius",
@@ -6402,9 +6571,14 @@
     },
     "filter/corrupt": {
       "domain": "image",
+      "externalTexture": null,
       "func": "corrupt",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "intensity",
@@ -6548,9 +6722,14 @@
     },
     "filter/craquelure": {
       "domain": "image",
+      "externalTexture": null,
       "func": "craquelure",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "spacing",
@@ -6621,9 +6800,14 @@
     },
     "filter/crt": {
       "domain": "image",
+      "externalTexture": null,
       "func": "crt",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "alpha",
@@ -6691,9 +6875,14 @@
     },
     "filter/degauss": {
       "domain": "image",
+      "externalTexture": null,
       "func": "degauss",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "displacement",
@@ -6773,9 +6962,14 @@
     },
     "filter/deriv": {
       "domain": "image",
+      "externalTexture": null,
       "func": "deriv",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "amount"
@@ -6811,9 +7005,14 @@
     },
     "filter/directionalBlur": {
       "domain": "image",
+      "externalTexture": null,
       "func": "directionalBlur",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "angle",
@@ -6860,9 +7059,14 @@
     },
     "filter/dither": {
       "domain": "image",
+      "externalTexture": null,
       "func": "dither",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "ditherType": "type",
         "mixAmount": "mix"
@@ -6986,9 +7190,14 @@
     },
     "filter/edge": {
       "domain": "image",
+      "externalTexture": null,
       "func": "edge",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "kernel",
@@ -7166,9 +7375,14 @@
     },
     "filter/emboss": {
       "domain": "image",
+      "externalTexture": null,
       "func": "emboss",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "style",
@@ -7261,9 +7475,14 @@
     },
     "filter/extrude": {
       "domain": "image",
+      "externalTexture": null,
       "func": "extrude",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "type",
@@ -7349,10 +7568,14 @@
     },
     "filter/feedback": {
       "domain": "image",
+      "externalTexture": null,
       "func": "feedback",
       "iterated": true,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "aberrationAmt": "aberration",
         "mixAmt": "mix"
@@ -7589,9 +7812,14 @@
     },
     "filter/fibers": {
       "domain": "image",
+      "externalTexture": null,
       "func": "fibers",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "density",
@@ -7663,9 +7891,14 @@
     },
     "filter/flipMirror": {
       "domain": "image",
+      "externalTexture": null,
       "func": "flipMirror",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "mode"
@@ -7712,9 +7945,14 @@
     },
     "filter/fxaa": {
       "domain": "image",
+      "externalTexture": null,
       "func": "fxaa",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "strength",
@@ -7774,9 +8012,14 @@
     },
     "filter/glowingEdge": {
       "domain": "image",
+      "externalTexture": null,
       "func": "glowingEdge",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "shape",
@@ -7848,9 +8091,14 @@
     },
     "filter/glyphMap": {
       "domain": "image",
+      "externalTexture": null,
       "func": "glyphMap",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "cellSize",
@@ -7911,9 +8159,14 @@
     },
     "filter/grade": {
       "domain": "image",
+      "externalTexture": null,
       "func": "grade",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "vignetteHighlightProtect": "vigHiProtect"
       },
@@ -8579,27 +8832,27 @@
       ],
       "textures": {
         "_creativeTex": {
-          "format": "rgba16float",
+          "format": "rgba16f",
           "height": "input",
           "width": "input"
         },
         "_hslTex": {
-          "format": "rgba16float",
+          "format": "rgba16f",
           "height": "input",
           "width": "input"
         },
         "_lutTex": {
-          "format": "rgba16float",
+          "format": "rgba16f",
           "height": "input",
           "width": "input"
         },
         "_primaryTex": {
-          "format": "rgba16float",
+          "format": "rgba16f",
           "height": "input",
           "width": "input"
         },
         "_wheelsTex": {
-          "format": "rgba16float",
+          "format": "rgba16f",
           "height": "input",
           "width": "input"
         }
@@ -8607,9 +8860,14 @@
     },
     "filter/grain": {
       "domain": "image",
+      "externalTexture": null,
       "func": "grain",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "alpha",
@@ -8659,9 +8917,14 @@
     },
     "filter/grime": {
       "domain": "image",
+      "externalTexture": null,
       "func": "grime",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "strength",
@@ -8715,9 +8978,14 @@
     },
     "filter/halftone": {
       "domain": "image",
+      "externalTexture": null,
       "func": "halftone",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "mode",
@@ -8924,9 +9192,14 @@
     },
     "filter/hatch": {
       "domain": "image",
+      "externalTexture": null,
       "func": "hatch",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "mode",
@@ -9068,9 +9341,14 @@
     },
     "filter/highPass": {
       "domain": "image",
+      "externalTexture": null,
       "func": "highPass",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "radius",
@@ -9150,9 +9428,14 @@
     },
     "filter/historicPalette": {
       "domain": "image",
+      "externalTexture": null,
       "func": "historicPalette",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "paletteIndex": "index"
       },
@@ -9277,9 +9560,14 @@
     },
     "filter/hs": {
       "domain": "image",
+      "externalTexture": null,
       "func": "hs",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "rotation",
@@ -9338,9 +9626,14 @@
     },
     "filter/invert": {
       "domain": "image",
+      "externalTexture": null,
       "func": "invert",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "mode"
@@ -9377,9 +9670,14 @@
     },
     "filter/lens": {
       "domain": "image",
+      "externalTexture": null,
       "func": "lens",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "displacement",
@@ -9435,9 +9733,14 @@
     },
     "filter/lensFlare": {
       "domain": "image",
+      "externalTexture": null,
       "func": "lensFlare",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "brightness",
@@ -9526,9 +9829,14 @@
     },
     "filter/lensWarp": {
       "domain": "image",
+      "externalTexture": null,
       "func": "lensWarp",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "displacement",
@@ -9578,9 +9886,14 @@
     },
     "filter/lightLeak": {
       "domain": "image",
+      "externalTexture": null,
       "func": "lightLeak",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "alpha",
@@ -9662,9 +9975,14 @@
     },
     "filter/lighting": {
       "domain": "image",
+      "externalTexture": null,
       "func": "lighting",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "normalStrength",
@@ -9861,9 +10179,14 @@
     },
     "filter/lowPoly": {
       "domain": "image",
+      "externalTexture": null,
       "func": "lowPoly",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "freq": "scale",
         "nth": "mode"
@@ -10025,9 +10348,14 @@
     },
     "filter/median": {
       "domain": "image",
+      "externalTexture": null,
       "func": "median",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "radius",
@@ -10075,9 +10403,14 @@
     },
     "filter/morphology": {
       "domain": "image",
+      "externalTexture": null,
       "func": "morphology",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "mode",
@@ -10157,9 +10490,14 @@
     },
     "filter/mosaicTiles": {
       "domain": "image",
+      "externalTexture": null,
       "func": "mosaicTiles",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "mode",
@@ -10313,10 +10651,14 @@
     },
     "filter/motionBlur": {
       "domain": "image",
+      "externalTexture": null,
       "func": "motionBlur",
       "iterated": true,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "amount",
@@ -10388,9 +10730,14 @@
     },
     "filter/normalMap": {
       "domain": "image",
+      "externalTexture": null,
       "func": "normalMap",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [],
       "params": {},
@@ -10411,9 +10758,14 @@
     },
     "filter/normalize": {
       "domain": "image",
+      "externalTexture": null,
       "func": "normalize",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [],
       "params": {},
@@ -10484,9 +10836,14 @@
     },
     "filter/octaveWarp": {
       "domain": "image",
+      "externalTexture": null,
       "func": "octaveWarp",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "frequency": "freq"
       },
@@ -10610,9 +10967,14 @@
     },
     "filter/oilPaint": {
       "domain": "image",
+      "externalTexture": null,
       "func": "oilPaint",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "mode",
@@ -10737,9 +11099,14 @@
     },
     "filter/osd": {
       "domain": "image",
+      "externalTexture": null,
       "func": "osd",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "alpha",
@@ -10824,9 +11191,14 @@
     },
     "filter/outline": {
       "domain": "image",
+      "externalTexture": null,
       "func": "outline",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "shape",
@@ -10922,9 +11294,14 @@
     },
     "filter/palette": {
       "domain": "image",
+      "externalTexture": null,
       "func": "palette",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "paletteIndex": "index",
         "paletteOffset": "offset",
@@ -11076,9 +11453,14 @@
     },
     "filter/parallax": {
       "domain": "image",
+      "externalTexture": null,
       "func": "parallax",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "heightMap",
@@ -11140,9 +11522,14 @@
     },
     "filter/patchwork": {
       "domain": "image",
+      "externalTexture": null,
       "func": "patchwork",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "squareSize",
@@ -11201,9 +11588,14 @@
     },
     "filter/photocopy": {
       "domain": "image",
+      "externalTexture": null,
       "func": "photocopy",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "detail",
@@ -11312,9 +11704,14 @@
     },
     "filter/pinch": {
       "domain": "image",
+      "externalTexture": null,
       "func": "pinch",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "strength",
@@ -11397,9 +11794,14 @@
     },
     "filter/pixelSort": {
       "domain": "image",
+      "externalTexture": null,
       "func": "pixelSort",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "angled",
@@ -11570,9 +11972,14 @@
     },
     "filter/pixels": {
       "domain": "image",
+      "externalTexture": null,
       "func": "pixels",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "size"
@@ -11609,9 +12016,14 @@
     },
     "filter/plasticWrap": {
       "domain": "image",
+      "externalTexture": null,
       "func": "plasticWrap",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "highlight",
@@ -11719,9 +12131,14 @@
     },
     "filter/polar": {
       "domain": "image",
+      "externalTexture": null,
       "func": "polar",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "mode",
@@ -11815,9 +12232,14 @@
     },
     "filter/pondRipples": {
       "domain": "image",
+      "externalTexture": null,
       "func": "pondRipples",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "amount",
@@ -11918,9 +12340,14 @@
     },
     "filter/posterize": {
       "domain": "image",
+      "externalTexture": null,
       "func": "posterize",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "levels",
@@ -11979,9 +12406,14 @@
     },
     "filter/prismaticAberration": {
       "domain": "image",
+      "externalTexture": null,
       "func": "prismaticAberration",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "aberrationAmt": "aberration"
       },
@@ -12076,9 +12508,14 @@
     },
     "filter/reindex": {
       "domain": "image",
+      "externalTexture": null,
       "func": "reindex",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "displacement"
@@ -12149,9 +12586,14 @@
     },
     "filter/relief": {
       "domain": "image",
+      "externalTexture": null,
       "func": "relief",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "mode",
@@ -12319,9 +12761,14 @@
     },
     "filter/repeat": {
       "domain": "image",
+      "externalTexture": null,
       "func": "repeat",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "x",
@@ -12409,9 +12856,14 @@
     },
     "filter/reverb": {
       "domain": "image",
+      "externalTexture": null,
       "func": "reverb",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "iterations",
@@ -12495,9 +12947,14 @@
     },
     "filter/ridge": {
       "domain": "image",
+      "externalTexture": null,
       "func": "ridge",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "level"
@@ -12536,9 +12993,14 @@
     },
     "filter/rotate": {
       "domain": "image",
+      "externalTexture": null,
       "func": "rotate",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "rotation",
@@ -12605,9 +13067,14 @@
     },
     "filter/scale": {
       "domain": "image",
+      "externalTexture": null,
       "func": "scale",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "x",
@@ -12695,9 +13162,14 @@
     },
     "filter/scanlineError": {
       "domain": "image",
+      "externalTexture": null,
       "func": "scanlineError",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "mode",
@@ -12794,9 +13266,14 @@
     },
     "filter/scatter": {
       "domain": "image",
+      "externalTexture": null,
       "func": "scatter",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "radius",
@@ -12889,9 +13366,14 @@
     },
     "filter/scratches": {
       "domain": "image",
+      "externalTexture": null,
       "func": "scratches",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "density",
@@ -12963,9 +13445,14 @@
     },
     "filter/scroll": {
       "domain": "image",
+      "externalTexture": null,
       "func": "scroll",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "x",
@@ -13053,9 +13540,14 @@
     },
     "filter/seamless": {
       "domain": "image",
+      "externalTexture": null,
       "func": "seamless",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "blend",
@@ -13122,9 +13614,14 @@
     },
     "filter/sharpen": {
       "domain": "image",
+      "externalTexture": null,
       "func": "sharpen",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "amount"
@@ -13160,9 +13657,14 @@
     },
     "filter/simpleAberration": {
       "domain": "image",
+      "externalTexture": null,
       "func": "simpleAberration",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "displacement"
@@ -13201,9 +13703,14 @@
     },
     "filter/sine": {
       "domain": "image",
+      "externalTexture": null,
       "func": "sine",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "amount",
@@ -13258,9 +13765,14 @@
     },
     "filter/skew": {
       "domain": "image",
+      "externalTexture": null,
       "func": "skew",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "skew",
@@ -13323,9 +13835,14 @@
     },
     "filter/smooth": {
       "domain": "image",
+      "externalTexture": null,
       "func": "smooth",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "type",
@@ -13455,9 +13972,14 @@
     },
     "filter/smoothstep": {
       "domain": "image",
+      "externalTexture": null,
       "func": "smoothstep",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "edge0",
@@ -13508,9 +14030,14 @@
     },
     "filter/snow": {
       "domain": "image",
+      "externalTexture": null,
       "func": "snow",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "alpha",
@@ -13574,9 +14101,14 @@
     },
     "filter/sobel": {
       "domain": "image",
+      "externalTexture": null,
       "func": "sobel",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "amount",
@@ -13626,9 +14158,14 @@
     },
     "filter/spatter": {
       "domain": "image",
+      "externalTexture": null,
       "func": "spatter",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "color",
@@ -13710,9 +14247,14 @@
     },
     "filter/spinBlur": {
       "domain": "image",
+      "externalTexture": null,
       "func": "spinBlur",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "amount",
@@ -13771,9 +14313,14 @@
     },
     "filter/spiral": {
       "domain": "image",
+      "externalTexture": null,
       "func": "spiral",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "strength",
@@ -13870,9 +14417,14 @@
     },
     "filter/spookyTicker": {
       "domain": "image",
+      "externalTexture": null,
       "func": "spookyTicker",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "rows",
@@ -13953,9 +14505,14 @@
     },
     "filter/stamp": {
       "domain": "image",
+      "externalTexture": null,
       "func": "stamp",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "smoothness",
@@ -14076,9 +14633,14 @@
     },
     "filter/step": {
       "domain": "image",
+      "externalTexture": null,
       "func": "step",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "threshold",
@@ -14126,9 +14688,14 @@
     },
     "filter/stipple": {
       "domain": "image",
+      "externalTexture": null,
       "func": "stipple",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "mode",
@@ -14246,9 +14813,14 @@
     },
     "filter/strayHair": {
       "domain": "image",
+      "externalTexture": null,
       "func": "strayHair",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "density",
@@ -14320,9 +14892,14 @@
     },
     "filter/strokes": {
       "domain": "image",
+      "externalTexture": null,
       "func": "strokes",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "mode",
@@ -14451,10 +15028,14 @@
     },
     "filter/temporalAberration": {
       "domain": "image",
+      "externalTexture": null,
       "func": "temporalAberration",
       "iterated": true,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "redDelay",
@@ -14661,9 +15242,14 @@
     },
     "filter/tetraColorArray": {
       "domain": "image",
+      "externalTexture": null,
       "func": "tetraColorArray",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "colorMode",
@@ -15150,9 +15736,14 @@
     },
     "filter/tetraCosine": {
       "domain": "image",
+      "externalTexture": null,
       "func": "tetraCosine",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "colorMode",
@@ -15422,8 +16013,12 @@
       "domain": "image",
       "externalTexture": "textTex",
       "func": "text",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "bgAlpha": "matteOpacity",
         "bgColor": "matteColor",
@@ -15595,9 +16190,14 @@
     },
     "filter/texture": {
       "domain": "image",
+      "externalTexture": null,
       "func": "texture",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "mode",
@@ -15727,9 +16327,14 @@
     },
     "filter/threshold": {
       "domain": "image",
+      "externalTexture": null,
       "func": "threshold",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "level",
@@ -15776,9 +16381,14 @@
     },
     "filter/tile": {
       "domain": "image",
+      "externalTexture": null,
       "func": "tile",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "symmetry",
@@ -15898,9 +16508,14 @@
     },
     "filter/tint": {
       "domain": "image",
+      "externalTexture": null,
       "func": "tint",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "color",
@@ -15965,9 +16580,14 @@
     },
     "filter/translate": {
       "domain": "image",
+      "externalTexture": null,
       "func": "translate",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "x",
@@ -16035,9 +16655,14 @@
     },
     "filter/tunnel": {
       "domain": "image",
+      "externalTexture": null,
       "func": "tunnel",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "shape",
@@ -16149,9 +16774,14 @@
     },
     "filter/unsharpMask": {
       "domain": "image",
+      "externalTexture": null,
       "func": "unsharpMask",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "amount",
@@ -16246,9 +16876,14 @@
     },
     "filter/vaseline": {
       "domain": "image",
+      "externalTexture": null,
       "func": "vaseline",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "alpha"
@@ -16287,9 +16922,14 @@
     },
     "filter/vignette": {
       "domain": "image",
+      "externalTexture": null,
       "func": "vignette",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "brightness",
@@ -16338,9 +16978,14 @@
     },
     "filter/warp": {
       "domain": "image",
+      "externalTexture": null,
       "func": "warp",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "strength",
@@ -16437,9 +17082,14 @@
     },
     "filter/watercolor": {
       "domain": "image",
+      "externalTexture": null,
       "func": "watercolor",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "detail",
@@ -16528,9 +17178,14 @@
     },
     "filter/waves": {
       "domain": "image",
+      "externalTexture": null,
       "func": "waves",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "strength",
@@ -16627,9 +17282,14 @@
     },
     "filter/wind": {
       "domain": "image",
+      "externalTexture": null,
       "func": "wind",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "method",
@@ -16705,9 +17365,14 @@
     },
     "filter/wobble": {
       "domain": "image",
+      "externalTexture": null,
       "func": "wobble",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "speed",
@@ -16782,9 +17447,14 @@
     },
     "filter/wormhole": {
       "domain": "image",
+      "externalTexture": null,
       "func": "wormhole",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "kink",
@@ -16917,9 +17587,14 @@
     },
     "filter/zoomBlur": {
       "domain": "image",
+      "externalTexture": null,
       "func": "zoomBlur",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "strength"
@@ -16955,11 +17630,13 @@
     },
     "filter3d/flow3d": {
       "domain": "volume-filter",
+      "externalTexture": null,
       "func": "flow3d",
       "iterated": true,
       "kind": "filter",
       "namespace": "filter3d",
       "outputGeo": "geoBuffer",
+      "outputTex": null,
       "outputTex3d": "global_flow3d_blended",
       "paramAliases": {},
       "paramNames": [
@@ -17307,10 +17984,13 @@
     },
     "filter3d/palette3d": {
       "domain": "volume-filter",
+      "externalTexture": null,
       "func": "palette3d",
+      "iterated": false,
       "kind": "filter",
       "namespace": "filter3d",
       "outputGeo": "inputGeo",
+      "outputTex": null,
       "outputTex3d": "volumeCache",
       "paramAliases": {
         "paletteIndex": "index",
@@ -17505,18 +18185,35 @@
     },
     "mixer/alphaMask": {
       "domain": "image",
+      "externalTexture": null,
       "func": "alphaMask",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "mixer",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "mixAmt": "mix"
       },
       "paramNames": [
         "tex",
         "mix",
-        "maskMode"
+        "maskMode",
+        "baseTex"
       ],
       "params": {
+        "baseTex": {
+          "default": "none",
+          "type": "surface",
+          "ui": {
+            "enabledBy": {
+              "eq": true,
+              "param": "maskMode"
+            },
+            "label": "mask background"
+          }
+        },
         "maskMode": {
           "default": false,
           "type": "boolean",
@@ -17552,6 +18249,7 @@
       "passes": [
         {
           "inputs": {
+            "baseTex": "baseTex",
             "inputTex": "inputTex",
             "tex": "tex"
           },
@@ -17571,9 +18269,14 @@
     },
     "mixer/applyMode": {
       "domain": "image",
+      "externalTexture": null,
       "func": "applyMode",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "mixer",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "mixAmt": "mix"
       },
@@ -17637,9 +18340,14 @@
     },
     "mixer/blendMode": {
       "domain": "image",
+      "externalTexture": null,
       "func": "blendMode",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "mixer",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "mixAmt": "mix"
       },
@@ -17716,9 +18424,14 @@
     },
     "mixer/cellSplit": {
       "domain": "image",
+      "externalTexture": null,
       "func": "cellSplit",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "mixer",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "tex",
@@ -17827,9 +18540,14 @@
     },
     "mixer/centerMask": {
       "domain": "image",
+      "externalTexture": null,
       "func": "centerMask",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "mixer",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "mixAmt": "mix"
       },
@@ -17935,9 +18653,14 @@
     },
     "mixer/channelCombine": {
       "domain": "image",
+      "externalTexture": null,
       "func": "channelCombine",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "mixer",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "rTex",
@@ -18022,9 +18745,14 @@
     },
     "mixer/distortion": {
       "domain": "image",
+      "externalTexture": null,
       "func": "distortion",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "mixer",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "tex",
@@ -18158,9 +18886,14 @@
     },
     "mixer/focusBlur": {
       "domain": "image",
+      "externalTexture": null,
       "func": "focusBlur",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "mixer",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "tex",
@@ -18245,9 +18978,14 @@
     },
     "mixer/mashup": {
       "domain": "image",
+      "externalTexture": null,
       "func": "mashup",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "mixer",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "source",
@@ -18343,9 +19081,14 @@
     },
     "mixer/patternMix": {
       "domain": "image",
+      "externalTexture": null,
       "func": "patternMix",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "mixer",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "tex",
@@ -18461,9 +19204,14 @@
     },
     "mixer/shadow": {
       "domain": "image",
+      "externalTexture": null,
       "func": "shadow",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "mixer",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "tex",
@@ -18631,9 +19379,14 @@
     },
     "mixer/shapeMask": {
       "domain": "image",
+      "externalTexture": null,
       "func": "shapeMask",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "mixer",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "tex",
@@ -18780,9 +19533,14 @@
     },
     "mixer/split": {
       "domain": "image",
+      "externalTexture": null,
       "func": "split",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "mixer",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "tex",
@@ -18883,9 +19641,14 @@
     },
     "mixer/thresholdMix": {
       "domain": "image",
+      "externalTexture": null,
       "func": "thresholdMix",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "mixer",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "tex",
@@ -19091,9 +19854,14 @@
     },
     "mixer/uvRemap": {
       "domain": "image",
+      "externalTexture": null,
       "func": "uvRemap",
+      "iterated": false,
       "kind": "mixer",
       "namespace": "mixer",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "tex",
@@ -19195,10 +19963,14 @@
     },
     "points/attractor": {
       "domain": "image",
+      "externalTexture": null,
       "func": "attractor",
       "iterated": true,
       "kind": "filter",
       "namespace": "points",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "stateSize",
@@ -19299,10 +20071,14 @@
     },
     "points/buddhabrot": {
       "domain": "image",
+      "externalTexture": null,
       "func": "buddhabrot",
       "iterated": true,
       "kind": "filter",
       "namespace": "points",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "stateSize",
@@ -19365,7 +20141,7 @@
         },
         "minIter": {
           "default": 1,
-          "max": 10,
+          "max": 1000.0,
           "min": 1,
           "step": 1,
           "type": "int",
@@ -19479,10 +20255,14 @@
     },
     "points/dla": {
       "domain": "image",
+      "externalTexture": null,
       "func": "dla",
       "iterated": true,
       "kind": "filter",
       "namespace": "points",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "stateSize",
@@ -19701,10 +20481,14 @@
     },
     "points/flock": {
       "domain": "image",
+      "externalTexture": null,
       "func": "flock",
       "iterated": true,
       "kind": "filter",
       "namespace": "points",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "separation",
@@ -19904,10 +20688,14 @@
     },
     "points/flow": {
       "domain": "image",
+      "externalTexture": null,
       "func": "flow",
       "iterated": true,
       "kind": "filter",
       "namespace": "points",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "stateSize",
@@ -19992,7 +20780,7 @@
         },
         "stride": {
           "default": 10,
-          "max": 10,
+          "max": 1000.0,
           "min": 1,
           "step": 1,
           "type": "float",
@@ -20057,12 +20845,129 @@
       ],
       "textures": {}
     },
+    "points/heightGrid": {
+      "domain": "image",
+      "externalTexture": null,
+      "func": "heightGrid",
+      "iterated": false,
+      "kind": "filter",
+      "namespace": "points",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
+      "paramAliases": {},
+      "paramNames": [
+        "heightTex",
+        "diffuseTex",
+        "gridScale",
+        "heightScale",
+        "heightOffset"
+      ],
+      "params": {
+        "diffuseTex": {
+          "default": "inputTex",
+          "type": "surface",
+          "ui": {
+            "category": "source",
+            "label": "diffuse map"
+          }
+        },
+        "gridScale": {
+          "default": 80,
+          "max": 400,
+          "min": 1,
+          "step": 1,
+          "type": "float",
+          "ui": {
+            "category": "terrain",
+            "control": "slider",
+            "label": "grid width"
+          },
+          "uniform": "gridScale"
+        },
+        "heightOffset": {
+          "default": 0,
+          "max": 100,
+          "min": -100,
+          "step": 0.1,
+          "type": "float",
+          "ui": {
+            "category": "terrain",
+            "control": "slider",
+            "label": "height offset"
+          },
+          "uniform": "heightOffset"
+        },
+        "heightScale": {
+          "default": 20,
+          "max": 100,
+          "min": -100,
+          "step": 0.1,
+          "type": "float",
+          "ui": {
+            "category": "terrain",
+            "control": "slider",
+            "label": "height"
+          },
+          "uniform": "heightScale"
+        },
+        "heightTex": {
+          "default": "inputTex",
+          "type": "surface",
+          "ui": {
+            "category": "source",
+            "label": "height map"
+          }
+        }
+      },
+      "passes": [
+        {
+          "drawBuffers": 3,
+          "inputs": {
+            "diffuseTex": "diffuseTex",
+            "heightTex": "heightTex",
+            "velTex": "global_vel",
+            "xyzTex": "global_xyz"
+          },
+          "key": "points/heightGrid:agent",
+          "name": "agent",
+          "outputs": {
+            "outRGBA": "global_rgba",
+            "outVel": "global_vel",
+            "outXYZ": "global_xyz"
+          },
+          "program": "agent",
+          "type": "compute",
+          "uniforms": {
+            "gridScale": "gridScale",
+            "heightOffset": "heightOffset",
+            "heightScale": "heightScale"
+          }
+        },
+        {
+          "inputs": {
+            "inputTex": "inputTex"
+          },
+          "key": "points/heightGrid:passthrough",
+          "name": "passthrough",
+          "outputs": {
+            "fragColor": "outputTex"
+          },
+          "program": "passthrough"
+        }
+      ],
+      "textures": {}
+    },
     "points/hydraulic": {
       "domain": "image",
+      "externalTexture": null,
       "func": "hydraulic",
       "iterated": true,
       "kind": "filter",
       "namespace": "points",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "stride",
@@ -20114,7 +21019,7 @@
         },
         "stride": {
           "default": 10,
-          "max": 10,
+          "max": 1000.0,
           "min": 1,
           "step": 1,
           "type": "float",
@@ -20166,10 +21071,14 @@
     },
     "points/lenia": {
       "domain": "image",
+      "externalTexture": null,
       "func": "lenia",
       "iterated": true,
       "kind": "filter",
       "namespace": "points",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "muK",
@@ -20388,10 +21297,14 @@
     },
     "points/life": {
       "domain": "image",
+      "externalTexture": null,
       "func": "life",
       "iterated": true,
       "kind": "filter",
       "namespace": "points",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "stateSize",
@@ -20644,10 +21557,14 @@
     },
     "points/physarum": {
       "domain": "image",
+      "externalTexture": null,
       "func": "physarum",
       "iterated": true,
       "kind": "filter",
       "namespace": "points",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "moveSpeed",
@@ -20862,10 +21779,14 @@
     },
     "points/physical": {
       "domain": "image",
+      "externalTexture": null,
       "func": "physical",
       "iterated": true,
       "kind": "filter",
       "namespace": "points",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "stateSize",
@@ -21013,11 +21934,15 @@
     },
     "render/loopBegin": {
       "domain": "loop-begin",
+      "externalTexture": null,
       "func": "loopBegin",
       "iterated": true,
       "kind": "filter",
       "loopRole": "begin",
       "namespace": "render",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "alpha",
@@ -21073,10 +21998,15 @@
     },
     "render/loopEnd": {
       "domain": "loop-end",
+      "externalTexture": null,
       "func": "loopEnd",
+      "iterated": false,
       "kind": "filter",
       "loopRole": "end",
       "namespace": "render",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [],
       "params": {},
@@ -21108,10 +22038,14 @@
     },
     "render/pointsBillboardRender": {
       "domain": "image",
+      "externalTexture": null,
       "func": "pointsBillboardRender",
       "iterated": true,
       "kind": "filter",
       "namespace": "render",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "rotationVariation": "rotationVar"
       },
@@ -21134,9 +22068,28 @@
         "viewScale",
         "posX",
         "posY",
+        "posZ",
+        "fieldOfView",
+        "sizeDistance",
+        "brightnessDistance",
+        "aperture",
+        "focalDistance",
         "iterationCount"
       ],
       "params": {
+        "aperture": {
+          "default": 0,
+          "max": 20,
+          "min": 0,
+          "type": "float",
+          "ui": {
+            "category": "view",
+            "control": "slider",
+            "enabledBy": "viewMode",
+            "label": "aperture"
+          },
+          "uniform": "aperture"
+        },
         "blendMode": {
           "choices": {
             "additive": 0,
@@ -21150,6 +22103,19 @@
             "label": "blend"
           },
           "uniform": "blendMode"
+        },
+        "brightnessDistance": {
+          "default": 0,
+          "max": 500,
+          "min": 0,
+          "type": "float",
+          "ui": {
+            "category": "view",
+            "control": "slider",
+            "enabledBy": "viewMode",
+            "label": "brightness distance"
+          },
+          "uniform": "brightnessDistance"
         },
         "density": {
           "default": 50,
@@ -21174,6 +22140,36 @@
             "label": "opacity"
           },
           "uniform": "depositOpacity"
+        },
+        "fieldOfView": {
+          "default": 60,
+          "max": 150,
+          "min": 10,
+          "step": 1,
+          "type": "float",
+          "ui": {
+            "category": "view",
+            "control": "slider",
+            "enabledBy": {
+              "eq": 2,
+              "param": "viewMode"
+            },
+            "label": "field of view"
+          },
+          "uniform": "fieldOfView"
+        },
+        "focalDistance": {
+          "default": 80,
+          "max": 500,
+          "min": 1,
+          "type": "float",
+          "ui": {
+            "category": "view",
+            "control": "slider",
+            "enabledBy": "viewMode",
+            "label": "focal distance"
+          },
+          "uniform": "focalDistance"
         },
         "inputIntensity": {
           "default": 10.15,
@@ -21246,6 +22242,23 @@
             "label": "pos y"
           },
           "uniform": "posY"
+        },
+        "posZ": {
+          "default": 0,
+          "max": 200,
+          "min": -200,
+          "step": 0.1,
+          "type": "float",
+          "ui": {
+            "category": "view",
+            "control": "slider",
+            "enabledBy": {
+              "eq": 2,
+              "param": "viewMode"
+            },
+            "label": "pos z"
+          },
+          "uniform": "posZ"
         },
         "rotateX": {
           "default": 0.3,
@@ -21334,6 +22347,19 @@
           },
           "uniform": "shapeMode"
         },
+        "sizeDistance": {
+          "default": 0,
+          "max": 500,
+          "min": 0,
+          "type": "float",
+          "ui": {
+            "category": "view",
+            "control": "slider",
+            "enabledBy": "viewMode",
+            "label": "size distance"
+          },
+          "uniform": "sizeDistance"
+        },
         "sizeVariation": {
           "default": 0,
           "max": 100,
@@ -21361,7 +22387,8 @@
         "viewMode": {
           "choices": {
             "flat": 0,
-            "ortho": 1
+            "ortho": 1,
+            "perspective": 2
           },
           "default": 0,
           "type": "int",
@@ -21437,17 +22464,21 @@
           },
           "program": "deposit",
           "uniforms": {
+            "brightnessDistance": "brightnessDistance",
             "density": "density",
             "depositOpacity": "depositOpacity",
+            "fieldOfView": "fieldOfView",
             "pointSize": "pointSize",
             "posX": "posX",
             "posY": "posY",
+            "posZ": "posZ",
             "rotateX": "rotateX",
             "rotateY": "rotateY",
             "rotateZ": "rotateZ",
             "rotationVar": "rotationVar",
             "seed": "seed",
             "shapeMode": "shapeMode",
+            "sizeDistance": "sizeDistance",
             "sizeVariation": "sizeVariation",
             "viewMode": "viewMode",
             "viewScale": "viewScale"
@@ -21480,17 +22511,21 @@
           },
           "program": "deposit",
           "uniforms": {
+            "brightnessDistance": "brightnessDistance",
             "density": "density",
             "depositOpacity": "depositOpacity",
+            "fieldOfView": "fieldOfView",
             "pointSize": "pointSize",
             "posX": "posX",
             "posY": "posY",
+            "posZ": "posZ",
             "rotateX": "rotateX",
             "rotateY": "rotateY",
             "rotateZ": "rotateZ",
             "rotationVar": "rotationVar",
             "seed": "seed",
             "shapeMode": "shapeMode",
+            "sizeDistance": "sizeDistance",
             "sizeVariation": "sizeVariation",
             "viewMode": "viewMode",
             "viewScale": "viewScale"
@@ -21523,10 +22558,14 @@
     },
     "render/pointsEmit": {
       "domain": "image",
+      "externalTexture": null,
       "func": "pointsEmit",
       "iterated": true,
       "kind": "filter",
       "namespace": "render",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "stateSize",
@@ -21692,10 +22731,14 @@
     },
     "render/pointsRender": {
       "domain": "image",
+      "externalTexture": null,
       "func": "pointsRender",
       "iterated": true,
       "kind": "filter",
       "namespace": "render",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "density",
@@ -21709,6 +22752,8 @@
         "posX",
         "posY",
         "matteOpacity",
+        "posZ",
+        "fieldOfView",
         "iterationCount"
       ],
       "params": {
@@ -21723,6 +22768,23 @@
             "label": "density"
           },
           "uniform": "density"
+        },
+        "fieldOfView": {
+          "default": 60,
+          "max": 150,
+          "min": 10,
+          "step": 1,
+          "type": "float",
+          "ui": {
+            "category": "view",
+            "control": "slider",
+            "enabledBy": {
+              "eq": 2,
+              "param": "viewMode"
+            },
+            "label": "field of view"
+          },
+          "uniform": "fieldOfView"
         },
         "inputIntensity": {
           "default": 10.15,
@@ -21796,6 +22858,20 @@
           },
           "uniform": "posY"
         },
+        "posZ": {
+          "default": 0,
+          "max": 200,
+          "min": -200,
+          "step": 0.1,
+          "type": "float",
+          "ui": {
+            "category": "view",
+            "control": "slider",
+            "enabledBy": "viewMode",
+            "label": "pos z"
+          },
+          "uniform": "posZ"
+        },
         "rotateX": {
           "default": 0.3,
           "max": 6.283185,
@@ -21841,9 +22917,12 @@
         "viewMode": {
           "choices": {
             "flat": 0,
-            "ortho": 1
+            "ortho": 1,
+            "perspective": 2
           },
           "default": 0,
+          "max": 2,
+          "min": 0,
           "type": "int",
           "ui": {
             "category": "view",
@@ -21909,8 +22988,10 @@
           "program": "deposit",
           "uniforms": {
             "density": "density",
+            "fieldOfView": "fieldOfView",
             "posX": "posX",
             "posY": "posY",
+            "posZ": "posZ",
             "rotateX": "rotateX",
             "rotateY": "rotateY",
             "rotateZ": "rotateZ",
@@ -21945,10 +23026,13 @@
     },
     "render/render3d": {
       "domain": "volume-renderer",
+      "externalTexture": null,
       "func": "render3d",
+      "iterated": false,
       "kind": "filter",
       "namespace": "render",
       "outputGeo": "screenGeoBuffer",
+      "outputTex": null,
       "outputTex3d": "inputTex3d",
       "paramAliases": {},
       "paramNames": [
@@ -22070,10 +23154,13 @@
     },
     "render/renderCubemap3d": {
       "domain": "volume-renderer",
+      "externalTexture": null,
       "func": "renderCubemap3d",
+      "iterated": false,
       "kind": "filter",
       "namespace": "render",
       "outputGeo": "screenGeoBuffer",
+      "outputTex": null,
       "outputTex3d": "inputTex3d",
       "paramAliases": {},
       "paramNames": [
@@ -22201,10 +23288,13 @@
     },
     "render/renderCubemapSurface": {
       "domain": "volume-renderer",
+      "externalTexture": null,
       "func": "renderCubemapSurface",
+      "iterated": false,
       "kind": "filter",
       "namespace": "render",
       "outputGeo": "screenGeoBuffer",
+      "outputTex": null,
       "outputTex3d": "inputTex3d",
       "paramAliases": {},
       "paramNames": [
@@ -22327,12 +23417,357 @@
         }
       }
     },
-    "render/renderLit3d": {
+    "render/renderLandscape3d": {
       "domain": "volume-renderer",
-      "func": "renderLit3d",
+      "externalTexture": null,
+      "func": "renderLandscape3d",
+      "iterated": false,
       "kind": "filter",
       "namespace": "render",
       "outputGeo": "screenGeoBuffer",
+      "outputTex": null,
+      "outputTex3d": "inputTex3d",
+      "paramAliases": {},
+      "paramNames": [
+        "volumeSize",
+        "threshold",
+        "densitySource",
+        "zoom",
+        "panX",
+        "panY",
+        "lightDirection",
+        "ambient",
+        "diffuseIntensity",
+        "specularIntensity",
+        "bgColor",
+        "bgAlpha",
+        "viewMode",
+        "rotateX",
+        "rotateY",
+        "rotateZ",
+        "viewScale",
+        "posX",
+        "posY",
+        "posZ",
+        "fieldOfView"
+      ],
+      "params": {
+        "ambient": {
+          "default": 0.35,
+          "max": 1,
+          "min": 0,
+          "type": "float",
+          "ui": {
+            "control": "slider",
+            "label": "ambient light"
+          },
+          "uniform": "ambient"
+        },
+        "bgAlpha": {
+          "default": 1,
+          "max": 1,
+          "min": 0,
+          "type": "float",
+          "ui": {
+            "control": "slider",
+            "label": "background opacity"
+          },
+          "uniform": "bgAlpha"
+        },
+        "bgColor": {
+          "default": [
+            0.025,
+            0.045,
+            0.075
+          ],
+          "type": "color",
+          "ui": {
+            "control": "color",
+            "label": "background color"
+          },
+          "uniform": "bgColor"
+        },
+        "densitySource": {
+          "choices": {
+            "geometry": 0
+          },
+          "default": 0,
+          "type": "int",
+          "ui": {
+            "control": false,
+            "label": "density source"
+          }
+        },
+        "diffuseIntensity": {
+          "default": 0.85,
+          "max": 2,
+          "min": 0,
+          "type": "float",
+          "ui": {
+            "control": "slider",
+            "label": "diffuse light"
+          },
+          "uniform": "diffuseIntensity"
+        },
+        "fieldOfView": {
+          "default": 60,
+          "max": 150,
+          "min": 10,
+          "step": 1,
+          "type": "float",
+          "ui": {
+            "category": "view",
+            "control": "slider",
+            "enabledBy": {
+              "eq": 2,
+              "param": "viewMode"
+            },
+            "label": "field of view"
+          },
+          "uniform": "fieldOfView"
+        },
+        "lightDirection": {
+          "default": [
+            -0.4,
+            0.85,
+            0.6
+          ],
+          "max": 1,
+          "min": -1,
+          "type": "vec3",
+          "ui": {
+            "control": "vector3",
+            "label": "light direction"
+          },
+          "uniform": "lightDirection"
+        },
+        "panX": {
+          "default": 0,
+          "max": 1,
+          "min": -1,
+          "type": "float",
+          "ui": {
+            "control": "slider",
+            "label": "pan x"
+          },
+          "uniform": "panX"
+        },
+        "panY": {
+          "default": 0,
+          "max": 1,
+          "min": -1,
+          "type": "float",
+          "ui": {
+            "control": "slider",
+            "label": "pan y"
+          },
+          "uniform": "panY"
+        },
+        "posX": {
+          "default": 0,
+          "max": 50,
+          "min": -50,
+          "step": 0.1,
+          "type": "float",
+          "ui": {
+            "category": "view",
+            "control": "slider",
+            "enabledBy": {
+              "eq": 2,
+              "param": "viewMode"
+            },
+            "label": "pos x"
+          },
+          "uniform": "posX"
+        },
+        "posY": {
+          "default": 0,
+          "max": 50,
+          "min": -50,
+          "step": 0.1,
+          "type": "float",
+          "ui": {
+            "category": "view",
+            "control": "slider",
+            "enabledBy": {
+              "eq": 2,
+              "param": "viewMode"
+            },
+            "label": "pos y"
+          },
+          "uniform": "posY"
+        },
+        "posZ": {
+          "default": 0,
+          "max": 200,
+          "min": -200,
+          "step": 0.1,
+          "type": "float",
+          "ui": {
+            "category": "view",
+            "control": "slider",
+            "enabledBy": {
+              "eq": 2,
+              "param": "viewMode"
+            },
+            "label": "pos z"
+          },
+          "uniform": "posZ"
+        },
+        "rotateX": {
+          "default": 0.3,
+          "max": 6.283185,
+          "min": 0,
+          "step": 0.01,
+          "type": "float",
+          "ui": {
+            "category": "view",
+            "control": "slider",
+            "enabledBy": {
+              "eq": 2,
+              "param": "viewMode"
+            },
+            "label": "rotate x"
+          },
+          "uniform": "rotateX"
+        },
+        "rotateY": {
+          "default": 0,
+          "max": 6.283185,
+          "min": 0,
+          "step": 0.01,
+          "type": "float",
+          "ui": {
+            "category": "view",
+            "control": "slider",
+            "enabledBy": {
+              "eq": 2,
+              "param": "viewMode"
+            },
+            "label": "rotate y"
+          },
+          "uniform": "rotateY"
+        },
+        "rotateZ": {
+          "default": 0,
+          "max": 6.283185,
+          "min": 0,
+          "step": 0.01,
+          "type": "float",
+          "ui": {
+            "category": "view",
+            "control": "slider",
+            "enabledBy": {
+              "eq": 2,
+              "param": "viewMode"
+            },
+            "label": "rotate z"
+          },
+          "uniform": "rotateZ"
+        },
+        "specularIntensity": {
+          "default": 0.12,
+          "max": 1,
+          "min": 0,
+          "type": "float",
+          "ui": {
+            "control": "slider",
+            "label": "specular light"
+          },
+          "uniform": "specularIntensity"
+        },
+        "threshold": {
+          "default": 0.5,
+          "max": 1,
+          "min": 0,
+          "type": "float",
+          "ui": {
+            "control": false,
+            "label": "density threshold"
+          },
+          "uniform": "threshold"
+        },
+        "viewMode": {
+          "choices": {
+            "ortho": 1,
+            "perspective": 2
+          },
+          "default": 1,
+          "define": "VIEW_MODE",
+          "type": "int",
+          "ui": {
+            "category": "view",
+            "control": "dropdown",
+            "label": "view"
+          }
+        },
+        "viewScale": {
+          "default": 0.8,
+          "max": 10,
+          "min": 0.1,
+          "step": 0.01,
+          "type": "float",
+          "ui": {
+            "control": false,
+            "label": "zoom"
+          },
+          "uniform": "viewScale"
+        },
+        "volumeSize": {
+          "default": 64,
+          "type": "int",
+          "ui": {
+            "control": false,
+            "label": "volume size"
+          },
+          "uniform": "volumeSize"
+        },
+        "zoom": {
+          "default": 1,
+          "max": 4,
+          "min": 0.25,
+          "type": "float",
+          "ui": {
+            "control": "slider",
+            "label": "zoom"
+          },
+          "uniform": "zoom"
+        }
+      },
+      "passes": [
+        {
+          "drawBuffers": 2,
+          "inputs": {
+            "analyticalGeo": "inputGeo",
+            "volumeCache": "inputTex3d"
+          },
+          "key": "render/renderLandscape3d:landscape",
+          "name": "render",
+          "outputs": {
+            "fragColor": "outputTex",
+            "geoOut": "screenGeoBuffer"
+          },
+          "program": "landscape",
+          "type": "compute"
+        }
+      ],
+      "textures": {
+        "screenGeoBuffer": {
+          "format": "rgba16f",
+          "height": "screen",
+          "width": "screen"
+        }
+      }
+    },
+    "render/renderLit3d": {
+      "domain": "volume-renderer",
+      "externalTexture": null,
+      "func": "renderLit3d",
+      "iterated": false,
+      "kind": "filter",
+      "namespace": "render",
+      "outputGeo": "screenGeoBuffer",
+      "outputTex": null,
       "outputTex3d": "inputTex3d",
       "paramAliases": {},
       "paramNames": [
@@ -22614,9 +24049,14 @@
     },
     "synth/bitwise": {
       "domain": "image",
+      "externalTexture": null,
       "func": "bitwise",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "operation",
@@ -22798,9 +24238,14 @@
     },
     "synth/cell": {
       "domain": "image",
+      "externalTexture": null,
       "func": "cell",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "cellVariation": "variation",
         "loopAmp": "speed"
@@ -22902,7 +24347,6 @@
       },
       "passes": [
         {
-          "inputs": {},
           "key": "synth/cell:cell",
           "name": "render",
           "outputs": {
@@ -22919,10 +24363,14 @@
     },
     "synth/cellularAutomata": {
       "domain": "image",
+      "externalTexture": null,
       "func": "cellularAutomata",
       "iterated": true,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "tex",
@@ -23126,9 +24574,14 @@
     },
     "synth/curl": {
       "domain": "image",
+      "externalTexture": null,
       "func": "curl",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "scale",
@@ -23200,7 +24653,7 @@
         },
         "seed": {
           "default": 0,
-          "max": 10,
+          "max": 1000.0,
           "min": 0,
           "type": "int",
           "ui": {
@@ -23237,9 +24690,14 @@
     },
     "synth/gabor": {
       "domain": "image",
+      "externalTexture": null,
       "func": "gabor",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "scale",
@@ -23345,7 +24803,6 @@
       },
       "passes": [
         {
-          "inputs": {},
           "key": "synth/gabor:gabor",
           "name": "render",
           "outputs": {
@@ -23358,9 +24815,14 @@
     },
     "synth/gradient": {
       "domain": "image",
+      "externalTexture": null,
       "func": "gradient",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "type",
@@ -23554,9 +25016,14 @@
     },
     "synth/julia": {
       "domain": "image",
+      "externalTexture": null,
       "func": "julia",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "poi",
@@ -23898,9 +25365,14 @@
     },
     "synth/mandala": {
       "domain": "image",
+      "externalTexture": null,
       "func": "mandala",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "scale",
@@ -24147,9 +25619,14 @@
     },
     "synth/mandelbrot": {
       "domain": "image",
+      "externalTexture": null,
       "func": "mandelbrot",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "poiMode": "poi"
       },
@@ -24378,8 +25855,12 @@
       "domain": "image",
       "externalTexture": "imageTex",
       "func": "media",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "backgroundColor": "bgColor",
         "backgroundOpacity": "bgAlpha"
@@ -24561,10 +26042,14 @@
     },
     "synth/mnca": {
       "domain": "image",
+      "externalTexture": null,
       "func": "mnca",
       "iterated": true,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "tex",
@@ -24901,9 +26386,14 @@
     },
     "synth/modPattern": {
       "domain": "image",
+      "externalTexture": null,
       "func": "modPattern",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "shape1",
@@ -25113,10 +26603,14 @@
     },
     "synth/navierStokes": {
       "domain": "image",
+      "externalTexture": null,
       "func": "navierStokes",
       "iterated": true,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "tex",
@@ -25424,9 +26918,14 @@
     },
     "synth/newton": {
       "domain": "image",
+      "externalTexture": null,
       "func": "newton",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "poi",
@@ -25685,9 +27184,14 @@
     },
     "synth/noise": {
       "domain": "image",
+      "externalTexture": null,
       "func": "noise",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "loopAmp": "speed",
         "noiseType": "type",
@@ -25885,9 +27389,14 @@
     },
     "synth/osc2d": {
       "domain": "image",
+      "externalTexture": null,
       "func": "osc2d",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "frequency": "freq"
       },
@@ -25933,7 +27442,7 @@
         },
         "seed": {
           "default": 0,
-          "max": 10,
+          "max": 1000.0,
           "min": 0,
           "type": "int",
           "ui": {
@@ -25976,9 +27485,14 @@
     },
     "synth/pattern": {
       "domain": "image",
+      "externalTexture": null,
       "func": "pattern",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "patternType": "type"
       },
@@ -26181,9 +27695,14 @@
     },
     "synth/perlin": {
       "domain": "image",
+      "externalTexture": null,
       "func": "perlin",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "scale",
@@ -26330,9 +27849,14 @@
     },
     "synth/polygon": {
       "domain": "image",
+      "externalTexture": null,
       "func": "polygon",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "sides",
@@ -26461,10 +27985,14 @@
     },
     "synth/reactionDiffusion": {
       "domain": "image",
+      "externalTexture": null,
       "func": "reactionDiffusion",
       "iterated": true,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "tex",
@@ -26801,9 +28329,14 @@
     },
     "synth/remap": {
       "domain": "image",
+      "externalTexture": null,
       "func": "remap",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "zoneCount",
@@ -26909,9 +28442,14 @@
     },
     "synth/sacredGeometry": {
       "domain": "image",
+      "externalTexture": null,
       "func": "sacredGeometry",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "geometry",
@@ -27118,9 +28656,14 @@
     },
     "synth/shape": {
       "domain": "image",
+      "externalTexture": null,
       "func": "shape",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {
         "loopAAmp": "speedA",
         "loopBAmp": "speedB"
@@ -27328,9 +28871,14 @@
     },
     "synth/solid": {
       "domain": "image",
+      "externalTexture": null,
       "func": "solid",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "color",
@@ -27378,9 +28926,14 @@
     },
     "synth/subdivide": {
       "domain": "image",
+      "externalTexture": null,
       "func": "subdivide",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "tex",
@@ -27552,9 +29105,14 @@
     },
     "synth/testPattern": {
       "domain": "image",
+      "externalTexture": null,
       "func": "testPattern",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth",
+      "outputGeo": null,
+      "outputTex": null,
+      "outputTex3d": null,
       "paramAliases": {},
       "paramNames": [
         "pattern",
@@ -27615,10 +29173,13 @@
     },
     "synth3d/cell3d": {
       "domain": "volume-generator",
+      "externalTexture": null,
       "func": "cell3d",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth3d",
       "outputGeo": "geoBuffer",
+      "outputTex": null,
       "outputTex3d": "volumeCache",
       "paramAliases": {
         "cellVariation": "variation"
@@ -27763,11 +29324,13 @@
     },
     "synth3d/cellularAutomata3d": {
       "domain": "volume-generator",
+      "externalTexture": null,
       "func": "cellularAutomata3d",
       "iterated": true,
       "kind": "generator",
       "namespace": "synth3d",
       "outputGeo": "geoBuffer",
+      "outputTex": null,
       "outputTex3d": "global_ca_state",
       "paramAliases": {},
       "paramNames": [
@@ -28001,10 +29564,13 @@
     },
     "synth3d/flythrough3d": {
       "domain": "volume-generator",
+      "externalTexture": null,
       "func": "flythrough3d",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth3d",
       "outputGeo": "geoBuffer",
+      "outputTex": null,
       "outputTex3d": "volumeCache",
       "paramAliases": {
         "fractalType": "type"
@@ -28178,10 +29744,13 @@
     },
     "synth3d/fractal3d": {
       "domain": "volume-generator",
+      "externalTexture": null,
       "func": "fractal3d",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth3d",
       "outputGeo": "geoBuffer",
+      "outputTex": null,
       "outputTex3d": "volumeCache",
       "paramAliases": {
         "fractalType": "type"
@@ -28390,12 +29959,146 @@
         }
       }
     },
-    "synth3d/noise3d": {
+    "synth3d/heightmap3d": {
       "domain": "volume-generator",
-      "func": "noise3d",
+      "externalTexture": null,
+      "func": "heightmap3d",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth3d",
       "outputGeo": "geoBuffer",
+      "outputTex": null,
+      "outputTex3d": "volumeCache",
+      "paramAliases": {},
+      "paramNames": [
+        "heightTex",
+        "tex",
+        "volumeSize",
+        "heightScale",
+        "baseHeight"
+      ],
+      "params": {
+        "baseHeight": {
+          "default": 0,
+          "max": 1,
+          "min": 0,
+          "type": "float",
+          "ui": {
+            "control": "slider",
+            "label": "base height"
+          },
+          "uniform": "baseHeight"
+        },
+        "heightScale": {
+          "default": 0.35,
+          "max": 1,
+          "min": 0,
+          "type": "float",
+          "ui": {
+            "control": "slider",
+            "label": "height scale"
+          },
+          "uniform": "heightScale"
+        },
+        "heightTex": {
+          "default": "none",
+          "type": "surface",
+          "ui": {
+            "label": "height image"
+          }
+        },
+        "tex": {
+          "default": "none",
+          "type": "surface",
+          "ui": {
+            "label": "color image"
+          }
+        },
+        "volumeSize": {
+          "choices": {
+            "x128": 128,
+            "x16": 16,
+            "x32": 32,
+            "x64": 64
+          },
+          "default": 64,
+          "randChoices": [
+            16,
+            32,
+            64
+          ],
+          "type": "int",
+          "ui": {
+            "control": "dropdown",
+            "label": "volume size"
+          },
+          "uniform": "volumeSize"
+        }
+      },
+      "passes": [
+        {
+          "drawBuffers": 2,
+          "inputs": {
+            "heightTex": "heightTex",
+            "tex": "tex"
+          },
+          "key": "synth3d/heightmap3d:precompute",
+          "name": "precompute",
+          "outputs": {
+            "fragColor": "volumeCache",
+            "geoOut": "geoBuffer"
+          },
+          "program": "precompute",
+          "type": "compute",
+          "viewport": {
+            "height": {
+              "default": 4096,
+              "param": "volumeSize",
+              "power": 2
+            },
+            "width": {
+              "default": 64,
+              "param": "volumeSize"
+            }
+          }
+        }
+      ],
+      "textures": {
+        "geoBuffer": {
+          "format": "rgba16f",
+          "height": {
+            "default": 4096,
+            "param": "volumeSize",
+            "power": 2
+          },
+          "width": {
+            "default": 64,
+            "param": "volumeSize"
+          }
+        },
+        "volumeCache": {
+          "format": "rgba16f",
+          "height": {
+            "default": 4096,
+            "param": "volumeSize",
+            "power": 2
+          },
+          "width": {
+            "default": 64,
+            "param": "volumeSize"
+          }
+        }
+      }
+    },
+    "synth3d/noise3d": {
+      "domain": "volume-generator",
+      "externalTexture": null,
+      "func": "noise3d",
+      "iterated": false,
+      "kind": "generator",
+      "namespace": "synth3d",
+      "outputGeo": "geoBuffer",
+      "outputTex": null,
       "outputTex3d": "volumeCache",
       "paramAliases": {},
       "paramNames": [
@@ -28544,11 +30247,13 @@
     },
     "synth3d/reactionDiffusion3d": {
       "domain": "volume-generator",
+      "externalTexture": null,
       "func": "reactionDiffusion3d",
       "iterated": true,
       "kind": "generator",
       "namespace": "synth3d",
       "outputGeo": "geoBuffer",
+      "outputTex": null,
       "outputTex3d": "global_rd_state",
       "paramAliases": {},
       "paramNames": [
@@ -28794,10 +30499,13 @@
     },
     "synth3d/shape3d": {
       "domain": "volume-generator",
+      "externalTexture": null,
       "func": "shape3d",
+      "iterated": false,
       "kind": "generator",
       "namespace": "synth3d",
       "outputGeo": "geoBuffer",
+      "outputTex": null,
       "outputTex3d": "volumeCache",
       "paramAliases": {},
       "paramNames": [

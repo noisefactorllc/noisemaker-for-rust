@@ -184,14 +184,14 @@ fn lenia_physarum_and_points_render_match_constant_scaled_and_view_rules() {
         ("viewScale".into(), Value::Float(1.0)),
     ]);
     assert_eq!(
-        compute_clip_center(0.5, 0.25, 999.0, &view_uniforms).unwrap(),
-        [0.0, -0.5]
+        compute_clip_center(0.5, 0.25, 999.0, &view_uniforms, 1, 1).unwrap(),
+        Some([0.0, -0.5, 80.0, 0.0, 1.0])
     );
     let mut ortho = view_uniforms.clone();
     ortho.insert("viewMode".into(), Value::Int(1));
     assert_eq!(
-        compute_clip_center(0.5, 0.5, 0.0, &ortho).unwrap(),
-        [0.0, 0.0]
+        compute_clip_center(0.5, 0.5, 0.0, &ortho, 1, 1).unwrap(),
+        Some([0.0, 0.0, 80.0, 80.0, 1.0])
     );
     let mut points_resources =
         BTreeMap::from([("global_xyz".into(), xyz), ("global_rgba".into(), rgba)]);

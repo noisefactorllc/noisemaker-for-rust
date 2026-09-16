@@ -41,7 +41,7 @@ fn schema_report(extra: &[&str]) -> std::process::Output {
 }
 
 #[test]
-fn parity_schema_mode_has_exact_sorted_205_record_denominator_and_metrics() {
+fn parity_schema_mode_has_exact_sorted_208_record_denominator_and_metrics() {
     let output = schema_report(&[]);
     assert!(
         output.status.success(),
@@ -49,7 +49,7 @@ fn parity_schema_mode_has_exact_sorted_205_record_denominator_and_metrics() {
         String::from_utf8_lossy(&output.stderr)
     );
     let report: Value = serde_json::from_slice(&output.stdout).unwrap();
-    assert_eq!(report["catalog"], 205);
+    assert_eq!(report["catalog"], 208);
     assert_eq!(
         report["catalog"].as_u64(),
         Some(report["compared"].as_u64().unwrap() + report["unsupported"].as_u64().unwrap())
@@ -57,13 +57,13 @@ fn parity_schema_mode_has_exact_sorted_205_record_denominator_and_metrics() {
     assert_eq!(report["failed"], 0);
     assert_eq!(report["tolerance"], 0);
     let results = report["results"].as_array().unwrap();
-    assert_eq!(results.len(), 205);
+    assert_eq!(results.len(), 208);
     let ids = results
         .iter()
         .map(|record| record["id"].as_str().unwrap())
         .collect::<Vec<_>>();
     assert!(ids.windows(2).all(|pair| pair[0] < pair[1]));
-    assert_eq!(ids.iter().copied().collect::<BTreeSet<_>>().len(), 205);
+    assert_eq!(ids.iter().copied().collect::<BTreeSet<_>>().len(), 208);
     for record in results {
         match record["status"].as_str().unwrap() {
             "compared" => {

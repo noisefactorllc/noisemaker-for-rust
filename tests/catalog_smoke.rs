@@ -22,7 +22,7 @@ const DEFAULT_SMOKE_BATCHES: &[(usize, usize)] = &[
     (137, 140),
     (140, 160),
     (160, 180),
-    (180, 205),
+    (180, 208),
 ];
 
 fn literal(value: &JsonValue) -> String {
@@ -183,15 +183,15 @@ fn smoke_options(effect: &EffectDefinition) -> RenderOptions {
 #[test]
 fn exact_smoke_inventory_and_registry_coverage_are_locked() {
     let catalog = effect_catalog().unwrap();
-    assert_eq!(catalog.effects.len(), 205);
-    assert_eq!(shader_bundle().unwrap().programs.len(), 288);
+    assert_eq!(catalog.effects.len(), 208);
+    assert_eq!(shader_bundle().unwrap().programs.len(), 292);
     assert_eq!(
         catalog
             .effects
             .values()
             .filter(|effect| effect.domain != "image")
             .count(),
-        15
+        17
     );
     assert_eq!(
         catalog
@@ -228,8 +228,8 @@ fn exact_smoke_inventory_and_registry_coverage_are_locked() {
 }
 
 #[test]
-fn completed_default_smoke_batches_cover_205_exactly_once() {
-    let mut coverage = vec![0_u8; 205];
+fn completed_default_smoke_batches_cover_208_exactly_once() {
+    let mut coverage = vec![0_u8; 208];
     for &(start, end) in DEFAULT_SMOKE_BATCHES {
         assert!(
             start < end && end <= coverage.len(),
@@ -239,7 +239,7 @@ fn completed_default_smoke_batches_cover_205_exactly_once() {
             *count += 1;
         }
     }
-    assert_eq!(coverage, vec![1; 205]);
+    assert_eq!(coverage, vec![1; 208]);
 }
 
 #[test]
@@ -339,7 +339,7 @@ fn oracle_non_finite_choice(id: &str, name: &str, value: &JsonValue) -> Option<&
 }
 
 #[test]
-fn all_456_non_null_compile_choices_execute_without_skips() {
+fn all_458_non_null_compile_choices_execute_without_skips() {
     let catalog = effect_catalog().unwrap();
     let mut failures = Vec::new();
     let mut executed = 0;
@@ -352,7 +352,7 @@ fn all_456_non_null_compile_choices_execute_without_skips() {
     let end = std::env::var("NM_CHOICE_END")
         .ok()
         .and_then(|value| value.parse::<usize>().ok())
-        .unwrap_or(456);
+        .unwrap_or(458);
     let only = std::env::var("NM_CHOICE_ONLY").ok();
     let mut catalog_index = 0;
     for (id, effect) in &catalog.effects {
@@ -414,15 +414,15 @@ fn all_456_non_null_compile_choices_execute_without_skips() {
             }
         }
     }
-    assert_eq!(catalog_index, 456);
+    assert_eq!(catalog_index, 458);
     let expected = if only.is_some() {
         executed
     } else {
-        end.min(456).saturating_sub(start.min(456))
+        end.min(458).saturating_sub(start.min(458))
     };
     assert_eq!(executed, expected);
-    if only.is_none() && start == 0 && end >= 456 {
-        assert_eq!(finite, 453);
+    if only.is_none() && start == 0 && end >= 458 {
+        assert_eq!(finite, 455);
         assert_eq!(
             expected_non_finite,
             BTreeSet::from([

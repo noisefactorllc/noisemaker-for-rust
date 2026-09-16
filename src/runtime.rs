@@ -345,9 +345,8 @@ impl Runtime {
             "abs" | "acos" | "all" | "any" | "ceil" | "cos" | "dFdx" | "dFdy" | "degrees"
             | "exp" | "floatBitsToUint" | "floor" | "fract" | "fwidth" | "inversesqrt"
             | "isnan" | "length" | "log" | "log2" | "normalize" | "packHalf2x16" | "radians"
-            | "round" | "sign" | "sin" | "sqrt" | "tanh" | "uintBitsToFloat" | "unpackHalf2x16" => {
-                &[1]
-            }
+            | "round" | "sign" | "sin" | "sqrt" | "tan" | "tanh" | "uintBitsToFloat"
+            | "unpackHalf2x16" => &[1],
             "cross" | "distance" | "dot" | "equal" | "greaterThan" | "greaterThanEqual"
             | "lessThan" | "lessThanEqual" | "max" | "min" | "mod" | "notEqual" | "pow"
             | "reflect" | "step" | "texture" => &[2],
@@ -988,6 +987,7 @@ fn component_builtin(name: &str, args: &[Value]) -> Result<Value, VmError> {
                     1.0
                 }
             }
+            "tan" => get(0).tan(),
             "tanh" => get(0).tanh(),
             _ => return Err(VmError::UnknownBuiltin { name: name.into() }),
         };

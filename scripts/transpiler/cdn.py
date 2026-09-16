@@ -87,6 +87,7 @@ _RENDER_ALLOWLIST = frozenset(
         "render/render3d",
         "render/renderCubemap3d",
         "render/renderCubemapSurface",
+        "render/renderLandscape3d",
         "render/renderLit3d",
     }
 )

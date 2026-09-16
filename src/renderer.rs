@@ -809,7 +809,25 @@ fn remap_uniform_data(
     width: u32,
     height: u32,
 ) -> Value {
+    // Reference 0ed489ec (this round) grew the packed UBO from 267 to 275 std140
+    // slots: RESOLUTION_SLOT is unchanged at 266, and 8 new zoneN_bounds slots
+    // (host-supplied AABB culling, one per zone) were appended at 267..275. Each
+    // defaults to [0,0,1,1] -- the reference's own "never rejects a canvas pixel"
+    // default -- so an un-set bounds box never clips a zone's polygon.
+    //
+    // NOTE: this renderer has no mechanism to pack zone polygon vertex data
+    // (zoneN_vP) into this uniform block at all -- only bgColor/zoneCount/
+    // smoothEdge/zone-active flags/resolution are populated below. That gap
+    // predates this round (the transpiled kernel body has tracked every
+    // upstream algorithm rewrite, including this round's testEdge/walkZone
+    // replacement, but the vertex data it walks has apparently never been
+    // wired here) and is unrelated to this round's diff -- flagged, not fixed,
+    // matching the identical finding independently made in the noisemaker-for-
+    // ruby and noisemaker-for-perl sibling ports this session. What this round
+    // DOES require is sizing this array to 275 so the transpiled kernel's
+    // ZONE_BOUNDS_SLOT (267) reads are in-bounds instead of panicking.
     let mut data = vec![Value::Vec(vec![0.0; 4]); 267];
+    data.resize(275, Value::Vec(vec![0.0, 0.0, 1.0, 1.0]));
     let background = match values.get("bgColor") {
         Some(Value::Vec(color)) => color.clone(),
         _ => vec![0.0; 3],
@@ -1772,7 +1790,7 @@ mod cache_tests {
         else {
             panic!("remap data must be an array")
         };
-        assert_eq!(data.len(), 267);
+        assert_eq!(data.len(), 275);
         assert_eq!(data[0], Value::Vec(vec![0.25, 0.5, 0.75, 0.8]));
         assert_eq!(data[1], Value::Vec(vec![2.0, 0.125, 0.0, 0.0]));
         assert_eq!(data[2], Value::Vec(vec![0.0, 0.0, 0.0, 1.0]));
@@ -1780,6 +1798,10 @@ mod cache_tests {
         assert_eq!(data[10], Value::Vec(vec![0.0; 4]));
         assert_eq!(data[265], Value::Vec(vec![0.0; 4]));
         assert_eq!(data[266], Value::Vec(vec![7.0, 5.0, 0.0, 0.0]));
+        // reference 0ed489ec: 8 new zoneN_bounds slots, each defaulting to
+        // [0,0,1,1] so an unset bounds box never clips a zone's polygon.
+        assert_eq!(data[267], Value::Vec(vec![0.0, 0.0, 1.0, 1.0]));
+        assert_eq!(data[274], Value::Vec(vec![0.0, 0.0, 1.0, 1.0]));
     }
 
     #[test]

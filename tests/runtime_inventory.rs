@@ -39,7 +39,7 @@ fn every_locked_ir_builtin_signature_dispatches_with_its_annotated_type() {
             .map(|(name, _, _)| name)
             .collect::<BTreeSet<_>>()
             .len(),
-        53
+        54
     );
 
     let mut runtime = Runtime::new();

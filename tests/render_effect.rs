@@ -44,7 +44,13 @@ fn solid_and_invert_have_literal_pixels() {
         &options(),
     )
     .unwrap();
-    assert_eq!(&invert.to_rgba8()[..4], &[204, 153, 102, 191]);
+    // Reference 0ed489ec (this round): invert un-premultiplies on read, inverts
+    // straight RGB, then re-premultiplies on write. Input [0.2,0.4,0.6,0.75] ->
+    // unpremultiplied [0.2667,0.5333,0.8] -> inverted [0.7333,0.4667,0.2] ->
+    // re-premultiplied by 0.75 -> [0.55,0.35,0.15,0.75] -> [140,89,38,191].
+    // Was [204,153,102,191] (a straight, non-premultiplied invert) before this
+    // round's fix.
+    assert_eq!(&invert.to_rgba8()[..4], &[140, 89, 38, 191]);
 }
 
 #[test]

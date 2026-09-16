@@ -10,8 +10,8 @@ use crate::generated::{BUNDLE_LOCK_JSON, CATALOG_JSON, SHADERS_JSON};
 mod validation;
 pub use validation::validate_program_ir;
 
-const EXPECTED_EFFECTS: usize = 205;
-const EXPECTED_PROGRAMS: usize = 288;
+const EXPECTED_EFFECTS: usize = 208;
+const EXPECTED_PROGRAMS: usize = 292;
 const EXPECTED_EXCLUSIONS: [&str; 5] = [
     "render/meshLoader",
     "render/meshRender",
