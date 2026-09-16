@@ -57,7 +57,11 @@ fn integer(uniforms: &BTreeMap<String, Value>, name: &str) -> Result<i32, Render
 /// Like `scalar`, but a missing uniform yields `default` instead of an
 /// error -- for uniforms a caller (e.g. pointsRender's `deposit` pass) may
 /// not always wire in.
-fn scalar_or(uniforms: &BTreeMap<String, Value>, name: &str, default: f32) -> Result<f32, RenderError> {
+fn scalar_or(
+    uniforms: &BTreeMap<String, Value>,
+    name: &str,
+    default: f32,
+) -> Result<f32, RenderError> {
     if uniforms.contains_key(name) {
         scalar(uniforms, name)
     } else {
@@ -162,10 +166,8 @@ pub fn compute_clip_center(
     if view_mode == 0 {
         return Ok(Some([x * 2.0 - 1.0, y * 2.0 - 1.0, 80.0, 0.0, 1.0]));
     }
-    let is_2d = view_mode == 1
-        && z.abs() < 1.0
-        && (0.0..=1.0).contains(&x)
-        && (0.0..=1.0).contains(&y);
+    let is_2d =
+        view_mode == 1 && z.abs() < 1.0 && (0.0..=1.0).contains(&x) && (0.0..=1.0).contains(&y);
     let (mut px, mut py, mut pz) = (x, y, z);
     if is_2d {
         px -= 0.5;
@@ -198,7 +200,13 @@ pub fn compute_clip_center(
         }
         let clip_y = fy * focal_length * scale / camera_depth;
         let projected_scale = 80.0 * focal_length * scale / (1.732050808 * camera_depth);
-        return Ok(Some([clip_x, clip_y, camera_depth, camera_distance, projected_scale]));
+        return Ok(Some([
+            clip_x,
+            clip_y,
+            camera_depth,
+            camera_distance,
+            projected_scale,
+        ]));
     }
     let [clip_x, clip_y] = if is_2d {
         [fx * 3.5 * scale, fy * 3.5 * scale]
@@ -400,15 +408,22 @@ fn points_render(
         if position[3] < 0.5 {
             return Ok(());
         }
-        let Some([clip_x, clip_y, _camera_depth, _camera_distance, _projected_scale]) =
-            compute_clip_center(
-                position[0],
-                position[1],
-                position[2],
-                uniforms,
-                destination.width(),
-                destination.height(),
-            )?
+        let Some(
+            [
+                clip_x,
+                clip_y,
+                _camera_depth,
+                _camera_distance,
+                _projected_scale,
+            ],
+        ) = compute_clip_center(
+            position[0],
+            position[1],
+            position[2],
+            uniforms,
+            destination.width(),
+            destination.height(),
+        )?
         else {
             return Ok(());
         };
@@ -669,15 +684,22 @@ fn billboard(
             return Ok(());
         }
         let mut color = texel_fetch_agent(rgba, sx, sy);
-        let Some([center_x, center_y, _camera_depth, camera_distance, projected_scale]) =
-            compute_clip_center(
-                position[0],
-                position[1],
-                position[2],
-                uniforms,
-                destination_width,
-                destination_height,
-            )?
+        let Some(
+            [
+                center_x,
+                center_y,
+                _camera_depth,
+                camera_distance,
+                projected_scale,
+            ],
+        ) = compute_clip_center(
+            position[0],
+            position[1],
+            position[2],
+            uniforms,
+            destination_width,
+            destination_height,
+        )?
         else {
             return Ok(());
         };
