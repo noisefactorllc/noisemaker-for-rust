@@ -243,7 +243,7 @@ fn completed_default_smoke_batches_cover_208_exactly_once() {
 }
 
 #[test]
-fn all_205_default_programs_are_finite_deterministic_and_aggregated() {
+fn all_208_default_programs_are_finite_deterministic_and_aggregated() {
     let started = Instant::now();
     let catalog = effect_catalog().unwrap();
     let mut failures = Vec::new();

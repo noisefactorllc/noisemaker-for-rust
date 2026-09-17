@@ -106,7 +106,7 @@ The catalog contains 208 CPU effects across image, volume, particle, renderer,
 and loop domains. Five upstream effects are intentionally excluded because they
 depend on media/runtime interfaces absent from this standalone CPU port:
 `render/meshLoader`, `render/meshRender`, `synth/roll`, `synth/scope`, and
-`synth/spectrum`. The complete generated inventory and the 456 non-null
+`synth/spectrum`. The complete generated inventory and the 458 non-null
 compile-time choices are listed in [docs/EFFECTS.md](docs/EFFECTS.md).
 
 External-texture effects require `--input` or a matching `--texture` binding.

@@ -45,3 +45,38 @@ fn package_metadata_and_user_facing_files_are_complete() {
         assert!(root.join(relative).is_file(), "missing {relative}");
     }
 }
+
+#[test]
+fn export_kit_config_is_valid_and_matches_catalog() {
+    let root = repository_root();
+    let config_path = root.join("export-kit/kit.config.json");
+    assert!(config_path.is_file(), "missing export-kit/kit.config.json");
+    let config: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&config_path).expect("read kit.config.json"))
+            .expect("valid json in kit.config.json");
+    assert_eq!(config["id"], "rust");
+    assert_eq!(config["compat"]["mode"], "list");
+    let metadata_rel = config["compat"]["fromBundleMetadata"]
+        .as_str()
+        .expect("compat.fromBundleMetadata string");
+    let metadata_path = root.join(metadata_rel);
+    assert!(metadata_path.is_file(), "missing {metadata_rel}");
+    let metadata: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&metadata_path).expect("read catalog.json"))
+            .expect("valid json in catalog.json");
+    let effects = metadata["effects"]
+        .as_object()
+        .expect("effects map in catalog.json");
+    assert_eq!(effects.len(), 208, "expected 208 catalog effects");
+    for effect_id in [
+        "points/heightGrid",
+        "render/renderLandscape3d",
+        "synth3d/heightmap3d",
+    ] {
+        assert!(
+            effects.contains_key(effect_id),
+            "expected {effect_id} in catalog"
+        );
+    }
+}
+
