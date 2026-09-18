@@ -79,4 +79,3 @@ fn export_kit_config_is_valid_and_matches_catalog() {
         );
     }
 }
-

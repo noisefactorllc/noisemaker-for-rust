@@ -349,54 +349,62 @@ fn vm_supports_struct_members_prefix_ternary_while_and_do_while() {
 
 #[test]
 fn vm_rejects_unbounded_execution_recursion_and_discard_deterministically() {
-    let infinite = program(
-        vec![main_function(vec![
-            json!({"kind":"while","condition":literal("bool",true),"body":{"kind":"block","body":[]}}),
-        ])],
-        &[],
-        vec![],
-        vec![],
-        vec![],
-    );
-    let mut vm = ShaderVm::new(&infinite, Runtime::new()).unwrap();
-    assert_eq!(
-        vm.run_pixel(&PixelContext::default(), &mut BTreeMap::new()),
-        Err(VmError::StatementLimit { limit: 1_048_576 })
-    );
+    let handle = std::thread::Builder::new()
+        .stack_size(8 * 1024 * 1024)
+        .spawn(|| {
+            let infinite = program(
+                vec![main_function(vec![
+                    json!({"kind":"while","condition":literal("bool",true),"body":{"kind":"block","body":[]}}),
+                ])],
+                &[],
+                vec![],
+                vec![],
+                vec![],
+            );
+            let mut vm = ShaderVm::new(&infinite, Runtime::new()).unwrap();
+            assert_eq!(
+                vm.run_pixel(&PixelContext::default(), &mut BTreeMap::new()),
+                Err(VmError::StatementLimit { limit: 1_048_576 })
+            );
 
-    let discard = program(
-        vec![main_function(vec![json!({"kind":"discard"})])],
-        &[],
-        vec![],
-        vec![],
-        vec![],
-    );
-    let mut vm = ShaderVm::new(&discard, Runtime::new()).unwrap();
-    assert_eq!(
-        vm.run_pixel(&PixelContext::default(), &mut BTreeMap::new()),
-        Err(VmError::Discarded)
-    );
+            let discard = program(
+                vec![main_function(vec![json!({"kind":"discard"})])],
+                &[],
+                vec![],
+                vec![],
+                vec![],
+            );
+            let mut vm = ShaderVm::new(&discard, Runtime::new()).unwrap();
+            assert_eq!(
+                vm.run_pixel(&PixelContext::default(), &mut BTreeMap::new()),
+                Err(VmError::Discarded)
+            );
 
-    let recurse = json!({"name":"recurse","mangledName":"recurse__void","returnType":"void","parameters":[],"body":[
-        expr(json!({"kind":"call","type":"void","name":"recurse","target":"recurse__void","arguments":[]}))
-    ]});
-    let recursive = program(
-        vec![
-            recurse,
-            main_function(vec![expr(
-                json!({"kind":"call","type":"void","name":"recurse","target":"recurse__void","arguments":[]}),
-            )]),
-        ],
-        &[],
-        vec![],
-        vec![],
-        vec![],
-    );
-    let mut vm = ShaderVm::new(&recursive, Runtime::new()).unwrap();
-    assert_eq!(
-        vm.run_pixel(&PixelContext::default(), &mut BTreeMap::new()),
-        Err(VmError::CallDepthLimit { limit: 64 })
-    );
+            let recurse = json!({"name":"recurse","mangledName":"recurse__void","returnType":"void","parameters":[],"body":[
+                expr(json!({"kind":"call","type":"void","name":"recurse","target":"recurse__void","arguments":[]}))
+            ]});
+            let recursive = program(
+                vec![
+                    recurse,
+                    main_function(vec![expr(
+                        json!({"kind":"call","type":"void","name":"recurse","target":"recurse__void","arguments":[]}),
+                    )]),
+                ],
+                &[],
+                vec![],
+                vec![],
+                vec![],
+            );
+            let mut vm = ShaderVm::new(&recursive, Runtime::new()).unwrap();
+            assert_eq!(
+                vm.run_pixel(&PixelContext::default(), &mut BTreeMap::new()),
+                Err(VmError::CallDepthLimit { limit: 64 })
+            );
+        })
+        .expect("spawn test thread with sufficient stack");
+    handle
+        .join()
+        .unwrap_or_else(|payload| std::panic::resume_unwind(payload));
 }
 
 #[test]
