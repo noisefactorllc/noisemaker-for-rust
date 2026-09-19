@@ -32,6 +32,9 @@ class ExportKitTest(unittest.TestCase):
             "synth3d/heightmap3d",
         ]:
             self.assertIn(effect_id, effects, f"expected {effect_id} in catalog")
+        for effect_id, effect in effects.items():
+            self.assertTrue(effect.get("func"), f"effect {effect_id} should declare a non-empty func")
+            self.assertTrue(effect.get("domain"), f"effect {effect_id} should declare a non-empty domain")
 
 
 if __name__ == "__main__":

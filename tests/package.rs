@@ -78,4 +78,14 @@ fn export_kit_config_is_valid_and_matches_catalog() {
             "expected {effect_id} in catalog"
         );
     }
+    for (id, effect) in effects {
+        assert!(
+            !effect["func"].as_str().unwrap_or("").is_empty(),
+            "effect {id} should declare a non-empty func"
+        );
+        assert!(
+            !effect["domain"].as_str().unwrap_or("").is_empty(),
+            "effect {id} should declare a non-empty domain"
+        );
+    }
 }
