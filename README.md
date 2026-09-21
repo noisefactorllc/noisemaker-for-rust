@@ -75,7 +75,7 @@ noisemaker-rs effects
 `generate` renders an image generator. It also accepts `random` as the effect. This deterministically selects from the sorted eligible generator pool using `--seed` and prints the resolved ID first. `apply` renders an image filter or
 mixer at the input image dimensions. `run` reads DSL from a file or standard
 input, and `render` is its compatibility alias. `effect` constructs a bounded,
-meaningful program for any catalog domain. `effects` prints all 208 sorted
+meaningful program for any catalog domain. `effects` prints all 205 sorted
 `ID<TAB>KIND` records.
 
 Common options are:
@@ -102,7 +102,7 @@ Width times height is limited to 16,777,216 pixels.
 
 ## Catalog and execution model
 
-The catalog contains 208 CPU effects across image, volume, particle, renderer,
+The catalog contains 205 CPU effects across image, volume, particle, renderer,
 and loop domains. Five upstream effects are intentionally excluded because they
 depend on media/runtime interfaces absent from this standalone CPU port:
 `render/meshLoader`, `render/meshRender`, `synth/roll`, `synth/scope`, and

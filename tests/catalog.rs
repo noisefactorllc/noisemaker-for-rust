@@ -5,12 +5,12 @@ use noisemaker_cpu::catalog::{Expression, Statement, effect_catalog, shader_bund
 #[test]
 fn embedded_catalog_is_the_exact_cpu_inventory() {
     let catalog = effect_catalog().unwrap();
-    assert_eq!(catalog.effects.len(), 208);
+    assert_eq!(catalog.effects.len(), 205);
     assert_eq!(
         catalog.namespace_counts(),
         BTreeMap::from([
             ("classicNoisedeck", 20),
-            ("filter", 116),
+            ("filter", 113),
             ("filter3d", 2),
             ("mixer", 15),
             ("points", 11),
@@ -71,7 +71,7 @@ fn embedded_program_inventory_is_complete_and_structural() {
         .flat_map(|effect| effect.passes.iter())
         .filter_map(|pass| pass.key.as_deref())
         .collect::<std::collections::BTreeSet<_>>();
-    assert_eq!(shaders.programs.len(), 292);
+    assert_eq!(shaders.programs.len(), 289);
     assert_eq!(
         pass_keys,
         shaders.programs.keys().map(String::as_str).collect()

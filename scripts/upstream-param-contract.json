@@ -1,6 +1,6 @@
 {
   "source": "noisemaker-for-cpu upstream-snapshot.js",
-  "revision": "beabda385253a3461d2ee5ee2f1b032cbe9a2832",
+  "revision": "f61ac07320888732594689258c6f7042cde0303b",
   "effects": {
     "classicNoisedeck/bitEffects": {
       "paramNames": [
@@ -458,13 +458,6 @@
       ],
       "paramAliases": {}
     },
-    "filter/bc": {
-      "paramNames": [
-        "brightness",
-        "contrast"
-      ],
-      "paramAliases": {}
-    },
     "filter/bloom": {
       "paramNames": [
         "threshold",
@@ -560,12 +553,6 @@
         "colorMix",
         "replaceAlpha",
         "keepAlpha"
-      ],
-      "paramAliases": {}
-    },
-    "filter/colorspace": {
-      "paramNames": [
-        "mode"
       ],
       "paramAliases": {}
     },
@@ -851,14 +838,6 @@
       "paramAliases": {
         "paletteIndex": "index"
       }
-    },
-    "filter/hs": {
-      "paramNames": [
-        "rotation",
-        "hueRange",
-        "saturation"
-      ],
-      "paramAliases": {}
     },
     "filter/invert": {
       "paramNames": [

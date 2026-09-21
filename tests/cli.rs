@@ -58,7 +58,7 @@ fn no_args_help_version_and_effect_inventory_are_real() {
         .lines()
         .map(str::to_owned)
         .collect::<Vec<_>>();
-    assert_eq!(lines.len(), 208);
+    assert_eq!(lines.len(), 205);
     assert!(lines.windows(2).all(|pair| pair[0] < pair[1]));
     assert!(lines.contains(&"synth/solid\tgenerator".to_owned()));
 }

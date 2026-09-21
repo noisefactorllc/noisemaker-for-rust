@@ -5323,60 +5323,6 @@
       ],
       "textures": {}
     },
-    "filter/bc": {
-      "domain": "image",
-      "externalTexture": null,
-      "func": "bc",
-      "iterated": false,
-      "kind": "filter",
-      "namespace": "filter",
-      "outputGeo": null,
-      "outputTex": null,
-      "outputTex3d": null,
-      "paramAliases": {},
-      "paramNames": [
-        "brightness",
-        "contrast"
-      ],
-      "params": {
-        "brightness": {
-          "default": 1,
-          "max": 10,
-          "min": 0,
-          "type": "float",
-          "ui": {
-            "control": "slider",
-            "label": "brightness"
-          },
-          "uniform": "brightness"
-        },
-        "contrast": {
-          "default": 0.5,
-          "max": 1,
-          "min": 0,
-          "type": "float",
-          "ui": {
-            "control": "slider",
-            "label": "contrast"
-          },
-          "uniform": "contrast"
-        }
-      },
-      "passes": [
-        {
-          "inputs": {
-            "inputTex": "inputTex"
-          },
-          "key": "filter/bc:bc",
-          "name": "render",
-          "outputs": {
-            "fragColor": "outputTex"
-          },
-          "program": "bc"
-        }
-      ],
-      "textures": {}
-    },
     "filter/bloom": {
       "domain": "image",
       "externalTexture": null,
@@ -6362,51 +6308,6 @@
             "color": "outputTex"
           },
           "program": "colorReplace"
-        }
-      ],
-      "textures": {}
-    },
-    "filter/colorspace": {
-      "domain": "image",
-      "externalTexture": null,
-      "func": "colorspace",
-      "iterated": false,
-      "kind": "filter",
-      "namespace": "filter",
-      "outputGeo": null,
-      "outputTex": null,
-      "outputTex3d": null,
-      "paramAliases": {},
-      "paramNames": [
-        "mode"
-      ],
-      "params": {
-        "mode": {
-          "choices": {
-            "hsv": 0,
-            "oklab": 1,
-            "oklch": 2
-          },
-          "default": 0,
-          "type": "int",
-          "ui": {
-            "control": "dropdown",
-            "label": "mode"
-          },
-          "uniform": "mode"
-        }
-      },
-      "passes": [
-        {
-          "inputs": {
-            "inputTex": "inputTex"
-          },
-          "key": "filter/colorspace:colorspace",
-          "name": "render",
-          "outputs": {
-            "fragColor": "outputTex"
-          },
-          "program": "colorspace"
         }
       ],
       "textures": {}
@@ -9554,72 +9455,6 @@
             "fragColor": "outputTex"
           },
           "program": "historicPalette"
-        }
-      ],
-      "textures": {}
-    },
-    "filter/hs": {
-      "domain": "image",
-      "externalTexture": null,
-      "func": "hs",
-      "iterated": false,
-      "kind": "filter",
-      "namespace": "filter",
-      "outputGeo": null,
-      "outputTex": null,
-      "outputTex3d": null,
-      "paramAliases": {},
-      "paramNames": [
-        "rotation",
-        "hueRange",
-        "saturation"
-      ],
-      "params": {
-        "hueRange": {
-          "default": 100,
-          "max": 200,
-          "min": 0,
-          "type": "float",
-          "ui": {
-            "control": "slider",
-            "label": "hue range"
-          },
-          "uniform": "hueRange"
-        },
-        "rotation": {
-          "default": 0,
-          "max": 180,
-          "min": -180,
-          "type": "float",
-          "ui": {
-            "control": "slider",
-            "label": "hue rotation"
-          },
-          "uniform": "rotation"
-        },
-        "saturation": {
-          "default": 1,
-          "max": 4,
-          "min": 0,
-          "type": "float",
-          "ui": {
-            "control": "slider",
-            "label": "saturation"
-          },
-          "uniform": "saturation"
-        }
-      },
-      "passes": [
-        {
-          "inputs": {
-            "inputTex": "inputTex"
-          },
-          "key": "filter/hs:hs",
-          "name": "render",
-          "outputs": {
-            "fragColor": "outputTex"
-          },
-          "program": "hs"
         }
       ],
       "textures": {}
@@ -30708,7 +30543,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "beabda385253a3461d2ee5ee2f1b032cbe9a2832",
+    "paramContractRevision": "f61ac07320888732594689258c6f7042cde0303b",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"

@@ -33,7 +33,7 @@ NOISEMAKER_JS_CPU_DIR=../noisemaker-for-cpu \
   cargo +stable test --test parity_spine -- --ignored
 ```
 
-The complete Rust test suite exercises all 208 eligible effects and all 458
+The complete Rust test suite exercises all 205 eligible effects and all 458
 non-null compile-time choices, so it can take several minutes. The JavaScript
 CPU port is used only as an offline maintenance oracle by `scripts/parity.py`;
 it must never become a production dependency.

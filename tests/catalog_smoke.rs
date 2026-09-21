@@ -22,7 +22,7 @@ const DEFAULT_SMOKE_BATCHES: &[(usize, usize)] = &[
     (137, 140),
     (140, 160),
     (160, 180),
-    (180, 208),
+    (180, 205),
 ];
 
 fn literal(value: &JsonValue) -> String {
@@ -183,8 +183,8 @@ fn smoke_options(effect: &EffectDefinition) -> RenderOptions {
 #[test]
 fn exact_smoke_inventory_and_registry_coverage_are_locked() {
     let catalog = effect_catalog().unwrap();
-    assert_eq!(catalog.effects.len(), 208);
-    assert_eq!(shader_bundle().unwrap().programs.len(), 292);
+    assert_eq!(catalog.effects.len(), 205);
+    assert_eq!(shader_bundle().unwrap().programs.len(), 289);
     assert_eq!(
         catalog
             .effects
@@ -228,8 +228,8 @@ fn exact_smoke_inventory_and_registry_coverage_are_locked() {
 }
 
 #[test]
-fn completed_default_smoke_batches_cover_208_exactly_once() {
-    let mut coverage = vec![0_u8; 208];
+fn completed_default_smoke_batches_cover_205_exactly_once() {
+    let mut coverage = vec![0_u8; 205];
     for &(start, end) in DEFAULT_SMOKE_BATCHES {
         assert!(
             start < end && end <= coverage.len(),
@@ -239,11 +239,11 @@ fn completed_default_smoke_batches_cover_208_exactly_once() {
             *count += 1;
         }
     }
-    assert_eq!(coverage, vec![1; 208]);
+    assert_eq!(coverage, vec![1; 205]);
 }
 
 #[test]
-fn all_208_default_programs_are_finite_deterministic_and_aggregated() {
+fn all_205_default_programs_are_finite_deterministic_and_aggregated() {
     let started = Instant::now();
     let catalog = effect_catalog().unwrap();
     let mut failures = Vec::new();

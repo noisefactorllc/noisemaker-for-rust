@@ -67,7 +67,7 @@ fn export_kit_config_is_valid_and_matches_catalog() {
     let effects = metadata["effects"]
         .as_object()
         .expect("effects map in catalog.json");
-    assert_eq!(effects.len(), 208, "expected 208 catalog effects");
+    assert_eq!(effects.len(), 205, "expected 205 catalog effects");
     for effect_id in [
         "points/heightGrid",
         "render/renderLandscape3d",

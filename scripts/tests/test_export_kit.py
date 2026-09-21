@@ -25,7 +25,7 @@ class ExportKitTest(unittest.TestCase):
             metadata = json.load(f)
 
         effects = metadata.get("effects", {})
-        self.assertEqual(len(effects), 208, "expected 208 catalog effects")
+        self.assertEqual(len(effects), 205, "expected 205 catalog effects")
         for effect_id in [
             "points/heightGrid",
             "render/renderLandscape3d",
