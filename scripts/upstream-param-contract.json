@@ -1,6 +1,6 @@
 {
   "source": "noisemaker-for-cpu upstream-snapshot.js",
-  "revision": "f61ac07320888732594689258c6f7042cde0303b",
+  "revision": "50b8f909ff59f177eb1312de7be461b16bbdd657",
   "effects": {
     "classicNoisedeck/bitEffects": {
       "paramNames": [
