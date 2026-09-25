@@ -7,7 +7,7 @@ Current compatibility matrix: [compatibility report](COMPATIBILITY.md).
 Daily review: 2026-09-25. Current inspected source: [`9a043c4ea38766d356fcd20c0d838149558cf0fd`](https://github.com/noisefactorllc/noisemaker-for-rust/commit/9a043c4ea38766d356fcd20c0d838149558cf0fd).
 Full rendered parity remains **unverified**. No release approval or new closure follows from this review.
 Current upstream discovery: `bbdeb56c4b75cf33379766c3e87b0f5a18bcbba8`. Published Noisemaker authority: `1.0.179`, source `fca611fd8f91424661d4e531d39313d24ea21134`, 210 effect IDs.
-The observations below retain their original source and authority identities; they do not qualify later updates.
+The observations below retain their original source and authority identities. They do not qualify later updates.
 Current served kit: `0.1.16`, source `9a043c4ea38766d356fcd20c0d838149558cf0fd`. [Retrieved inventory and hashes](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-served-inventories.json). Artifact identity does not establish host qualification.
 
 ### Earlier source observations
@@ -45,7 +45,7 @@ Review CI boundary: Exact-source runs: Export kit, ci. A passing export dispatch
 
 ### Daily review, 2026-09-25
 
-The current generated-bundle check passes. Exact-source Cargo CI succeeds, but retains two ignored documentation tests. This does not establish current full rendered parity or the installed CLI on every declared platform. GAP-001 remains open; the 205-ID served declaration leaves five current IDs absent. [Raw evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/rust-ci-36082527571.log).
+The current generated-bundle check passes. Exact-source Cargo CI succeeds, but retains two ignored documentation tests. This does not establish current full rendered parity or the installed CLI on every declared platform. GAP-001 remains open. The 205-ID served declaration leaves five current IDs absent. [Raw evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/rust-ci-36082527571.log).
 The review checked source changes, worker evidence, source-bound CI where present, and current served inventories. Full installed-host and platform qualification remains incomplete.
 
 Environment: macOS 26.5, Darwin arm64.
@@ -120,7 +120,7 @@ These entries record missing qualification. They do not infer implementation def
 
 ## 5. Ordered next actions
 
-Current first action: Run cargo package with verification, install the resulting crate in an isolated CARGO_HOME, and execute the documented noisemaker-rs PNG example on Rust 1.85 and the current supported toolchain. Require reference pixel comparisons with an immutable oracle. Resolve both ignored doctests and all five missing IDs without reducing the denominator.
+Current first action: Run cargo package with verification. Install the resulting crate in an isolated CARGO_HOME. Execute the documented noisemaker-rs PNG example on Rust 1.85 and the current supported toolchain. Require reference pixel comparisons with an immutable oracle. Resolve both ignored doctests and all five missing IDs without reducing the denominator.
 Subsequent historical actions remain dependent on that evidence. No implementation is authorized by this audit.
 
 1. Resolve authority identities for GAP-001. Retain earlier denominators, goldens, tolerances, and exclusions.
@@ -133,7 +133,7 @@ Implementation belongs to the separate job. Do not port additional effects or ad
 
 ## 6. Pass history
 
-2026-09-25 daily review at `9a043c4ea38766d356fcd20c0d838149558cf0fd`: source freshness and bounded evidence reviewed; open qualification limits retained. [Retained review evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/rust-ci-36082527571.log). No new closure claimed.
+2026-09-25 daily review at `9a043c4ea38766d356fcd20c0d838149558cf0fd`: source freshness and bounded evidence reviewed. Open qualification limits retained. [Retained review evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/rust-ci-36082527571.log). No new closure claimed.
 
 | Date | Source SHA | Changes | Tested scope | Remaining limits |
 |---|---|---|---|---|
