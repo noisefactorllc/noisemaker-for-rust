@@ -30543,7 +30543,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "4891b9953f9fd8a61cf9ae0dda2fe747a9be82df",
+    "paramContractRevision": "2f47612c29045c1b91af94887a8ff20106e980ef",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"
