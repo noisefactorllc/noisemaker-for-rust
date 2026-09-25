@@ -309,6 +309,9 @@ impl CpuRenderer {
         mut observe_particle_group: impl FnMut(&BTreeMap<String, Surface>),
     ) -> Result<RenderResult, RenderError> {
         let mut surfaces = BTreeMap::<String, Surface>::new();
+        // Retain shared states across the plan so earlier particle owner
+        // allocations remain live, preventing allocator address reuse across chains.
+        let mut _retained_shared = Vec::new();
 
         for chain in plan.chains {
             // Current image/volume/geometry state is deliberately local to a
@@ -351,6 +354,7 @@ impl CpuRenderer {
                         observe_particle_group(&execution.shared);
                     }
                     bundle = execution.bundle;
+                    _retained_shared.push(execution.shared);
                     continue;
                 }
                 for step in steps {
