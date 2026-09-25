@@ -4,8 +4,8 @@ Current compatibility matrix: [compatibility report](COMPATIBILITY.md).
 
 ## 1. Scope and source revisions
 
-Daily review: 2026-09-25. Current inspected source: [`9a043c4ea38766d356fcd20c0d838149558cf0fd`](https://github.com/noisefactorllc/noisemaker-for-rust/commit/9a043c4ea38766d356fcd20c0d838149558cf0fd).
-Full rendered parity remains **unverified**. No release approval or new closure follows from this review.
+Daily review: 2026-09-25. Current inspected source: [`25f1340c6b087d648bb5b4249b2f4d94be5d5c02`](https://github.com/noisefactorllc/noisemaker-for-rust/commit/25f1340c6b087d648bb5b4249b2f4d94be5d5c02).
+Full rendered parity at this SHA: measured (GAP-001). Installation, host, and platform qualification remain unverified. No release approval follows from this review.
 Current upstream discovery: `bbdeb56c4b75cf33379766c3e87b0f5a18bcbba8`. Published Noisemaker authority: `1.0.179`, source `fca611fd8f91424661d4e531d39313d24ea21134`, 210 effect IDs.
 The observations below retain their original source and authority identities. They do not qualify later updates.
 Current served kit: `0.1.16`, source `9a043c4ea38766d356fcd20c0d838149558cf0fd`. [Retrieved inventory and hashes](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-served-inventories.json). Artifact identity does not establish host qualification.
@@ -81,16 +81,16 @@ These entries record missing qualification. They do not infer implementation def
 
 ### GAP-001: current authority and parity qualification
 
-- Status: open. Priority: P2. Category: verification.
+- Status: closed. Priority: P2. Category: verification.
 - Affected scope: Cargo.toml, src/generated/, scripts/parity.py, scripts/generate_bundle.py, README.md
 - Expected behavior: Reproducible evidence binds each supported claim to the port and authority revisions.
 - Observed behavior: Five upstream effects remain intentionally excluded. Generated-file consistency does not establish pixel parity or validate special semantic adapters.
-- Evidence: [Historical source](https://github.com/noisefactorllc/noisemaker-for-rust/blob/2ef1cc4179f5163023c26e785f533d07cf699fb4/README.md) and section 3.
-- Next action: Run all 205 parity records against an identified CPU revision. Retain five excluded upstream effects and every timeout or runtime failure.
-- Dependencies: Resolve immutable authority inputs. Preserve historical goldens and provenance.
-- Acceptance criteria: Report every applicable case, parameter choice, exclusion, error, and tolerance. Do not reduce the denominator to report success.
-- Required checks: Existing compiler and rendered parity gates, with raw output and exact source hashes.
-- Last verification: 2026-09-24. Full behavior qualification remains unverified.
+- Evidence: 2026-09-25 rendered parity run at `25f1340c6b087d648bb5b4249b2f4d94be5d5c02` against the pinned JavaScript CPU oracle noisemaker-for-cpu `f2eb495d70abcb74e3632e7a652a4f83e4f3b11e` on an identified CPU revision (AMD EPYC 7713, x86_64, Linux 6.8.0-134-generic). Denominator: 205 catalog records. Result: 202 compared, all byte-exact at tolerance 0; 3 unsupported with the stable overlay-interface reason (`filter/fibers`, `filter/scratches`, `filter/strayHair`); 0 errors. The default 30-second timeout first reported `filter3d/flow3d` as a timeout failure; the retained 120-second retry compares byte-exact (rust 66.841 s). Parameters and per-record metrics: [report](parity/parity-report-20260925.json), [raw output](parity/parity-run-20260925.log), [flow3d retry](parity/parity-flow3d-120s-retry.json), [source hashes and CPU identity](parity/source-identity.json). The five upstream effects excluded from this standalone CPU port (`render/meshLoader`, `render/meshRender`, `synth/roll`, `synth/scope`, `synth/spectrum`) remain excluded and reported as excluded, not as passes.
+- Next action: None for the rendered parity denominator. Parameter sweeps, stateful sequences, installed CLI (GAP-002), and platform matrices (GAP-003) remain separate open qualification.
+- Dependencies: Resolved. Immutable authority inputs are pinned by commit and tree hash in `docs/parity/source-identity.json`; historical goldens and provenance are unchanged, and no golden was regenerated.
+- Acceptance criteria: Met. Every applicable case, parameter choice, exclusion, error, and tolerance is reported; the denominator stays at 205.
+- Required checks: Existing compiler gates unchanged. The rendered parity evidence is retained in-repo with raw output, exact source hashes, and the identified CPU revision; a CI-declared parity gate is not part of this candidate (workflow changes are out of scope for this job).
+- Last verification: 2026-09-25 (local 205-record run against the pinned oracle at the tested source revision).
 
 ### GAP-002: installed developer workflow qualification
 
@@ -137,6 +137,7 @@ Implementation belongs to the separate job. Do not port additional effects or ad
 
 | Date | Source SHA | Changes | Tested scope | Remaining limits |
 |---|---|---|---|---|
+| 2026-09-25 | `25f1340c6b087d648bb5b4249b2f4d94be5d5c02` | GAP-001 closed: executed the full 205-record rendered parity run against the pinned noisemaker-for-cpu `f2eb495d70abcb74e3632e7a652a4f83e4f3b11e` oracle on an identified CPU (AMD EPYC 7713, x86_64). | 202/205 compared byte-exact at tolerance 0; 3 unsupported with the stable overlay-interface reason; 0 errors. Default 30 s timeout failure on `filter3d/flow3d` retained; the 120 s retry compares byte-exact. Raw report, log, retry, and source hashes in `docs/parity/`. Workflow changes were not made. | Installation (GAP-002), distribution (GAP-003), parameter sweeps beyond harness defaults, and platform matrices remain unqualified. |
 | 2026-09-24 | `2ef1cc4179f5163023c26e785f533d07cf699fb4` | Created six-section register and README link. No closures. | The generated-bundle check exited 0. This is a reproducibility check, not a render or Cargo package installation test. | Full audit, installed workflows, current rendered parity, platforms, and releases remain unqualified. |
 
 Run ID: `20260924-remaining-gap-documents`.

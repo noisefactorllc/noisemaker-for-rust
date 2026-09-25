@@ -1,0 +1,26 @@
+{
+  "byte_exact": 1,
+  "catalog": 1,
+  "compared": 1,
+  "errors": 0,
+  "failed": 0,
+  "passed": 1,
+  "results": [
+    {
+      "channels_over_2": 0,
+      "differing_channels": 0,
+      "id": "filter3d/flow3d",
+      "js_seconds": 0.848697246008669,
+      "max_delta": 0,
+      "mean_delta": 0.0,
+      "pass": true,
+      "rust_seconds": 66.84117123899341,
+      "status": "compared"
+    }
+  ],
+  "seed": 1,
+  "size": 8,
+  "time": 0.25,
+  "tolerance": 0,
+  "unsupported": 0
+}
