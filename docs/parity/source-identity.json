@@ -153,16 +153,24 @@
     },
     "result": {"denominator": 205, "compared": 202, "unsupported": 3, "errors": 0, "passed": 202, "failed": 0, "byte_exact": 202},
     "declared_checks_reexecuted": {
-      "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0 on the sync tree 9a42d8e0 (code identical to the follow-up record commit); cargo 1.98.1 / rustc 1.98.1 (stable) plus toolchain 1.85.0, Python 3.11",
+      "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0 on a checkout whose scripts/ and src/ trees are byte-identical to the sync tree 9a42d8e0c48eca550e7e30109755473ad6f16901 (verified: git diff between 1eb130d9df3d70da8f9a3f0b157a1de0d2bbc875 and the successor docs-only commits is empty over scripts and src); cargo 1.98.1 / rustc 1.98.1 (stable) plus toolchain 1.85.0, Python 3.11",
       "commands": [
         {"command": "cargo fmt --all -- --check", "exit_code": 0},
         {"command": "cargo clippy --all-targets --all-features -- -D warnings", "exit_code": 0},
         {"command": "cargo +1.85.0 check --all-targets --all-features", "exit_code": 0},
         {"command": "cargo test --all-targets --all-features --release", "exit_code": 0, "result": "every test-binary result line 'ok', 0 failed across the suite"},
+        {"command": "cargo test --all-targets --all-features", "exit_code": 0, "executed_as": "cargo test --all-targets --all-features -j 2 (identical test set; -j 2 bounds build parallelism because the default-parallelism debug run was killed by the container, and the single-process full_parity debug binary runs 1842.72 s)", "result": "every test-binary result line 'ok', 0 failed across the suite including the debug-profile full_parity binary (8 passed, 1842.72 s)"},
         {"command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'", "exit_code": 0, "result": "OK"},
         {"command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check", "exit_code": 0},
-        {"command": "cargo build --release --locked", "exit_code": 0}
+        {"command": "cargo build --release --locked", "exit_code": 0},
+        {"command": "cargo package --locked", "exit_code": 0}
       ]
+    },
+    "corroboration": {
+      "oracle_checkout": "noisemaker-for-cpu checkout at /state/cache/platform/noisemaker-for-cpu, detached at d03aed7b30384bcebc04bc7f73a7f750ce3b2227 (tree a83a13ee6d7aa6d6b01688f1c166cc89af5df8df); re-pin with: git -C <checkout> checkout d03aed7b30384bcebc04bc7f73a7f750ce3b2227",
+      "ancestry": "Verified locally with git merge-base --is-ancestor: 41b92689c23f is the parent of bfbe54764eee (git log 41b9268..bfbe547 lists exactly bfbe547); bfbe54764eee is an ancestor of d03aed7b3038 (both commands exit 0). The full remote range 36fbfac07be5..bfbe54764eee reduces to the union of the two declared legs; per-leg audits are recorded in upstream_range_audit, forced_range_leg_audit, and followup_range_audit above.",
+      "snapshot_sha256_commands": "git -C <checkout> show <ref>:src/effects/generated/upstream-snapshot.js | sha256sum at 79c3ad6=ed26740b…, 41b9268=8d0cec91…, bfbe547=ed26740b…, a1801be=df429875…, d03aed7=df429875… (full hashes in the per-leg snapshot_identity blocks)",
+      "renderer_path_claim": "Reproduce with: git -C <checkout> show bfbe547:src/effects/generated/upstream-snapshot.js | grep -c '\"viewport\"' (0) and grep for width/height spec values containing auto/scale/multiply/screenDivide/param (none). The textureDimension change in CPU renderer.js (41b9268..bfbe547) therefore exercises no shipped catalog effect; the port's rendered output is bound by the 205-record byte-exact run recorded here."
     },
     "artifacts_sha256": {
       "parity-report-20260926-ranged.json": "f01304cbccb51b68dbaa1c0151ed8638249da87ff7118a0f1cbc6c5eec22a7c9",
