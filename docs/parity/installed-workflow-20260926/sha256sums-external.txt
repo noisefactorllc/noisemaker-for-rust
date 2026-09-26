@@ -1,0 +1,3 @@
+eae2d3831a4c14a911562e6a52d607206c475be75bc7799f2f0efedb6a936ca5  noisemaker-for-rust-0.1.0.crate  (packaged artifact, cargo +stable package --locked in the isolated copy)
+11f8f86d12feb11b32464dc2d0b48bea0400d5995105e03bc3195113e3b04fca  root-1.85.0/bin/noisemaker-rs  (installed from that crate with Rust 1.85.0; removed by uninstall)
+b6b8f40464cab86e2fea89b1f5d8a7df534df52c387284fb603ed0cf4bd8f625  root-stable/bin/noisemaker-rs  (installed from that crate with stable 1.98.1; removed by uninstall)
