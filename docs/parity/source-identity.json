@@ -293,5 +293,54 @@
       "parity-report-20260926-12db707.json": "7ec350a58014af4309dcf4dff47d86c3c80923a9c1942cba10c152bc6a65120c",
       "parity-run-20260926-12db707.log": "9ae38f9ac312625957320949e08eee8cb5e28da3c66bb94811bfbb32c34dce1d"
     }
+  },
+  "catalog_summary_leg_audit": {
+    "declared_range": "noisemaker-for-cpu bfbe54764eee87c8f67d2b281d5f304faad04a5b..901bbd98eda0cd5a63f94ed83f5c66d285b5dbe5 (forced-start delivery; the delivery's observed sub-span 12db707f3f49e93a9d204263415a2a2ea55cb828..901bbd98eda0 is contained in it). Audited locally, not assumed: bfbe54764eee is an ancestor of 901bbd98eda0 and 12db707f3f49 is an ancestor of 901bbd98eda0 (git merge-base --is-ancestor exits 0 in both directions), so the previously audited legs (upstream_range_audit, forced_range_leg_audit, followup_range_audit, crt_range_leg_audit, gap_audit_range_leg_audit) plus this new leg cover the whole declared range.",
+    "new_commits": [
+      "901bbd98eda0cd5a63f94ed83f5c66d285b5dbe5 Docs: reconcile parity summaries with the current 205-effect catalog and attribute the historical 166/117 figures to pin f1d2b46 (GAP-004)"
+    ],
+    "compare_url": "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/12db707f3f49...901bbd98eda0",
+    "diffstat": "README.md 2, docs/COMPLETION_GAPS.md 16, docs/CRT-PARITY.md 2, docs/EFFECTS.md 2, scripts/parity/run.js 7; total 5 files, 15 insertions(+), 14 deletions(-)",
+    "snapshot_identity": {
+      "file": "src/effects/generated/upstream-snapshot.js",
+      "sha256_at_12db707": "df429875fc9af9a24f6e9026b72f4d5b6dd75faf94e6c27dcbdd50f8e1344d7a",
+      "sha256_at_901bbd9": "df429875fc9af9a24f6e9026b72f4d5b6dd75faf94e6c27dcbdd50f8e1344d7a",
+      "finding": "The single new commit is a CPU-repo docs/summary reconciliation (GAP-004 closure): README Collection parity, docs/COMPLETION_GAPS.md GAP-004, docs/CRT-PARITY.md, docs/EFFECTS.md, and the scripts/parity/run.js gate comment only. `git diff 12db707..901bbd9 -- src/ scripts/upstream/` is empty and the generated snapshot is byte-identical at both ends (sha256s above), so the parameter contract the Rust port consumes (revision 6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa) needs no change and the port requires no source change for this trigger. The changed scripts/parity/run.js is the CPU repo's own parity-runner comment, not the generated snapshot or anything the port consumes."
+    }
+  },
+  "catalog_summary_range_run": {
+    "run_date": "2026-09-26",
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/checkouts/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json docs/parity/parity-report-20260926-901bbd9.json",
+    "port_revision": {
+      "repository": "noisefactorllc/noisemaker-for-rust",
+      "commit": "72c9ac0e9ec959f01cc6c4c195f7bbba5ada5cea — the code of the tree this run executed (tree 520de6e335a7275b82ee13bec1ab85dfb259d0e4); the committed record following it is docs-only with no src/ or scripts/ changes",
+      "tree": "520de6e335a7275b82ee13bec1ab85dfb259d0e4",
+      "binary_sha256": "d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01",
+      "binary_built_with": "cargo build --release --locked, cargo 1.98.1, stable-x86_64-unknown-linux-gnu",
+      "param_contract_revision": "6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa"
+    },
+    "oracle_revision": {
+      "repository": "noisefactorllc/noisemaker-for-cpu",
+      "commit": "901bbd98eda0cd5a63f94ed83f5c66d285b5dbe5",
+      "runtime": "node v26.5.1, offline test oracle only, fresh clone at its published default branch (main)"
+    },
+    "result": {"catalog": 205, "compared": 202, "unsupported": 3, "errors": 0, "passed": 202, "failed": 0, "byte_exact": 202},
+    "declared_checks_reexecuted": {
+      "declaration": "CONTRIBUTING.md publication checks executed with exit code 0 on the tree this run executed (72c9ac0e; src/ and scripts/ unchanged by the docs-only record following it); cargo 1.98.1 / rustc 1.98.1 (stable) plus toolchain 1.85.0, Python 3.11. The crate declares no [features] section, so --all-features is a no-op flag.",
+      "commands": [
+        {"command": "cargo fmt --all -- --check", "exit_code": 0},
+        {"command": "cargo clippy --all-targets --all-features -- -D warnings", "exit_code": 0},
+        {"command": "cargo +1.85.0 check --all-targets --all-features", "exit_code": 0},
+        {"command": "cargo test --all-targets --all-features --release", "exit_code": 0, "result": "28 test-binary result lines all 'ok', 0 failed, 2 ignored (the NOISEMAKER_JS_CPU_DIR-gated parity_spine tests) across the suite"},
+        {"command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'", "exit_code": 0, "result": "OK"},
+        {"command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check", "exit_code": 0},
+        {"command": "cargo build --release --locked", "exit_code": 0},
+        {"command": "cargo package --locked", "exit_code": 0, "result": "Packaged 53 files, 34.3MiB; verification compiled and finished"}
+      ]
+    },
+    "artifacts_sha256": {
+      "parity-report-20260926-901bbd9.json": "e4e6aff05af6170ffb801a60f3f4af26127f2fbb9db66dfe90ed41aefe219885",
+      "parity-run-20260926-901bbd9.log": "2495f2b6d550928c7bffa027fbd9026ada6cbd9d3d32fab9d7e75bc274089178"
+    }
   }
 }
