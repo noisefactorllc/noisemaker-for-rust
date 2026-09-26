@@ -2,8 +2,9 @@
 
 ## 1. Source and authority revisions
 
-Daily review: 2026-09-25. Current inspected source: [`25f1340c6b087d648bb5b4249b2f4d94be5d5c02`](https://github.com/noisefactorllc/noisemaker-for-rust/commit/25f1340c6b087d648bb5b4249b2f4d94be5d5c02).
+Daily review: 2026-09-26. Current inspected source: [`0638cacece3e24f6922f32aab8c032a275ae05c0`](https://github.com/noisefactorllc/noisemaker-for-rust/commit/0638cacece3e24f6922f32aab8c032a275ae05c0).
 Full rendered parity at this SHA: measured (section 3). Installation, host, and platform qualification remain unverified. No release approval follows from this review.
+Generated catalog provenance records parameter-contract revision `9d3474dfdc6cb737ebb7b2f3598b16d940af1544` (noisemaker-for-cpu range audit and parity run in [source identity](parity/source-identity.json)).
 Current upstream discovery: `bbdeb56c4b75cf33379766c3e87b0f5a18bcbba8`. Published Noisemaker authority: `1.0.179`, source `fca611fd8f91424661d4e531d39313d24ea21134`, 210 effect IDs.
 The observations below retain their original source and authority identities. They do not qualify later updates.
 Current served kit: `0.1.16`, source `9a043c4ea38766d356fcd20c0d838149558cf0fd`. [Retrieved inventory and hashes](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-served-inventories.json). Artifact identity does not establish host qualification.
@@ -47,7 +48,11 @@ The matrix below retains the earlier measured scope. A historical verified row i
 
 ## 3. Parity coverage
 
-### Full render suite, 2026-09-25
+### Full render suite, 2026-09-26
+
+One 205-record parity run executed the complete catalog through both CLIs against identified revisions. Port source: `0638cacece3e24f6922f32aab8c032a275ae05c0`. JavaScript CPU oracle: noisemaker-for-cpu `41b92689c23fb1ccf9b513ecc8a30fbe11365473` (immutable authority input, resolved by pinned checkout). CPU revision: AMD EPYC 7713, x86_64, Linux 6.8.0-134-generic. Parameters: size 8, time 0.25, seed 1, tolerance 0, per-command timeout 120 s. Result: 202 compared byte-exact (max delta 0), 3 unsupported with the stable overlay-interface reason (`filter/fibers`, `filter/scratches`, `filter/strayHair`), 0 errors. The five upstream effects excluded from this standalone CPU port remain excluded and are reported as excluded, not as passes. This run follows the noisemaker-for-cpu range `aaa6df50421d..41b9268` audit recorded in [source identity](parity/source-identity.json): the range bumped the pinned upstream revision to `9d3474dfdc6cb737ebb7b2f3598b16d940af1544` with unchanged snapshot effect data and adds CPU-internal anti-staleness tooling, so the port reduces to a parameter-contract provenance bump. Raw output, the machine-readable report, and exact source hashes: [parity report](parity/parity-report-20260926.json), [raw run log](parity/parity-run-20260926.log), [source identity and hashes](parity/source-identity.json).
+
+### Previous full render suite, 2026-09-25
 
 One 205-record parity run executed the complete catalog through both CLIs against identified revisions. Port source: `25f1340c6b087d648bb5b4249b2f4d94be5d5c02`. JavaScript CPU oracle: noisemaker-for-cpu `f2eb495d70abcb74e3632e7a652a4f83e4f3b11e` (immutable authority input, resolved by pinned checkout). CPU revision: AMD EPYC 7713, x86_64, Linux 6.8.0-134-generic. Parameters: size 8, time 0.25, seed 1, tolerance 0, per-command timeout 120 s. Result: 202 compared byte-exact (max delta 0), 3 unsupported with the stable overlay-interface reason (`filter/fibers`, `filter/scratches`, `filter/strayHair`), 0 errors. The five upstream effects excluded from this standalone CPU port remain excluded and are reported as excluded, not as passes. The harness default 30-second timeout first reported `filter3d/flow3d` as a timeout failure; the retained 120-second retry compares byte-exact (rust 66.841 s). The default-timeout failure is retained in this record, not discarded. Raw output, the machine-readable report, the retry record, and exact source hashes: [parity report](parity/parity-report-20260925.json), [raw run log](parity/parity-run-20260925.log), [flow3d retry](parity/parity-flow3d-120s-retry.json), [source identity and hashes](parity/source-identity.json).
 

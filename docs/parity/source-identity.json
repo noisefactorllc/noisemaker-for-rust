@@ -1,19 +1,28 @@
 {
-  "run_date": "2026-09-25",
-  "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/scratch/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json docs/parity/parity-report-20260925.json",
+  "run_date": "2026-09-26",
+  "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json docs/parity/parity-report-20260926.json",
   "port_revision": {
     "repository": "noisefactorllc/noisemaker-for-rust",
-    "commit": "25f1340c6b087d648bb5b4249b2f4d94be5d5c02",
-    "tree": "fa96d14f49a364bef1105633c12e1ec0a5868796",
-    "binary_sha256": "197e71c1e4415703f3e0ff01cb68b4e276e28fe83a3fe5b49b73f3d36d4e7ee0",
+    "commit": "0638cacece3e24f6922f32aab8c032a275ae05c0",
+    "tree": "d6b080bf4fffbf3752e99380d156873f1ff2b5fc",
+    "binary_sha256": "22653b921eb564dadbc1e21ed577443df712a31ac2173c97178c97c324713462",
     "binary_built_with": "cargo build --release --locked, cargo 1.98.1, stable-x86_64-unknown-linux-gnu",
-    "param_contract_revision": "2f47612c29045c1b91af94887a8ff20106e980ef"
+    "param_contract_revision": "9d3474dfdc6cb737ebb7b2f3598b16d940af1544"
   },
   "oracle_revision": {
     "repository": "noisefactorllc/noisemaker-for-cpu",
-    "commit": "f2eb495d70abcb74e3632e7a652a4f83e4f3b11e",
-    "tree": "71bc7fcf3ea9adf4cb829a102b275bffc4b840cd",
+    "commit": "41b92689c23fb1ccf9b513ecc8a30fbe11365473",
+    "tree": "03b308ea8498d52b047e4bf78eeb4fc5b01ce8f5",
     "runtime": "node v26.5.1, offline test oracle only"
+  },
+  "upstream_range_audit": {
+    "declared_range": "noisemaker-for-cpu aaa6df50421d9d6db752289cdc1ff7c1efb1d9d1..41b92689c23fb1ccf9b513ecc8a30fbe11365473 (delivery also cites 36fbfac07be5a9a10b7a991209b566be3f54fe6e..41b92689c23f; both range starts are ancestors of 41b9268, audited locally, not assumed)",
+    "commits": [
+      "00e324924415f88c60d75d69bfc2f63830884b63 Integrate remote default branch: resolve conflicts with verified local state",
+      "73597362dd1439718470254802ce4868fc774e9b Record sourceSha256 for compiled kernels in compile-glsl.js",
+      "41b92689c23fb1ccf9b513ecc8a30fbe11365473 Record sourceSha256 for compiled kernels and enforce pin tie-in"
+    ],
+    "finding": "The range bumps the CPU pinned upstream revision from noisemaker@2f47612c29045c1b91af94887a8ff20106e980ef to noisemaker@9d3474dfdc6cb737ebb7b2f3598b16d940af1544 with identical snapshot effect data (src/effects/generated/upstream-snapshot.js changes only its UPSTREAM_REVISION line; the src/ diff contains no other effect, program, or parameter changes), and adds CPU-internal anti-staleness tooling (scripts/upstream/pinned-source-manifest.json, sourceSha256 fields in glsl-coverage.js, source-lock tests) that the Rust port does not consume. The port therefore reduces to the parameter-contract provenance bump; rendered output is unaffected, confirmed by the byte-exact run recorded here."
   },
   "cpu_identity": {
     "architecture": "x86_64",
@@ -58,11 +67,13 @@
     }
   ],
   "timeout_observation": {
-    "note": "An earlier full run at port revision 634ae4a8cd16c9f3b552b57ed598bacfc45c81fb used the harness default 30-second timeout and reported filter3d/flow3d as 'timeout after 30s' (1 error, exit validation failed). That run was not discarded: the retained retry below binds the same effect at the 120-second timeout, where it compares byte-exact (rust 66.841s, js 0.849s). The run recorded here repeated the full 205-record suite at the port revision above with the 120-second timeout.",
+    "note": "An earlier full run at port revision 634ae4a8cd16c9f3b552b57ed598bacfc45c81fb used the harness default 30-second timeout and reported filter3d/flow3d as 'timeout after 30s' (1 error, exit validation failed). That run was not discarded: the retained retry binds the same effect at the 120-second timeout, where it compares byte-exact (rust 66.841s, js 0.849s). The run recorded here and the 2026-09-25 run both used the 120-second timeout; filter3d/flow3d compares byte-exact in each.",
     "retry_artifact": "parity-flow3d-120s-retry.json",
     "retry_max_delta": 0
   },
   "artifacts_sha256": {
+    "parity-report-20260926.json": "a773ad3a7cdde1ea769eb82e7b41c570b7097dd513d734a0085a6b7027071fa3",
+    "parity-run-20260926.log": "f4058d0881a875d6a619fa05b41dd0791c9c596e39651550fdbc3e62d54f71be",
     "parity-report-20260925.json": "d3354d25eaf355698744f6d893a7fa1adecbdd5935d99c55b144fd3d574829c6",
     "parity-run-20260925.log": "a875f57ea434d5766eacfdc38ec66dee987b8c9741efc06ba61b79c7e9f436af",
     "parity-flow3d-120s-retry.json": "8c55c5305c2011738ee07de18b476dc86a5c1129639607ee3c877ee2105b3360"
