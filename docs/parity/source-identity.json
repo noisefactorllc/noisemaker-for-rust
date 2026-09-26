@@ -134,6 +134,73 @@
     "parity-run-20260925.log": "a875f57ea434d5766eacfdc38ec66dee987b8c9741efc06ba61b79c7e9f436af",
     "parity-flow3d-120s-retry.json": "8c55c5305c2011738ee07de18b476dc86a5c1129639607ee3c877ee2105b3360"
   },
+  "crt_range_leg_audit": {
+    "declared_range": "noisemaker-for-cpu bfbe54764eee87c8f67d2b281d5f304faad04a5b..4b590d2f7f607a2788a5bc7675288ec166d0b633 (the delivery's observed range ea198510ae27d0d36bdd74deaf6798a50ba75848..4b590d2f7f60 is a sub-span: ea198510 is an ancestor of 4b590d2f7f60, merge-base verified locally, not assumed). The forced-start leg 41b9268..bfbe547 and the middle leg 79c3ad6..d03aed7 are the previously audited upstream_range_audit/forced_range_leg_audit/followup_range_audit legs; the new portion d03aed7..4b590d2 is audited here.",
+    "compare_url": "https://github.com/noisemaker-for-cpu/compare/d03aed7b3038...4b590d2f7f60",
+    "commits": [
+      "ea198510ae27d0d36bdd74deaf6798a50ba75848 Audit: record exact-source closure evidence at the published candidate (docs-only)",
+      "8debec575c29badf8f56e26f09b140bbc573faa8 Fix filter/crt CPU adapter parity (crt.js, reverted by the next commit)",
+      "c0d53d0bbf2f926f43d7bef3ed3d4c30c73344c7 Revert \"Fix filter/crt CPU adapter parity\" (restores the pre-fix crt.js)",
+      "aaf3d0748735f9c3c9849dfeb2e312f2d67e63be Docs: record measured no-op result of the CRT cosine wrap (docs-only)",
+      "c2a1d1852a35e497bfb2cbb37df4aa3f75db64c4 Docs: record fma-contraction emulation as structural no-op for CRT parity (docs-only)",
+      "e5c81a30f3c6c9ad2f2d0e01a56752e6bb6f92b0 Audit: record GAP-001 CRT localization and blocked status with measured evidence (docs-only)",
+      "bb1f4dea6748f08284a2d4f1388b0c01e28c1d39 Audit: correct CRT cos-site evidence, pin wrap metrics in a committed test, and record check artifacts",
+      "0d9dded4753d20782a89070e1721242bd19c754a Docs: correct fma no-op reasoning and refresh the parity regression constraint (docs-only)",
+      "0013269e9406c5fa5dee8ac01742eaded7920523 Audit: anchor GAP-001 verification at 0d9dded and correct artifact provenance (docs-only)",
+      "ad0045177a5ede44c388a5dc32c146a0af97027b Audit: isolate the CRT cos-wrap characterization on the retained sine adapter",
+      "f5a431daed7e5f0a62ab9ce81d519afa12f9f135 Audit: anchor GAP-001 verification at ad00451 (docs-only)",
+      "ade078fd209203d6c828a97b7ecd80411bc830e1 Audit: restore the 166/167 regression constraint and tie verification to the f5a431d tree (docs-only)",
+      "bca394405f479f1f48f0343b8a7bb8e36491796b Audit: anchor GAP-001 verification at ade078f (docs-only)",
+      "049273be95ae28609992c52a2c1f273b58624f26 Test: characterize all three CRT cos-wrap configurations; docs: correct the confounded 94/105 attribution",
+      "f8767118252b7df4d62330cd8b4e7f25a69cdae1 Audit: anchor GAP-001 verification at 049273b (docs-only)",
+      "4b590d2f7f607a2788a5bc7675288ec166d0b633 Docs: state GAP-001 check provenance against the 049273b code tree (docs-only)"
+    ],
+    "diffstat": "docs/COMPATIBILITY.md 2+, docs/COMPLETION_GAPS.md 13, docs/CRT-PARITY.md 12+, parity.log 43+, probe.json 17+, test/cpu-special-effects.test.js 72+; total 6 files, 149 insertions(+), 10 deletions(-); zero src/ or scripts/upstream/ files",
+    "snapshot_identity": {
+      "file": "src/effects/generated/upstream-snapshot.js",
+      "sha256_at_bfbe547": "ed26740bfb16d79528aa0750ed40039a7f4498c62aef6da7d559a5a57a5595b2",
+      "sha256_at_d03aed7": "df429875fc9af9a24f6e9026b72f4d5b6dd75faf94e6c27dcbdd50f8e1344d7a",
+      "sha256_at_ea198510": "df429875fc9af9a24f6e9026b72f4d5b6dd75faf94e6c27dcbdd50f8e1344d7a",
+      "sha256_at_4b590d2": "df429875fc9af9a24f6e9026b72f4d5b6dd75faf94e6c27dcbdd50f8e1344d7a",
+      "finding": "The snapshot is byte-identical from d03aed7 through 4b590d2 (same sha256 as the already-synced followup leg), so the parameter contract the Rust port consumes (revision 6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa, generated catalog byte-identical) needs no change. `git diff d03aed7..4b590d2 -- src/ scripts/upstream/` is empty: the only src/ commit in the leg (8debec5, a filter/crt adapter cos-wrap) was reverted in the next commit (c0d53d0), leaving the committed crt.js byte-identical to the already-ported state. The leg's remaining changes are CPU-repo docs/COMPLETION_GAPS and CRT-PARITY audit corrections, committed CPU-side parity artifacts (parity.log, probe.json), and test/cpu-special-effects.test.js characterization tests for the CRT cosine-wrap no-op — CPU-repo test code the Rust port does not mirror (the port's parity contract is the executed 205-record run below, in which filter/crt compares byte-exact at tolerance 0). The port therefore requires no source change for this trigger."
+    }
+  },
+  "crt_range_run": {
+    "run_date": "2026-09-26",
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/platform/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json docs/parity/parity-report-20260926-ea1985.json",
+    "port_revision": {
+      "repository": "noisefactorllc/noisemaker-for-rust",
+      "commit": "b6c24628f6b8082f07a8a0a1a0110661325d10ef — the code of the tree this run executed (scripts/ and src/ trees unchanged by the docs-only records that follow)",
+      "tree": "f27ce1b7eb6a6f51344e70bbfbe2f0fbd2cc7587",
+      "binary_sha256": "d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01",
+      "binary_built_with": "cargo build --release --locked, cargo 1.98.1, stable-x86_64-unknown-linux-gnu",
+      "param_contract_revision": "6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa"
+    },
+    "oracle_revision": {
+      "repository": "noisefactorllc/noisemaker-for-cpu",
+      "commit": "4b590d2f7f607a2788a5bc7675288ec166d0b633",
+      "runtime": "node v26.5.1, offline test oracle only, fresh clone at 4b590d2f7f60 (main)"
+    },
+    "result": {"denominator": 205, "compared": 202, "unsupported": 3, "errors": 0, "passed": 202, "failed": 0, "byte_exact": 202},
+    "declared_checks_reexecuted": {
+      "declaration": "CONTRIBUTING.md publication checks executed with exit code 0 on the tree this run executed (b6c24628; scripts/ and src/ trees unchanged by the docs-only records following it); cargo 1.98.1 / rustc 1.98.1 (stable) plus toolchain 1.85.0, Python 3.11",
+      "commands": [
+        {"command": "cargo fmt --all -- --check", "exit_code": 0},
+        {"command": "cargo clippy --all-targets --all-features -- -D warnings", "exit_code": 0},
+        {"command": "cargo +1.85.0 check --all-targets --all-features", "exit_code": 0},
+        {"command": "cargo test --all-targets --all-features --release", "exit_code": 0, "result": "every test-binary result line 'ok', 0 failed across the suite"},
+        {"command": "cargo test --all-targets --all-features -j 2", "exit_code": 0, "result": "every test-binary result line 'ok', 0 failed across the suite including the debug-profile full_parity binary (-j 2 bounds build parallelism because the default-parallelism debug run was killed by the container)"},
+        {"command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'", "exit_code": 0, "result": "Ran 19 tests, OK"},
+        {"command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check", "exit_code": 0},
+        {"command": "cargo build --release --locked", "exit_code": 0},
+        {"command": "cargo package --locked", "exit_code": 0}
+      ]
+    },
+    "artifacts_sha256": {
+      "parity-report-20260926-ea1985.json": "7a3acd21913e028de75481331c52f3a096db78a4e88006477841dc5b49567511",
+      "parity-run-20260926-ea1985.log": "93ff8e7391ef50010e2bf3200e6fc5aca221213ff1d4115e91f3745b852a3df5"
+    }
+  },
   "followup_run": {
     "run_date": "2026-09-26",
     "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/platform/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json docs/parity/parity-report-20260926-ranged.json",
