@@ -1,0 +1,48 @@
+++ cargo +1.85.0 check --workspace --all-targets --locked
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.24
+   Compiling version_check v0.9.5
+   Compiling generic-array v0.14.7
+   Compiling crc32fast v1.5.0
+    Checking cfg-if v1.0.4
+    Checking simd-adler32 v0.3.10
+   Compiling syn v3.0.3
+   Compiling serde_core v1.0.229
+    Checking utf8parse v0.2.2
+    Checking anstyle-parse v1.0.0
+    Checking anstyle-query v1.1.5
+    Checking anstyle v1.0.14
+    Checking typenum v1.20.1
+    Checking adler2 v2.0.1
+   Compiling zmij v1.0.23
+    Checking is_terminal_polyfill v1.70.2
+    Checking colorchoice v1.0.5
+    Checking anstream v1.0.0
+    Checking miniz_oxide v0.8.9
+    Checking clap_lex v1.1.0
+   Compiling heck v0.5.0
+    Checking strsim v0.11.1
+   Compiling thiserror v2.0.20
+   Compiling serde_json v1.0.151
+   Compiling serde v1.0.229
+    Checking clap_builder v4.6.6
+   Compiling clap_derive v4.6.4
+   Compiling serde_derive v1.0.229
+   Compiling thiserror-impl v2.0.20
+    Checking flate2 v1.1.9
+    Checking fdeflate v0.3.7
+    Checking bitflags v2.13.1
+    Checking itoa v1.0.18
+    Checking memchr v2.8.3
+    Checking png v0.18.1
+    Checking clap v4.6.6
+    Checking block-buffer v0.10.4
+    Checking crypto-common v0.1.7
+    Checking digest v0.10.7
+    Checking cpufeatures v0.2.17
+    Checking sha2 v0.10.9
+    Checking noisemaker-for-rust v0.1.0 (/workspace/repos/noisemaker-for-rust)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 18.77s
+++ echo exit=0
+exit=0

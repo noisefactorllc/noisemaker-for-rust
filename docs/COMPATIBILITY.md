@@ -36,13 +36,13 @@ The matrix below retains the earlier measured scope. A historical verified row i
 | Dimension | Status | Measured scope or limit |
 |---|---|---|
 | Source-level checks | verified | The generated-bundle check exited 0. This is a reproducibility check, not a render or Cargo package installation test. |
-| Actual host rendering | unverified | No new complete native or browser workflow qualified by this report. |
-| Minimum and current host versions | unverified | Declared requirements are not a tested version matrix. |
-| Supported operating systems and backends | unverified | This pass does not establish Windows, Linux, and macOS coverage. |
-| Installed package and first useful result | unverified | Complete isolated installation was not qualified for this source. |
-| Parameters, external inputs, state, and chains | unverified | Full current-authority combinations remain unmeasured. |
-| Invalid input and recovery | unverified | Unit checks do not establish every installed public entry point. |
-| Upgrade, removal, and resource cleanup | unverified | Prior defects and missing workflows remain in the gap register. |
+| Actual host rendering | verified (Linux x86_64) | 2026-09-25/26: complete native CPU rendering measured against the pinned JS oracle. No browser workflow qualified by this report. |
+| Minimum and current host versions | verified (Rust) | 2026-09-26: `cargo check --all-targets` and the full release test suite passed on Rust 1.85.0 (MSRV) and stable 1.98.1; the packaged crate was installed on both. [Evidence](parity/installed-workflow-20260926/README.md). |
+| Supported operating systems and backends | partial | Linux x86_64 measured (see the installed-workflow and parity evidence). Windows and macOS remain unmeasured. |
+| Installed package and first useful result | verified (Linux x86_64) | 2026-09-26: packaged-crate install into a private root on Rust 1.85.0 and stable 1.98.1; gradient, DSL chain, and PNG-input renders succeeded. macOS/Windows untested. [Evidence](parity/installed-workflow-20260926/README.md). |
+| Parameters, external inputs, state, and chains | partial | Installed-chain gradient, DSL chain, and `apply` PNG-input renders exercised; full current-authority combinations remain unmeasured. |
+| Invalid input and recovery | verified (installed CLI, selected cases) | 2026-09-26: out-of-range and unknown parameters failed with actionable diagnostics (exit 1) through the installed binary; a corrected run recovered (exit 0). [Evidence](parity/installed-workflow-20260926/recovery-stable.log). |
+| Upgrade, removal, and resource cleanup | verified (isolated install) | 2026-09-26: clean uninstall from the private root (exit 0, empty bin); read-only destination preserved on failure; SIGTERM mid-render preserved the destination and left no temporary files. [Evidence](parity/installed-workflow-20260926/README.md). |
 | Accessibility of provided controls | unverified | Keyboard, focus, labels, and diagnostics need host observations where applicable. |
 | Release readiness | blocked | Full parity, installation, host, and artifact evidence remain incomplete. |
 
@@ -56,7 +56,7 @@ One 205-record parity run executed the complete catalog through both CLIs agains
 
 One 205-record parity run executed the complete catalog through both CLIs against identified revisions. Port source: `25f1340c6b087d648bb5b4249b2f4d94be5d5c02`. JavaScript CPU oracle: noisemaker-for-cpu `f2eb495d70abcb74e3632e7a652a4f83e4f3b11e` (immutable authority input, resolved by pinned checkout). CPU revision: AMD EPYC 7713, x86_64, Linux 6.8.0-134-generic. Parameters: size 8, time 0.25, seed 1, tolerance 0, per-command timeout 120 s. Result: 202 compared byte-exact (max delta 0), 3 unsupported with the stable overlay-interface reason (`filter/fibers`, `filter/scratches`, `filter/strayHair`), 0 errors. The five upstream effects excluded from this standalone CPU port remain excluded and are reported as excluded, not as passes. The harness default 30-second timeout first reported `filter3d/flow3d` as a timeout failure; the retained 120-second retry compares byte-exact (rust 66.841 s). The default-timeout failure is retained in this record, not discarded. Raw output, the machine-readable report, the retry record, and exact source hashes: [parity report](parity/parity-report-20260925.json), [raw run log](parity/parity-run-20260925.log), [flow3d retry](parity/parity-flow3d-120s-retry.json), [source identity and hashes](parity/source-identity.json).
 
-Remaining coverage limits are unchanged by this run: parameter sweeps beyond the documented defaults, stateful sequences beyond the harness chain shape, installed CLI qualification (GAP-002), and platform matrices (GAP-003) remain unmeasured. No skip or tolerated difference counts as exact parity.
+Remaining coverage limits after the 2026-09-26 installed-workflow run: parameter sweeps beyond the documented defaults, stateful sequences beyond the harness chain shape, distribution lifecycle and artifact bytes (GAP-003), and the macOS/Windows platform matrix remain unmeasured (the installed CLI qualification itself, GAP-002, is measured on Linux x86_64: see [installed-workflow-20260926](parity/installed-workflow-20260926/README.md)). No skip or tolerated difference counts as exact parity.
 
 ### Earlier measurements
 

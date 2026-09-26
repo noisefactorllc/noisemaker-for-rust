@@ -1,0 +1,443 @@
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling version_check v0.9.5
+   Compiling generic-array v0.14.7
+   Compiling simd-adler32 v0.3.10
+   Compiling utf8parse v0.2.2
+   Compiling crc32fast v1.5.0
+   Compiling syn v3.0.3
+   Compiling cfg-if v1.0.4
+   Compiling serde_core v1.0.229
+   Compiling anstyle-parse v1.0.0
+   Compiling zmij v1.0.23
+   Compiling adler2 v2.0.1
+   Compiling colorchoice v1.0.5
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling typenum v1.20.1
+   Compiling anstyle v1.0.14
+   Compiling anstyle-query v1.1.5
+   Compiling anstream v1.0.0
+   Compiling miniz_oxide v0.8.9
+   Compiling thiserror v2.0.20
+   Compiling serde v1.0.229
+   Compiling strsim v0.11.1
+   Compiling heck v0.5.0
+   Compiling clap_lex v1.1.0
+   Compiling serde_json v1.0.151
+   Compiling clap_builder v4.6.6
+   Compiling clap_derive v4.6.4
+   Compiling flate2 v1.1.9
+   Compiling thiserror-impl v2.0.20
+   Compiling serde_derive v1.0.229
+   Compiling fdeflate v0.3.7
+   Compiling bitflags v2.13.1
+   Compiling itoa v1.0.18
+   Compiling memchr v2.8.3
+   Compiling png v0.18.1
+   Compiling clap v4.6.6
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling cpufeatures v0.2.17
+   Compiling sha2 v0.10.9
+   Compiling noisemaker-for-rust v0.1.0 (/workspace/repos/noisemaker-for-rust)
+    Finished `release` profile [optimized] target(s) in 1m 33s
+     Running unittests src/lib.rs (target/release/deps/noisemaker_cpu-9fc8456c12b88346)
+
+running 29 tests
+test cli::tests::flock_effect_program_uses_a_real_bounded_particle_owner_chain ... ok
+test cli::tests::mashup_effect_program_seeds_and_uniquely_wires_all_nine_surfaces ... ok
+test overlay::tests::rng_matches_javascript_number_and_bitwise_semantics ... ok
+test cli::tests::volume_effect_program_uses_one_resolved_size_for_owner_effect_and_renderer ... ok
+test renderer::cache_tests::cache_hit_refreshes_lru_recency ... ok
+test renderer::cache_tests::group_frame_executor_interleaves_move_and_deposit ... ok
+test renderer::cache_tests::grouped_frames_dispatch_real_draw_op_and_advance_shared_trail ... ok
+test renderer::cache_tests::iterated_unknown_draw_error_propagates_from_first_frame ... ok
+test renderer::cache_tests::joining_state_size_inherits_owner_while_standalone_keeps_its_own ... ok
+test renderer::cache_tests::loop_executor_freezes_input_and_only_advances_accumulator ... ok
+test renderer::cache_tests::particle_trace_records_source_identity_before_deep_clone ... ok
+test renderer::cache_tests::remap_uniform_adapter_has_exact_header_active_and_dimension_records ... ok
+test renderer::cache_tests::reserved_aliases_share_one_canonical_surface_through_pass_execution ... ok
+test renderer::cache_tests::synthetic_undeclared_particle_resources_use_state_size_formats_and_persist ... ok
+test renderer::cache_tests::production_particle_groups_size_undeclared_state_and_reset_seeded_owners ... ok
+test vm::tests::atlas_program_integer_division_inventory_is_frozen ... ok
+test vm::tests::atlas_z_initializer_is_fractional_but_same_program_integer_division_truncates ... ok
+test vm::tests::canonical_crt_hash_defers_the_product_until_after_fract ... ok
+test vm::tests::canonical_crt_seed_precision_rejects_changed_calls_and_function_bodies ... ok
+test vm::tests::canonical_pattern_precision_rejects_changed_smoothstep_arguments ... ok
+test vm::tests::canonical_simplex_corner_defers_only_the_matched_vector_storage ... ok
+test vm::tests::javascript_float_atlas_z_fingerprint_matches_exactly_two_bundle_programs ... ok
+test vm::tests::javascript_float_atlas_z_fingerprint_rejects_near_misses ... ok
+test vm::tests::javascript_sine_hash_fingerprint_matches_exactly_two_of_nine_random_functions ... ok
+test vm::tests::javascript_sine_hash_fingerprint_rejects_signature_and_dot_constant_changes ... ok
+test vm::tests::javascript_sine_hash_has_literal_js_scalar_result ... ok
+test vm::tests::navier_hash_targets_remain_normal_ir_functions ... ok
+test vm::tests::nonmatching_random_targets_execute_their_ir_and_return_scalar_literals ... ok
+test renderer::cache_tests::two_particle_owners_are_isolated_seed_sensitive_and_repeatable ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.19s
+
+     Running unittests src/bin/noisemaker-rs.rs (target/release/deps/noisemaker_rs-59d9eb638433391c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/adapters.rs (target/release/deps/adapters-9f28958732a3cd7a)
+
+running 4 tests
+test cosine_and_historic_palette_adapters_match_oracle_pixels ... ok
+test fractal_and_julia_registered_adapters_match_oracle_pixels ... ok
+test fragment_registry_is_exactly_the_four_replacement_keys ... ok
+test nonregistered_fragment_program_still_uses_generic_vm ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
+     Running tests/catalog.rs (target/release/deps/catalog-0b32cfc6f22a9933)
+
+running 4 tests
+test catalog_preserves_canonical_parameter_aliases_and_declaration_order ... ok
+test embedded_catalog_is_the_exact_cpu_inventory ... ok
+test embedded_program_inventory_is_complete_and_structural ... ok
+test typed_ir_deserializes_overloads_qualifiers_storage_and_lvalues ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.24s
+
+     Running tests/catalog_smoke.rs (target/release/deps/catalog_smoke-46e3a9cfcabf2351)
+
+running 8 tests
+test all_205_default_programs_are_finite_deterministic_and_aggregated has been running for over 60 seconds
+test all_458_non_null_compile_choices_execute_without_skips has been running for over 60 seconds
+test all_205_default_programs_are_finite_deterministic_and_aggregated ... ok
+test completed_default_smoke_batches_cover_205_exactly_once ... ok
+test every_iterated_default_is_60_and_one_default_reaches_execution ... ok
+test exact_smoke_inventory_and_registry_coverage_are_locked ... ok
+test smoke_builder_wires_all_nine_mashup_surfaces ... ok
+test smoke_generator_omits_optional_current_surface_default ... ok
+test smoke_plan_keeps_particle_state_at_the_schema_minimum ... ok
+test all_458_non_null_compile_choices_execute_without_skips ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 487.82s
+
+     Running tests/catalog_validation.rs (target/release/deps/catalog_validation-7e222ecef2b7c108)
+
+running 6 tests
+test hoisted_declarations_deserialize_and_resolve_in_the_enclosing_scope ... ok
+test rejects_builtin_target_name_mismatch_and_unknown_builtins ... ok
+test rejects_invalid_operators_and_malformed_lvalues ... ok
+test rejects_storage_type_and_out_argument_inconsistencies ... ok
+test rejects_unknown_types_and_duplicate_symbols ... ok
+test rejects_unresolved_user_calls_and_nested_identifiers ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/release/deps/cli-8a615666f2785768)
+
+running 11 tests
+test animate_binds_input_texture_into_saved_media_frames ... ok
+error: unrecognized subcommand 'wat'
+
+Usage: noisemaker-rs [OPTIONS] [COMMAND]
+
+For more information, try '--help'.
+error: the following required arguments were not provided:
+  <EFFECT>
+
+Usage: noisemaker-rs generate <EFFECT>
+
+For more information, try '--help'.
+error: unexpected argument 'extra' found
+
+Usage: noisemaker-rs effects [OPTIONS]
+
+For more information, try '--help'.
+error: unexpected argument '--bogus' found
+
+Usage: noisemaker-rs effects [OPTIONS]
+
+For more information, try '--help'.
+error: invalid value 'nope' for '--width <WIDTH>': invalid digit found in string
+
+For more information, try '--help'.
+test every_validation_branch_fails_before_output_mutation ... ok
+test apply_accepts_decimal_schema_endpoints_after_dsl_f32_coercion ... ok
+test ffmpeg_receives_literal_mp4_format_for_extensionless_atomic_temp ... ok
+test generate_random_run_stdin_and_apply_write_valid_atomic_pngs ... ok
+test missing_ffmpeg_keeps_requested_frames_or_fails_without_them ... ok
+test no_args_help_version_and_effect_inventory_are_real ... ok
+test public_mashup_effect_uses_seeded_surface_inputs_instead_of_black_fallback ... ok
+test schema_validation_precedes_apply_input_reads_and_animate_frame_artifacts ... ok
+noisemaker-rs: <cli>:1:5: Expected "("
+test validation_and_render_failures_preserve_existing_destinations_and_temps ... ok
+test file_and_alias_commands_params_and_textures_follow_cli_contract ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.55s
+
+     Running tests/dsl.rs (target/release/deps/dsl-d797faad20800455)
+
+running 19 tests
+test compiler_allows_surface_only_mixer_to_begin_a_chain ... ok
+test compiler_enforces_image_chain_and_render_target_rules ... ok
+test compiler_evaluates_values_and_partial_bindings_in_declaration_order ... ok
+test compiler_merges_named_and_positional_partials_and_rejects_mode_changes ... ok
+test compiler_normalizes_catalog_hex_color_defaults_like_supplied_colors ... ok
+test compiler_rejects_finite_f64_that_overflows_the_f32_parameter_boundary ... ok
+test compiler_requires_search_resolves_in_order_and_reports_unknown_effects ... ok
+test compiler_separates_surface_edges_and_accepts_surface_value_forms ... ok
+test compiler_strictly_coerces_enums_bools_colors_vectors_ranges_and_finiteness ... ok
+test compiler_uses_canonical_positional_order_and_locked_aliases ... ok
+test parser_builds_precedence_unary_arrays_vectors_booleans_and_enum_paths ... ok
+test compiler_validates_volume_and_loop_domains_without_executing_them ... ok
+test parser_decodes_colors_and_composite_values ... ok
+test parser_preserves_search_order_render_namespace_and_optional_semicolons ... ok
+test parser_rejects_mixed_arguments_at_the_conflicting_token ... ok
+test read_value_forms_reduce_to_surface_and_bad_name_is_rejected ... ok
+test surfaces_are_exactly_o0_through_o7 ... ok
+test tokenizer_failures_are_located_and_fail_closed ... ok
+test tokenizer_tracks_locations_comments_strings_and_numbers ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/full_parity.rs (target/release/deps/full_parity-e2e7720d79334855)
+
+running 4 tests
+test parity_schema_mode_has_exact_sorted_205_record_denominator_and_metrics ... ok
+test parity_schema_validation_rejects_threshold_failure_and_reasonless_unsupported ... ok
+test production_rust_sources_never_delegate_to_oracle_processes ... ok
+test parity_invokes_both_cli_processes_and_classifies_invalid_png_and_timeout_as_errors ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.44s
+
+     Running tests/iteration.rs (target/release/deps/iteration-0304f9c05f3ac30e)
+
+running 7 tests
+test balanced_loop_is_one_group_and_planner_defends_invalid_regions ... ok
+test cellular_automata_resets_and_matches_js_n1_n4_oracles ... ok
+test particle_name_contract_and_pure_grouping_are_exact ... ok
+test read_write_and_second_particle_owner_split_groups ... ok
+test schedule_uses_exact_fixed_delta_frame_and_positive_wrap ... ok
+test zero_iteration_image_effect_returns_byte_exact_input ... ok
+test navier_stokes_matches_js_n1_n4_full_frame_oracles ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.65s
+
+     Running tests/overlay.rs (target/release/deps/overlay-542168e0650ff4d8)
+
+running 4 tests
+test initial_mode_is_clear_passthrough_and_does_not_touch_cache ... ok
+test cache_key_hits_misses_evicts_refreshes_and_clears ... ok
+test zero_and_oversized_limits_leave_entries_uncached ... ok
+test ready_overlays_match_exact_oracle_hashes_and_are_deterministic ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s
+
+     Running tests/package.rs (target/release/deps/package-9b2dcaebbf831acd)
+
+running 3 tests
+test package_binary_prints_usage_without_arguments ... ok
+test package_metadata_and_user_facing_files_are_complete ... ok
+test export_kit_config_is_valid_and_matches_catalog ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/parity_spine.rs (target/release/deps/parity_spine-6f3ee69fddf9a6a4)
+
+running 2 tests
+test precision_boundaries_are_byte_exact ... ignored, requires a noisemaker-for-cpu checkout; set NOISEMAKER_JS_CPU_DIR and use --ignored
+test three_effect_js_oracle_parity_is_byte_exact ... ignored, requires a noisemaker-for-cpu checkout; set NOISEMAKER_JS_CPU_DIR and use --ignored
+
+test result: ok. 0 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/pass_runner.rs (target/release/deps/pass_runner-551eb3033e9cb768)
+
+running 14 tests
+test canonical_uniforms_override_effect_aliases ... ok
+test attachment_writes_preserve_non_finite_shader_lanes_for_format_conversion ... ok
+test conditions_repeats_and_resource_dimensions_are_deterministic ... ok
+test execution_samples_external_linear_and_internal_nearest ... ok
+test execution_supports_mrt_and_quantizes_each_output_format ... ok
+test execution_updates_named_attachments_uses_viewport_and_binds_black_missing_sampler ... ok
+test external_and_internal_filter_contract_is_representable ... ok
+test classic_palette_indices_override_hidden_uniforms_but_zero_keeps_raw_defaults ... ok
+test mrt_rejects_mixed_destination_dimensions_before_execution ... ok
+test navier_splat_initial_attachment_matches_javascript_cpu_oracle ... ok
+test parameters_use_defaults_coerce_values_and_render_seed_inherits ... ok
+test reserved_canonical_uniforms_survive_aliases_through_pass_execution ... ok
+test single_attachment_without_viewport_preserves_declared_resource_dimensions ... ok
+test fractional_atlas_z_generators_match_javascript_pre_render_volume_oracles ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+
+     Running tests/png.rs (target/release/deps/png-51001049f63ddec6)
+
+running 10 tests
+test decode_rejects_crc_failures ... ok
+test decode_normalizes_every_supported_8_bit_color_type_to_rgba ... ok
+test decode_rejects_dimensions_over_the_shared_pixel_cap ... ok
+test decode_rejects_input_over_the_png_memory_boundary ... ok
+test decode_rejects_interlacing_before_allocating_output ... ok
+test decode_rejects_invalid_chunk_order ... ok
+test decode_rejects_non_8_bit_sources ... ok
+test decode_rejects_decompressed_data_beyond_the_header_size ... ok
+test decode_rejects_oversized_ancillary_chunks_without_reading_the_payload ... ok
+test rgba8_encode_decode_is_top_down_and_complete ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/render_effect.rs (target/release/deps/render_effect-fc0f0319a7433f06)
+
+running 14 tests
+test crt_reduced_turn_sine_matches_javascript_cpu_oracle_rgba8_pixel ... ok
+test classic_palette_defaults_match_javascript_cpu_oracle_pixels ... ok
+test direct_parameter_api_accepts_decimal_schema_endpoints_at_f32_precision ... ok
+test custom_struct_copy_constructor_executes_real_shapes3d_program ... ok
+test direct_parameter_api_rejects_malformed_scalars_and_catalog_bound_violations ... ok
+test direct_parameter_api_rejects_wrong_width_and_non_finite_vectors ... ok
+test direct_parameter_api_accepts_documented_lossless_coercions ... ok
+test multi_pass_mixer_and_derivative_effects_render_finite_8x8 ... ok
+test remap_computed_uniform_array_and_shape_global_name_collision_are_supported ... ok
+test snow_f32_semantic_adapter_matches_javascript_cpu_oracle_pixels ... ok
+test solid_and_invert_have_literal_pixels ... ok
+test temporal_aberration_matches_javascript_factory_true_branch_assignment_bug ... ok
+test unknown_effect_is_typed ... ok
+test noise_is_deterministic_and_render_seed_changes_it ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.87s
+
+     Running tests/renderer.rs (target/release/deps/renderer-cc118cd5e453b0da)
+
+running 8 tests
+test compile_failures_are_transparent_dsl_errors_before_execution ... ok
+test independent_chains_do_not_share_current_images ... ok
+test renderer_honors_default_last_write_and_explicit_earlier_target ... ok
+test renderer_returns_typed_unwritten_and_missing_mixer_surface_errors ... ok
+test renderer_renders_solid_and_generator_filter_literal_pixels ... ok
+test renderer_value_and_partial_bindings_equal_expanded_program ... ok
+test repeated_render_calls_do_not_retain_named_surfaces ... ok
+test renderer_wires_mixer_surface_parameters ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+     Running tests/runtime.rs (target/release/deps/runtime-0e20e6be6dabbfe8)
+
+running 7 tests
+test comparisons_reduce_for_operators_and_relational_builtins_return_vectors ... ok
+test constructors_flatten_splat_and_reject_invalid_conversions ... ok
+test derivatives_record_replay_and_reject_divergent_shapes ... ok
+test integer_ops_wrap_and_float_division_preserves_signed_zero_semantics ... ok
+test matrix_products_pcg_and_bitcasts_match_golden_values ... ok
+test texture_handles_are_stable_indices_and_use_bottom_left_coordinates ... ok
+test unknown_builtin_and_wrong_arity_are_typed_errors ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/runtime_conformance.rs (target/release/deps/runtime_conformance-598f2b15246dfbda)
+
+running 7 tests
+test emitted_unary_binary_and_logical_operator_families_are_value_exact ... ok
+test float_component_builtins_match_sibling_edge_semantics ... ok
+test geometry_builtins_match_nontrivial_reference_vectors ... ok
+test integer_bit_half_and_matrix_operations_are_bit_exact ... ok
+test relational_and_boolean_builtins_return_lane_exact_results ... ok
+test standard_sine_matches_javascript_math_sin_then_float32 ... ok
+test texture_builtins_match_filter_origin_lod_fetch_and_size_contracts ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/runtime_inventory.rs (target/release/deps/runtime_inventory-ff42f21ba176bf8d)
+
+running 2 tests
+test every_locked_ir_builtin_signature_dispatches_with_its_annotated_type ... ok
+test every_locked_ir_binary_signature_dispatches_with_its_annotated_type ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+
+     Running tests/sampler.rs (target/release/deps/sampler-b3415043957a0a58)
+
+running 10 tests
+test bilinear_uses_bottom_left_texel_centers_and_averages_the_center ... ok
+test bilinear_clamps_to_edge_texels ... ok
+test nearest_clamps_out_of_range_uvs_without_wrapping ... ok
+test nearest_reads_top_down_storage_with_glsl_bottom_left_coordinates ... ok
+test rgba16f_quantization_matches_reference_webgl_attachment_truncation ... ok
+test rgba32f_quantization_is_an_explicit_no_op ... ok
+test rgba8_quantization_clamps_rounds_and_round_trips_as_bytes ... ok
+test samplers_map_non_finite_uvs_to_stable_clamped_edges ... ok
+test surfaces_default_to_nearest_filtering_and_can_request_linear_filtering ... ok
+test rgba16f_quantization_preserves_special_values_and_truncates_subnormals ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/scatter.rs (target/release/deps/scatter-8a90c5d2242d5e20)
+
+running 7 tests
+test dla_colliding_stuck_agents_add_and_unstuck_agents_do_nothing ... ok
+test billboard_hash_shapes_sprite_rotation_and_both_blends_are_exact ... ok
+test draw_registry_and_point_origin_rules_are_exact ... ok
+test flow3d_flattens_z_limits_prefix_and_adds_opaque_alpha ... ok
+test unknown_draw_key_returns_typed_error_before_program_lookup ... ok
+test lenia_physarum_and_points_render_match_constant_scaled_and_view_rules ... ok
+test wormhole_end_to_end_matches_oracle_and_dimension_mismatch_is_typed_graph_error ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.29s
+
+     Running tests/surface.rs (target/release/deps/surface-77348c89a2dd3340)
+
+running 6 tests
+test clone_and_clear_are_independent ... ok
+test rgba8_conversion_is_top_down_clamped_rounded_and_finite ... ok
+test rgba8_conversion_round_trips_and_surface_accessors_are_consistent ... ok
+test surface_rejects_the_first_dimension_over_the_shared_pixel_cap ... ok
+test surface_rejects_mismatched_float_and_byte_lengths ... ok
+test surface_rejects_zero_dimensions_with_stable_typed_errors ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/value.rs (target/release/deps/value-421a60d2a5cd744b)
+
+running 3 tests
+test swizzles_arrays_structs_and_samplers_remain_typed ... ok
+test invalid_value_access_is_a_typed_error ... ok
+test values_store_float_lanes_at_f32_boundaries_and_copy_by_value ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/vm.rs (target/release/deps/vm-da33090f79cd0c88)
+
+running 12 tests
+test binary_expression_converts_operands_to_their_typed_ir_declarations ... ok
+test canonical_hash_uint_call_matches_javascript_cpu_semantics ... ok
+test conditional_expression_converts_the_selected_branch_to_its_declared_type ... ok
+test ordinary_direct_conditional_assignment_writes_the_true_branch ... ok
+test vm_branch_hoisted_declaration_is_initialized_by_the_selected_nested_block ... ok
+test vm_executes_scopes_loops_lvalues_assignment_expressions_and_copy_back ... ok
+test vm_records_and_replays_all_fine_derivative_builtins ... ok
+test vm_supports_struct_members_prefix_ternary_while_and_do_while ... ok
+test vm_validation_rejects_duplicate_component_swizzle_writes ... ok
+test vm_wires_texture_and_derivative_builtins_through_runtime ... ok
+test vm_writes_all_indexed_types_and_nested_lvalue_compositions ... ok
+test vm_rejects_unbounded_execution_recursion_and_discard_deterministically ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/volume.rs (target/release/deps/volume-ed4838856041c2ec)
+
+running 7 tests
+test huge_volume_atlases_fail_before_allocation_or_integer_wrap ... ok
+test incoming_volume_atlas_must_be_exactly_n_by_n_squared ... ok
+test volume_generator_executes_typed_ir_before_public_image_wrapper_rejects_channel ... ok
+test volume_generator_filter_and_renderer_preserve_typed_flow ... ok
+test incoming_atlas_overrides_downstream_authored_volume_size ... ok
+test zero_iteration_volume_generator_returns_zero_starter_and_bypasses_passes ... ok
+test zero_iteration_clones_every_incoming_typed_channel ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.51s
+
+   Doc-tests noisemaker_cpu
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+exit=0

@@ -1,0 +1,68 @@
+   Packaging noisemaker-for-rust v0.1.0 (/state/cache/scratch/gap002-v4/iso)
+warning: ignoring test `adapters` as `tests/adapters.rs` is not included in the published package
+warning: ignoring test `catalog` as `tests/catalog.rs` is not included in the published package
+warning: ignoring test `catalog_smoke` as `tests/catalog_smoke.rs` is not included in the published package
+warning: ignoring test `catalog_validation` as `tests/catalog_validation.rs` is not included in the published package
+warning: ignoring test `cli` as `tests/cli.rs` is not included in the published package
+warning: ignoring test `dsl` as `tests/dsl.rs` is not included in the published package
+warning: ignoring test `full_parity` as `tests/full_parity.rs` is not included in the published package
+warning: ignoring test `iteration` as `tests/iteration.rs` is not included in the published package
+warning: ignoring test `overlay` as `tests/overlay.rs` is not included in the published package
+warning: ignoring test `package` as `tests/package.rs` is not included in the published package
+warning: ignoring test `parity_spine` as `tests/parity_spine.rs` is not included in the published package
+warning: ignoring test `pass_runner` as `tests/pass_runner.rs` is not included in the published package
+warning: ignoring test `png` as `tests/png.rs` is not included in the published package
+warning: ignoring test `render_effect` as `tests/render_effect.rs` is not included in the published package
+warning: ignoring test `renderer` as `tests/renderer.rs` is not included in the published package
+warning: ignoring test `runtime` as `tests/runtime.rs` is not included in the published package
+warning: ignoring test `runtime_conformance` as `tests/runtime_conformance.rs` is not included in the published package
+warning: ignoring test `runtime_inventory` as `tests/runtime_inventory.rs` is not included in the published package
+warning: ignoring test `sampler` as `tests/sampler.rs` is not included in the published package
+warning: ignoring test `scatter` as `tests/scatter.rs` is not included in the published package
+warning: ignoring test `surface` as `tests/surface.rs` is not included in the published package
+warning: ignoring test `value` as `tests/value.rs` is not included in the published package
+warning: ignoring test `vm` as `tests/vm.rs` is not included in the published package
+warning: ignoring test `volume` as `tests/volume.rs` is not included in the published package
+    Packaged 52 files, 34.3MiB (1.4MiB compressed)
+   Verifying noisemaker-for-rust v0.1.0 (/state/cache/scratch/gap002-v4/iso)
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling utf8parse v0.2.2
+   Compiling serde_core v1.0.229
+   Compiling crc32fast v1.5.0
+   Compiling simd-adler32 v0.3.10
+   Compiling anstyle-parse v1.0.0
+   Compiling syn v3.0.3
+   Compiling adler2 v2.0.1
+   Compiling zmij v1.0.23
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling cfg-if v1.0.4
+   Compiling colorchoice v1.0.5
+   Compiling anstyle-query v1.1.5
+   Compiling anstyle v1.0.14
+   Compiling anstream v1.0.0
+   Compiling miniz_oxide v0.8.9
+   Compiling serde_json v1.0.151
+   Compiling thiserror v2.0.20
+   Compiling strsim v0.11.1
+   Compiling heck v0.5.0
+   Compiling clap_lex v1.1.0
+   Compiling serde v1.0.229
+   Compiling clap_builder v4.6.6
+   Compiling clap_derive v4.6.4
+   Compiling thiserror-impl v2.0.20
+   Compiling serde_derive v1.0.229
+   Compiling flate2 v1.1.9
+   Compiling fdeflate v0.3.7
+   Compiling memchr v2.8.3
+   Compiling bitflags v2.13.1
+   Compiling itoa v1.0.18
+   Compiling png v0.18.1
+   Compiling clap v4.6.6
+   Compiling noisemaker-for-rust v0.1.0 (/state/cache/scratch/gap002-v4/iso/target/package/noisemaker-for-rust-0.1.0)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 23.47s
+package-exit=0
+noisemaker-for-rust-0.1.0
+noisemaker-for-rust-0.1.0.crate
+tmp-crate

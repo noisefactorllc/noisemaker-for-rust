@@ -1,0 +1,5 @@
+Linux 083c56fa7a34 6.8.0-134-generic #134-Ubuntu SMP PREEMPT_DYNAMIC Fri Jun 26 18:43:11 UTC 2026 x86_64 GNU/Linux
+Model name:                              AMD EPYC 7713 64-Core Processor
+               total        used        free      shared  buff/cache   available
+Mem:              15           2           0           0          13          12
+/dev/sda        315G   66G  234G  22% /state

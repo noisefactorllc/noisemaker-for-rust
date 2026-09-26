@@ -1,0 +1,6 @@
+noisemaker-rs: <cli>:1:47: Parameter "colorCount" must be at most 4
+invalid-exit=1
+noisemaker-rs: Unknown parameter "bogus" for synth/gradient
+invalid2-exit=1
+recover-exit=0
+0dd30eaf65defaa97b90668647244490a259a3f99207e658ce1f290917fa02d9  /state/cache/scratch/gap002-v4/recovered-stable.png

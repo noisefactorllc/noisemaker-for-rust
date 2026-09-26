@@ -1,0 +1,46 @@
+  Installing noisemaker-for-rust v0.1.0 (/state/cache/scratch/gap002-v4/unpack-1.85.0/noisemaker-for-rust-0.1.0)
+    Updating crates.io index
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling serde_core v1.0.229
+   Compiling utf8parse v0.2.2
+   Compiling crc32fast v1.5.0
+   Compiling syn v3.0.3
+   Compiling simd-adler32 v0.3.10
+   Compiling anstyle-parse v1.0.0
+   Compiling anstyle-query v1.1.5
+   Compiling adler2 v2.0.1
+   Compiling zmij v1.0.23
+   Compiling cfg-if v1.0.4
+   Compiling anstyle v1.0.14
+   Compiling colorchoice v1.0.5
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling anstream v1.0.0
+   Compiling miniz_oxide v0.8.9
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling strsim v0.11.1
+   Compiling clap_lex v1.1.0
+   Compiling thiserror v2.0.20
+   Compiling heck v0.5.0
+   Compiling clap_derive v4.6.4
+   Compiling clap_builder v4.6.6
+   Compiling thiserror-impl v2.0.20
+   Compiling serde_derive v1.0.229
+   Compiling flate2 v1.1.9
+   Compiling fdeflate v0.3.7
+   Compiling memchr v2.8.3
+   Compiling bitflags v2.13.1
+   Compiling itoa v1.0.18
+   Compiling png v0.18.1
+   Compiling clap v4.6.6
+   Compiling noisemaker-for-rust v0.1.0 (/state/cache/scratch/gap002-v4/unpack-1.85.0/noisemaker-for-rust-0.1.0)
+    Finished `release` profile [optimized] target(s) in 50.15s
+  Installing /state/cache/scratch/gap002-v4/root-1.85.0/bin/noisemaker-rs
+   Installed package `noisemaker-for-rust v0.1.0 (/state/cache/scratch/gap002-v4/unpack-1.85.0/noisemaker-for-rust-0.1.0)` (executable `noisemaker-rs`)
+warning: be sure to add `/state/cache/scratch/gap002-v4/root-1.85.0/bin` to your PATH to be able to run the installed binaries
+install-exit=0
+11f8f86d12feb11b32464dc2d0b48bea0400d5995105e03bc3195113e3b04fca  /state/cache/scratch/gap002-v4/root-1.85.0/bin/noisemaker-rs
+noisemaker-rs 0.1.0
+version-exit=0

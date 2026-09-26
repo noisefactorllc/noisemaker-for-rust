@@ -1,0 +1,7 @@
+  Installing noisemaker-for-rust v0.1.0 (/state/cache/scratch/gap002-v4/unpack-stable/noisemaker-for-rust-0.1.0)
+    Updating crates.io index
+    Finished `release` profile [optimized] target(s) in 0.34s
+  Installing /state/cache/scratch/gap002-v4/root-stable/bin/noisemaker-rs
+   Installed package `noisemaker-for-rust v0.1.0 (/state/cache/scratch/gap002-v4/unpack-stable/noisemaker-for-rust-0.1.0)` (executable `noisemaker-rs`)
+warning: be sure to add `/state/cache/scratch/gap002-v4/root-stable/bin` to your PATH to be able to run the installed binaries
+install-exit=0

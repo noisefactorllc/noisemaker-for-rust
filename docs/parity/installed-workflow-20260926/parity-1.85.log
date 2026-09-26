@@ -1,0 +1,4 @@
+[1/2] classicNoisedeck/bitEffects: max=0 mean=0.0000 over2=0 rust=0.542s js=0.295s
+[2/2] synth/gradient: max=0 mean=0.0000 over2=0 rust=0.411s js=0.281s
+denominator: catalog=2 compared=2 unsupported=0 errors=0 passed=2 failed=0 byte_exact=2
+parity-exit=0
