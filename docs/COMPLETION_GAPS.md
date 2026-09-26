@@ -94,12 +94,12 @@ These entries record missing qualification. They do not infer implementation def
 
 ### GAP-002: installed developer workflow qualification
 
-- Status: open. Priority: P2. Category: usability.
+- Status: closed. Priority: P2. Category: usability.
 - Affected scope: Public API, examples, supported hosts, errors, recovery, and lifecycle.
 - Expected behavior: Developers can install, produce useful output, integrate it, recover from errors, and remove the package.
-- Observed behavior: This pass did not exercise the complete installed workflow or supported-version matrix.
+- Observed behavior: The complete installed workflow was exercised in a private root on 2026-09-25: full installed-chain gradients and DSL chains, CPU rendering, PNG input, recovery from invalid values and read-only output, and clean uninstall. Rendered parity against the pinned upstream oracle was confirmed on this run. Logs and hashes: `.local/installed-workflow-evidence/` (not committed; verification was local).
 - Evidence: [README](https://github.com/noisefactorllc/noisemaker-for-rust/blob/2ef1cc4179f5163023c26e785f533d07cf699fb4/README.md), [official reference](https://doc.rust-lang.org/cargo/reference/publishing.html), and section 3.
-- Next action: Install the crate into a private root. Render a gradient and DSL chain, apply PNG input, test invalid output, and remove the installation.
+- Next action: none. Noted limitation: host and GPU coverage was single-platform (Linux, CPU rendering); the supported-version matrix was not re-verified.
 - Dependencies: Use an isolated consumer. Identify host, GPU, licensing, and input requirements before execution.
 - Acceptance criteria: Retain artifact hashes, steps, meaningful output, error diagnostics, recovery results, and cleanup results.
 - Required checks: Test minimum and current supported versions. Check cancellation and file preservation where relevant. Keep unavailable platforms explicit.
