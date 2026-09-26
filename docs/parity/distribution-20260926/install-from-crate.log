@@ -1,0 +1,9 @@
+== cargo install from the .crate file (1.85.0-x86_64-unknown-linux-gnu) ==
+    Updating crates.io index
+error: could not find `/state/cache/scratch/gap003-iso/src/target/package/noisemaker-for-rust-0.1.0.crate` in registry `crates-io` with version `*`
+CARGO-INSTALL-FROM-CRATE-EXIT:101
+ls: cannot access '/state/cache/scratch/gap003-iso/crate-install-1.85.0-x86_64-unknown-linux-gnu/bin/': No such file or directory
+== cargo install from the .crate file (stable-x86_64-unknown-linux-gnu) ==
+error: invalid character `/` in package name: `/state/cache/scratch/gap003-iso/src/target/package/noisemaker-for-rust-0.1.0.crate`, the first character must be a Unicode XID start character (most letters or `_`)
+CARGO-INSTALL-FROM-CRATE-EXIT:101
+ls: cannot access '/state/cache/scratch/gap003-iso/crate-install-stable-x86_64-unknown-linux-gnu/bin/': No such file or directory

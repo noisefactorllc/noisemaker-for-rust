@@ -1,7 +1,0 @@
-== install from .crate archive (stable) ==
-/usr/bin/bash: line 27: +stable: command not found
-INSTALL-EXIT:0
-ls: cannot access 'private-stable/bin/': No such file or directory
-/usr/bin/bash: line 30: private-stable/bin/noisemaker-rs: No such file or directory
-0
-EFFECTS-EXIT:0

@@ -1,7 +1,0 @@
-== install from .crate archive (1.85.0) ==
-/usr/bin/bash: line 27: +1.85.0: command not found
-INSTALL-EXIT:0
-ls: cannot access 'private-1.85.0/bin/': No such file or directory
-/usr/bin/bash: line 30: private-1.85.0/bin/noisemaker-rs: No such file or directory
-0
-EFFECTS-EXIT:0
