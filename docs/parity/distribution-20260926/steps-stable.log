@@ -1,0 +1,36 @@
+== private install from the unpacked .crate archive (stable) ==
+    Finished `release` profile [optimized] target(s) in 40.65s
+  Installing /state/cache/scratch/gap003-iso/private-stable/bin/noisemaker-rs
+   Installed package `noisemaker-for-rust v0.1.0 (/state/cache/scratch/gap003-iso/noisemaker-for-rust-0.1.0)` (executable `noisemaker-rs`)
+warning: be sure to add `/state/cache/scratch/gap003-iso/private-stable/bin` to your PATH to be able to run the installed binaries
+INSTALL-EXIT:0
+noisemaker-rs 0.1.0
+VERSION-EXIT:0
+EFFECTS-EXIT:0
+205
+== packaged examples build + run (stable) ==
+   Compiling noisemaker-for-rust v0.1.0 (/state/cache/scratch/gap003-iso/noisemaker-for-rust-0.1.0)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 22.24s
+BUILD-EXAMPLES-EXIT:0
+/state/cache/scratch/gap003-iso/example-render_effect-stable.png
+RUN-EXAMPLE-1-EXIT:0
+/state/cache/scratch/gap003-iso/example-render_dsl-stable.png
+RUN-EXAMPLE-2-EXIT:0
+GENERATE-EXIT:0
+== upgrade: reinstall over the existing private root (stable) ==
+    Replaced package `noisemaker-for-rust v0.1.0 (/state/cache/scratch/gap003-iso/noisemaker-for-rust-0.1.0)` with `noisemaker-for-rust v0.1.0 (/state/cache/scratch/gap003-iso/noisemaker-for-rust-0.1.0)` (executable `noisemaker-rs`)
+warning: be sure to add `/state/cache/scratch/gap003-iso/private-stable/bin` to your PATH to be able to run the installed binaries
+UPGRADE-EXIT:0
+noisemaker-rs 0.1.0
+POST-UPGRADE-VERSION-EXIT:0
+POST-UPGRADE-RENDER-EXIT:0
+POST-UPGRADE-RENDER-IDENTICAL
+== removal (stable) ==
+    Removing /state/cache/scratch/gap003-iso/private-stable/bin/noisemaker-rs
+UNINSTALL-EXIT:0
+== reinstall after removal (stable) ==
+   Installed package `noisemaker-for-rust v0.1.0 (/state/cache/scratch/gap003-iso/noisemaker-for-rust-0.1.0)` (executable `noisemaker-rs`)
+warning: be sure to add `/state/cache/scratch/gap003-iso/private-stable/bin` to your PATH to be able to run the installed binaries
+REINSTALL-EXIT:0
+noisemaker-rs 0.1.0
+REINSTALL-VERSION-EXIT:0

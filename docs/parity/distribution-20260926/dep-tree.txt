@@ -1,0 +1,72 @@
+ Downloading crates ...
+  Downloaded crypto-common v0.1.7
+  Downloaded digest v0.10.7
+  Downloaded generic-array v0.14.7
+  Downloaded block-buffer v0.10.4
+  Downloaded cpufeatures v0.2.17
+  Downloaded version_check v0.9.5
+  Downloaded sha2 v0.10.9
+  Downloaded typenum v1.20.1
+noisemaker-for-rust v0.1.0 (/state/cache/scratch/rustdist/src-copy)
+├── clap v4.6.6
+│   ├── clap_builder v4.6.6
+│   │   ├── anstream v1.0.0
+│   │   │   ├── anstyle v1.0.14
+│   │   │   ├── anstyle-parse v1.0.0
+│   │   │   │   └── utf8parse v0.2.2
+│   │   │   ├── anstyle-query v1.1.5
+│   │   │   ├── colorchoice v1.0.5
+│   │   │   ├── is_terminal_polyfill v1.70.2
+│   │   │   └── utf8parse v0.2.2
+│   │   ├── anstyle v1.0.14
+│   │   ├── clap_lex v1.1.0
+│   │   └── strsim v0.11.1
+│   └── clap_derive v4.6.4 (proc-macro)
+│       ├── heck v0.5.0
+│       ├── proc-macro2 v1.0.107
+│       │   └── unicode-ident v1.0.24
+│       ├── quote v1.0.47
+│       │   └── proc-macro2 v1.0.107 (*)
+│       └── syn v3.0.3
+│           ├── proc-macro2 v1.0.107 (*)
+│           ├── quote v1.0.47 (*)
+│           └── unicode-ident v1.0.24
+├── png v0.18.1
+│   ├── bitflags v2.13.1
+│   ├── crc32fast v1.5.0
+│   │   └── cfg-if v1.0.4
+│   ├── fdeflate v0.3.7
+│   │   └── simd-adler32 v0.3.10
+│   ├── flate2 v1.1.9
+│   │   ├── crc32fast v1.5.0 (*)
+│   │   └── miniz_oxide v0.8.9
+│   │       ├── adler2 v2.0.1
+│   │       └── simd-adler32 v0.3.10
+│   └── miniz_oxide v0.8.9 (*)
+├── serde v1.0.229
+│   ├── serde_core v1.0.229
+│   └── serde_derive v1.0.229 (proc-macro)
+│       ├── proc-macro2 v1.0.107 (*)
+│       ├── quote v1.0.47 (*)
+│       └── syn v3.0.3 (*)
+├── serde_json v1.0.151
+│   ├── itoa v1.0.18
+│   ├── memchr v2.8.3
+│   ├── serde_core v1.0.229
+│   └── zmij v1.0.23
+└── thiserror v2.0.20
+    └── thiserror-impl v2.0.20 (proc-macro)
+        ├── proc-macro2 v1.0.107 (*)
+        ├── quote v1.0.47 (*)
+        └── syn v3.0.3 (*)
+[dev-dependencies]
+└── sha2 v0.10.9
+    ├── cfg-if v1.0.4
+    ├── cpufeatures v0.2.17
+    └── digest v0.10.7
+        ├── block-buffer v0.10.4
+        │   └── generic-array v0.14.7
+        │       └── typenum v1.20.1
+        └── crypto-common v0.1.7
+            ├── generic-array v0.14.7 (*)
+            └── typenum v1.20.1

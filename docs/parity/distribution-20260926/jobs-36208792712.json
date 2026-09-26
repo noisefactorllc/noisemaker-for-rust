@@ -1,0 +1,301 @@
+{
+  "total_count": 2,
+  "jobs": [
+    {
+      "id": 108310861762,
+      "run_id": 36208792712,
+      "workflow_name": "ci",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/noisefactorllc/noisemaker-for-rust/actions/runs/36208792712",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOT4okAs8AAAAZN9SXwg",
+      "head_sha": "31fb9dc168a2f50aac99b6c379950767b06c4c62",
+      "url": "https://api.github.com/repos/noisefactorllc/noisemaker-for-rust/actions/jobs/108310861762",
+      "html_url": "https://github.com/noisefactorllc/noisemaker-for-rust/actions/runs/36208792712/job/108310861762",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-26T01:32:48Z",
+      "started_at": "2026-09-26T01:32:52Z",
+      "completed_at": "2026-09-26T01:33:33Z",
+      "name": "quality",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-09-26T01:32:53Z",
+          "completed_at": "2026-09-26T01:32:54Z"
+        },
+        {
+          "name": "Pre Harden runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-09-26T01:32:54Z",
+          "completed_at": "2026-09-26T01:32:58Z"
+        },
+        {
+          "name": "Harden runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-09-26T01:32:58Z",
+          "completed_at": "2026-09-26T01:32:58Z"
+        },
+        {
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-09-26T01:32:58Z",
+          "completed_at": "2026-09-26T01:33:00Z"
+        },
+        {
+          "name": "Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-09-26T01:33:00Z",
+          "completed_at": "2026-09-26T01:33:00Z"
+        },
+        {
+          "name": "Install Rust toolchains",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-09-26T01:33:00Z",
+          "completed_at": "2026-09-26T01:33:07Z"
+        },
+        {
+          "name": "Verify formatting",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-09-26T01:33:07Z",
+          "completed_at": "2026-09-26T01:33:08Z"
+        },
+        {
+          "name": "Lint all targets",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-09-26T01:33:08Z",
+          "completed_at": "2026-09-26T01:33:18Z"
+        },
+        {
+          "name": "Check the minimum supported Rust version",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-09-26T01:33:18Z",
+          "completed_at": "2026-09-26T01:33:28Z"
+        },
+        {
+          "name": "Test the generator",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-09-26T01:33:28Z",
+          "completed_at": "2026-09-26T01:33:29Z"
+        },
+        {
+          "name": "Verify generated artifacts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-09-26T01:33:29Z",
+          "completed_at": "2026-09-26T01:33:30Z"
+        },
+        {
+          "name": "Post Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-09-26T01:33:30Z",
+          "completed_at": "2026-09-26T01:33:30Z"
+        },
+        {
+          "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-09-26T01:33:30Z",
+          "completed_at": "2026-09-26T01:33:31Z"
+        },
+        {
+          "name": "Post Harden runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22,
+          "started_at": "2026-09-26T01:33:31Z",
+          "completed_at": "2026-09-26T01:33:32Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23,
+          "started_at": "2026-09-26T01:33:32Z",
+          "completed_at": "2026-09-26T01:33:32Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/noisefactorllc/noisemaker-for-rust/check-runs/108310861762",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000041425,
+      "runner_name": "GitHub Actions 1000041425",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 108310861865,
+      "run_id": 36208792712,
+      "workflow_name": "ci",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/noisefactorllc/noisemaker-for-rust/actions/runs/36208792712",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOT4okAs8AAAAZN9SYKQ",
+      "head_sha": "31fb9dc168a2f50aac99b6c379950767b06c4c62",
+      "url": "https://api.github.com/repos/noisefactorllc/noisemaker-for-rust/actions/jobs/108310861865",
+      "html_url": "https://github.com/noisefactorllc/noisemaker-for-rust/actions/runs/36208792712/job/108310861865",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-26T01:32:49Z",
+      "started_at": "2026-09-26T01:32:51Z",
+      "completed_at": "2026-09-26T02:02:02Z",
+      "name": "test-and-package",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-09-26T01:32:52Z",
+          "completed_at": "2026-09-26T01:32:54Z"
+        },
+        {
+          "name": "Pre Harden runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-09-26T01:32:54Z",
+          "completed_at": "2026-09-26T01:33:00Z"
+        },
+        {
+          "name": "Harden runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-09-26T01:33:00Z",
+          "completed_at": "2026-09-26T01:33:01Z"
+        },
+        {
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-09-26T01:33:01Z",
+          "completed_at": "2026-09-26T01:33:02Z"
+        },
+        {
+          "name": "Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-09-26T01:33:02Z",
+          "completed_at": "2026-09-26T01:33:02Z"
+        },
+        {
+          "name": "Run actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-09-26T01:33:02Z",
+          "completed_at": "2026-09-26T01:33:05Z"
+        },
+        {
+          "name": "Install stable Rust",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-09-26T01:33:05Z",
+          "completed_at": "2026-09-26T01:33:07Z"
+        },
+        {
+          "name": "Test all targets",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-09-26T01:33:07Z",
+          "completed_at": "2026-09-26T02:01:28Z"
+        },
+        {
+          "name": "Build the release binary",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-09-26T02:01:28Z",
+          "completed_at": "2026-09-26T02:01:51Z"
+        },
+        {
+          "name": "Build the crate archive",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-09-26T02:01:51Z",
+          "completed_at": "2026-09-26T02:01:58Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-09-26T02:01:58Z",
+          "completed_at": "2026-09-26T02:01:58Z"
+        },
+        {
+          "name": "Post Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-09-26T02:01:58Z",
+          "completed_at": "2026-09-26T02:01:58Z"
+        },
+        {
+          "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-09-26T02:01:58Z",
+          "completed_at": "2026-09-26T02:01:58Z"
+        },
+        {
+          "name": "Post Harden runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-09-26T02:01:58Z",
+          "completed_at": "2026-09-26T02:02:00Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-09-26T02:02:00Z",
+          "completed_at": "2026-09-26T02:02:00Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/noisefactorllc/noisemaker-for-rust/check-runs/108310861865",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000041426,
+      "runner_name": "GitHub Actions 1000041426",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

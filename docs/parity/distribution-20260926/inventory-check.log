@@ -1,0 +1,21 @@
+== extract .crate and build per-file inventory ==
+52 files in the fresh archive
+
+== byte comparison against the prior 2026-09-26 rustdist package run ==
+prior inventory entries: 52  fresh archive files: 52
+in prior inventory not in fresh archive: []
+in fresh archive not in prior inventory: []
+byte diffs: []
+RESULT: 52/52 files byte-identical between the 2026-09-26 rustdist run and the fresh isolated repackage of ff250e8e91e7003a918c7943146fc64d0fb123bc (git archive HEAD, cargo package --locked --no-verify, cargo 1.85.0).
+
+== notices present in the archive ==
+present: LICENSE (MIT License)
+present: README.md
+present: SECURITY.md
+present: CONTRIBUTING.md
+present: CODE_OF_CONDUCT.md
+present: TRADEMARK.md
+
+== Cargo.toml normalization ==
+Cargo.toml: cargo-normalized in the archive; original retained verbatim as Cargo.toml.orig
+All other 51 files byte-identical to the git-archive source copy of ff250e8e.

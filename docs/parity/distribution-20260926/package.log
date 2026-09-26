@@ -1,0 +1,34 @@
+== cargo package --locked (isolated copy of HEAD ff250e8) ==
+   Packaging noisemaker-for-rust v0.1.0 (/state/cache/scratch/gap003-iso/src)
+warning: ignoring test `adapters` as `tests/adapters.rs` is not included in the published package
+warning: ignoring test `catalog` as `tests/catalog.rs` is not included in the published package
+warning: ignoring test `catalog_smoke` as `tests/catalog_smoke.rs` is not included in the published package
+warning: ignoring test `catalog_validation` as `tests/catalog_validation.rs` is not included in the published package
+warning: ignoring test `cli` as `tests/cli.rs` is not included in the published package
+warning: ignoring test `dsl` as `tests/dsl.rs` is not included in the published package
+warning: ignoring test `full_parity` as `tests/full_parity.rs` is not included in the published package
+warning: ignoring test `iteration` as `tests/iteration.rs` is not included in the published package
+warning: ignoring test `overlay` as `tests/overlay.rs` is not included in the published package
+warning: ignoring test `package` as `tests/package.rs` is not included in the published package
+warning: ignoring test `parity_spine` as `tests/parity_spine.rs` is not included in the published package
+warning: ignoring test `pass_runner` as `tests/pass_runner.rs` is not included in the published package
+warning: ignoring test `png` as `tests/png.rs` is not included in the published package
+warning: ignoring test `render_effect` as `tests/render_effect.rs` is not included in the published package
+warning: ignoring test `renderer` as `tests/renderer.rs` is not included in the published package
+warning: ignoring test `runtime` as `tests/runtime.rs` is not included in the published package
+warning: ignoring test `runtime_conformance` as `tests/runtime_conformance.rs` is not included in the published package
+warning: ignoring test `runtime_inventory` as `tests/runtime_inventory.rs` is not included in the published package
+warning: ignoring test `sampler` as `tests/sampler.rs` is not included in the published package
+warning: ignoring test `scatter` as `tests/scatter.rs` is not included in the published package
+warning: ignoring test `surface` as `tests/surface.rs` is not included in the published package
+warning: ignoring test `value` as `tests/value.rs` is not included in the published package
+warning: ignoring test `vm` as `tests/vm.rs` is not included in the published package
+warning: ignoring test `volume` as `tests/volume.rs` is not included in the published package
+    Updating crates.io index
+    Packaged 52 files, 34.3MiB (1.4MiB compressed)
+PACKAGE-EXIT:0
+total 1480
+drwx------ 2 node 1001    4096 Sep 26 11:01 .
+drwx------ 3 node 1001    4096 Sep 26 11:01 ..
+-rw------- 1 node 1001 1505534 Sep 26 11:01 noisemaker-for-rust-0.1.0.crate
+db74b57f2bf5407f75414705000af0fc128bafb9c96863789305a3f82cb3171a  target/package/noisemaker-for-rust-0.1.0.crate

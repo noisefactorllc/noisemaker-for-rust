@@ -1,0 +1,1 @@
+db74b57f2bf5407f75414705000af0fc128bafb9c96863789305a3f82cb3171a  noisemaker-for-rust-0.1.0.crate
