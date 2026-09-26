@@ -32,6 +32,28 @@
     },
     "finding": "The range bumps the CPU pinned upstream revision from noisemaker@2f47612c29045c1b91af94887a8ff20106e980ef to noisemaker@9d3474dfdc6cb737ebb7b2f3598b16d940af1544 with identical snapshot effect data (src/effects/generated/upstream-snapshot.js changes only its UPSTREAM_REVISION line, sha256s above; the src/ diff contains no other effect, program, or parameter changes), and adds CPU-internal anti-staleness tooling (scripts/upstream/pinned-source-manifest.json, sourceSha256 fields in glsl-coverage.js, source-lock tests) that the Rust port does not consume. The port therefore reduces to the parameter-contract provenance bump; rendered output is unaffected, confirmed by the byte-exact run recorded here."
   },
+  "followup_range_audit": {
+    "declared_range": "noisemaker-for-cpu 79c3ad626f82939247317d77909080b25f05c6a9..d03aed7b30384bcebc04bc7f73a7f750ce3b2227. The delivery also cites the forced range end bfbe54764eee87c8f67d2b281d5f304faad04a5b as 41b9268..bfbe547; both are covered because 41b9268 is bfbe547's parent and bfbe547 is an ancestor of d03aed7 (merge-base verified locally, not assumed).",
+    "compare_url": "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/79c3ad626f82...d03aed7b3038",
+    "commits": [
+      "a1801be0715c7b368b23fe190bf714e2a781543e sync: update upstream source lock and inventory through noisemaker@6a0af04d",
+      "f935c3441fda7389d54eca5a6e2fa3d6bed5a3f1 Audit: record source-lock sync through noisemaker@6a0af04d in register and report (docs-only)",
+      "d03aed7b30384bcebc04bc7f73a7f750ce3b2227 Audit: add reproducible range-audit evidence to the compatibility report (docs-only)"
+    ],
+    "compare_url": "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/79c3ad626f82...d03aed7b3038",
+    "diffstat": "README.md 2, docs/COMPATIBILITY.md 12+, docs/COMPLETION_GAPS.md 1+, docs/EFFECTS.md 2, scripts/upstream/pinned-source-manifest.json 12+/7-, scripts/upstream/source-lock.js 6, src/effects/generated/upstream-snapshot.js 2, test/upstream-inventory.test.js 2; total 8 files, 32 insertions(+), 14 deletions(-)",
+    "snapshot_identity": {
+      "file": "src/effects/generated/upstream-snapshot.js",
+      "sha256_at_79c3ad6": "ed26740bfb16d79528aa0750ed40039a7f4498c62aef6da7d559a5a57a5595b2",
+      "sha256_at_41b9268": "8d0cec912dc1932a5eb0fb8d97ebd960540c2bfc951d7ef0c18942908ff94e05",
+      "sha256_at_bfbe547": "ed26740bfb16d79528aa0750ed40039a7f4498c62aef6da7d559a5a57a5595b2",
+      "sha256_at_d03aed7": "df429875fc9af9a24f6e9026b72f4d5b6dd75faf94e6c27dcbdd50f8e1344d7a",
+      "entire_diff": "+export const UPSTREAM_REVISION = \"6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa\"\n-export const UPSTREAM_REVISION = \"8eeb7b5ac14eb37a8d16037f607a88ce63924cd3\""
+    },
+    "manifest_corroboration": "The pinned-source-manifest diff over 79c3ad6..d03aed7 touches only shaders/src/runtime entries (backends/diagnostics.js added; webgl2.js, webgpu.js, pipeline.js sizes/sha256s updated). No shaders/effects entries changed, corroborating the unchanged snapshot effect data (the only 'shaders/effects' matches in the manifest diff are the pinned paths config, not entries).",
+    "renderer_note": "The span's only src/ runtime change is CPU renderer.js textureDimension handling ('auto' alias, param multiply, screenDivide default 1, scale-with-clamp, viewport w/h aliases, paramDefault 64) plus a synthetic-fixture test. The generated snapshot contains no pass viewport entries and no shipped texture width/height spec using the new forms, so no catalog effect exercises this code path; rendered output for the catalog is unaffected, confirmed by the byte-exact run recorded below.",
+    "finding": "The range bumps the CPU pinned upstream revision from noisemaker@8eeb7b5ac14eb37a8d16037f607a88ce63924cd3 to noisemaker@6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa with identical snapshot effect data (only the UPSTREAM_REVISION line changes, sha256s above), updates CPU-internal anti-staleness manifests the Rust port does not consume, and adds two docs-only CPU audit commits. The port reduces to the parameter-contract provenance bump to 6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa; rendered output is unaffected, confirmed by the byte-exact run recorded here."
+  },
   "declared_checks": {
     "declaration": "CONTRIBUTING.md publication checks, all executed with exit code 0 on the implementation tree 0638cace (sync commit) re-run on its code-identical successor 0369314 plus this docs-only record (no src/ or scripts/ changes between them); rustup 1.29.1, cargo 1.98.1 / rustc 1.98.1 (stable-x86_64-unknown-linux-gnu) and toolchain 1.85.0, Python 3.11",
     "commands": [
@@ -99,5 +121,40 @@
     "parity-report-20260925.json": "d3354d25eaf355698744f6d893a7fa1adecbdd5935d99c55b144fd3d574829c6",
     "parity-run-20260925.log": "a875f57ea434d5766eacfdc38ec66dee987b8c9741efc06ba61b79c7e9f436af",
     "parity-flow3d-120s-retry.json": "8c55c5305c2011738ee07de18b476dc86a5c1129639607ee3c877ee2105b3360"
+  },
+  "followup_run": {
+    "run_date": "2026-09-26",
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/platform/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json docs/parity/parity-report-20260926-ranged.json",
+    "port_revision": {
+      "repository": "noisefactorllc/noisemaker-for-rust",
+      "commit": "1eb130d9df3d70da8f9a3f0b157a1de0d2bbc875 (sync commit) — the code of the tree this run executed is exactly the committed sync tree 9a42d8e0c48eca550e7e30109755473ad6f16901; this docs-only record succeeds it with no src/ or scripts/ changes",
+      "tree": "9a42d8e0c48eca550e7e30109755473ad6f16901",
+      "binary_sha256": "d5ade3ea35d0f7fd3e0be136e959a2fd101af2a2e2732e5f5f7d88920c73a298",
+      "binary_built_with": "cargo build --release --locked, cargo 1.98.1, stable-x86_64-unknown-linux-gnu",
+      "param_contract_revision": "6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa"
+    },
+    "oracle_revision": {
+      "repository": "noisefactorllc/noisemaker-for-cpu",
+      "commit": "d03aed7b30384bcebc04bc7f73a7f750ce3b2227",
+      "tree": "a83a13ee6d7aa6d6b01688f1c166cc89af5df8df",
+      "runtime": "node v26.5.1, offline test oracle only, pinned checkout checked out at d03aed7"
+    },
+    "result": {"denominator": 205, "compared": 202, "unsupported": 3, "errors": 0, "passed": 202, "failed": 0, "byte_exact": 202},
+    "declared_checks_reexecuted": {
+      "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0 on the sync tree 9a42d8e0 (code identical to the follow-up record commit); cargo 1.98.1 / rustc 1.98.1 (stable) plus toolchain 1.85.0, Python 3.11",
+      "commands": [
+        {"command": "cargo fmt --all -- --check", "exit_code": 0},
+        {"command": "cargo clippy --all-targets --all-features -- -D warnings", "exit_code": 0},
+        {"command": "cargo +1.85.0 check --all-targets --all-features", "exit_code": 0},
+        {"command": "cargo test --all-targets --all-features --release", "exit_code": 0, "result": "every test-binary result line 'ok', 0 failed across the suite"},
+        {"command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'", "exit_code": 0, "result": "OK"},
+        {"command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check", "exit_code": 0},
+        {"command": "cargo build --release --locked", "exit_code": 0}
+      ]
+    },
+    "artifacts_sha256": {
+      "parity-report-20260926-ranged.json": "f01304cbccb51b68dbaa1c0151ed8638249da87ff7118a0f1cbc6c5eec22a7c9",
+      "parity-run-20260926-ranged.log": "c299769ae974578bb9df8eb05f9a545e1ef34508873c113ad19a894c5c23820c"
+    }
   }
 }
