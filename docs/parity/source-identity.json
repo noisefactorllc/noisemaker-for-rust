@@ -22,7 +22,29 @@
       "73597362dd1439718470254802ce4868fc774e9b Record sourceSha256 for compiled kernels in compile-glsl.js",
       "41b92689c23fb1ccf9b513ecc8a30fbe11365473 Record sourceSha256 for compiled kernels and enforce pin tie-in"
     ],
-    "finding": "The range bumps the CPU pinned upstream revision from noisemaker@2f47612c29045c1b91af94887a8ff20106e980ef to noisemaker@9d3474dfdc6cb737ebb7b2f3598b16d940af1544 with identical snapshot effect data (src/effects/generated/upstream-snapshot.js changes only its UPSTREAM_REVISION line; the src/ diff contains no other effect, program, or parameter changes), and adds CPU-internal anti-staleness tooling (scripts/upstream/pinned-source-manifest.json, sourceSha256 fields in glsl-coverage.js, source-lock tests) that the Rust port does not consume. The port therefore reduces to the parameter-contract provenance bump; rendered output is unaffected, confirmed by the byte-exact run recorded here."
+    "compare_url": "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/aaa6df50421d...41b92689c23f",
+    "diffstat": "README.md 2, docs/EFFECTS.md 2, scripts/upstream/compile-glsl.js 8+, scripts/upstream/inventory.js 9, scripts/upstream/pinned-source-manifest.json 5659+, scripts/upstream/source-lock.js 41, src/effects/generated/glsl-coverage.js 301+, src/effects/generated/upstream-snapshot.js 2, test/upstream-inventory.test.js 2, test/upstream-source-lock.test.js 96; total 10 files, 6114 insertions(+), 8 deletions(-)",
+    "snapshot_identity": {
+      "file": "src/effects/generated/upstream-snapshot.js",
+      "sha256_at_aaa6df5": "eb74c5b75bf0545aca010c9fb92ac64d1c6f45521e28444a6d7733693a7a3e77",
+      "sha256_at_41b9268": "8d0cec912dc1932a5eb0fb8d97ebd960540c2bfc951d7ef0c18942908ff94e05",
+      "entire_diff": "+export const UPSTREAM_REVISION = \"9d3474dfdc6cb737ebb7b2f3598b16d940af1544\"\n-export const UPSTREAM_REVISION = \"2f47612c29045c1b91af94887a8ff20106e980ef\""
+    },
+    "finding": "The range bumps the CPU pinned upstream revision from noisemaker@2f47612c29045c1b91af94887a8ff20106e980ef to noisemaker@9d3474dfdc6cb737ebb7b2f3598b16d940af1544 with identical snapshot effect data (src/effects/generated/upstream-snapshot.js changes only its UPSTREAM_REVISION line, sha256s above; the src/ diff contains no other effect, program, or parameter changes), and adds CPU-internal anti-staleness tooling (scripts/upstream/pinned-source-manifest.json, sourceSha256 fields in glsl-coverage.js, source-lock tests) that the Rust port does not consume. The port therefore reduces to the parameter-contract provenance bump; rendered output is unaffected, confirmed by the byte-exact run recorded here."
+  },
+  "declared_checks": {
+    "declaration": "CONTRIBUTING.md publication checks, all executed with exit code 0 on the implementation tree 0638cace (sync commit) re-run on its code-identical successor 0369314 plus this docs-only record (no src/ or scripts/ changes between them); rustup 1.29.1, cargo 1.98.1 / rustc 1.98.1 (stable-x86_64-unknown-linux-gnu) and toolchain 1.85.0, Python 3.11",
+    "commands": [
+      {"command": "cargo fmt --all -- --check", "exit_code": 0},
+      {"command": "cargo clippy --all-targets --all-features -- -D warnings", "exit_code": 0},
+      {"command": "cargo +1.85.0 check --all-targets --all-features", "exit_code": 0},
+      {"command": "cargo test --all-targets --all-features --release", "exit_code": 0, "result": "every test-binary result line 'ok', 0 failed across the suite; 2 ignored"},
+      {"command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'", "exit_code": 0, "result": "Ran 19 tests, OK"},
+      {"command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check", "exit_code": 0},
+      {"command": "cargo build --release --locked", "exit_code": 0},
+      {"command": "cargo package --locked", "exit_code": 0}
+    ],
+    "parity_harness": {"command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js <noisemaker-for-cpu checkout>/bin/noisemaker-cpu.js --timeout 120 --json docs/parity/parity-report-20260926.json", "exit_code": 0, "result": "denominator catalog=205 compared=202 unsupported=3 errors=0 passed=202 failed=0 byte_exact=202"}
   },
   "cpu_identity": {
     "architecture": "x86_64",
