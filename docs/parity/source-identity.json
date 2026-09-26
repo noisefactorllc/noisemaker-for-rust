@@ -243,5 +243,55 @@
       "parity-report-20260926-ranged.json": "f01304cbccb51b68dbaa1c0151ed8638249da87ff7118a0f1cbc6c5eec22a7c9",
       "parity-run-20260926-ranged.log": "c299769ae974578bb9df8eb05f9a545e1ef34508873c113ad19a894c5c23820c"
     }
+  },
+  "gap_audit_range_leg_audit": {
+    "declared_range": "noisemaker-for-cpu bfbe54764eee87c8f67d2b281d5f304faad04a5b..12db707f3f49e93a9d204263415a2a2ea55cb828 (forced-start delivery; the observed sub-span 7145223b522f785188630681be24c86de21f687f..12db707f3f49 is contained in it). Audited locally, not assumed: bfbe54764eee is an ancestor of 4b590d2f7f607a2788a5bc7675288ec166d0b633 (git merge-base --is-ancestor exits 0), and 4b590d2f7f60 is an ancestor of 12db707f3f49, so the previously audited legs (upstream_range_audit, forced_range_leg_audit, followup_range_audit, crt_range_leg_audit) plus this new leg cover the whole declared range.",
+    "new_commits": [
+      "7145223b522f785188630681be24c86de21f687f Audit: record bounded external-input parity comparison for GAP-002 (docs-only)",
+      "12db707f3f49e93a9d204263415a2a2ea55cb828 Audit: record bounded landscape authority comparison for GAP-003 and block on measured authority transcendental divergence (docs-only)"
+    ],
+    "compare_url": "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/4b590d2f7f60...12db707f3f49",
+    "diffstat": "docs/COMPATIBILITY.md 46+, docs/COMPLETION_GAPS.md 16, landscape-authority-comparison.json 71+; total 3 files, 127 insertions(+), 6 deletions(-)",
+    "snapshot_identity": {
+      "file": "src/effects/generated/upstream-snapshot.js",
+      "sha256_at_4b590d2": "df429875fc9af9a24f6e9026b72f4d5b6dd75faf94e6c27dcbdd50f8e1344d7a",
+      "sha256_at_12db707": "df429875fc9af9a24f6e9026b72f4d5b6dd75faf94e6c27dcbdd50f8e1344d7a",
+      "finding": "The two new commits are CPU-repo audit records (GAP-002 bounded external-input comparison, GAP-003 bounded landscape authority comparison). `git diff 4b590d2..12db707 -- src/ scripts/` is empty and the generated snapshot is byte-identical at both ends (sha256s above), so the parameter contract the Rust port consumes (revision 6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa) needs no change and the port requires no source change for this trigger. The leg's remaining changes are CPU-repo docs and a CPU-side comparison artifact the port does not mirror."
+    }
+  },
+  "gap_audit_range_run": {
+    "run_date": "2026-09-26",
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/platform/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json docs/parity/parity-report-20260926-12db707.json",
+    "port_revision": {
+      "repository": "noisefactorllc/noisemaker-for-rust",
+      "commit": "7f5561908b343b1fce11c2e7e1949d4446a1e6ff — the code of the tree this run executed; the committed record following it is docs-only with no src/ or scripts/ changes",
+      "tree": "986b5f8ee4602ffb2349d2fa20245f14d5d890ff",
+      "binary_sha256": "d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01",
+      "binary_built_with": "cargo build --release --locked, cargo 1.98.1, stable-x86_64-unknown-linux-gnu",
+      "param_contract_revision": "6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa"
+    },
+    "oracle_revision": {
+      "repository": "noisefactorllc/noisemaker-for-cpu",
+      "commit": "12db707f3f49e93a9d204263415a2a2ea55cb828",
+      "runtime": "node v26.5.1, offline test oracle only, fresh clone at its published default branch (main)"
+    },
+    "result": {"catalog": 205, "compared": 202, "unsupported": 3, "errors": 0, "passed": 202, "failed": 0, "byte_exact": 202},
+    "declared_checks_reexecuted": {
+      "declaration": "CONTRIBUTING.md publication checks executed with exit code 0 on the tree this run executed (7f556190; src/ and scripts/ unchanged by the docs-only record following it); cargo 1.98.1 / rustc 1.98.1 (stable) plus toolchain 1.85.0, Python 3.11. The crate declares no [features] section, so --all-features is a no-op flag.",
+      "commands": [
+        {"command": "cargo fmt --all -- --check", "exit_code": 0},
+        {"command": "cargo clippy --all-targets --all-features -- -D warnings", "exit_code": 0},
+        {"command": "cargo +1.85.0 check --all-targets --all-features", "exit_code": 0},
+        {"command": "cargo test --all-targets --all-features --release", "exit_code": 0, "result": "28 test-binary result lines all 'ok', 0 failed, 2 ignored (the NOISEMAKER_JS_CPU_DIR-gated parity_spine tests) across the suite"},
+        {"command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'", "exit_code": 0, "result": "Ran 19 tests, OK"},
+        {"command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check", "exit_code": 0},
+        {"command": "cargo build --release --locked", "exit_code": 0},
+        {"command": "cargo package --locked", "exit_code": 0, "result": "Packaged 53 files, 34.3MiB; verification compiled and finished"}
+      ]
+    },
+    "artifacts_sha256": {
+      "parity-report-20260926-12db707.json": "7ec350a58014af4309dcf4dff47d86c3c80923a9c1942cba10c152bc6a65120c",
+      "parity-run-20260926-12db707.log": "9ae38f9ac312625957320949e08eee8cb5e28da3c66bb94811bfbb32c34dce1d"
+    }
   }
 }
