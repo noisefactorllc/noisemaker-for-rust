@@ -4,7 +4,7 @@ Current compatibility matrix: [compatibility report](COMPATIBILITY.md).
 
 ## 1. Scope and source revisions
 
-Daily review: 2026-09-27. Current inspected source: [`347e298…`](https://github.com/noisefactorllc/noisemaker-for-rust/commit/347e298348fbf61993f537f2a7689e798674d7e4).
+Daily review: 2026-09-27. Current inspected source: [`863f64a247fa6255c0e2667b273dae9aedeea073`](https://github.com/noisefactorllc/noisemaker-for-rust/commit/863f64a247fa6255c0e2667b273dae9aedeea073).
 Full rendered parity at this SHA: measured 2026-09-27 (section 3, GAP-001). Installed developer workflow and distribution qualification: measured 2026-09-26 on Linux x86_64 (GAP-002, GAP-003). Both results are carried across the docs-only revisions after `7f55619` because the runtime tree is unchanged. The macOS and Windows platform matrix remains unmeasured. No release approval follows from this review.
 Current upstream discovery: `e73a44a37f0c99bd3779c5fb26c7bba65a46a379`. Published Noisemaker authority: `1.0.192`, source `e73a44a37f0c99bd3779c5fb26c7bba65a46a379`, 210 effect IDs. The published manifest is byte-identical to the recorded 1.0.176 manifest. The effect catalog is unchanged.
 The observations below retain their original source and authority identities. They do not qualify later updates.
@@ -39,6 +39,29 @@ The containing commit identifies this register's publication revision. The share
 ## 3. Methods and evidence
 
 Review CI boundary: Exact-source runs: Export kit, ci. A passing export dispatch does not qualify rendered parity. Current complete-render enforcement remains an open requirement. [Exact-source responses](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/noisemaker-for-rust-remote-evidence.json).
+
+### Daily review, 2026-09-27, source-lock delivery `dedfd07`
+
+Newest noisemaker-for-cpu delivery: `dedfd07c24f80d9b0adddf912a4224ce6c1d795f`, upstream pin `12b4d74fb4f28d5f00bb1dde107fa8673814d8b9`. Compare URL: [7a824744..dedfd07](https://github.com/noisefactorllc/noisemaker-for-cpu/compare/7a824744cb563f2280811f04e5a49f6792ed319d...dedfd07c24f80d9b0adddf912a4224ce6c1d795f).
+Audited locally, not assumed: `7a824744cb563f2280811f04e5a49f6792ed319d` is an ancestor of `dedfd07` (`git merge-base --is-ancestor` exits 0). The new leg is one commit, `dedfd07c…` (`sync: update upstream source lock and inventory through noisemaker@12b4d74f`). The pin moved `7443f6e6..12b4d74f`.
+Diffstat: README 2, docs/COMPATIBILITY 12+, docs/COMPLETION_GAPS 1+, docs/EFFECTS 2, CPU evidence records (`source-lock-sync-7443f6e6-12b4d74f-audit.json`, parity and range-audit records, two logs), `scripts/upstream/pinned-source-manifest.json` 11+, `scripts/upstream/source-lock.js` 6, snapshot 2, `test/upstream-inventory.test.js` 2. Total 13 files, 462 insertions(+), 340 deletions(-). Zero `src/` runtime files other than the generated snapshot.
+Snapshot identity: sha256 at `7a824744` `7c2699a5c686e93572e56bb08f0985b22bf48a4a414799f9b15dab0da5a79759`, at `dedfd07` `2b7587bd1aefb5a9c90f0dece320127bcdd12d11c36b809b60d79b6f9d838472`. The entire snapshot diff is the revision line.
+Manifest corroboration: the pinned-source-manifest diff changes the pin revision, `shaders/src/runtime/pipeline.js` (size and sha256), and adds `shaders/src/runtime/preflight.js`. No `shaders/effects` entries changed. The effect catalog is unchanged, so the port requires no source change and the parameter contract stays at `6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa`.
+Environment: Linux x86_64 (AMD EPYC 7713, Linux 6.8.0-134-generic), cargo 1.98.1 (rustup, homes under `/state/cache`), node v26.5.1, Python 3.11.2. No GPU, macOS, or Windows in this container.
+
+Executed commands (exit codes final):
+
+```sh
+cargo build --release --locked   # exit 0; binary sha256 d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01 (byte-identical to the recorded binary)
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js <fresh clone of noisemaker-for-cpu at dedfd07>/bin/noisemaker-cpu.js --timeout 120 --json docs/parity/parity-report-20260927-dedfd07.json   # exit 0
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check   # exit 0
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'   # exit 0; 19 tests, OK
+```
+
+Parity result at size 8, time 0.25, seed 1, tolerance 0: 205 catalog records. 202 compared byte-exact (max delta 0). 3 unsupported with the stable overlay-interface reason (`filter/fibers`, `filter/scratches`, `filter/strayHair`). 0 errors. `filter3d/flow3d` compared byte-exact in-run at 64.103 s, inside the 120 s timeout.
+Port source of the run: `863f64a247fa6255c0e2667b273dae9aedeea073` (runtime tree unchanged from the prior 2026-09-27 runs; the commits after `7f55619` are docs-only). Report sha256 `9717bb7923254d5db7f6a58313812e05333290da0862e8d5511909c58430ae49`. Run log sha256 `b8a63de60572c77a62e488c91b7836a1454abb86dbffc05724076b621ab0acc9`. Raw artifacts committed: [report](parity/parity-report-20260927-dedfd07.json), [raw run log](parity/parity-run-20260927-dedfd07.log).
+Exact-source CI: the newest `ci` and `Export kit` runs are green at head `b6c24628f6b8082f07a8a0a1a0110661325d10ef` (2026-09-26T16:45:48Z). The runtime diff `b6c2462..863f64a` over `src/`, `scripts/`, `examples/`, `tests/`, `Cargo.toml`, `Cargo.lock`, `export-kit/` is empty, so those runs bind the current runtime and kit content.
+The 2026-09-26 declared publication checks are carried, not re-executed. The runtime tree is unchanged: the diff `7f55619..863f64a` over `src/`, `scripts/`, `examples/`, `tests/`, `Cargo.toml`, `Cargo.lock` is empty. The rebuilt binary is byte-identical. Carried items: fmt, clippy, check, release tests on 1.85.0 and stable, package.
 
 ### Daily review, 2026-09-27
 
