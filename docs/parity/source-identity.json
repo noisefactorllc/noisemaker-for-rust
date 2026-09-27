@@ -342,5 +342,62 @@
       "parity-report-20260926-901bbd9.json": "e4e6aff05af6170ffb801a60f3f4af26127f2fbb9db66dfe90ed41aefe219885",
       "parity-run-20260926-901bbd9.log": "2495f2b6d550928c7bffa027fbd9026ada6cbd9d3d32fab9d7e75bc274089178"
     }
+  },
+  "b61b658_leg_audit": {
+    "declared_range": "noisemaker-for-cpu dedfd07c24f80d9b0adddf912a4224ce6c1d795f..b61b658399f18b5a93abd0020c02fff3be9630f5. Audited locally, not assumed: dedfd07c24f80d9b0adddf912a4224ce6c1d795f is an ancestor of b61b658399f18b5a93abd0020c02fff3be9630f5 (git merge-base --is-ancestor exits 0 in a full clone), and the previously audited legs above cover the range start, so this leg completes the declared delivery.",
+    "new_commits": [
+      "34a0325c5392e20c2520f39740042675dbcd5cc4 sync: update upstream source lock and inventory through noisemaker@93229933",
+      "b61b658399f18b5a93abd0020c02fff3be9630f5 sync: update upstream source lock and inventory through noisemaker@296e0138"
+    ],
+    "compare_url": "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/dedfd07c24f8...b61b658399f1",
+    "diffstat": "README.md 2, docs/COMPATIBILITY.md 23+, docs/COMPLETION_GAPS.md 2+, docs/EFFECTS.md 2, docs/evidence/source-lock-sync-12b4d74f-9322993-audit.json 125+ (new), docs/evidence/source-lock-sync-9322993-296e0138-audit.json 147+ (new), docs/evidence/source-lock-sync-parity.json 2, docs/evidence/source-lock-sync-range-audit.raw.json 61, docs/evidence/source-lock-sync-source-tests.log 18, docs/evidence/source-lock-sync-test-full.log 562, scripts/upstream/pinned-source-manifest.json 2, scripts/upstream/source-lock.js 2, src/effects/generated/upstream-snapshot.js 2, test/upstream-inventory.test.js 2; total 14 files, 630 insertions(+), 322 deletions(-). Zero src/ runtime files other than the generated snapshot.",
+    "snapshot_identity": {
+      "file": "src/effects/generated/upstream-snapshot.js",
+      "sha256_at_dedfd07": "2b7587bd1aefb5a9c90f0dece320127bcdd12d11c36b809b60d79b6f9d838472",
+      "sha256_at_b61b658": "f78c661c4b35146106f52ca3546f2444b533a8817966b87a018dafdcda4c40ec",
+      "entire_diff": "+export const UPSTREAM_REVISION = \"296e0138c4744ed485b2e95de3eeb466c17629ee\"\n-export const UPSTREAM_REVISION = \"12b4d74fb4f28d5f00bb1dde107fa8673814d8b9\""
+    },
+    "manifest_corroboration": "The pinned-source-manifest diff over dedfd07..b61b658 is one line: the revision field moves 12b4d74fb4f28d5f00bb1dde107fa8673814d8b9 to 296e0138c4744ed485b2e95de3eeb466c17629ee; every per-file size and sha256 entry is unchanged, and no shaders/effects or shaders/src entry changed.",
+    "source_lock_constants": "The PINNED_SOURCE_DIGEST (e371a165…) and PINNED_SOURCE_MANIFEST_DIGEST (8bb68100…) constants in scripts/upstream/source-lock.js are byte-unchanged across the range (the only constant that changes is PINNED_UPSTREAM_REVISION), proving the pinned upstream trees are identical across both pin moves.",
+    "upstream_independence_check": "Independent corroboration in a fresh blobless clone of https://github.com/noisefactorllc/noisemaker.git: git merge-base --is-ancestor 12b4d74fb4f28d5f00bb1dde107fa8673814d8b9 296e0138c4744ed485b2e95de3eeb466c17629ee exits 0; the git tree objects of both pinned paths are identical at both pins (shaders/effects 7ba7a60f3c3afaced19555f3078ca7f4f46af968, shaders/src 6b791b539462bb6165f620541f6acec1573c6981 at both 12b4d74f and 296e0138), which cryptographically proves the pinned directories are byte-identical across the range; git diff 12b4d74f..296e0138 -- shaders/effects/ shaders/src/ is empty. The three shaders/ commits in the upstream range (93229933 GAP-017, a912749f GAP-019, 296e0138 GAP-021) touch only shaders/tests/ plus the upstream harness (test-harness.js) and scripts/run-js-tests.js registrations; ec457c2e, 8fe3ccaf, 7c5f1765, and 11d7c699 are docs checkpoints touching no shaders/ paths. The upstream range diffstat over shaders/ is 7 files, 1574 insertions(+), 3 deletions(-).",
+    "cpu_side_evidence": "The CPU repo's own committed machine-checkable audits at b61b658 (docs/evidence/source-lock-sync-12b4d74f-9322993-audit.json sha256 444784994393c6719733c44e8624ad94e5da80cda51cbfdacdbeb664f552a60a; docs/evidence/source-lock-sync-9322993-296e0138-audit.json sha256 993a8090aae50a72815d8c986d4c8471c87ffaea2f9b90f958c424c083368bde) record the same conclusions with per-commit upstream tree SHAs, recomputed digest cross-checks, blob identities, command exit codes, and verbatim logs.",
+    "finding": "Both new commits are CPU source-lock sync commits. The generated snapshot changes only its UPSTREAM_REVISION line (entire diff above), the src/ diff contains no other effect, program, or parameter change, and the pinned upstream trees are byte-identical across both pin moves (unchanged digests plus the independent upstream tree-sha equality above). The Rust port consumes the pinned tree only through the parameter contract (revision 6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa, unchanged) and has no code path into the upstream test-harness tooling the range adds, so the port requires no source change; rendered output is unaffected, confirmed by the byte-exact 205-record run at the b61b658 oracle recorded below."
+  },
+  "b61b658_range_run": {
+    "run_date": "2026-09-27",
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json docs/parity/parity-report-20260927-b61b658.json",
+    "port_revision": {
+      "repository": "noisefactorllc/noisemaker-for-rust",
+      "commit": "4092859cec814704bbd8d195e4b53492d9067325 — the published head this run executed (tree 85ca7c66be992cafb19e0d38b555aec97c71840b); the commit carrying this record is docs-only plus raw parity artifacts above it with no src/, scripts/, examples/, tests/, Cargo.toml, Cargo.lock, or export-kit/ changes (git diff 7f55619..4092859 over those paths is empty)",
+      "tree": "85ca7c66be992cafb19e0d38b555aec97c71840b",
+      "binary_sha256": "4eb6288abc0d687ed3bd9b279ab1977ffb77ee37881c7b75b037ee4cf35e5586",
+      "binary_built_with": "cargo build --release --locked, cargo 1.98.1 (797e8a9bc 2026-08-05), stable-x86_64-unknown-linux-gnu, rustup 1.29.1 with RUSTUP_HOME/CARGO_HOME under /state/cache/scratch (relocated, exec-capable homes)",
+      "param_contract_revision": "6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa"
+    },
+    "oracle_revision": {
+      "repository": "noisefactorllc/noisemaker-for-cpu",
+      "commit": "b61b658399f18b5a93abd0020c02fff3be9630f5",
+      "runtime": "node v26.5.1, offline test oracle only, full clone at /state/cache/noisemaker-for-cpu checked out at b61b658399f1"
+    },
+    "result": {"catalog": 205, "compared": 202, "unsupported": 3, "errors": 0, "passed": 202, "failed": 0, "byte_exact": 202},
+    "flow3d_note": "filter3d/flow3d compared byte-exact in-run at 71.159 s (rust) / 0.831 s (js), inside the 120 s timeout; filter/crt compared byte-exact at 0.382 s.",
+    "declared_checks_reexecuted": {
+      "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0 on the tree this run executed (4092859, the published head at run time), not carried from an older tree; cargo 1.98.1 / rustc 1.98.1 (stable) plus toolchain 1.85.0 (cargo 1.85.0, d73d2caf9 2024-12-31, crate target re-verified after touching src/lib.rs), rustup 1.29.1, node v26.5.1, Python 3.11.2, Linux x86_64 (AMD EPYC 7713, 6.8.0-134-generic). The crate declares no [features] section, so --all-features is a no-op flag.",
+      "commands": [
+        {"command": "cargo fmt --all -- --check", "exit_code": 0},
+        {"command": "cargo clippy --all-targets --all-features -- -D warnings", "exit_code": 0},
+        {"command": "cargo +1.85.0 check --all-targets --all-features", "exit_code": 0},
+        {"command": "cargo test --release --locked --all-features", "exit_code": 0, "result": "27 test-binary result lines all 'ok' (including doc-tests), 206 passed, 0 failed, 2 ignored (the NOISEMAKER_JS_CPU_DIR-gated parity_spine tests) across the suite; longest binary 569.19 s"},
+        {"command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'", "exit_code": 0, "result": "OK"},
+        {"command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check", "exit_code": 0},
+        {"command": "cargo build --release --locked", "exit_code": 0, "result": "binary sha256 4eb6288abc0d687ed3bd9b279ab1977ffb77ee37881c7b75b037ee4cf35e5586"},
+        {"command": "cargo package --locked", "exit_code": 0, "result": "Packaged; package verification compiled and finished"},
+        {"command": "NOISEMAKER_JS_CPU_DIR=<oracle at b61b658> cargo test --release --locked --test parity_spine -- --ignored", "exit_code": 0, "result": "2 passed, 0 failed (precision_boundaries_are_byte_exact, three_effect_js_oracle_parity_is_byte_exact)"}
+      ]
+    },
+    "artifacts_sha256": {
+      "parity-report-20260927-b61b658.json": "b79e3ac2db3536c6e7af264b449a12090ca3e2e41352eb17ded15b75ea30da89",
+      "parity-run-20260927-b61b658.log": "63b21eb7c60d9c640a41245fca651f45d548ab47b20d162c57be26095e375b67"
+    }
   }
 }

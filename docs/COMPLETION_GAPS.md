@@ -4,9 +4,9 @@ Current compatibility matrix: [compatibility report](COMPATIBILITY.md).
 
 ## 1. Scope and source revisions
 
-Daily review: 2026-09-27, second pass. Current inspected source: [`84b8168a2337ef846a6846d09c4cf32e0b481928`](https://github.com/noisefactorllc/noisemaker-for-rust/commit/84b8168a2337ef846a6846d09c4cf32e0b481928). This head is docs-only above `863f64a`. The runtime tree is unchanged.
-Full rendered parity at this SHA: measured 2026-09-27 and re-executed by this review (section 3, GAP-001). Installed developer workflow and distribution qualification: measured 2026-09-26 on Linux x86_64 (GAP-002, GAP-003). Both results are carried across the docs-only revisions after `7f55619` because the runtime tree is unchanged. The macOS and Windows platform matrix remains unmeasured. No release approval follows from this review.
-Current upstream discovery (review, 2026-09-27T13:45Z): `93229933b102ba82e713402be19db57207698850`, release `1.0.194` (11:35Z). The audit's 11:05Z observation recorded `1.0.192`. Release `1.0.193` was already published at 10:00Z. Release `1.0.193` is the CPU-pinned revision `12b4d74f`. The `1.0.193` and `1.0.194` manifests are byte-identical to the recorded 1.0.176 manifest. The effect catalog is unchanged. Upstream commits above the CPU pin remain unqualified. They belong to the CPU sync queue.
+Daily review: 2026-09-27, third pass. Current inspected source: [`4092859cec814704bbd8d195e4b53492d9067325`](https://github.com/noisefactorllc/noisemaker-for-rust/commit/4092859cec814704bbd8d195e4b53492d9067325) — the published head this review executed. Every commit after `7f55619` is docs-only; the runtime tree is unchanged.
+Full rendered parity at this SHA: measured 2026-09-27 and re-executed by this review (section 3), including the 205-record run at the newest CPU delivery end `b61b658`. Installed developer workflow and distribution qualification: measured 2026-09-26 on Linux x86_64 (GAP-002, GAP-003). Both results are carried across the docs-only revisions after `7f55619` because the runtime tree is unchanged. The macOS and Windows platform matrix remains unmeasured. No release approval follows from this review.
+Current upstream discovery (review, 2026-09-27T13:45Z): `93229933b102ba82e713402be19db57207698850`, release `1.0.194` (11:35Z). The audit's 11:05Z observation recorded `1.0.192`. Release `1.0.193` was already published at 10:00Z. Release `1.0.193` is the CPU-pinned revision `12b4d74f`. The `1.0.193` and `1.0.194` manifests are byte-identical to the recorded 1.0.176 manifest. The effect catalog is unchanged. Upstream commits above the CPU pin remain unqualified. They belong to the CPU sync queue. Bounded refresh 2026-09-27T21:23Z: `git ls-remote` records upstream main at `04e8582c1db495f5a140d59a3be78e266775b702`, beyond the CPU pin `296e0138c4744ed485b2e95de3eeb466c17629ee`; those upstream commits remain unqualified and belong to the CPU sync queue.
 The observations below retain their original source and authority identities. They do not qualify later updates.
 Current served kit: `0.1.21`, source `b6c24628f6b8082f07a8a0a1a0110661325d10ef`. Byte-checked against the repository on 2026-09-27 (section 3). Artifact identity does not establish host qualification.
 
@@ -39,6 +39,39 @@ The containing commit identifies this register's publication revision. The share
 ## 3. Methods and evidence
 
 Review CI boundary: Exact-source runs: Export kit, ci. A passing export dispatch does not qualify rendered parity. Current complete-render enforcement remains an open requirement. [Exact-source responses](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/noisemaker-for-rust-remote-evidence.json).
+
+### Daily review, 2026-09-27, two-sync delivery `b61b658`
+
+This review audited the noisemaker-for-cpu delivery `dedfd07c24f80d9b0adddf912a4224ce6c1d795f..b61b658399f18b5a93abd0020c02fff3be9630f5` ([compare](https://github.com/noisefactorllc/noisemaker-for-cpu/compare/dedfd07c24f8...b61b658399f1)) at the port head `4092859`.
+Newest noisemaker-for-cpu delivery: `b61b658399f18b5a93abd0020c02fff3be9630f5` (upstream pin `296e0138c4744ed485b2e95de3eeb466c17629ee`, the upstream main at the sync commits).
+`dedfd07` is an ancestor of `b61b658` (`git merge-base --is-ancestor` exits 0), so the previously audited legs plus this one cover the full declared delivery.
+The leg is two commits, both CPU source-lock sync commits (subjects emitted from `git log --format='%H %s'`): `34a0325c5392e20c2520f39740042675dbcd5cc4` (`noisemaker@93229933`) and `b61b658399f18b5a93abd0020c02fff3be9630f5` (`noisemaker@296e0138`). Diffstat: README 2, docs/COMPATIBILITY 23+, docs/COMPLETION_GAPS 2+, docs/EFFECTS 2, two new CPU audit JSONs, three refreshed CPU evidence records and logs, pinned-source-manifest 2, source-lock.js 2, snapshot 2, upstream-inventory.test.js 2. Total 14 files, 630 insertions(+), 322 deletions(-). Zero `src/` runtime files other than the generated snapshot.
+Snapshot identity: sha256 `2b7587bd…` at `dedfd07`, `f78c661c…` at `b61b658`. The entire snapshot diff is the revision line.
+Output-neutrality audit: the pinned-source-manifest diff is the revision line only; the `PINNED_SOURCE_DIGEST`/`PINNED_SOURCE_MANIFEST_DIGEST` constants are byte-unchanged across both pin moves; and a fresh blobless clone of the upstream noisemaker repo records identical git tree objects for `shaders/effects` (`7ba7a60f…`) and `shaders/src` (`6b791b53…`) at both `12b4d74f` and `296e0138`. The upstream range's only `shaders/` commits (93229933, a912749f, 296e0138) touch `shaders/tests/` plus the upstream harness and test registrations — code the CPU port does not consume and no Rust equivalent mirrors. The port requires no source change, and the parameter contract stays at `6a0af04d`. Per-leg details and CPU-side audit artifact hashes: [source identity](parity/source-identity.json) (`b61b658_leg_audit`).
+No gap opened, closed, or reopened. GAP-001's 202/205-byte-exact-with-3-unsupported state is unchanged and re-measured below at the new oracle end. GAP-002/GAP-003 evidence is carried (the runtime tree is unchanged).
+
+Environment: Linux x86_64 (AMD EPYC 7713, Linux 6.8.0-134-generic). Toolchain cargo 1.98.1 via rustup 1.29.1 with relocated rustup/cargo homes under `/state/cache/scratch` (the earlier user-level install was evicted with the container home), plus toolchain 1.85.0. Node v26.5.1. Python 3.11.2. No GPU, macOS, or Windows in this container.
+
+Executed commands (exit codes final, all run at the `4092859` tree):
+
+```sh
+cargo build --release --locked   # exit 0; binary sha256 4eb6288abc0d687ed3bd9b279ab1977ffb77ee37881c7b75b037ee4cf35e5586
+cargo fmt --all -- --check   # exit 0
+cargo clippy --all-targets --all-features -- -D warnings   # exit 0
+cargo +1.85.0 check --all-targets --all-features   # exit 0 (cargo 1.85.0, d73d2caf9 2024-12-31; crate target re-verified after touching src/lib.rs)
+cargo test --release --locked --all-features   # exit 0; 27 result lines all 'ok', 206 passed, 0 failed, 2 oracle-gated ignored; longest binary 569.19 s
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'   # exit 0; OK
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check   # exit 0
+cargo package --locked   # exit 0; packaged and verified
+NOISEMAKER_JS_CPU_DIR=<oracle at b61b658> cargo test --release --locked --test parity_spine -- --ignored   # exit 0; 2 passed, 0 failed
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js <full clone of noisemaker-for-cpu at b61b658>/bin/noisemaker-cpu.js --timeout 120 --json docs/parity/parity-report-20260927-b61b658.json   # exit 0
+```
+
+The rebuilt binary sha256 `4eb6288…` differs from the previously recorded `d182360e…` because the relocated rustup/cargo homes embed different absolute paths in the build; the runtime tree is unchanged since `7f55619` (`git diff 7f55619..4092859` over `src/`, `scripts/`, `examples/`, `tests/`, `Cargo.toml`, `Cargo.lock`, `export-kit/` is empty). The executed parity run is the authoritative contract evidence.
+
+Independent parity result at the `b61b658` oracle: 205 catalog records. 202 compared byte-exact, worst max delta 0. 3 unsupported with the stable overlay-interface reason. 0 errors. `filter3d/flow3d` byte-exact in-run at 71.159 s; `filter/crt` byte-exact at 0.382 s.
+Report sha256 `b79e3ac2db3536c6e7af264b449a12090ca3e2e41352eb17ded15b75ea30da89`. Run log sha256 `63b21eb7c60d9c640a41245fca651f45d548ab47b20d162c57be26095e375b67`. Raw artifacts: `docs/parity/parity-report-20260927-b61b658.json`, `docs/parity/parity-run-20260927-b61b658.log`.
+The 2026-09-26 declared publication checks are superseded by the re-execution above at this tree, which covers every declared check with exit 0. Exact-source CI: no workflow in the repository declares a path filter or an exact-source run that binds this docs-only head, so none was executed. The crate declares no `[features]` section, so `--all-features` is a no-op flag.
 
 ### Independent review, 2026-09-27
 
