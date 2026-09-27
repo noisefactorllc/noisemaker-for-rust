@@ -2,10 +2,10 @@
 
 ## 1. Source and authority revisions
 
-Daily review: 2026-09-27. Current inspected source: [`863f64a247fa6255c0e2667b273dae9aedeea073`](https://github.com/noisefactorllc/noisemaker-for-rust/commit/863f64a247fa6255c0e2667b273dae9aedeea073).
-Full rendered parity at this SHA: measured (section 3, 2026-09-27 runs). Installation, host, distribution packaging, and platform qualification are measured on Linux x86_64 (sections 2-3). The macOS/Windows platform matrix remains unmeasured. No release approval follows from this review.
+Daily review: 2026-09-27, second pass. Current inspected source: [`84b8168a2337ef846a6846d09c4cf32e0b481928`](https://github.com/noisefactorllc/noisemaker-for-rust/commit/84b8168a2337ef846a6846d09c4cf32e0b481928). This head is docs-only above `863f64a`. The runtime tree is unchanged.
+Full rendered parity at this SHA: measured and independently re-executed (section 3, 2026-09-27 runs). Installation, host, distribution packaging, and platform qualification are measured on Linux x86_64 (sections 2-3). The macOS/Windows platform matrix remains unmeasured. No release approval follows from this review.
 Generated catalog provenance records parameter-contract revision `6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa`. The CPU authority now pins `12b4d74fb4f28d5f00bb1dde107fa8673814d8b9`. The snapshot effect data is byte-identical across that range. The port requires no source change, and the provenance bump belongs to the sync job.
-Current upstream discovery: `e73a44a37f0c99bd3779c5fb26c7bba65a46a379`. Published Noisemaker authority: `1.0.192`, source `e73a44a37f0c99bd3779c5fb26c7bba65a46a379`, 210 effect IDs. The published manifest is byte-identical to the recorded 1.0.176 manifest, so the effect catalog is unchanged.
+Current upstream discovery (review, 2026-09-27T13:45Z): `93229933b102ba82e713402be19db57207698850`, release `1.0.194` (11:35Z). The audit's 11:05Z observation recorded `1.0.192`. Release `1.0.193` was already published at 10:00Z. Release `1.0.193` is the CPU-pinned revision `12b4d74f`. The `1.0.193` and `1.0.194` manifests are byte-identical to the recorded 1.0.176 manifest. The effect catalog is unchanged. Upstream commits above the CPU pin remain unqualified. They belong to the CPU sync queue.
 The observations below retain their original source and authority identities. They do not qualify later updates.
 Current served kit: `0.1.21`, source `b6c24628f6b8082f07a8a0a1a0110661325d10ef`. Byte-verified against the repository on 2026-09-27 (section 4). Artifact identity does not establish host qualification.
 
@@ -49,6 +49,17 @@ The matrix below retains the earlier measured scope. A historical verified row i
 | Release readiness | blocked | Linux x86_64 parity, installation, host, and artifact evidence are complete (sections 2-3). A release decision and crates.io publication remain out of scope for this report. The macOS/Windows platform matrix is unmeasured. |
 
 ## 3. Parity coverage
+
+### Full render suite, independent review, 2026-09-27
+
+One 205-record parity run executed the complete catalog through both CLIs against identified revisions. This review re-executed the worker's run independently.
+- Port source: `84b8168a2337ef846a6846d09c4cf32e0b481928`. The runtime tree equals the audited tree. The commits after `7f55619` are docs-only.
+- JavaScript CPU oracle: noisemaker-for-cpu `dedfd07c24f80d9b0adddf912a4224ce6c1d795f` (immutable authority input, fresh clone at that commit). It pins upstream `12b4d74fb4f28d5f00bb1dde107fa8673814d8b9`.
+- CPU revision: AMD EPYC 7713, x86_64, Linux 6.8.0-134-generic. Parameters: size 8, time 0.25, seed 1, tolerance 0, per-command timeout 120 s.
+- Result: 202 compared byte-exact (worst max delta 0), 3 unsupported with the stable overlay-interface reason, 0 errors. `filter3d/flow3d` byte-exact in-run at 66.916 s.
+- The rebuilt Rust binary is byte-identical to the audited binary (sha256 `d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01`).
+- Report sha256 `d8390a59d7e9ed39271ccd03b9e7eb4fd2f805d0254b89343cec66af1eff422e`. Run log sha256 `7603601aad9ca5d7a9580a1120be62ea5c941cac085f84015fef194512fe4694`. Evidence record `/series/review-20260927-133500/result.json`.
+- The two ignored CI tests (`precision_boundaries_are_byte_exact`, `three_effect_js_oracle_parity_is_byte_exact` in `tests/parity_spine.rs`) pass with `NOISEMAKER_JS_CPU_DIR` set. Result: 2 passed, 0 failed.
 
 ### Full render suite at the 2026-09-27 source-lock delivery end, 2026-09-27
 
@@ -368,6 +379,16 @@ Review CI boundary: Exact-source runs: Export kit, ci. A passing export dispatch
 - Workflow path filters quoted from the workflow files. `ci.yml` push paths: `'**'`, `'!*.md'`, `'!.github/ISSUE_TEMPLATE/**'`, `'!.github/PULL_REQUEST_TEMPLATE*'`, `'!.github/FUNDING.yml'`, `'!.github/CODEOWNERS'`, `'!.editorconfig'`, `'!docs/**'`, `'docs/EFFECTS.md'`. `export-kit.yml` push paths: `'export-kit/**'`, `'.github/workflows/export-kit.yml'`, `'LICENSE'`, `'Cargo.toml'`, `'Cargo.lock'`, `'src/**'`. Audit document changes match neither filter set. Publishing them triggers no CI and no kit republish.
 - Full evidence record: `/series/evidence-audit-20260927-093000/result-noisemaker-for-rust.json`.
 
+Independent review 2026-09-27. Environment: Linux x86_64, AMD EPYC 7713, Linux 6.8.0-134-generic. Toolchain cargo 1.98.1 installed user-level, node v26.5.1, Python 3.11.2.
+
+- `cargo build --release --locked` exit 0. Binary sha256 `d182360e…`, byte-identical to the audited binary.
+- Full 205-record parity run at a fresh `dedfd07` oracle clone: exit 0. Result: 202 compared byte-exact at tolerance 0, 3 unsupported, 0 errors. Report sha256 `d8390a59…`.
+- `NOISEMAKER_JS_CPU_DIR=<oracle> cargo test --release --locked --test parity_spine -- --ignored` exit 0. Both previously ignored tests pass (2 passed, 0 failed).
+- CLI probes through the rebuilt binary: `effects | head -3` exits 101 with the broken-pipe panic. `generate --param colorCount=99` exits 1 with an actionable diagnostic. A corrected run exits 0 and renders a PNG.
+- Served kit `0.1.21` sampled files: `engine/src/lib.rs`, `engine/Cargo.toml`, `engine/Cargo.lock` byte-match `git show b6c2462:<path>`. `LICENSES/noisemaker-MIT.txt` byte-matches the noisemaker `LICENSE` at `12b4d74f`.
+- GAP-002 evidence manifest hash-verified 37 of 37 files. GAP-003 evidence manifest hash-verified 26 of 27 entries (self-listing defect only).
+- Evidence record: `/series/review-20260927-133500/result.json`.
+
 [Bounded test evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/rust-tests.json). [Exact-source Actions](https://github.com/noisefactorllc/noisemaker-for-rust/actions?query=head_sha%3A2ef1cc4179f5163023c26e785f533d07cf699fb4).
 [This run evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents) retains commands, exit codes, source identities, and distribution metadata.
 Official ecosystem reference: [Current Cargo Book, accessed 2026-09-24](https://doc.rust-lang.org/cargo/reference/publishing.html).
@@ -376,7 +397,7 @@ A successful dispatch or unit-test summary does not establish a full rendered ga
 
 ## 5. Open compatibility limits
 
-Next bounded verification: Rendered parity was re-measured 2026-09-27 at the newest CPU delivery (section 3), and the served kit `0.1.21` was byte-verified (section 4). The resolved-ignored-doctest item is unchanged: resolve both ignored doctests without reducing the denominator. Next executable verifications need unavailable hosts or broader sweeps: macOS and Windows platform legs, and parameter sweeps beyond the harness defaults.
+Next bounded verification: Rendered parity was re-measured 2026-09-27 and independently re-executed by this review (section 3). The served kit `0.1.21` was byte-verified (section 4). The two ignored CI tests are oracle-gated tests in `tests/parity_spine.rs`, not doctests. They pass with `NOISEMAKER_JS_CPU_DIR` set. CI resolution stays with the implementation job. Next executable verifications need unavailable hosts or broader sweeps: macOS and Windows platform legs, and parameter sweeps beyond the harness defaults.
 See the stable entries in [completion gaps](COMPLETION_GAPS.md).
 
 See [GAP-001 and the complete gap register](COMPLETION_GAPS.md#4-known-gaps) for evidence, dependencies, and acceptance criteria.
@@ -391,11 +412,13 @@ Implementation corrections remain with the separate job. This report does not ad
 
 ## 6. History
 
+Independent review 2026-09-27 at `84b8168a2337ef846a6846d09c4cf32e0b481928`: this review re-executed the 205-record parity run at the `dedfd07` oracle. Result: 202 byte-exact, 3 unsupported, 0 errors. It re-verified all three closure claims. It identified both ignored CI tests and passed them locally. It refreshed the upstream discovery to `9322993` (`1.0.194`). See [completion gaps](COMPLETION_GAPS.md).
 2026-09-27 daily review at `863f64a247fa6255c0e2667b273dae9aedeea073`: rendered parity re-measured at the newest CPU delivery `dedfd07` (upstream pin `12b4d74f`), with GAP-002/GAP-003 evidence carried across the unchanged runtime tree. No gap opened, closed, or reopened. See [completion gaps](COMPLETION_GAPS.md).
 2026-09-27 daily review at `347e298348fbf61993f537f2a7689e798674d7e4`: rendered parity re-measured at the newest CPU delivery, served kit `0.1.21` byte-verified, and GAP-002/GAP-003 evidence carried across the unchanged runtime tree. No gap opened, closed, or reopened. Evidence record: `/series/evidence-audit-20260927-093000/result-noisemaker-for-rust.json`.
 
 | Date | Source | Result | Change |
 |---|---|---|---|
+| 2026-09-27 (review) | `84b8168a2337ef846a6846d09c4cf32e0b481928` | Independent re-execution: 202/205 compared byte-exact at tolerance 0, 3 unsupported with reasons, 0 errors. See section 3. | Reviewed the worker audit and all three closure claims. Rebuilt the binary byte-identical. Re-ran the full 205-record parity suite at a fresh `dedfd07` oracle clone: 202 byte-exact, worst max delta 0, 3 unsupported, 0 errors. `filter3d/flow3d` byte-exact at 66.916 s. Both ignored CI tests (`tests/parity_spine.rs`) pass with `NOISEMAKER_JS_CPU_DIR` set. GAP-002 evidence 37/37 hash-verified. GAP-003 evidence 26/27 hash-verified (self-listing defect only). Served kit sampled files matched 4 of 4 byte-identical. Upstream discovery refreshed to `9322993` (`1.0.194`, 11:35Z). The `1.0.193` and `1.0.194` manifests are byte-identical to the recorded 1.0.176 manifest. Workflow (CI) changes were not made. |
 | 2026-09-27 | `863f64a247fa6255c0e2667b273dae9aedeea073` | Rendered parity re-measured at the newest delivery end: 202/205 compared byte-exact at tolerance 0, 3 unsupported with reasons, 0 errors. See section 3. | Audited the newest noisemaker-for-cpu delivery `dedfd07c24f80d9b0adddf912a4224ce6c1d795f` (upstream pin `12b4d74f…`). The leg is one CPU source-lock sync commit. `7a824744` is an ancestor of `dedfd07` (merge-base verified locally). The snapshot changes only its revision line (sha256s `7c2699a5…` at `7a824744`, `2b7587bd…` at `dedfd07`). The pinned-source manifest changes only the pin, `shaders/src/runtime/pipeline.js`, and new `preflight.js`. No `shaders/effects` entries changed. The port requires no source change, and the parameter contract stays at `6a0af04d…`. Executed the 205-record run against the `dedfd07` oracle: 202 byte-exact, 3 unsupported, 0 errors. `filter3d/flow3d` byte-exact in-run at 64.103 s. Rebuilt binary byte-identical (sha256 `d182360e…`). Raw artifacts: `docs/parity/parity-report-20260927-dedfd07.json` / `parity-run-20260927-dedfd07.log`. Workflow (CI) changes were not made. |
 | 2026-09-27 | `347e298348fbf61993f537f2a7689e798674d7e4` | Rendered parity re-measured at the newest delivery end: 202/205 compared byte-exact at tolerance 0, 3 unsupported with reasons, 0 errors. See section 3. | Audited the newest noisemaker-for-cpu delivery `7a824744` (upstream pin `7443f6e6`). The pin range `6a0af04d..7443f6e6` changes upstream shader-language sources and tests. The effect catalog is unchanged, and the CPU snapshot changes only its revision line. The port requires no source change. Executed the 205-record run against the `7a824744` oracle: 202 byte-exact, 3 unsupported, 0 errors. `filter3d/flow3d` byte-exact in-run at 72.072 s. Rebuilt binary byte-identical. Byte-verified the served kit `0.1.21` (33/35 files direct, upstream MIT notice, 205-ID compat set). Recorded the newest exact-source CI (`b6c2462` head, runtime identical). Published authority advanced to `1.0.192` (`e73a44a`), manifest byte-identical to 1.0.176. Registers rewritten to the strict style rules with no factual change. Workflow (CI) changes were not made. |
 | 2026-09-26 | `72c9ac0e9ec959f01cc6c4c195f7bbba5ada5cea` | Rendered parity re-measured at the newest delivery end: 202/205 compared byte-exact at tolerance 0, 3 unsupported with reasons, 0 errors. See section 3. | Audited the noisemaker-for-cpu range `12db707f3f49..901bbd98eda0`. This completes the forced-start delivery `bfbe54764eee..901bbd98eda0`. Both range starts verified ancestors of `901bbd98eda0` locally. The single new commit is a CPU-repo docs/summary reconciliation (GAP-004 closure). It touches README, `docs/COMPLETION_GAPS.md`, `docs/CRT-PARITY.md`, `docs/EFFECTS.md`, and the CPU parity-runner comment only. The runtime diff `12db707..901bbd9` over `src/`, `scripts/upstream/` is empty, and the generated snapshot is byte-identical at both ends. The port requires no source change, and the parameter contract stays at `6a0af04d…`. Executed 205-record run against the `901bbd98eda0` oracle (202 byte-exact, 3 unsupported, 0 errors. `filter/crt` and `filter3d/flow3d` byte-exact). Raw artifacts in `docs/parity/parity-report-20260926-901bbd9.json` / `parity-run-20260926-901bbd9.log`. Hashes in [source identity](parity/source-identity.json). |
