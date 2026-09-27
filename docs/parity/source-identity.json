@@ -399,5 +399,98 @@
       "parity-report-20260927-b61b658.json": "b79e3ac2db3536c6e7af264b449a12090ca3e2e41352eb17ded15b75ea30da89",
       "parity-run-20260927-b61b658.log": "63b21eb7c60d9c640a41245fca651f45d548ab47b20d162c57be26095e375b67"
     }
+  },
+  "f0ccebe_leg_audit": {
+    "declared_range": "noisemaker-for-cpu b61b658399f18b5a93abd0020c02fff3be9630f5..f0ccebef830bf6b8d99eafadf73f260a6c224873. Audited locally, not assumed: b61b658399f18b5a93abd0020c02fff3be9630f5 is an ancestor of f0ccebef830bf6b8d99eafadf73f260a6c224873 (git merge-base --is-ancestor exits 0 in a full clone), and the previously audited legs above cover the range start, so this leg completes the declared delivery.",
+    "new_commits": [
+      "f0ccebef830bf6b8d99eafadf73f260a6c224873 GAP-007: give browser demo controls distinct accessible names"
+    ],
+    "compare_url": "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/b61b658399f1...f0ccebef830b",
+    "diffstat": "docs/COMPLETION_GAPS.md 6, examples/browser/control-factory.js 37+, examples/browser/demo.js 12+, examples/browser/effect-select.js 11+, examples/browser/index.html 14, examples/browser/toggle-switch.js 5+, test/demo-pipeline.test.js 38+; total 7 files, 112 insertions(+), 11 deletions(-). Zero src/ runtime files and zero scripts/ files: `git diff b61b658..f0ccebe -- src/ scripts/` is empty.",
+    "snapshot_identity": {
+      "file": "src/effects/generated/upstream-snapshot.js",
+      "sha256_at_b61b658": "f78c661c4b35146106f52ca3546f2444b533a8817966b87a018dafdcda4c40ec",
+      "sha256_at_f0ccebe": "f78c661c4b35146106f52ca3546f2444b533a8817966b87a018dafdcda4c40ec",
+      "finding": "The single new commit is a CPU-repo browser-demo accessibility change (control aria-labels in examples/browser plus test/demo-pipeline.test.js unit tests and a docs/COMPLETION_GAPS.md GAP-007 closure note). The generated snapshot is byte-identical at both ends and scripts/upstream/pinned-source-manifest.json plus scripts/upstream/source-lock.js are byte-unchanged (git diff over both files is empty), so the parameter contract the Rust port consumes (revision 6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa) needs no change. The Rust port mirrors no browser demo (its examples/ contains only render_dsl.rs and render_effect.rs), so the port requires no source change for this trigger."
+    }
   }
+,
+  "f0ccebe_range_run": {
+    "run_date": "2026-09-27",
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json /state/cache/scratch/parity-report-f0ccebe.json",
+    "port_revision": {
+      "repository": "noisefactorllc/noisemaker-for-rust",
+      "commit": "3ae887b774f00dd2a56c647a6459c942c19b8f62 - the published head this run executed (tree dd9dd8e573c3e58cf902ad19899d3d03e021bb9a); the commit carrying this record is docs-only plus raw parity artifacts above it with no src/, scripts/, examples/, tests/, Cargo.toml, Cargo.lock, or export-kit/ changes (git diff 7f55619..3ae887b over those paths is empty)",
+      "tree": "dd9dd8e573c3e58cf902ad19899d3d03e021bb9a",
+      "binary_sha256": "d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01",
+      "binary_built_with": "cargo build --release --locked, cargo 1.98.1 (797e8a9bc 2026-08-05), stable-x86_64-unknown-linux-gnu, rustup 1.29.1 with RUSTUP_HOME=/state/cache/rustup and CARGO_HOME=/state/cache/cargo (relocated, exec-capable homes); this reproduced the previously recorded d182360e binary hash",
+      "param_contract_revision": "6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa"
+    },
+    "oracle_revision": {
+      "repository": "noisefactorllc/noisemaker-for-cpu",
+      "commit": "f0ccebef830bf6b8d99eafadf73f260a6c224873",
+      "runtime": "node v26.5.1, offline test oracle only, full clone at /state/cache/noisemaker-for-cpu checked out at f0ccebef830b"
+    },
+    "result": {
+      "catalog": 205,
+      "compared": 202,
+      "unsupported": 3,
+      "errors": 0,
+      "passed": 202,
+      "failed": 0,
+      "byte_exact": 202
+    },
+    "flow3d_note": "filter3d/flow3d compared byte-exact in-run at 66.448 s (rust) / 0.824 s (js), inside the 120 s timeout; filter/crt compared byte-exact at 0.424 s.",
+    "declared_checks_reexecuted": {
+      "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0 on the tree this run executed (3ae887b, the published head at run time), not carried from an older tree; cargo 1.98.1 (797e8a9bc 2026-08-05) / rustc 1.98.1 (stable) plus toolchain 1.85.0, rustup 1.29.1, node v26.5.1, Python 3.11.2, Linux x86_64 (6.8.0-134-generic, 6 cores). The crate declares no [features] section, so --all-features is a no-op flag.",
+      "commands": [
+        {
+          "command": "cargo build --release --locked",
+          "exit_code": 0,
+          "result": "binary sha256 d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01"
+        },
+        {
+          "command": "cargo fmt --all -- --check",
+          "exit_code": 0
+        },
+        {
+          "command": "cargo clippy --all-targets --all-features -- -D warnings",
+          "exit_code": 0
+        },
+        {
+          "command": "cargo +1.85.0 check --all-targets --all-features",
+          "exit_code": 0
+        },
+        {
+          "command": "cargo test --release --locked --all-features",
+          "exit_code": 0,
+          "result": "27 test-binary result lines all 'ok' (including doc-tests), 206 passed, 0 failed, 2 ignored (the NOISEMAKER_JS_CPU_DIR-gated parity_spine tests) across the suite; longest binary 511.54 s"
+        },
+        {
+          "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'",
+          "exit_code": 0,
+          "result": "OK"
+        },
+        {
+          "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check",
+          "exit_code": 0
+        },
+        {
+          "command": "cargo package --locked",
+          "exit_code": 0,
+          "result": "Packaged; package verification compiled and finished"
+        },
+        {
+          "command": "NOISEMAKER_JS_CPU_DIR=/state/cache/noisemaker-for-cpu cargo test --release --locked --test parity_spine -- --ignored",
+          "exit_code": 0,
+          "result": "2 passed, 0 failed (precision_boundaries_are_byte_exact, three_effect_js_oracle_parity_is_byte_exact)"
+        }
+      ]
+    },
+    "artifacts_sha256": {
+      "parity-report-20260927-f0ccebe.json": "94487e8c5f594fe1768432e207f4ed4f453bda852e30045184a141eee9730489",
+      "parity-run-20260927-f0ccebe.log": "7bc0543303c15a4ffb5ddd0d4c358d52e3cc3b5f3f1c0d480acc5a79a6f07826"
+    }
+  }
+
 }
