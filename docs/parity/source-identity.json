@@ -517,7 +517,7 @@
     "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/platform/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json /state/cache/scratch/parity-report-fd9d56c.json",
     "port_revision": {
       "repository": "noisefactorllc/noisemaker-for-rust",
-      "commit": "b7fbfff5417de70191261758a9a37a51cad382d5 — the published head this run executed (tree 3d10dbef7ecd41c32e193f3fa56f54d1cb1c5a51); the commit carrying this record is docs-only with no src/, scripts/, examples/, tests/, Cargo.toml, Cargo.lock, or export-kit/ changes",
+      "commit": "b7fbfff5417de70191261758a9a37a51cad382d5 — the published head this run executed (tree 3d10dbef7ecd41c32e193f3fa56f54d1cb1c5a51); the runtime tree of the commit carrying this record equals 3d10dbef over src/, examples/, tests/, Cargo.toml, Cargo.lock, and export-kit/ (later commits may touch docs or the repository test entrypoint only)",
       "tree": "3d10dbef7ecd41c32e193f3fa56f54d1cb1c5a51",
       "binary_sha256": "d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01",
       "binary_built_with": "cargo build --release --locked, cargo 1.98.1 (797e8a9bc 2026-08-05), rustc 1.98.1 (48a229cea), stable-x86_64-unknown-linux-gnu, rustup 1.29.1 with RUSTUP_HOME=/state/cache/rustup and CARGO_HOME=/state/cache/cargo (relocated, exec-capable homes); this reproduced the previously recorded d182360e binary hash",
