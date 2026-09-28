@@ -1,0 +1,29 @@
+#!/bin/sh
+# Repository test entrypoint: the deterministic checks that do not need a
+# JavaScript oracle checkout. Exits non-zero on the first failure.
+#
+# Rust checks (fmt, clippy, MSRV check, release test suite) run here when a
+# cargo toolchain is already available on PATH (including relocated
+# RUSTUP_HOME/CARGO_HOME homes); when the host has none, they are left to the
+# exact-source `ci` workflow (quality + test-and-package jobs), which runs
+# them on every non-docs commit, and this entrypoint says so explicitly
+# instead of failing on a missing toolchain.
+set -e
+cd "$(dirname "$0")/.."
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+if ! command -v cargo >/dev/null 2>&1; then
+  # Relocated rustup/cargo homes (exec-capable, persistent) when the default
+  # PATH carries no toolchain.
+  export RUSTUP_HOME="${RUSTUP_HOME:-/state/cache/rustup}"
+  export CARGO_HOME="${CARGO_HOME:-/state/cache/cargo}"
+  export PATH="$CARGO_HOME/bin:$PATH"
+fi
+if command -v cargo >/dev/null 2>&1; then
+  cargo fmt --all -- --check
+  cargo clippy --all-targets --all-features -- -D warnings
+  cargo +1.85.0 check --all-targets --all-features
+  cargo test --release --locked --all-features
+else
+  echo "cargo toolchain not found on this host; rust checks are enforced by the exact-source ci workflow (quality, test-and-package)"
+fi
