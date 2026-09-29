@@ -590,6 +590,110 @@
       "parity-run-fd9d56c.log": "a4887fd389427088d2d20886413a4aaa4aec2db7b6b4527856a7d48d48a13b2f",
       "archive": "Raw run artifacts are archived with the job in /workspace/evidence per the no-committed-logs policy; no new logs under docs/parity/."
     }
-  }
-
+  },
+    "d2965d0_leg_audit": {
+      "declared_range": "noisemaker-for-cpu fd9d56c74ce7500b7eaeea90a93d3bf49375d28e..d2965d0b7880cee678de11ec797155c8a65c7b66 (delivery also cites the observed range 7863f096061baef1a3bd664fc0ff149e0b2939d1..d2965d0b7880cee678de11ec797155c8a65c7b66 and flags a force-push/unknown-diff; both range starts verified ancestors of d2965d0 locally with git merge-base --is-ancestor exit 0, audited rather than assumed).",
+      "new_commits": [
+        "64539bcfaa2f3f996e2b8656fca40ae17676414c Audit review: reopen GAP-003 under the rendered-parity closure rule and refresh the cpu audit documents",
+        "f9a36f2d2704223b77f20f1d48659af28251d169 Audit review: record GAP-003 whole-port closure basis and trim duplicated review evidence",
+        "c87d58957f92e915fe0cb13858032cc94d91eadf Audit review: count all 210 whole-port cases for GAP-003 and apply strict STE to the review rows",
+        "5e15ca86f0ea2ea0502ec70bb54fd01d75865528 Audit review: reopen GAP-007 for the unexecuted screen-reader pass and enforce the six-sentence strict cap",
+        "6296476a2cab6d9f88317469bd2da9cd4e83704c docs: record 2026-09-29 M4/Metal CRT tracing and capture reconciliation for GAP-001",
+        "e0ff79cfc3ca989bdbde86521f6f5ce82e788709 docs: correct GAP-001 substitution semantics, record emulation-lane exhaustion and constructive golden fit",
+        "3c30781c7c0285424532da7a7c210e3ac0fc6fb1 docs: deduplicate GAP-001 narrative into CRT-PARITY.md and record final-tree check evidence",
+        "83fea7cbcb0841d9086eb0db121268d0f45b9c05 docs: correct GAP-001 substitution-semantics record, exhaust the emulation lane with a constructive golden fit, complete the hash-site probe to all 16 distinct inputs, and bind final-tree check evidence",
+        "7863f096061baef1a3bd664fc0ff149e0b2939d1 docs: correct the Metal-versus-plain hash-site match count and distinct-input arithmetic in GAP-001 evidence",
+        "d2965d0b7880cee678de11ec797155c8a65c7b66 sync: update upstream source lock and inventory through noisemaker@f24b5254"
+      ],
+      "compare_url": "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/fd9d56c74ce7...d2965d0b7880",
+      "diffstat": "README.md 2, docs/COMPATIBILITY.md 61, docs/COMPLETION_GAPS.md 72, docs/CRT-PARITY.md 33+, docs/EFFECTS.md 2, scripts/upstream/pinned-source-manifest.json 6, scripts/upstream/source-lock.js 6, src/effects/generated/upstream-snapshot.js 2, test/upstream-inventory.test.js 2; total 9 files, 134 insertions(+), 52 deletions(-). Zero src/ runtime files other than the generated snapshot.",
+      "snapshot_identity": {
+        "file": "src/effects/generated/upstream-snapshot.js",
+        "sha256_at_fd9d56c": "f54a9e00c4bc66bd432a7aa3f10735030034c251984d81b145b36a1c71b2be1d",
+        "sha256_at_d2965d0": "50cb6c50ddbba252127b1ab3d79ce05e7be9b6be1e22889787d0575ee3a69c66",
+        "entire_diff": "+export const UPSTREAM_REVISION = \"f24b52540af6a88d12daa05feba1a04ad61b22a2\"\n-export const UPSTREAM_REVISION = \"73c15be00d6888f4b5d2835d8e242ee9e840df45\""
+      },
+      "manifest_corroboration": "The pinned-source-manifest diff over fd9d56c..d2965d0 is the revision field (73c15be00d6888f4b5d2835d8e242ee9e840df45 to f24b52540af6a88d12daa05feba1a04ad61b22a2) plus exactly one shaders/src entry (shaders/src/runtime/external-input.js 54120->67725 bytes, recomputed sha256 c29887aa272c02e2e695bede7a273e9010188793598ab82b1daad883071c3763); no shaders/effects entry changed, corroborating the unchanged snapshot effect data (the snapshot diff is the UPSTREAM_REVISION line only).",
+      "upstream_note": "The one shaders/src change belongs to the upstream WebAudio browser runtime: noisemaker@68273906/a5059106/4d47b3fd/4f5e0d28 (GAP-032) rework AudioInputManager into a multi-capture manager in shaders/src/runtime/external-input.js. The Rust port consumes the pinned tree only through the shaders/effects definitions and the Effect base class at inventory time and has no WebAudio/audio-input runtime, so no port behavioral change applies.",
+      "finding": "Ten new commits: nine CPU-repo GAP-001/GAP-003/GAP-007 audit-review and docs records the port neither consumes nor mirrors, and one source-lock sync commit (d2965d0) bumping the CPU pinned upstream revision to noisemaker@f24b52540af6a88d12daa05feba1a04ad61b22a2 with the snapshot effect data byte-identical apart from the UPSTREAM_REVISION line. The pinned shaders/src tree changed (one WebAudio runtime entry, digest recomputed), but the Rust port consumes only the effect catalog through the parameter contract (revision 6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa, unchanged, confirmed by generate_bundle.py --check exit 0 at the unchanged contract) and has no code path into the upstream WebAudio runtime. The port requires no source change; rendered output is unaffected, confirmed by the byte-exact 205-record run recorded below."
+    },
+    "d2965d0_range_run": {
+      "run_date": "2026-09-29",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/checkouts/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json /workspace/evidence/parity-report-20260929-d2965d0.json",
+      "port_revision": {
+        "repository": "noisefactorllc/noisemaker-for-rust",
+        "commit": "c266f4b620bb3102476423ffb7c36750d175c860 - the published head this run executed (tree a3716d5cec976fada44b0fcf6efb1303c545fa86); the runtime tree of the commit carrying this record equals c266f4b over src/, examples/, tests/, scripts/generate_bundle.py, scripts/transpiler/, scripts/parity.py, scripts/test, Cargo.toml, Cargo.lock, and export-kit/ (git diff c266f4b over those paths is empty; the record-carrying commit touches docs only)",
+        "tree": "a3716d5cec976fada44b0fcf6efb1303c545fa86",
+        "binary_sha256": "d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01",
+        "binary_built_with": "cargo build --release --locked, cargo 1.98.1 (797e8a9bc 2026-08-05), rustc 1.98.1 (48a229cea), stable-x86_64-unknown-linux-gnu, rustup 1.29.1 with RUSTUP_HOME=/state/cache/rustup and CARGO_HOME=/state/cache/cargo (relocated, exec-capable homes); this reproduced the previously recorded d182360e binary hash",
+        "param_contract_revision": "6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa"
+      },
+      "oracle_revision": {
+        "repository": "noisefactorllc/noisemaker-for-cpu",
+        "commit": "d2965d0b7880cee678de11ec797155c8a65c7b66",
+        "tree": "69d2ffc4731b23fddd472b830d3458915ede2bc4",
+        "runtime": "node v26.5.1, offline test oracle only, full clone at /state/cache/checkouts/noisemaker-for-cpu checked out at d2965d0b7880 (its published default branch main)"
+      },
+      "result": {
+        "catalog": 205,
+        "compared": 202,
+        "unsupported": 3,
+        "errors": 0,
+        "passed": 202,
+        "failed": 0,
+        "byte_exact": 202
+      },
+      "flow3d_note": "filter3d/flow3d compared byte-exact in-run at 66.376 s (rust) / 0.864 s (js), inside the 120 s timeout; filter/crt compared byte-exact at 0.413 s.",
+      "declared_checks_reexecuted": {
+        "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0 on the tree this run executed (c266f4b, the published head at run time), not carried from an older tree; cargo 1.98.1 (797e8a9bc 2026-08-05) / rustc 1.98.1 (48a229cea) plus toolchain 1.85.0, rustup 1.29.1, node v26.5.1, Python 3.11.2, Linux x86_64 (6.8.0-134-generic). The crate declares no [features] section, so --all-features is a no-op flag.",
+        "commands": [
+          {
+            "command": "cargo build --release --locked",
+            "exit_code": 0,
+            "result": "binary sha256 d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01"
+          },
+          {
+            "command": "cargo fmt --all -- --check",
+            "exit_code": 0
+          },
+          {
+            "command": "cargo clippy --all-targets --all-features -- -D warnings",
+            "exit_code": 0
+          },
+          {
+            "command": "cargo +1.85.0 check --all-targets --all-features",
+            "exit_code": 0
+          },
+          {
+            "command": "cargo test --release --locked --all-features",
+            "exit_code": 0,
+            "result": "every test-binary result line 'ok', 0 failed, 2 ignored (the NOISEMAKER_JS_CPU_DIR-gated parity_spine tests) across the suite"
+          },
+          {
+            "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'",
+            "exit_code": 0,
+            "result": "OK"
+          },
+          {
+            "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check",
+            "exit_code": 0
+          },
+          {
+            "command": "cargo package --locked",
+            "exit_code": 0,
+            "result": "Packaged; package verification compiled and finished"
+          },
+          {
+            "command": "NOISEMAKER_JS_CPU_DIR=/state/cache/checkouts/noisemaker-for-cpu cargo test --release --locked --test parity_spine -- --ignored",
+            "exit_code": 0,
+            "result": "2 passed, 0 failed (precision_boundaries_are_byte_exact, three_effect_js_oracle_parity_is_byte_exact)"
+          }
+        ]
+      },
+      "artifacts_sha256": {
+        "parity-report-20260929-d2965d0.json": "bd49a22a9d93b0bba3fdaff05da02ee01bf482e80ee86aad8d5c133d1542dc7d",
+        "parity-run-20260929-d2965d0.log": "8f789c834b551f57a1d800d3922a7fd131a5a35e8dbd0453390de2477a14b36a",
+        "archive": "Raw run artifacts are archived with the job in /workspace/evidence per the no-committed-logs policy; no new logs under docs/parity/."
+      }
+    }
 }
