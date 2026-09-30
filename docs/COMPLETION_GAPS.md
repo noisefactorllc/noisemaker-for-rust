@@ -38,7 +38,7 @@ The containing commit identifies this register's publication revision. The share
 
 ## 3. Methods and evidence
 
-Review CI boundary: Exact-source runs: Export kit, ci. A passing export dispatch does not qualify rendered parity. Current complete-render enforcement remains an open requirement. [Exact-source responses](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/noisemaker-for-rust-remote-evidence.json).
+Review CI boundary: Exact-source runs: Export kit, ci. A passing export dispatch does not qualify rendered parity. Current complete-render enforcement remains an open requirement. Exact-source responses (audit evidence `review-20260925-053200/noisemaker-for-rust-remote-evidence.json`).
 
 ### Daily review, 2026-09-29, source-lock delivery `d2965d0`
 
@@ -235,11 +235,11 @@ The 2026-09-26 declared publication checks are carried, not re-executed. The run
 
 ### Daily review, 2026-09-25
 
-The current generated-bundle gate passes. Exact-source Cargo CI succeeds, but retains two ignored documentation tests. This does not establish current full rendered parity or the installed CLI on every declared platform. GAP-001 remains open. The 205-ID served declaration leaves five current IDs absent. [Raw evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/rust-ci-36082527571.log).
+The current generated-bundle gate passes. Exact-source Cargo CI succeeds, but retains two ignored documentation tests. This does not establish current full rendered parity or the installed CLI on every declared platform. GAP-001 remains open. The 205-ID served declaration leaves five current IDs absent. Raw evidence (audit evidence `review-20260925-053200/rust-ci-36082527571.log`).
 The review examined source changes, worker evidence, source-bound CI where present, and current served inventories. Full installed-host and platform qualification remains incomplete.
 Environment: macOS 26.5, Darwin arm64.
-[Source SHA-256 records](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/noisemaker-for-rust-source-hashes.json) bind these checks to the reviewed revision.
-[Raw command evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/rust-tests.json). [Remote evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/noisemaker-for-rust-remote.json).
+Source SHA-256 records (audit evidence `evidence-20260924-remaining-gap-documents/noisemaker-for-rust-source-hashes.json`) bind these checks to the reviewed revision.
+Raw command evidence (audit evidence `evidence-20260924-remaining-gap-documents/rust-tests.json`). Remote evidence (audit evidence `evidence-20260924-remaining-gap-documents/noisemaker-for-rust-remote.json`).
 
 Executed command:
 
@@ -401,4 +401,4 @@ Independent review 2026-09-27 at `84b8168a2337ef846a6846d09c4cf32e0b481928`. Thi
 | 2026-09-24 | `2ef1cc4179f5163023c26e785f533d07cf699fb4` | Created six-section register and README link. No closures. | The generated-bundle gate exited 0. This is a reproducibility examination, not a render or Cargo package installation test. | Full audit, installed workflows, current rendered parity, platforms, and releases remain unqualified. |
 
 Run ID: `20260924-remaining-gap-documents`.
-[Operational evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents). Creating this register does not advance successful-audit timestamps or the rotation.
+Operational evidence (audit evidence `evidence-20260924-remaining-gap-documents`). Creating this register does not advance successful-audit timestamps or the rotation.

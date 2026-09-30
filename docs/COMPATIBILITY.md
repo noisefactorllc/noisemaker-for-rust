@@ -424,7 +424,7 @@ Current served declaration: 205 effect IDs. This inventory is not evidence of ex
 
 ## 4. Evidence
 
-Review CI boundary: Exact-source runs: Export kit, ci. A passing export dispatch does not qualify rendered parity. Current complete-render enforcement remains an open verification requirement. [Exact-source responses and workflows](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/noisemaker-for-rust-remote-evidence.json).
+Review CI boundary: Exact-source runs: Export kit, ci. A passing export dispatch does not qualify rendered parity. Current complete-render enforcement remains an open verification requirement. Exact-source responses and workflows (audit evidence `review-20260925-053200/noisemaker-for-rust-remote-evidence.json`).
 
 2026-09-27 executed evidence. Environment: Linux x86_64, AMD EPYC 7713, Linux 6.8.0-134-generic. Toolchain: cargo 1.98.1 installed user-level, node v26.5.1, Python 3.11.2.
 
@@ -446,8 +446,8 @@ Independent review 2026-09-27. Environment: Linux x86_64, AMD EPYC 7713, Linux 6
 - GAP-002 evidence manifest hash-verified 37 of 37 files. GAP-003 evidence manifest hash-verified 26 of 27 entries (self-listing defect only).
 - Evidence record: `/series/review-20260927-133500/result.json`.
 
-[Bounded test evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/rust-tests.json). [Exact-source Actions](https://github.com/noisefactorllc/noisemaker-for-rust/actions?query=head_sha%3A2ef1cc4179f5163023c26e785f533d07cf699fb4).
-[This run evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents) retains commands, exit codes, source identities, and distribution metadata.
+Bounded test evidence (audit evidence `evidence-20260924-remaining-gap-documents/rust-tests.json`). [Exact-source Actions](https://github.com/noisefactorllc/noisemaker-for-rust/actions?query=head_sha%3A2ef1cc4179f5163023c26e785f533d07cf699fb4).
+This run evidence (audit evidence `evidence-20260924-remaining-gap-documents`) retains commands, exit codes, source identities, and distribution metadata.
 Official ecosystem reference: [Current Cargo Book, accessed 2026-09-24](https://doc.rust-lang.org/cargo/reference/publishing.html).
 Source CI, export dispatch, artifact delivery, and rendered parity are separate evidence dimensions.
 A successful dispatch or unit-test summary does not establish a full rendered gate.
