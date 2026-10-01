@@ -814,5 +814,71 @@
         "archive": "Raw run artifacts are archived with the job in /workspace/evidence per the no-committed-logs policy; no new logs under docs/parity/.",
         "cpu_repository_bundle": "noisemaker-for-cpu-5f12866.bundle in /workspace/evidence (sha256 03492fa5277d92cc1bacb684802a68d25f5c67d740528aba81be4f93a9400b86): a git bundle of the noisemaker-for-cpu main history through 5f12866e919f76fc19e4d3e6f0670d61d10dc672 (git bundle verify reports a complete history). A reviewer can independently re-verify the full range diff and ancestry: git clone -b main <bundle> <dir>, then git merge-base --is-ancestor fd9d56c74ce7500b7eaeea90a93d3bf49375d28e 5f12866e919f76fc19e4d3e6f0670d61d10dc672, the same for d2965d0b7880cee678de11ec797155c8a65c7b66 and ce3926d7a224e6e2ce362b743e2c231a39ddc602; all exit 0 (re-verified 2026-09-30 from a fresh clone of this bundle)."
       }
+    },
+    "d6664f8_leg_audit": {
+      "declared_range": "noisemaker-for-cpu fd9d56c74ce7500b7eaeea90a93d3bf49375d28e..d6664f8a494aec3bd10bce200d63d42ec833d61a per the delivery trigger, which flags a force-push/unknown-diff and cites the observed ranges 5f12866e919f76fc19e4d3e6f0670d61d10dc672..50c1cbe3319158be9d2965ebd4934b2852d96789 and 50c1cbe3319158be9d2965ebd4934b2852d96789..d6664f8a494aec3bd10bce200d63d42ec833d61a; fd9d56c74ce7, 5f12866e919f, and 50c1cbe33191 all verified ancestors of d6664f8a494a locally with git merge-base --is-ancestor exit 0, so the previously audited legs (through 5f12866) plus this one cover the full declared delivery - audited rather than assumed.",
+      "new_commits": [
+        "50c1cbe3319158be9d2965ebd4934b2852d96789 GAP-003 first leg: add the executable scripts/parity-summary whole-port parity summary entrypoint",
+        "d6664f8a494aec3bd10bce200d63d42ec833d61a GAP-003 first leg: publish the parity-summary record update on the verified entrypoint commit"
+      ],
+      "compare_url": "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/5f12866e919f...d6664f8a494a",
+      "diffstat": "docs/COMPLETION_GAPS.md 3+/3-, scripts/parity-summary 37+ (new), scripts/parity/lib.js 60+ (new), scripts/parity/run.js 9+/47-, scripts/parity/summary.js 216+ (new), test/parity-summary.test.js 115+ (new); total 6 files, 440 insertions(+), 50 deletions(-). Zero src/ runtime files, zero shaders/ or pinned-source-manifest entries, zero generated upstream-snapshot changes.",
+      "snapshot_identity": {
+        "file": "src/effects/generated/upstream-snapshot.js",
+        "sha256_at_5f12866": "0c7119e943ce355c9ab82c1652a83cf09ae1f43cb0bc788825e60c2d1482a132",
+        "sha256_at_d6664f8": "0c7119e943ce355c9ab82c1652a83cf09ae1f43cb0bc788825e60c2d1482a132",
+        "entire_diff": "(none - the generated upstream snapshot is byte-identical at both range ends; sha256s recomputed locally from the working clone at both commits)"
+      },
+      "manifest_corroboration": "The pinned-source manifest is untouched over 5f12866..d6664f8 (not in the diffstat); the range touches only CPU-repo parity-harness scripts (scripts/parity-summary entrypoint, scripts/parity/lib.js extracted from run.js, scripts/parity/summary.js, run.js slimmed to reuse lib.js), a new test/parity-summary.test.js, and the CPU repo's own docs/COMPLETION_GAPS.md record update.",
+      "upstream_note": "No upstream (noisemaker) tree content changed in this leg: the CPU GAP-003 first leg refactors the CPU repo's own parity harness and adds its whole-port parity-summary entrypoint. The Rust port drives the CPU oracle only through bin/noisemaker-cpu.js via scripts/parity.py and consumes the effect catalog through the parameter contract, so none of these files enter the port's build or render path.",
+      "finding": "Two new commits: the CPU repo's GAP-003 first leg - a new executable scripts/parity-summary whole-port parity-summary entrypoint (scripts/parity-summary + scripts/parity/summary.js, with shared logic extracted into scripts/parity/lib.js and run.js slimmed to reuse it) plus its record update in the CPU repo's docs/COMPLETION_GAPS.md. All six changed files are CPU-repo harness/test/docs files the Rust port neither consumes nor mirrors: no src/, shaders/, pinned-source-manifest, or generated upstream-snapshot byte changed, so the parameter contract (revision 6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa, confirmed unchanged by generate_bundle.py --check exit 0 at the unchanged contract) is untouched. The port requires no source change; rendered output is unaffected, confirmed by the recorded 205-record run below: 202 of 205 compared byte-exact at tolerance 0, the remaining 3 cases unsupported with the stable overlay-interface reason (unsupported, not exact passes), 0 errors."
+    },
+    "d6664f8_range_run": {
+      "run_date": "2026-10-01",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/ckpt/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json /workspace/evidence/parity-report-20261001-d6664f8.json",
+      "port_revision": {
+        "repository": "noisefactorllc/noisemaker-for-rust",
+        "commit": "0f8d01cb7532b35e4cdf9b5cc189c30887e9f355 - the published head this run executed (tree 8ad786f4cbc871f8c9d457ffdf9d23fce41a04a2); the runtime tree of the commit carrying this record equals 0f8d01c over src/, examples/, tests/, scripts/, Cargo.toml, Cargo.lock, and export-kit/ (git diff 0f8d01c over those paths is empty; the record-carrying commit touches docs only)",
+        "tree": "8ad786f4cbc871f8c9d457ffdf9d23fce41a04a2",
+        "binary_sha256": "d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01",
+        "binary_built_with": "cargo build --release --locked, cargo 1.98.1 (797e8a9bc 2026-08-05), rustc 1.98.1 (48a229cea), stable-x86_64-unknown-linux-gnu, rustup 1.29.1 with RUSTUP_HOME=/state/cache/rustup and CARGO_HOME=/state/cache/cargo (relocated, exec-capable homes); this reproduced the previously recorded d182360e binary hash at the unchanged 0f8d01c runtime tree",
+        "param_contract_revision": "6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa"
+      },
+      "oracle_revision": {
+        "repository": "noisefactorllc/noisemaker-for-cpu",
+        "commit": "d6664f8a494aec3bd10bce200d63d42ec833d61a",
+        "tree": "761293b250439245f9aa065a8756d51d0d0227d7",
+        "runtime": "node v26.5.1, offline test oracle only, full clone at /state/cache/ckpt/noisemaker-for-cpu checked out at d6664f8a494a (its published default branch main); bin/noisemaker-cpu.js is untouched by the range, so the oracle renderer is byte-identical to the 5f12866 oracle"
+      },
+      "result": {
+        "catalog": 205,
+        "compared": 202,
+        "unsupported": 3,
+        "errors": 0,
+        "passed": 202,
+        "failed": 0,
+        "byte_exact": 202
+      },
+      "flow3d_note": "filter3d/flow3d compared byte-exact in-run at 71.900 s (rust) / 0.974 s (js), inside the 120 s timeout; filter/crt compared byte-exact at 0.440 s.",
+      "declared_checks_reexecuted": {
+        "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0 on the tree this run executed (0f8d01c, the published head at run time, clean worktree), not carried from an older tree; cargo 1.98.1 (797e8a9bc 2026-08-05) / rustc 1.98.1 (48a229cea) plus toolchain 1.85.0, rustup 1.29.1, node v26.5.1, Python 3.11.2, Linux x86_64 (6.8.0-134-generic). The crate declares no [features] section, so --all-features is a no-op flag. Verbatim PATH, command, and output for each check are in /workspace/evidence/checks-20261001/01..10 (job evidence archive).",
+        "commands": [
+          {"command": "cargo build --release --locked", "exit_code": 0, "result": "binary sha256 d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01"},
+          {"command": "cargo fmt --all -- --check", "exit_code": 0},
+          {"command": "cargo clippy --all-targets --all-features --locked -- -D warnings", "exit_code": 0},
+          {"command": "cargo +1.85.0 check --all-targets --all-features --locked", "exit_code": 0},
+          {"command": "cargo test --release --locked --all-features", "exit_code": 0, "result": "every test-binary result line 'ok', 0 failed, 2 ignored (the NOISEMAKER_JS_CPU_DIR-gated parity_spine tests) across the suite"},
+          {"command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'", "exit_code": 0, "result": "Ran 19 tests, OK"},
+          {"command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check", "exit_code": 0},
+          {"command": "cargo package --locked", "exit_code": 0, "result": "Packaged; package verification compiled and finished"},
+          {"command": "NOISEMAKER_JS_CPU_DIR=/state/cache/ckpt/noisemaker-for-cpu cargo test --release --locked --test parity_spine -- --ignored", "exit_code": 0, "result": "2 passed, 0 failed (precision_boundaries_are_byte_exact, three_effect_js_oracle_parity_is_byte_exact)"}
+        ]
+      },
+      "artifacts_sha256": {
+        "parity-report-20261001-d6664f8.json": "3e62619d9144430d599b2f39d3e35bf054d2244b546a3cc12ffaacf810c43868",
+        "parity-log-20261001-d6664f8.txt": "4198f1782384eabb150b039d434e01a93ede02d53e0024f7444cc60508fe51eb",
+        "archive": "Raw run artifacts are archived with the job in /workspace/evidence per the no-committed-logs policy; no new logs under docs/parity/.",
+        "cpu_repository_bundle": "noisemaker-for-cpu-d6664f8.bundle in /workspace/evidence (sha256 e0c5fd58ba2f6ea6b205661a674bc16d71ead7b83bdf8d66facac17703eaaa84): a git bundle of the noisemaker-for-cpu main history through d6664f8a494aec3bd10bce200d63d42ec833d61a (git bundle verify reports a complete history). A reviewer can independently re-verify the full range diff and ancestry: git clone -b main <bundle> <dir>, then git merge-base --is-ancestor fd9d56c74ce7500b7eaeea90a93d3bf49375d28e d6664f8a494aec3bd10bce200d63d42ec833d61a, the same for 5f12866e919f76fc19e4d3e6f0670d61d10dc672 and 50c1cbe3319158be9d2965ebd4934b2852d96789; all exit 0 (verified 2026-10-01 from the working clone and re-verified from a fresh clone of this bundle)."
+      }
     }
 }
