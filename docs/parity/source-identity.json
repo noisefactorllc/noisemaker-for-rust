@@ -960,5 +960,91 @@
         "archive": "Raw run artifacts are archived with the job in /workspace/evidence per the no-committed-logs policy; no new logs under docs/parity/.",
         "cpu_repository_bundle": "noisemaker-for-cpu-ef26f1c.bundle in /workspace/evidence (sha256 7677dffb697d3b7219a4795e3f0bb637cd96d596b21304c84931781b40ebb270): a git bundle of the noisemaker-for-cpu main history through ef26f1c88a4496234d285fa476b8d09d6f05009c (git bundle verify reports a complete history). A reviewer can independently re-verify the full range diff and ancestry: git clone -b main <bundle> <dir>, then git merge-base --is-ancestor d6664f8a494aec3bd10bce200d63d42ec833d61a ef26f1c88a4496234d285fa476b8d09d6f05009c, the same for 704645a45df9587ce238190bb5ec4ed2d4c22039 and 116dae317a07a96d9f8ef3b0320f873871ff6b57; all exit 0 (verified 2026-10-01 from the working clone)."
       }
-    }
+    },
+"d02aaab_leg_audit": {
+  "compare_url": "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/ef26f1c88a44...d13b0a2100fb",
+  "declared_range": "noisemaker-for-cpu ef26f1c88a4496234d285fa476b8d09d6f05009c..d13b0a2100fb2753b0905e301ab6c2eea8d8e1f2 per the delivery trigger; both SHAs verified locally in a full clone at /state/cache/sync/noisemaker-for-cpu (git merge-base --is-ancestor ef26f1c d13b0a2 exit 0). The published main tip at run time is d02aaabbee0f6d292234ce8e4aa9f50347df9dda, one further commit beyond the declared range whose diff is docs/COMPLETION_GAPS.md 1 insertion only; the parity run below binds the oracle at that published tip. Audited rather than assumed.",
+  "diffstat": "docs/COMPLETION_GAPS.md 2+/2-, eight new parity/goldens/defaults/*.golden.png (binary), parity/goldens/provenance.json 404 lines, scripts/parity/capture-records.json 34+, scripts/parity/lib.js 9+/2-, scripts/parity/write-provenance.js 8+/6-, scripts/upstream/compile-glsl.js 20+ (a146f22) with d13b0a2 netting it back to the narrow statement-level restoreIntegerDivision (compile-glsl.js sha256 4ef1deca03a3 at a146f22 -> 6cb7a21e8c89 at d13b0a2, the emitted src/effects/generated/canonical-kernels.js identical across both: git diff a146f22 d13b0a2 -- canonical-kernels.js is empty), src/effects/generated/canonical-kernels.js 12+/12-; total 15 files, 312 insertions(+), 189 deletions(-). Zero upstream-snapshot or pinned-source-manifest changes.",
+  "finding": "Two new commits: the CPU transpiler's narrow integer-division lowering with its regenerated canonical-kernels.js, plus the rejected-widening record. The Rust port consumes the CPU tree only through the effect catalog via the parameter contract (revision 6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa, confirmed unchanged by generate_bundle.py --check exit 0) and drives the oracle only through bin/noisemaker-cpu.js via scripts/parity.py; it neither consumes compile-glsl.js nor canonical-kernels.js (the port's pipeline is src/generated/shaders.json plus its own Rust engine). The oracle's rendered output demonstrably changed over the range: rendering the CPU repo's own parity/upstream-defaults fixtures through bin/noisemaker-cpu.js (8x8, time 0.25, seed 1) yields synth3d/reactionDiffusion3d sha256 761f89aec6de at ef26f1c versus d70d00fc33d0 at the tip, and synth3d/noise3d be44b5c8e2fd at ef26f1c versus 7a82ad70d60b at the tip, while synth3d/shape3d is byte-identical (0ae6522b4014 at both ends - consistent with its unrewritten yAtlas division); probe sha256s in /workspace/evidence/range-d02aaab/oracle-probe-sha256s.txt. Despite this oracle behavior change, the port required exactly one behavioral fix: the tracked atlas-z compatibility emulation in src/vm.rs (the javascript_float_atlas_z_program shim, which preserved the CPU factory's untyped-var fractional coordinate) keyed its behavior on the declaration shape - the component-indexed pixelCoord[1] / volSize dividend in synth3d/reactionDiffusion3d:simulate now emulates the CPU's Math.trunc emission (exact integer truncation), while the plain-identifier yAtlas / volSize dividend in synth3d/shape3d:precompute keeps the untyped float64 emulation; the fingerprint tests pin the per-program emission classification. The pre-render oracle literals in tests/pass_runner.rs moved to the CPU's new bytes: the synth3d/reactionDiffusion3d seeded rd_state (empty 2x4 inputs) is now all-zero where the fractional-z artifact previously produced one 1.0 texel, and the synth3d/shape3d precompute density bytes are unchanged (its emission is unchanged). With that fix the full parity run at the tip compares 202 of 205 byte-exact at tolerance 0 with 0 errors (run recorded below), restoring the all-zero divergence contract. Without the fix the run fails exactly on synth3d/reactionDiffusion3d (max=96 mean=7.8750 over2=21), the case the shim's float emulation previously matched.",
+  "manifest_corroboration": "The pinned-source manifest and upstream-snapshot.js are untouched over ef26f1c..d13b0a2 (git diff --stat over both files is empty); the range touches only the CPU GAP-003 campaign record (docs), the CPU parity skip policy and goldens (scripts/parity/*, parity/goldens/* - repo-local files the Rust port does not consume), the CPU transpiler scripts/upstream/compile-glsl.js, and the CPU's regenerated src/effects/generated/canonical-kernels.js.",
+  "new_commits": [
+    "a146f22839dc33f5998db47ec9188050ebd3177f GAP-003: fix GLSL integer-division truncation in transpiled volume kernels; graduate eight byte-exact skip cases into the graded set with recorded capture provenance",
+    "d13b0a2100fb2753b0905e301ab6c2eea8d8e1f2 GAP-003: record the rejected integer-division widening with its measured authority evidence"
+  ],
+  "port_change": "src/vm.rs: rename the float-atlas-z compatibility contract to javascript_atlas_z_program / is_javascript_atlas_program / is_javascript_atlas_z_declaration and add javascript_atlas_z_emission (JavascriptAtlasZEmission::{TruncatedComponentIndexed, UntypedFloat}); the declaration evaluator emits Value::Int(left / right) for the component-indexed arm (the CPU's Math.trunc emission) and keeps Value::Float((f64::from(left) / f64::from(right)) as f32) for the plain-identifier arm (the CPU's unrewritten emission); fingerprint tests updated to pin the per-program emission. tests/pass_runner.rs: fractional_atlas_z_generators_match_javascript_pre_render_volume_oracles renamed to atlas_z_generators_match_javascript_pre_render_volume_oracles with the reactionDiffusion3d rd_state literals re-pinned to the CPU's post-leg bytes [0.0 x8] (the previous [0.0 x4, 0.0, 1.0, 0.0, 0.0] contained the fractional-z artifact); the shape3d density literals are unchanged. docs/parity/source-identity.json: this record. No generated bundle files changed (generate_bundle.py --check exit 0).",
+  "snapshot_identity": {
+    "entire_diff": "(none - the generated upstream snapshot is byte-identical at both range ends and at the published tip d02aaabbee0f; sha256s recomputed locally from the working clone at each commit)",
+    "file": "src/effects/generated/upstream-snapshot.js",
+    "sha256_at_d13b0a2": "0c7119e943ce355c9ab82c1652a83cf09ae1f43cb0bc788825e60c2d1482a132",
+    "sha256_at_ef26f1c": "0c7119e943ce355c9ab82c1652a83cf09ae1f43cb0bc788825e60c2d1482a132"
+  },
+  "upstream_note": "No upstream (noisemaker) tree content changed in this leg. The executable change is CPU-internal: compile-glsl.js gains restoreIntegerDivision, which rewrites only `var NAME = VEC[IDX] / intName;` statements whose GLSL dividend is component-indexed and whose divisor is provably int-typed into `Math.trunc(VEC[IDX] / intName)`; the volume-atlas factories (canonicalFactory283/284/285/286/288/289) are regenerated accordingly, while the shape3d precompute's plain-identifier dividend `var z = yAtlas / volSize;` (canonicalFactory290) is NOT rewritten and keeps the untyped float64 division - d13b0a2 records that a broader expression-level widening was measured against the GPU authority and rejected."
+},
+"d02aaab_range_run": {
+  "artifacts_sha256": {
+    "archive": "Raw run artifacts are archived with the job in /workspace/evidence per the no-committed-logs policy; no new logs under docs/parity/.",
+    "cpu_repository_bundle": "noisemaker-for-cpu-d02aaab.bundle in /workspace/evidence/range-d02aaab (sha256 ff521db725b4cbe010ae08f9ca037b3726a6ec6d052489b8df335b70fc77c804): a git bundle of the noisemaker-for-cpu main history through d02aaabbee0f6d292234ce8e4aa9f50347df9dda (git bundle verify reports a complete history). A reviewer can independently re-verify the full range diff and ancestry: git clone -b main <bundle> <dir>, then git merge-base --is-ancestor ef26f1c88a4496234d285fa476b8d09d6f05009c d13b0a2100fb2753b0905e301ab6c2eea8d8e1f2, the same for a146f22839dc33f5998db47ec9188050ebd3177f and d02aaabbee0f6d292234ce8e4aa9f50347df9dda; all exit 0 (verified 2026-10-01 from the working clone).",
+    "parity-report-20261001-d02aaab.json": "598d3bb570c69a1462138ea322e0f8fa26575ed0c284e4bf936bc978798d6119"
+  },
+  "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/sync/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json /workspace/evidence/parity-report-20261001-d02aaab.json",
+  "declared_checks_reexecuted": {
+    "commands": [
+      {
+        "command": "cargo +stable build --release --locked",
+        "exit_code": 0,
+        "evidence": "checks-20261001-d02aaab/01-build.txt + 01-sha256.txt",
+        "result": "target/release/noisemaker-rs sha256 31e1f64d0d10632f6a960a84c8c12950dd97f7379be8b887cd784207c6b3794d, byte-identical to the binary the recorded parity run executed (the parity run used this same release build; the check rebuild is content-deterministic over the unchanged runtime tree and the only edit after the run is this docs record)"
+      },
+      {"command": "cargo +stable fmt --all -- --check", "exit_code": 0, "evidence": "checks-20261001-d02aaab/02-fmt.txt"},
+      {"command": "cargo +stable clippy --all-targets --all-features --locked -- -D warnings", "exit_code": 0, "evidence": "checks-20261001-d02aaab/03-clippy.txt"},
+      {"command": "cargo +1.85.0 check --all-targets --all-features", "exit_code": 0, "evidence": "checks-20261001-d02aaab/04-msrv.txt"},
+      {
+        "command": "cargo +stable test --release --locked --all-features",
+        "exit_code": 0,
+        "evidence": "checks-20261001-d02aaab/05-test.txt",
+        "result": "27 test-binary result lines ok, 206 passed, 0 failed, 2 ignored (the NOISEMAKER_JS_CPU_DIR-gated parity_spine tests)"
+      },
+      {
+        "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'",
+        "exit_code": 0,
+        "evidence": "checks-20261001-d02aaab/06-unittest.txt",
+        "result": "Ran 19 tests, OK"
+      },
+      {"command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check", "exit_code": 0, "evidence": "checks-20261001-d02aaab/07-bundle.txt"},
+      {"command": "cargo +stable package --locked", "exit_code": 0, "evidence": "checks-20261001-d02aaab/08-package.txt", "result": "Packaged; package verification compiled and finished"},
+      {
+        "command": "NOISEMAKER_JS_CPU_DIR=/state/cache/sync/noisemaker-for-cpu cargo +stable test --release --locked --test parity_spine -- --ignored",
+        "exit_code": 0,
+        "evidence": "checks-20261001-d02aaab/09-oracle-gated.txt",
+        "result": "2 passed, 0 failed (precision_boundaries_are_byte_exact, three_effect_js_oracle_parity_is_byte_exact)"
+      }
+    ],
+    "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0, verbatim in CONTRIBUTING order, on the candidate tree carrying this record (the record-carrying commit, which is also the runtime tree: the commit contains the src/vm.rs and tests/pass_runner.rs parity fixes plus this docs record); cargo 1.99.0 (5f94df478 2026-08-27) / rustc 1.99.0 (b940084d7 2026-09-28) plus toolchain 1.85.0, rustup 1.29.1, node v26.5.1, Python 3.11.2, Linux x86_64. The crate declares no [features] section, so --all-features is a no-op flag. Verbatim command and output for each check are in /workspace/evidence/checks-20261001-d02aaab/01-build..09-oracle-gated (job evidence archive): 01 cargo +stable build --release --locked (parity-binary provenance: target/release/noisemaker-rs sha256 31e1f64d0d10632f6a960a84c8c12950dd97f7379be8b887cd784207c6b3794d, recorded in 01-sha256.txt, byte-identical to the binary the recorded parity run executed), 02 fmt --check, 03 clippy -D warnings, 04 +1.85.0 check, 05 +stable test --release --locked --all-features (27 test-binary result lines ok, 206 passed, 0 failed, 2 NOISEMAKER_JS_CPU_DIR-gated parity_spine tests ignored), 06 scripts/tests unittest (Ran 19 tests, OK), 07 generate_bundle.py --check, 08 cargo package --locked, 09 the NOISEMAKER_JS_CPU_DIR-gated parity_spine run (exit 0, 2 passed, 0 failed)."
+  },
+  "flow3d_note": "filter3d/flow3d compared byte-exact in-run inside the 120 s timeout; filter/crt compared byte-exact.",
+  "oracle_revision": {
+    "commit": "d02aaabbee0f6d292234ce8e4aa9f50347df9dda",
+    "repository": "noisefactorllc/noisemaker-for-cpu",
+    "runtime": "node v26.5.1, offline test oracle only, full clone at /state/cache/sync/noisemaker-for-cpu checked out at d02aaabbee0f (its published default branch main; one docs-only commit beyond the declared range end d13b0a2100fb, whose generated canonical-kernels.js and transpiler are identical to d13b0a2's)",
+    "tree": "f31e6c318d88d2d1f093282d69a409052f6c1a9e"
+  },
+  "port_revision": {
+    "binary_built_with": "cargo +stable build --release --locked, cargo 1.99.0 (5f94df478 2026-08-27), rustc 1.99.0 (b940084d7 2026-09-28), stable-x86_64-unknown-linux-gnu, rustup 1.29.1 with RUSTUP_HOME=/state/cache/rustup and CARGO_HOME=/state/cache/cargo (relocated, exec-capable homes); this binary hash differs truthfully from the previously recorded dfc29bed3aa4 because the executed build includes this sync's src/vm.rs parity fix",
+    "binary_sha256": "31e1f64d0d10632f6a960a84c8c12950dd97f7379be8b887cd784207c6b3794d",
+    "commit": "this record-carrying commit (the runtime tree is the tree field; the commit carries the src/vm.rs and tests/pass_runner.rs parity fixes plus this docs record, so its runtime tree is exactly the committed tree)",
+    "param_contract_revision": "6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa",
+    "repository": "noisefactorllc/noisemaker-for-rust",
+    "tree": "the committed tree of this record-carrying commit (self-referential hash omitted); its runtime state is verifiable as: git diff bd351f5c67 over src/, examples/, tests/, scripts/, Cargo.toml, Cargo.lock, and export-kit/ shows exactly the src/vm.rs atlas-z emulation change and the tests/pass_runner.rs oracle-literal re-pins described in port_change, with every other runtime file byte-identical to the published head"
+  },
+  "result": {
+    "byte_exact": 202,
+    "catalog": 205,
+    "compared": 202,
+    "errors": 0,
+    "failed": 0,
+    "passed": 202,
+    "unsupported": 3
+  },
+  "run_date": "2026-10-01"
+}
 }

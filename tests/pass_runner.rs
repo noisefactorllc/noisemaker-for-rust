@@ -298,7 +298,7 @@ fn navier_splat_initial_attachment_matches_javascript_cpu_oracle() {
 }
 
 #[test]
-fn fractional_atlas_z_generators_match_javascript_pre_render_volume_oracles() {
+fn atlas_z_generators_match_javascript_pre_render_volume_oracles() {
     let catalog = effect_catalog().unwrap();
     let shaders = shader_bundle().unwrap();
 
@@ -375,7 +375,7 @@ fn fractional_atlas_z_generators_match_javascript_pre_render_volume_oracles() {
         .chunks_exact(4)
         .map(|pixel| pixel[0])
         .collect::<Vec<_>>();
-    assert_eq!(reaction_b, [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]);
+    assert_eq!(reaction_b, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
 }
 
 #[test]

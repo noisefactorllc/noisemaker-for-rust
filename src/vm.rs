@@ -78,7 +78,7 @@ pub struct ShaderVm {
     javascript_crt_hash_compatibility: bool,
     javascript_pattern_smoothstep_compatibility: bool,
     javascript_sine_hash_random_functions: BTreeSet<String>,
-    javascript_float_atlas_z_program: bool,
+    javascript_atlas_z_program: bool,
     scopes: Vec<BTreeMap<String, Binding>>,
     root_frame: usize,
     statement_count: u64,
@@ -115,7 +115,7 @@ impl ShaderVm {
             .filter(|function| is_javascript_sine_hash_random(function))
             .map(|function| function.mangled_name.clone())
             .collect();
-        let javascript_float_atlas_z_program = is_javascript_float_atlas_program(program);
+        let javascript_atlas_z_program = is_javascript_atlas_program(program);
         Ok(Self {
             program: program.clone(),
             runtime,
@@ -126,7 +126,7 @@ impl ShaderVm {
             javascript_crt_hash_compatibility: false,
             javascript_pattern_smoothstep_compatibility: false,
             javascript_sine_hash_random_functions,
-            javascript_float_atlas_z_program,
+            javascript_atlas_z_program,
             scopes: Vec::new(),
             root_frame: 0,
             statement_count: 0,
@@ -354,8 +354,10 @@ impl ShaderVm {
                                     })
                                     .collect(),
                             )
-                        } else if self.javascript_float_atlas_z_program
-                            && is_javascript_float_atlas_z_declaration(declaration)
+                        } else if let Some(emission) = self
+                            .javascript_atlas_z_program
+                            .then(|| javascript_atlas_z_emission(declaration))
+                            .flatten()
                         {
                             let Expression::Binary { left, right, .. } = initializer else {
                                 unreachable!("atlas z fingerprint requires a binary initializer");
@@ -368,9 +370,23 @@ impl ShaderVm {
                                 ));
                             };
                             // The canonical JS CPU compiler emits an untyped `var` here.
-                            // Preserve its fractional atlas coordinate even though the source IR
-                            // labels the declaration and division as `int`.
-                            Value::Float((f64::from(left) / f64::from(right)) as f32)
+                            // Since the GAP-003 integer-division leg a146f22 it wraps the
+                            // component-indexed dividend (`pixelCoord[1] / volSize`) in
+                            // Math.trunc, while the plain-identifier dividend
+                            // (`yAtlas / volSize` in the shape3d precompute) keeps the
+                            // untyped float64 division the broader widening leg at
+                            // d13b0a2 measured and rejected. Emulate each shape exactly,
+                            // and keep the fingerprint loud: a type_error here means the
+                            // operand typing drifted away from the shapes the CPU
+                            // compiler's lowering keys on.
+                            match emission {
+                                JavascriptAtlasZEmission::TruncatedComponentIndexed => {
+                                    Value::Int(left / right)
+                                }
+                                JavascriptAtlasZEmission::UntypedFloat => {
+                                    Value::Float((f64::from(left) / f64::from(right)) as f32)
+                                }
+                            }
                         } else {
                             self.eval(initializer)?
                         }
@@ -987,7 +1003,7 @@ impl ShaderVm {
     }
 }
 
-fn is_javascript_float_atlas_program(program: &ProgramIr) -> bool {
+fn is_javascript_atlas_program(program: &ProgramIr) -> bool {
     let has_atlas_declaration = program.functions.iter().any(|function| {
         function.name == "main"
             && function.mangled_name == "main__void"
@@ -999,7 +1015,7 @@ fn is_javascript_float_atlas_program(program: &ProgramIr) -> bool {
                     Statement::Declaration { declarations }
                         if declarations
                             .iter()
-                            .any(is_javascript_float_atlas_z_declaration)
+                            .any(is_javascript_atlas_z_declaration)
                 )
             })
     });
@@ -1043,12 +1059,31 @@ fn is_javascript_float_atlas_program(program: &ProgramIr) -> bool {
     reaction_diffusion_signature || shape_signature
 }
 
-fn is_javascript_float_atlas_z_declaration(declaration: &VariableDefinition) -> bool {
+fn is_javascript_atlas_z_declaration(declaration: &VariableDefinition) -> bool {
+    javascript_atlas_z_emission(declaration).is_some()
+}
+
+/// Which untyped-`var` atlas-z emission the canonical JS CPU compiler produces for
+/// this declaration shape. `restoreIntegerDivision` (GAP-003 leg a146f22) rewrites
+/// only `var z = vec[i] / intName;` statements whose dividend is component-indexed
+/// into `Math.trunc(...)`; the plain-identifier dividend (`yAtlas / volSize` in the
+/// shape3d precompute) stays an untyped float64 division because a broader
+/// expression-level widening was measured and rejected against the GPU authority
+/// (GAP-003 record at d13b0a2). The port must emulate each shape exactly.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum JavascriptAtlasZEmission {
+    TruncatedComponentIndexed,
+    UntypedFloat,
+}
+
+fn javascript_atlas_z_emission(
+    declaration: &VariableDefinition,
+) -> Option<JavascriptAtlasZEmission> {
     if declaration.name != "z"
         || declaration.value_type.0 != "int"
         || declaration.array_size.is_some()
     {
-        return false;
+        return None;
     }
     let Some(Expression::Binary {
         value_type,
@@ -1057,10 +1092,10 @@ fn is_javascript_float_atlas_z_declaration(declaration: &VariableDefinition) -> 
         right,
     }) = declaration.initializer.as_ref()
     else {
-        return false;
+        return None;
     };
     if value_type.0 != "int" || operator != "/" {
-        return false;
+        return None;
     }
     let Expression::Identifier {
         value_type: denominator_type,
@@ -1068,13 +1103,13 @@ fn is_javascript_float_atlas_z_declaration(declaration: &VariableDefinition) -> 
         storage: denominator_storage,
     } = right.as_ref()
     else {
-        return false;
+        return None;
     };
     if denominator_type.0 != "int"
         || denominator_name != "volSize"
         || *denominator_storage != StorageClass::Local
     {
-        return false;
+        return None;
     }
     match left.as_ref() {
         Expression::Member {
@@ -1088,20 +1123,31 @@ fn is_javascript_float_atlas_z_declaration(declaration: &VariableDefinition) -> 
                 storage,
             } = object.as_ref()
             else {
-                return false;
+                return None;
             };
-            value_type.0 == "int"
+            if value_type.0 == "int"
                 && field == "y"
                 && object_type.0 == "ivec2"
                 && name == "pixelCoord"
                 && *storage == StorageClass::Local
+            {
+                Some(JavascriptAtlasZEmission::TruncatedComponentIndexed)
+            } else {
+                None
+            }
         }
         Expression::Identifier {
             value_type,
             name,
             storage,
-        } => value_type.0 == "int" && name == "yAtlas" && *storage == StorageClass::Local,
-        _ => false,
+        } => {
+            if value_type.0 == "int" && name == "yAtlas" && *storage == StorageClass::Local {
+                Some(JavascriptAtlasZEmission::UntypedFloat)
+            } else {
+                None
+            }
+        }
+        _ => None,
     }
 }
 
@@ -1919,7 +1965,7 @@ mod tests {
         let mut found = Vec::new();
         for function in &program.functions {
             visit_declarations(&function.body, &mut |declaration| {
-                if is_javascript_float_atlas_z_declaration(declaration) {
+                if is_javascript_atlas_z_declaration(declaration) {
                     found.push(declaration.clone());
                 }
             });
@@ -1946,12 +1992,12 @@ mod tests {
     }
 
     #[test]
-    fn javascript_float_atlas_z_fingerprint_matches_exactly_two_bundle_programs() {
+    fn javascript_atlas_z_fingerprint_matches_exactly_two_bundle_programs() {
         let matches = shader_bundle()
             .unwrap()
             .programs
             .iter()
-            .filter(|(_, program)| is_javascript_float_atlas_program(&program.ir))
+            .filter(|(_, program)| is_javascript_atlas_program(&program.ir))
             .map(|(key, _)| key.as_str())
             .collect::<Vec<_>>();
         assert_eq!(
@@ -1979,13 +2025,13 @@ mod tests {
     }
 
     #[test]
-    fn javascript_float_atlas_z_fingerprint_rejects_near_misses() {
+    fn javascript_atlas_z_fingerprint_rejects_near_misses() {
         let declaration = atlas_declaration("synth3d/reactionDiffusion3d:simulate");
-        assert!(is_javascript_float_atlas_z_declaration(&declaration));
+        assert!(is_javascript_atlas_z_declaration(&declaration));
 
         let mut wrong_declaration = declaration.clone();
         wrong_declaration.name = "slice".into();
-        assert!(!is_javascript_float_atlas_z_declaration(&wrong_declaration));
+        assert!(!is_javascript_atlas_z_declaration(&wrong_declaration));
 
         let mut wrong_denominator = declaration.clone();
         let Some(Expression::Binary { right, .. }) = &mut wrong_denominator.initializer else {
@@ -1995,7 +2041,7 @@ mod tests {
             panic!("expected identifier denominator");
         };
         *name = "width".into();
-        assert!(!is_javascript_float_atlas_z_declaration(&wrong_denominator));
+        assert!(!is_javascript_atlas_z_declaration(&wrong_denominator));
 
         let mut wrong_numerator = declaration;
         let Some(Expression::Binary { left, .. }) = &mut wrong_numerator.initializer else {
@@ -2005,7 +2051,7 @@ mod tests {
             panic!("expected member numerator");
         };
         *field = "x".into();
-        assert!(!is_javascript_float_atlas_z_declaration(&wrong_numerator));
+        assert!(!is_javascript_atlas_z_declaration(&wrong_numerator));
 
         let mut wrong_program =
             shader_bundle().unwrap().programs["synth3d/reactionDiffusion3d:simulate"]
@@ -2017,14 +2063,25 @@ mod tests {
             .find(|function| function.mangled_name == "laplacian3D__ivec3_int")
             .unwrap()
             .return_type = Type("vec3".into());
-        assert!(!is_javascript_float_atlas_program(&wrong_program));
+        assert!(!is_javascript_atlas_program(&wrong_program));
 
         let already_exact = &shader_bundle().unwrap().programs["synth3d/noise3d:precompute"].ir;
-        assert!(!is_javascript_float_atlas_program(already_exact));
+        assert!(!is_javascript_atlas_program(already_exact));
+
+        // The two matched programs carry different CPU emissions: the component-indexed
+        // dividend is wrapped in Math.trunc, the plain-identifier one is not.
+        assert_eq!(
+            javascript_atlas_z_emission(&atlas_declaration("synth3d/reactionDiffusion3d:simulate")),
+            Some(JavascriptAtlasZEmission::TruncatedComponentIndexed)
+        );
+        assert_eq!(
+            javascript_atlas_z_emission(&atlas_declaration("synth3d/shape3d:precompute")),
+            Some(JavascriptAtlasZEmission::UntypedFloat)
+        );
     }
 
     #[test]
-    fn atlas_z_initializer_is_fractional_but_same_program_integer_division_truncates() {
+    fn atlas_z_initializer_truncates_like_the_cpu_emitted_math_trunc() {
         let ir = &shader_bundle().unwrap().programs["synth3d/reactionDiffusion3d:simulate"].ir;
         let mut vm = ShaderVm::new(ir, Runtime::new()).unwrap();
         vm.push();
@@ -2036,7 +2093,7 @@ mod tests {
             declarations: vec![declaration],
         })
         .unwrap();
-        assert_eq!(vm.scopes.last().unwrap()["z"].value, Value::Float(1.5));
+        assert_eq!(vm.scopes.last().unwrap()["z"].value, Value::Int(1));
 
         vm.write_root("volSize", Value::Int(7)).unwrap();
         let unrelated = Expression::Binary {
