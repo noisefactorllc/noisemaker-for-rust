@@ -49,26 +49,7 @@ The leg is two commits (subjects emitted from `git log --format='%H %s'`): `50c1
 Output-neutrality audit: the generated upstream snapshot is byte-identical at both range ends (sha256 `0c7119e9…` at `5f12866`, recomputed locally at `d6664f8`, same sha256) — this leg changes no snapshot, no manifest, and no parameter-contract input; the parameter contract stays at `6a0af04d` (`generate_bundle.py --check` exit 0 at the unchanged contract). The range touches only CPU-repo parity-harness files (`scripts/parity-summary` entrypoint, `scripts/parity/lib.js` extracted from `run.js`, `scripts/parity/summary.js`, `test/parity-summary.test.js`) plus the CPU repo's own `docs/COMPLETION_GAPS.md` record update — files the Rust port neither consumes nor mirrors: the port drives the CPU oracle only through `bin/noisemaker-cpu.js` via `scripts/parity.py`, which is untouched. The port requires no source change. Per-leg details: [source identity](parity/source-identity.json) (`d6664f8_leg_audit`).
 No gap opened, closed, or reopened. GAP-001's 202/205-byte-exact-with-3-unsupported state is unchanged and re-measured below at the new oracle end. GAP-002/GAP-003 evidence is carried (the runtime tree is unchanged).
 
-Environment: Linux x86_64 (Linux 6.8.0-134-generic). Toolchain cargo 1.98.1 (797e8a9bc 2026-08-05) / rustc 1.98.1 (48a229cea) via rustup 1.29.1 with relocated rustup/cargo homes under `/state/cache/rustup` and `/state/cache/cargo`, plus toolchain 1.85.0. Node v26.5.1. Python 3.11.2. No GPU, macOS, or Windows in this container.
-
-Executed commands (exit codes final, all run at the `0f8d01c` tree):
-
-```sh
-cargo build --release --locked   # exit 0; binary sha256 d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01, reproducing the previously recorded d182360e… hash
-cargo fmt --all -- --check   # exit 0
-cargo clippy --all-targets --all-features --locked -- -D warnings   # exit 0
-cargo +1.85.0 check --all-targets --all-features --locked   # exit 0
-cargo test --release --locked --all-features   # exit 0; every result line ok, 0 failed, 2 oracle-gated ignored
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'   # exit 0; Ran 19 tests, OK
-PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check   # exit 0
-cargo package --locked   # exit 0; packaged and verified
-NOISEMAKER_JS_CPU_DIR=/state/cache/ckpt/noisemaker-for-cpu cargo test --release --locked --test parity_spine -- --ignored   # exit 0; 2 passed, 0 failed
-PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/ckpt/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json /workspace/evidence/parity-report-20261001-d6664f8.json   # exit 0
-```
-
-Parity result at the `d6664f8` oracle: 205 catalog records. 202 compared byte-exact, worst max delta 0. 3 unsupported with the stable overlay-interface reason. 0 errors. `filter3d/flow3d` byte-exact in-run at 71.900 s; `filter/crt` byte-exact at 0.440 s.
-Report sha256 `3e62619d9144430d599b2f39d3e35bf054d2244b546a3cc12ffaacf810c43868`. Run log sha256 `4198f1782384eabb150b039d434e01a93ede02d53e0024f7444cc60508fe51eb`. Both raw artifacts and the CPU-repository git bundle are archived with the job in `/workspace/evidence` per the no-committed-logs policy; no new logs are committed under `docs/parity/`.
-Exact-source CI: the audited head `0f8d01c` and the commit carrying this record are docs-only over the runtime tree, so neither triggers a `ci` path-filter run; the audited tree changes no crate source. The crate declares no `[features]` section, so `--all-features` is a no-op flag.
+Checks re-executed at the `0f8d01c` tree: all CONTRIBUTING.md publication checks exit 0, and the 205-record parity run at the `d6664f8` oracle returns 202 compared byte-exact, 3 unsupported with the stable overlay-interface reason, 0 errors. Per-leg record: [source identity](parity/source-identity.json) (`d6664f8_range_run`); verbatim command output and raw run artifacts are archived with the job in `/workspace/evidence` (checks-20261001, parity-report-20261001-d6664f8) per the no-committed-logs policy.
 
 ### Daily review, 2026-09-30, source-lock delivery `5f12866`
 
