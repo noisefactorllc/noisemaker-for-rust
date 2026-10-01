@@ -841,7 +841,7 @@
         "commit": "0f8d01cb7532b35e4cdf9b5cc189c30887e9f355 - the published head this run executed (tree 8ad786f4cbc871f8c9d457ffdf9d23fce41a04a2); the runtime tree of the commit carrying this record equals 0f8d01c over src/, examples/, tests/, scripts/, Cargo.toml, Cargo.lock, and export-kit/ (git diff 0f8d01c over those paths is empty; the record-carrying commit touches docs only)",
         "tree": "8ad786f4cbc871f8c9d457ffdf9d23fce41a04a2",
         "binary_sha256": "d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01",
-        "binary_built_with": "cargo build --release --locked, cargo 1.98.1 (797e8a9bc 2026-08-05), rustc 1.98.1 (48a229cea), stable-x86_64-unknown-linux-gnu, rustup 1.29.1 with RUSTUP_HOME=/state/cache/rustup and CARGO_HOME=/state/cache/cargo (relocated, exec-capable homes); this reproduced the previously recorded d182360e binary hash at the unchanged 0f8d01c runtime tree",
+        "binary_built_with": "cargo +stable build --release --locked, cargo 1.98.1 (797e8a9bc 2026-08-05), rustc 1.98.1 (48a229cea), stable-x86_64-unknown-linux-gnu, rustup 1.29.1 with RUSTUP_HOME=/state/cache/rustup and CARGO_HOME=/state/cache/cargo (relocated, exec-capable homes); verbatim build output and the recorded binary sha256 are in /workspace/evidence/checks-20261001-final/01.txt (re-verified at the published head 9227d47, whose runtime tree equals 0f8d01c over the crate sources), reproducing the previously recorded d182360e binary hash",
         "param_contract_revision": "6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa"
       },
       "oracle_revision": {
@@ -861,17 +861,18 @@
       },
       "flow3d_note": "filter3d/flow3d compared byte-exact in-run at 71.900 s (rust) / 0.974 s (js), inside the 120 s timeout; filter/crt compared byte-exact at 0.440 s.",
       "declared_checks_reexecuted": {
-        "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0 on the tree this run executed (0f8d01c, the published head at run time, clean worktree), not carried from an older tree; cargo 1.98.1 (797e8a9bc 2026-08-05) / rustc 1.98.1 (48a229cea) plus toolchain 1.85.0, rustup 1.29.1, node v26.5.1, Python 3.11.2, Linux x86_64 (6.8.0-134-generic). The crate declares no [features] section, so --all-features is a no-op flag. Verbatim PATH, command, and output for each check are in /workspace/evidence/checks-20261001/01..10 (job evidence archive).",
+        "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0, verbatim in CONTRIBUTING order, on the audited runtime tree (0f8d01c; the record-carrying commits touch docs only over it), re-run 2026-10-01 at the published head 9227d47 whose runtime tree equals 0f8d01c over src/, examples/, tests/, scripts/, Cargo.toml, Cargo.lock, and export-kit/; cargo 1.98.1 (797e8a9bc 2026-08-05) / rustc 1.98.1 (48a229cea) plus toolchain 1.85.0, rustup 1.29.1, node v26.5.1, Python 3.11.2, Linux x86_64 (6.8.0-134-generic). The crate declares no [features] section, so --all-features is a no-op flag. Verbatim command and output for each check are in /workspace/evidence/checks-20261001-final/01..09 (job evidence archive): 01 cargo +stable build --release --locked (parity-binary provenance: target/release/noisemaker-rs sha256 d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01, recorded in the same file, reproducing the previously recorded hash), 02 fmt --check, 03 clippy -D warnings, 04 +1.85.0 check, 05 +stable test --all-targets --all-features (28 test binaries ok, 0 failed, 2 NOISEMAKER_JS_CPU_DIR-gated parity_spine tests ignored), 06 scripts/tests unittest (Ran 19 tests, OK), 07 generate_bundle.py --check, 08 repeat release build, 09 cargo package --locked. The NOISEMAKER_JS_CPU_DIR-gated parity_spine run (exit 0, 2 passed, 0 failed) is in /workspace/evidence/checks-20261001/10.txt.",
         "commands": [
-          {"command": "cargo build --release --locked", "exit_code": 0, "result": "binary sha256 d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01"},
-          {"command": "cargo fmt --all -- --check", "exit_code": 0},
-          {"command": "cargo clippy --all-targets --all-features --locked -- -D warnings", "exit_code": 0},
-          {"command": "cargo +1.85.0 check --all-targets --all-features --locked", "exit_code": 0},
-          {"command": "cargo test --release --locked --all-features", "exit_code": 0, "result": "every test-binary result line 'ok', 0 failed, 2 ignored (the NOISEMAKER_JS_CPU_DIR-gated parity_spine tests) across the suite"},
-          {"command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'", "exit_code": 0, "result": "Ran 19 tests, OK"},
-          {"command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check", "exit_code": 0},
-          {"command": "cargo package --locked", "exit_code": 0, "result": "Packaged; package verification compiled and finished"},
-          {"command": "NOISEMAKER_JS_CPU_DIR=/state/cache/ckpt/noisemaker-for-cpu cargo test --release --locked --test parity_spine -- --ignored", "exit_code": 0, "result": "2 passed, 0 failed (precision_boundaries_are_byte_exact, three_effect_js_oracle_parity_is_byte_exact)"}
+          {"command": "cargo +stable build --release --locked", "exit_code": 0, "evidence": "checks-20261001-final/01.txt", "result": "target/release/noisemaker-rs sha256 d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01"},
+          {"command": "cargo +stable fmt --all -- --check", "exit_code": 0, "evidence": "checks-20261001-final/02.txt"},
+          {"command": "cargo +stable clippy --all-targets --all-features -- -D warnings", "exit_code": 0, "evidence": "checks-20261001-final/03.txt"},
+          {"command": "cargo +1.85.0 check --all-targets --all-features", "exit_code": 0, "evidence": "checks-20261001-final/04.txt"},
+          {"command": "cargo +stable test --all-targets --all-features", "exit_code": 0, "evidence": "checks-20261001-final/05.txt", "result": "28 test-binary result lines ok, 0 failed, 2 ignored (the NOISEMAKER_JS_CPU_DIR-gated parity_spine tests)"},
+          {"command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'", "exit_code": 0, "evidence": "checks-20261001-final/06.txt", "result": "Ran 19 tests, OK"},
+          {"command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check", "exit_code": 0, "evidence": "checks-20261001-final/07.txt"},
+          {"command": "cargo +stable build --release --locked (repeat)", "exit_code": 0, "evidence": "checks-20261001-final/08.txt"},
+          {"command": "cargo package --locked", "exit_code": 0, "evidence": "checks-20261001-final/09.txt", "result": "Packaged; package verification compiled and finished"},
+          {"command": "NOISEMAKER_JS_CPU_DIR=/state/cache/ckpt/noisemaker-for-cpu cargo test --release --locked --test parity_spine -- --ignored", "exit_code": 0, "evidence": "checks-20261001/10.txt", "result": "2 passed, 0 failed (precision_boundaries_are_byte_exact, three_effect_js_oracle_parity_is_byte_exact)"}
         ]
       },
       "artifacts_sha256": {
