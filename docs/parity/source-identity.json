@@ -711,5 +711,108 @@
           ]
         }
       }
+    },
+    "5f12866_leg_audit": {
+      "declared_range": "noisemaker-for-cpu d2965d0b7880cee678de11ec797155c8a65c7b66..5f12866e919f76fc19e4d3e6f0670d61d10dc672 (delivery also cites the observed range ce3926d7a224e6e2ce362b743e2c231a39ddc602..5f12866e919f76fc19e4d3e6f0670d61d10dc672 and flags a force-push/unknown-diff; all three starts fd9d56c74ce7500b7eaeea90a93d3bf49375d28e, d2965d0b7880cee678de11ec797155c8a65c7b66, and ce3926d7a224e6e2ce362b743e2c231a39ddc602 verified ancestors of 5f12866e919f locally with git merge-base --is-ancestor exit 0, both on the working clone and re-verified from a fresh clone of the committed git bundle, audited rather than assumed).",
+      "new_commits": [
+        "36872dd4cd9d131bf614ac0c91a9e9791f917cff Record accepted CRT approximation and compatibility constraints",
+        "c58badadb8b0527212ae244e1b0249f15040fa63 docs: record supervisor publication 403 blocker for reviewed candidate 36872dd in the GAP register pass history",
+        "52219d90f7e95e2f9bf00bd39796febe0457219e docs: replace local machine paths with portable references",
+        "65a52cb04134c127c76a5dd8248286ab8d77e551 docs: record GAP-002 second bounded external-input qualification (53x29, CPU vs upstream WebGL2 authority at pin f24b5254)",
+        "7e50900231df465517920109369b6007d17ab725 docs: record public-CLI run evidence (exit 0, byte-match with ESM outputs) for the GAP-002 53x29 qualification",
+        "ce3926d7a224e6e2ce362b743e2c231a39ddc602 docs: tie GAP-002 required checks to the exact record candidate 7e50900 with archived exact-candidate run evidence",
+        "5f12866e919f76fc19e4d3e6f0670d61d10dc672 sync: advance the pinned upstream source-lock revision to e24c844f8dada85551ab084f41db8944fbc176c8"
+      ],
+      "compare_url": "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/d2965d0b7880...5f12866e919f",
+      "diffstat": "README.md 2, docs/COMPATIBILITY.md 12+, docs/COMPLETION_GAPS.md 31, docs/CRT-PARITY.md 33, docs/EFFECTS.md 2, scripts/upstream/pinned-source-manifest.json 18, scripts/upstream/source-lock.js 6, src/effects/generated/upstream-snapshot.js 2, test/upstream-inventory.test.js 2; total 9 files, 67 insertions(+), 41 deletions(-). Zero src/ runtime files other than the generated snapshot.",
+      "snapshot_identity": {
+        "file": "src/effects/generated/upstream-snapshot.js",
+        "sha256_at_d2965d0": "50cb6c50ddbba252127b1ab3d79ce05e7be9b6be1e22889787d0575ee3a69c66",
+        "sha256_at_5f12866": "0c7119e943ce355c9ab82c1652a83cf09ae1f43cb0bc788825e60c2d1482a132",
+        "entire_diff": "+export const UPSTREAM_REVISION = \"e24c844f8dada85551ab084f41db8944fbc176c8\"\n-export const UPSTREAM_REVISION = \"f24b52540af6a88d12daa05feba1a04ad61b22a2\""
+      },
+      "manifest_corroboration": "The pinned-source-manifest diff over d2965d0..5f12866 is the revision field (f24b52540af6a88d12daa05feba1a04ad61b22a2 to e24c844f8dada85551ab084f41db8944fbc176c8) plus exactly four shaders/src/runtime entries (diagnostics.js 7128->8059 bytes sha256 2d3e07a8ba2720eb2db9797f7f663442e623e91d2c1f15a776f2f6e0129ba62b; webgl2.js 78150->81111 sha256 5f8c655c26ea9aa5683bc6fcbb010f67775d8e72866564e0e4512b250e812576; webgpu.js 164220->164648 sha256 def2f4697c288109ea398c53f5eddadae66dbbabc12e92912df2914fcc439fad; pipeline.js 123038->124928 sha256 4696cbea38d0f37ff890826be0932127a56dcf9e2d723c00007d08c8912b3ab3); no shaders/effects entry changed, corroborating the unchanged snapshot effect data (the snapshot diff is the UPSTREAM_REVISION line only).",
+      "upstream_note": "The four shaders/src changes belong to the upstream GPU runtime: noisemaker@e24c844f finalizes GAP-007 backend diagnostics and accepts the 'input'/'resolution' dimension keywords in the validator, touching shaders/src/runtime/backends/diagnostics.js, backends/webgl2.js, backends/webgpu.js, and runtime/pipeline.js. The Rust port consumes the pinned tree only through the shaders/effects definitions and the Effect base class at inventory time, executes its own Rust CPU engine, and has no code path into the upstream GPU backends or Pipeline, so no port behavioral change applies.",
+      "finding": "Seven new commits: six CPU-repo docs records (CRT approximation/compatibility constraints, supervisor-publication blocker note, portable-path rewording, GAP-002 external-input qualification evidence, GAP-002 required-checks tie) the port neither consumes nor mirrors, plus one source-lock sync commit (5f12866) bumping the CPU pinned upstream revision to noisemaker@e24c844f8dada85551ab084f41db8944fbc176c8 with the snapshot effect data byte-identical apart from the UPSTREAM_REVISION line. The pinned shaders/src tree changed (four GPU-runtime entries, digests recomputed), but the Rust port consumes only the effect catalog through the parameter contract (revision 6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa, unchanged, confirmed by generate_bundle.py --check exit 0 at the unchanged contract) and has no code path into the upstream GPU runtime. The port requires no source change; rendered output is unaffected, confirmed by the recorded 205-record run below: 202 of 205 compared byte-exact at tolerance 0, the remaining 3 cases unsupported with the stable overlay-interface reason (unsupported, not exact passes), 0 errors."
+    },
+    "5f12866_range_run": {
+      "run_date": "2026-09-30",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json /workspace/evidence/parity-report-20260930-5f12866.json",
+      "port_revision": {
+        "repository": "noisefactorllc/noisemaker-for-rust",
+        "commit": "b4a8402873a693664d8e8e33f2e73d00e8efc4a3 - the published head this run executed (tree f3a62a4900c22417bb8129d35992cb3e5a3198d0); the runtime tree of the commit carrying this record equals b4a8402 over src/, examples/, tests/, scripts/generate_bundle.py, scripts/transpiler/, scripts/parity.py, scripts/test, Cargo.toml, Cargo.lock, and export-kit/ (git diff b4a8402 over those paths is empty; the record-carrying commit touches docs only)",
+        "tree": "f3a62a4900c22417bb8129d35992cb3e5a3198d0",
+        "binary_sha256": "d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01",
+        "binary_built_with": "cargo build --release --locked, cargo 1.98.1 (797e8a9bc 2026-08-05), rustc 1.98.1 (48a229cea), stable-x86_64-unknown-linux-gnu, rustup 1.29.1 with RUSTUP_HOME=/state/cache/rustup and CARGO_HOME=/state/cache/cargo (relocated, exec-capable homes); this reproduced the previously recorded d182360e binary hash, re-verified from a from-scratch build after rm -rf target (38.99 s), same sha256 d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01",
+        "param_contract_revision": "6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa"
+      },
+      "oracle_revision": {
+        "repository": "noisefactorllc/noisemaker-for-cpu",
+        "commit": "5f12866e919f76fc19e4d3e6f0670d61d10dc672",
+        "tree": "7ce22d24a842f381bebe019404bfa6453bfc7d00",
+        "runtime": "node v26.5.1, offline test oracle only, full clone at /state/cache/noisemaker-for-cpu checked out at 5f12866e919f (its published default branch main)"
+      },
+      "result": {
+        "catalog": 205,
+        "compared": 202,
+        "unsupported": 3,
+        "errors": 0,
+        "passed": 202,
+        "failed": 0,
+        "byte_exact": 202
+      },
+      "flow3d_note": "filter3d/flow3d compared byte-exact in-run at 107.507 s (rust) / 1.316 s (js), inside the 120 s timeout; filter/crt compared byte-exact at 0.598 s.",
+      "declared_checks_reexecuted": {
+        "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0 on the tree this run executed (b4a8402, the published head at run time, clean worktree), not carried from an older tree; cargo 1.98.1 (797e8a9bc 2026-08-05) / rustc 1.98.1 (48a229cea) plus toolchain 1.85.0, rustup 1.29.1, node v26.5.1, Python 3.11.2, Linux x86_64 (6.8.0-134-generic). The crate declares no [features] section, so --all-features is a no-op flag. Verbatim PATH, command, and output for each check are in /workspace/evidence/checks/01..09 (job evidence archive).",
+        "commands": [
+          {
+            "command": "cargo build --release --locked",
+            "exit_code": 0,
+            "result": "binary sha256 d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01"
+          },
+          {
+            "command": "cargo fmt --all -- --check",
+            "exit_code": 0
+          },
+          {
+            "command": "cargo clippy --all-targets --all-features --locked -- -D warnings",
+            "exit_code": 0
+          },
+          {
+            "command": "cargo +1.85.0 check --all-targets --all-features --locked",
+            "exit_code": 0
+          },
+          {
+            "command": "cargo test --release --locked --all-features",
+            "exit_code": 0,
+            "result": "every test-binary result line 'ok', 0 failed, 2 ignored (the NOISEMAKER_JS_CPU_DIR-gated parity_spine tests) across the suite"
+          },
+          {
+            "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'",
+            "exit_code": 0,
+            "result": "OK"
+          },
+          {
+            "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check",
+            "exit_code": 0
+          },
+          {
+            "command": "cargo package --locked",
+            "exit_code": 0,
+            "result": "Packaged; package verification compiled and finished"
+          },
+          {
+            "command": "NOISEMAKER_JS_CPU_DIR=/state/cache/noisemaker-for-cpu cargo test --release --locked --test parity_spine -- --ignored",
+            "exit_code": 0,
+            "result": "2 passed, 0 failed (precision_boundaries_are_byte_exact, three_effect_js_oracle_parity_is_byte_exact)"
+          }
+        ]
+      },
+      "artifacts_sha256": {
+        "parity-report-20260930-5f12866.json": "425b52ddd873371bcf126e436ee6ada6f82242adaaba562236574058e9563bdf",
+        "parity-run-20260930-5f12866.log": "8aaa36794356fdb1aa6c7f0ad3fab9be9a81323450fe0001cec22d63c37cdf7e",
+        "archive": "Raw run artifacts are archived with the job in /workspace/evidence per the no-committed-logs policy; no new logs under docs/parity/.",
+        "cpu_repository_bundle": "noisemaker-for-cpu-5f12866.bundle in /workspace/evidence (sha256 03492fa5277d92cc1bacb684802a68d25f5c67d740528aba81be4f93a9400b86): a git bundle of the noisemaker-for-cpu main history through 5f12866e919f76fc19e4d3e6f0670d61d10dc672 (git bundle verify reports a complete history). A reviewer can independently re-verify the full range diff and ancestry: git clone -b main <bundle> <dir>, then git merge-base --is-ancestor fd9d56c74ce7500b7eaeea90a93d3bf49375d28e 5f12866e919f76fc19e4d3e6f0670d61d10dc672, the same for d2965d0b7880cee678de11ec797155c8a65c7b66 and ce3926d7a224e6e2ce362b743e2c231a39ddc602; all exit 0 (re-verified 2026-09-30 from a fresh clone of this bundle)."
+      }
     }
 }
