@@ -646,7 +646,7 @@ fn apply_parameter(
                 {
                     Evaluated::Array(
                         decode_hex_color(&value)
-                            .map_err(&fail)?
+                            .map_err(fail)?
                             .into_iter()
                             .map(Evaluated::Number)
                             .collect(),

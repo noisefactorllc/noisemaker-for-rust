@@ -881,5 +881,84 @@
         "archive": "Raw run artifacts are archived with the job in /workspace/evidence per the no-committed-logs policy; no new logs under docs/parity/.",
         "cpu_repository_bundle": "noisemaker-for-cpu-d6664f8.bundle in /workspace/evidence (sha256 e0c5fd58ba2f6ea6b205661a674bc16d71ead7b83bdf8d66facac17703eaaa84): a git bundle of the noisemaker-for-cpu main history through d6664f8a494aec3bd10bce200d63d42ec833d61a (git bundle verify reports a complete history). A reviewer can independently re-verify the full range diff and ancestry: git clone -b main <bundle> <dir>, then git merge-base --is-ancestor fd9d56c74ce7500b7eaeea90a93d3bf49375d28e d6664f8a494aec3bd10bce200d63d42ec833d61a, the same for 5f12866e919f76fc19e4d3e6f0670d61d10dc672 and 50c1cbe3319158be9d2965ebd4934b2852d96789; all exit 0 (verified 2026-10-01 from the working clone and re-verified from a fresh clone of this bundle)."
       }
+    },
+    "ef26f1c_leg_audit": {
+      "declared_range": "noisemaker-for-cpu d6664f8a494aec3bd10bce200d63d42ec833d61a..ef26f1c88a4496234d285fa476b8d09d6f05009c per the delivery trigger, which flags a force-push/unknown-diff and cites the observed ranges 704645a45df9587ce238190bb5ec4ed2d4c22039..116dae317a07a96d9f8ef3b0320f873871ff6b57 and 116dae317a07a96d9f8ef3b0320f873871ff6b57..ef26f1c88a4496234d285fa476b8d09d6f05009c; d6664f8a494a, 704645a45df9, and 116dae317a07 all verified ancestors of ef26f1c88a44 locally with git merge-base --is-ancestor exit 0, so the previously audited legs (through d6664f8) plus this one cover the full declared delivery - audited rather than assumed.",
+      "new_commits": [
+        "704645a45df9587ce238190bb5ec4ed2d4c22039 GAP-003 record: record the 2026-10-01 M4/Metal authority capture campaign for the 41 skip fixtures",
+        "116dae317a07a96d9f8ef3b0320f873871ff6b57 GAP-003: correct the synth3d/reactionDiffusion3d parity fixture to the authority-valid starter usage and record its M4/Metal authority capture",
+        "ef26f1c88a4496234d285fa476b8d09d6f05009c GAP-003: restore exact GLSL uint semantics in transpiled hash kernels; record the measured M4/Metal re-capture and comparison"
+      ],
+      "compare_url": "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/d6664f8a494a...ef26f1c88a44",
+      "diffstat": "docs/COMPLETION_GAPS.md 3+, parity/upstream-defaults/synth3d__reactionDiffusion3d.dsl 4+/1-, scripts/upstream/compile-glsl.js 41+, src/effects/generated/canonical-kernels.js 21+/21-; total 4 files, 68 insertions(+), 23 deletions(-). Zero upstream-snapshot or pinned-source-manifest changes.",
+      "snapshot_identity": {
+        "file": "src/effects/generated/upstream-snapshot.js",
+        "sha256_at_d6664f8": "0c7119e943ce355c9ab82c1652a83cf09ae1f43cb0bc788825e60c2d1482a132",
+        "sha256_at_ef26f1c": "0c7119e943ce355c9ab82c1652a83cf09ae1f43cb0bc788825e60c2d1482a132",
+        "entire_diff": "(none - the generated upstream snapshot is byte-identical at both range ends; sha256s recomputed locally from the working clone at both commits)"
+      },
+      "manifest_corroboration": "The pinned-source manifest is untouched over d6664f8..ef26f1c (not in the diffstat); the range touches only the CPU GAP-003 campaign record (docs), a CPU-repo parity fixture DSL (parity/upstream-defaults/synth3d__reactionDiffusion3d.dsl, a repo-local file the Rust port does not consume), the CPU transpiler scripts/upstream/compile-glsl.js, and the CPU's regenerated src/effects/generated/canonical-kernels.js.",
+      "upstream_note": "No upstream (noisemaker) tree content changed in this leg. The executable change is CPU-internal: compile-glsl.js gains restoreUnsignedIntegerArithmetic, which rewrites the transpiled hash3/hash4 LCG mixing from raw JS * / + / ^ / >> / float(uint(...)) to exact mod-2^32 semantics (cpu_umul, >>> 0, logical shifts), and canonical-kernels.js is regenerated accordingly. This changes the CPU oracle's executed JS for the grad3/grad4 hash path.",
+      "finding": "Three new commits: two CPU GAP-003 capture-campaign records (docs and a CPU-repo-local fixture DSL) plus the uint-semantics fix in the CPU transpiler with its regenerated canonical-kernels.js. The Rust port consumes the CPU tree only through the effect catalog via the parameter contract (revision 6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa, confirmed unchanged by generate_bundle.py --check exit 0) and drives the oracle only through bin/noisemaker-cpu.js via scripts/parity.py; it neither consumes compile-glsl.js nor canonical-kernels.js (the port's pipeline is src/generated/shaders.json plus its own Rust engine). The oracle's rendered noise3d output demonstrably changed over the range: rendering the CPU repo's own parity/upstream-defaults/synth3d__noise3d.dsl through bin/noisemaker-cpu.js (8x8, time 0.25, seed 1) yields sha256 be29fb422f7cf0a2731103514ee4aa637294e99f14cb6c832a5c2e3963d08e46 at d6664f8 versus be44b5c8e2fd1dcc251b4e0e4bd6ebe83faf10fc37871390e52798799f1b40b3 at ef26f1c, while the same probe on synth__perlin is byte-identical (433539e29f32036ce57517ba7ba05ebf50538570a3a82801479ecda9a4087499 at both ends). Despite this oracle behavior change, the port's full parity run at ef26f1c compares 202 of 205 byte-exact at tolerance 0 with 0 errors (run recorded below; synth3d/noise3d is among the byte-exact cases, max=0), confirming the port's runtime.rs pcg3d already implemented exact u32 wrapping/logical-shift semantics that the CPU fix moves the JS oracle toward. The port therefore requires no parity source change; the only port change in this sync is this record plus a one-line clippy fix (src/dsl/compile.rs map_err(&fail) -> map_err(fail)) required by the container's rustc/clippy 1.99.0 -D warnings, with no behavioral effect."
+    },
+    "ef26f1c_range_run": {
+      "run_date": "2026-10-01",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/cpu/bin/noisemaker-cpu.js --timeout 120 --json /workspace/evidence/parity-report-20261001-ef26f1c.json",
+      "port_revision": {
+        "repository": "noisefactorllc/noisemaker-for-rust",
+        "commit": "this record-carrying commit (the runtime tree is the tree field; the commit carries the clippy fix in src/dsl/compile.rs plus this docs record, so its runtime tree is exactly the committed tree)",
+        "tree": "the committed tree of this record-carrying commit (self-referential hash omitted); its runtime state is verifiable as: git diff a2f260a494e over src/, examples/, tests/, scripts/, Cargo.toml, Cargo.lock, and export-kit/ shows exactly the one-line src/dsl/compile.rs change (blob 98901ab6e11f968f7995b6d91613b3cdef3a5e2d), with every other runtime file byte-identical to the published head",
+        "binary_sha256": "dfc29bed3aa445cd0d910c3c031dd0a9c44b6a0e800dec7c6c10ec55893736c4",
+        "binary_built_with": "cargo +stable build --release --locked, cargo 1.99.0 (5f94df478 2026-08-27), rustc 1.99.0 (b940084d7 2026-09-28), stable-x86_64-unknown-linux-gnu, rustup 1.29.1 with RUSTUP_HOME=/state/cache/rustup and CARGO_HOME=/state/cache/cargo (relocated, exec-capable homes); this binary hash differs truthfully from the previously recorded d182360e22cc5fe44c4dd0b6d58fdb810a2a0daaef388ea27831210ec5244b01 because the executed build uses the container's fresh stable 1.99.0 and includes the one-line clippy 1.99 needless-borrow fix in src/dsl/compile.rs; the same toolchain and homes reproduce prior hashes when prior versions are used",
+        "param_contract_revision": "6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa"
+      },
+      "oracle_revision": {
+        "repository": "noisefactorllc/noisemaker-for-cpu",
+        "commit": "ef26f1c88a4496234d285fa476b8d09d6f05009c",
+        "tree": "a0fc510ab9775f23ee5b842a67fe43cd332926ee",
+        "runtime": "node v26.5.1, offline test oracle only, full clone at /state/cache/cpu checked out at ef26f1c88a44 (its published default branch main)"
+      },
+      "result": {"catalog": 205, "compared": 202, "unsupported": 3, "errors": 0, "passed": 202, "failed": 0, "byte_exact": 202},
+      "flow3d_note": "filter3d/flow3d compared byte-exact in-run at 71.436 s (rust) / 0.821 s (js), inside the 120 s timeout; filter/crt compared byte-exact at 0.403 s.",
+      "declared_checks_reexecuted": {
+        "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0, verbatim in CONTRIBUTING order, on the candidate tree carrying this record (the record-carrying commit, which is also the runtime tree: the commit contains the clippy fix in src/dsl/compile.rs plus this docs record); cargo 1.99.0 (5f94df478 2026-08-27) / rustc 1.99.0 (b940084d7 2026-09-28) plus toolchain 1.85.0, rustup 1.29.1, node v26.5.1, Python 3.11.2, Linux x86_64. The crate declares no [features] section, so --all-features is a no-op flag. Verbatim command and output for each check are in /workspace/evidence/checks-20261001-ef26f1c/01..09 (job evidence archive): 01 cargo +stable build --release --locked (parity-binary provenance: target/release/noisemaker-rs sha256 dfc29bed3aa445cd0d910c3c031dd0a9c44b6a0e800dec7c6c10ec55893736c4, recorded in 01-sha256.txt), 02 fmt --check, 03 clippy -D warnings, 04 +1.85.0 check, 05 +stable test --release --locked --all-features (27 test-binary result lines ok, 0 failed, 2 NOISEMAKER_JS_CPU_DIR-gated parity_spine tests ignored), 06 scripts/tests unittest (Ran 19 tests, OK), 07 generate_bundle.py --check, 09 cargo package --locked, 10 the NOISEMAKER_JS_CPU_DIR-gated parity_spine run (exit 0, 2 passed, 0 failed).",
+        "commands": [
+          {
+            "command": "cargo +stable build --release --locked",
+            "exit_code": 0,
+            "evidence": "checks-20261001-ef26f1c/01-build.txt + 01-sha256.txt",
+            "result": "target/release/noisemaker-rs sha256 dfc29bed3aa445cd0d910c3c031dd0a9c44b6a0e800dec7c6c10ec55893736c4"
+          },
+          {"command": "cargo +stable fmt --all -- --check", "exit_code": 0, "evidence": "checks-20261001-ef26f1c/02-fmt.txt"},
+          {"command": "cargo +stable clippy --all-targets --all-features --locked -- -D warnings", "exit_code": 0, "evidence": "checks-20261001-ef26f1c/03-clippy.txt"},
+          {"command": "cargo +1.85.0 check --all-targets --all-features", "exit_code": 0, "evidence": "checks-20261001-ef26f1c/04-msrv.txt"},
+          {
+            "command": "cargo +stable test --release --locked --all-features",
+            "exit_code": 0,
+            "evidence": "checks-20261001-ef26f1c/05-test.txt",
+            "result": "27 test-binary result lines ok, 0 failed, 2 ignored (the NOISEMAKER_JS_CPU_DIR-gated parity_spine tests)"
+          },
+          {
+            "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'",
+            "exit_code": 0,
+            "evidence": "checks-20261001-ef26f1c/06-unittest.txt",
+            "result": "Ran 19 tests, OK"
+          },
+          {"command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check", "exit_code": 0, "evidence": "checks-20261001-ef26f1c/07-bundle.txt"},
+          {"command": "cargo +stable package --locked", "exit_code": 0, "evidence": "checks-20261001-ef26f1c/09-package.txt", "result": "Packaged; package verification compiled and finished"},
+          {
+            "command": "NOISEMAKER_JS_CPU_DIR=/state/cache/cpu cargo +stable test --release --locked --test parity_spine -- --ignored",
+            "exit_code": 0,
+            "evidence": "checks-20261001-ef26f1c/10-oracle-gated.txt",
+            "result": "2 passed, 0 failed (precision_boundaries_are_byte_exact, three_effect_js_oracle_parity_is_byte_exact)"
+          }
+        ]
+      },
+      "artifacts_sha256": {
+        "parity-report-20261001-ef26f1c.json": "482053c0bab66d026e1f6318ebe0dd7d413261f11c6312128c959126191b899f",
+        "parity-log-20261001-ef26f1c.txt": "cb7ea019137fd9a13b752baa71715044dd786e900df57bfff17ab13e78c5952f",
+        "archive": "Raw run artifacts are archived with the job in /workspace/evidence per the no-committed-logs policy; no new logs under docs/parity/.",
+        "cpu_repository_bundle": "noisemaker-for-cpu-ef26f1c.bundle in /workspace/evidence (sha256 7677dffb697d3b7219a4795e3f0bb637cd96d596b21304c84931781b40ebb270): a git bundle of the noisemaker-for-cpu main history through ef26f1c88a4496234d285fa476b8d09d6f05009c (git bundle verify reports a complete history). A reviewer can independently re-verify the full range diff and ancestry: git clone -b main <bundle> <dir>, then git merge-base --is-ancestor d6664f8a494aec3bd10bce200d63d42ec833d61a ef26f1c88a4496234d285fa476b8d09d6f05009c, the same for 704645a45df9587ce238190bb5ec4ed2d4c22039 and 116dae317a07a96d9f8ef3b0320f873871ff6b57; all exit 0 (verified 2026-10-01 from the working clone)."
+      }
     }
 }
