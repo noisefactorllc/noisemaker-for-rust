@@ -1049,6 +1049,7 @@
 },
   "b93980b_leg_audit": {
     "declared_range": "noisemaker-for-cpu d13b0a2100fb2753b0905e301ab6c2eea8d8e1f2..b93980b512a24ef71ab61a959ed2ce35c1f09666 per the delivery trigger, which flags a force-push/unknown-diff and cites the observed ranges d02aaabbee0f6d292234ce8e4aa9f50347df9dda..9e202113c4fa1830c5cbdc697c8363b92259515d and 9e202113c4fa1830c5cbdc697c8363b92259515d..b93980b512a24ef71ab61a959ed2ce35c1f09666. d13b0a2, d02aaab, and 9e20211 all verified ancestors of b93980b locally (git merge-base --is-ancestor exit 0, re-verified against a fresh clone of the committed noisemaker-for-cpu-b93980b.bundle), so the previously published d02aaab_leg_audit covers everything through d02aaab and the new portion is d02aaab..b93980b - audited rather than assumed.",
+    "reviewer_evidence": "The full range audit (commit list, per-commit patches, diffstat, ancestry exit codes, sha256 identity of src/effects/generated/upstream-snapshot.js, scripts/upstream/pinned-source-manifest.json, and bin/noisemaker-cpu.js at d02aaab/9e20211/b93980b, and the empty src/bin/scripts-upstream range diff) is captured verbatim in /workspace/evidence/cpu-range-review.txt, generated from a fresh clone of the committed bundle; the bundle itself ships in the job evidence archive evidence-1790922776920.tar.gz alongside it.",
     "compare_urls": [
       "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/d13b0a2100fb...b93980b512a2",
       "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/d02aaabbee0f...9e202113c4fa",
@@ -1099,7 +1100,7 @@
     },
     "flow3d_note": "filter3d/flow3d compared byte-exact in-run at 104.957 s (rust) / 1.335 s (js), inside the 120 s timeout; filter/crt compared byte-exact at 0.600 s. The three worm-overlay cases compared byte-exact at 0.405 s, 0.312 s, and 0.415 s (rust) respectively.",
     "declared_checks_reexecuted": {
-      "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0, verbatim in CONTRIBUTING order, on the candidate tree carrying this record (the record-carrying commit, which is also the runtime tree: the commit contains only this docs record); cargo 1.99.0 (5f94df478 2026-08-27) / rustc 1.99.0 (b940084d7 2026-09-28) plus toolchain 1.85.0, rustup 1.29.1, node v26.5.1, Python 3.11.2, Linux x86_64. The crate declares no [features] section, so --all-features is a no-op flag. Verbatim command and output for each check are in /workspace/evidence/checks-20261002-b93980b/01-build..10-oracle-gated (job evidence archive).",
+      "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0, verbatim in CONTRIBUTING order, on the candidate tree carrying this record (the record-carrying commit 42198395, whose runtime tree (src/, examples/, tests/, Cargo.toml, Cargo.lock, export-kit/) is byte-identical to the previously published head e9899db: the commit changes only scripts/parity.py (the Ready-mode worm-overlay coverage in the parity harness the recorded run executed), scripts/tests/test_parity.py, and this docs record); cargo 1.99.0 (5f94df478 2026-08-27) / rustc 1.99.0 (b940084d7 2026-09-28) plus toolchain 1.85.0, rustup 1.29.1, node v26.5.1, Python 3.11.2, Linux x86_64. The crate declares no [features] section, so --all-features is a no-op flag. Verbatim command and output for each check are in /workspace/evidence/checks-20261002-b93980b/01-build..10-oracle-gated (job evidence archive).",
       "commands": [
         {
           "command": "cargo +stable build --release --locked",
@@ -1138,7 +1139,7 @@
           "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'",
           "exit_code": 0,
           "evidence": "checks-20261002-b93980b/06-unittest.txt",
-          "result": "Ran 19 tests, OK"
+          "result": "Ran 20 tests, OK"
         },
         {
           "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check",
@@ -1163,6 +1164,7 @@
       "parity-report-20261002-full205.json": "53877811f65ad48da8b2ca0c52d674374e00bc8fd3c9fabeeb8a2b01c22a1b27",
       "parity-log-20261002-full205.txt": "f99b3e3c2ed275f7446214297ee186a0cd47f8ab3cf797d28414651ea97eaf25",
       "archive": "Raw run artifacts are archived with the job in /workspace/evidence per the no-committed-logs policy; no new logs under docs/parity/.",
+    "evidence_archive": "evidence-1790922776920.tar.gz in /workspace/evidence: the supervisor-mounted archive of the evidence directory containing checks-20261002-b93980b/ (all publication-check outputs), cpu-range-review.txt, both parity reports/logs, and noisemaker-for-cpu-b93980b.bundle (sha256 1fca68d4441549c851a36e631619afacc0127694bbda4d544b495edc97c11fbb)",
       "cpu_repository_bundle": "noisemaker-for-cpu-b93980b.bundle in /workspace/evidence (sha256 1fca68d4441549c851a36e631619afacc0127694bbda4d544b495edc97c11fbb): a git bundle of the noisemaker-for-cpu main history through b93980b512a24ef71ab61a959ed2ce35c1f09666 (git bundle verify reports a complete history). A reviewer can independently re-verify the full range diff and ancestry: git clone -b main <bundle> <dir>, then git merge-base --is-ancestor d13b0a2100fb2753b0905e301ab6c2eea8d8e1f2 b93980b512a24ef71ab61a959ed2ce35c1f09666, the same for d02aaabbee0f6d292234ce8e4aa9f50347df9dda and 9e202113c4fa1830c5cbdc697c8363b92259515d; all exit 0 (verified 2026-10-02 from a fresh clone of this bundle)."
     },
     "overlay_resolution": "The historical runs recorded above (through the 2026-10-01 d02aaab run) classified filter/fibers, filter/scratches, and filter/strayHair as 'unsupported' because the JavaScript CLI renders these three canonical worm-overlay effects only in Ready one-shot mode (no Initial one-shot flag) while the harness forced the Rust CLI to --one-shot initial everywhere else. This candidate removes the skip: scripts/parity.py's OVERLAY_READY_IDS now routes exactly these three ids through Ready one-shot mode on both CLIs (Rust '--one-shot ready', the JS CLI's only mode) and tags their records overlay_one_shot=ready, with the same tolerance-0 byte-exact bar as every other case. Both implementations agree byte-exact (max_delta 0 for all three in the run recorded below). scripts/tests/test_parity.py gains test_worm_overlay_effects_are_compared_in_ready_mode_not_skipped, which pins the OVERLAY_READY_IDS membership against the catalog and validates the Ready-mode compared-record schema; its red behavior was verified by temporarily replacing the constant (the suite failed), then restoring it. This run supersedes the 'unsupported' classification in the top-level unsupported_records field and every per-leg result above; the earlier 202/202 reports remain archived as historical evidence of those runs."
