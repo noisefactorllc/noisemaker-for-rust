@@ -1045,6 +1045,119 @@
     "passed": 202,
     "unsupported": 3
   },
-  "run_date": "2026-10-01"
+  "run_date": "2026-10-01",
+  "b93980b_leg_audit": {
+    "declared_range": "noisemaker-for-cpu d13b0a2100fb2753b0905e301ab6c2eea8d8e1f2..b93980b512a24ef71ab61a959ed2ce35c1f09666 per the delivery trigger, which flags a force-push/unknown-diff and cites the observed ranges d02aaabbee0f6d292234ce8e4aa9f50347df9dda..9e202113c4fa1830c5cbdc697c8363b92259515d and 9e202113c4fa1830c5cbdc697c8363b92259515d..b93980b512a24ef71ab61a959ed2ce35c1f09666. d13b0a2, d02aaab, and 9e20211 all verified ancestors of b93980b locally (git merge-base --is-ancestor exit 0, re-verified against a fresh clone of the committed noisemaker-for-cpu-b93980b.bundle), so the previously published d02aaab_leg_audit covers everything through d02aaab and the new portion is d02aaab..b93980b - audited rather than assumed.",
+    "compare_urls": [
+      "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/d13b0a2100fb...b93980b512a2",
+      "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/d02aaabbee0f...9e202113c4fa",
+      "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/9e202113c4fa...b93980b512a2"
+    ],
+    "new_commits": [
+      "9e202113c4fa1830c5cbdc697c8363b92259515d GAP-003: fresh M4/Metal capture campaign; graduate 14 skip cases into the graded set with recorded provenance",
+      "b93980b512a24ef71ab61a959ed2ce35c1f09666 GAP-003: regenerate provenance introducedIn for the 14 third-leg goldens against the published introducing commit 9e20211"
+    ],
+    "diffstat": "docs/COMPLETION_GAPS.md 9, 14 new parity/goldens/defaults/*.golden.png (binary), parity/goldens/provenance.json 130+, scripts/parity/capture-records.json 72+, scripts/parity/lib.js 29, scripts/parity/run.js 10, scripts/parity/summary.js 6, test/parity-summary.test.js 4; total 21 files, 212 insertions(+), 48 deletions(-). Zero upstream-snapshot, pinned-source-manifest, src/, bin/, or scripts/upstream/ changes.",
+    "snapshot_identity": {
+      "file": "src/effects/generated/upstream-snapshot.js",
+      "sha256_at_d02aaab": "0c7119e943ce355c9ab82c1652a83cf09ae1f43cb0bc788825e60c2d1482a132",
+      "sha256_at_9e20211": "0c7119e943ce355c9ab82c1652a83cf09ae1f43cb0bc788825e60c2d1482a132",
+      "sha256_at_b93980b": "0c7119e943ce355c9ab82c1652a83cf09ae1f43cb0bc788825e60c2d1482a132",
+      "entire_diff": "(none - the generated upstream snapshot is byte-identical at all three commits; sha256s recomputed locally from the working clone and a fresh clone of the committed bundle)",
+      "other_identity": "scripts/upstream/pinned-source-manifest.json sha256 9950d16a13d47e04... identical at d02aaab and b93980b; bin/noisemaker-cpu.js sha256 96d09295c0292a68... identical at d02aaab and b93980b (both recomputed locally)"
+    },
+    "manifest_corroboration": "The pinned-source manifest is untouched over d02aaab..b93980b (not in the diffstat; sha256 identical above). The range touches only the CPU GAP-003 campaign record (docs), CPU-repo parity goldens and provenance (parity/goldens/*), the CPU-repo skip policy and parity tooling (scripts/parity/lib.js, run.js, summary.js, capture-records.json), and CPU-repo test/parity-summary.test.js - repo-local files the Rust port does not consume.",
+    "upstream_note": "No upstream (noisemaker) tree content changed in this leg and the CPU runtime is byte-identical across the range: the executable change is CPU-repo parity bookkeeping only. The capture campaign graduates 14 previously skipped cases (filter/temporalAberration, points/dla, points/flock, points/flow, points/heightGrid, points/hydraulic, points/life, points/physarum, points/physical, render/pointsEmit, render/pointsRender, render/renderLandscape3d, synth3d/heightmap3d as committed goldens, plus filter/feedback into a +/-2 tolerance) from the CPU skip policy into the graded set - the three reference-0ed489ec landscape/heightfield effects (points/heightGrid, render/renderLandscape3d, synth3d/heightmap3d) leave NEW_CPU_EFFECT_IDS and the blanket iterated flag becomes the curated ITERATED_SKIP_IDS (10 still-divergent effects) with shared union semantics; b93980b then rewrites only the 14 new goldens' provenance introducedIn SHAs against the published introducing commit 9e20211 (records-only, provenance sha256 values unchanged, no golden bytes or gate behavior change).",
+    "finding": "Two new commits, both CPU-repo-internal GAP-003 parity records; no effect, program, parameter, runtime, or snapshot drift exists in the range. The Rust port consumes the CPU tree only through the effect catalog via the parameter contract (revision 6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa, confirmed unchanged by generate_bundle.py --check exit 0) and drives the oracle only through bin/noisemaker-cpu.js via scripts/parity.py (sha256 identical across the range). It neither consumes scripts/parity/lib.js nor the CPU goldens/provenance/capture-records (the port's parity contract is the executed 205-record run below). The three effects leaving the CPU skip policy (points/heightGrid, render/renderLandscape3d, synth3d/heightmap3d) were never skipped by the port's harness - all are among the compared 202 and each compares byte-exact (max=0) in the run recorded below. The port therefore requires no source change; the only port change in this sync is this record."
+  },
+  "b93980b_range_run": {
+    "run_date": "2026-10-02",
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/refs/cpu/bin/noisemaker-cpu.js --timeout 120 --json /workspace/evidence/parity-report-20261002-b93980b.json",
+    "port_revision": {
+      "repository": "noisefactorllc/noisemaker-for-rust",
+      "commit": "this record-carrying commit (the runtime tree is the tree field; the commit carries this docs record only, so its runtime tree is exactly the committed tree)",
+      "tree": "the committed tree of this record-carrying commit (self-referential hash omitted); its runtime state is verifiable as: git diff d02aaab published head over src/, examples/, tests/, scripts/, Cargo.toml, Cargo.lock, and export-kit/ is empty, so the runtime tree is byte-identical to the previously published head and to the binary the recorded parity run executed",
+      "binary_sha256": "31e1f64d0d10632f6a960a84c8c12950dd97f7379be8b887cd784207c6b3794d",
+      "binary_built_with": "cargo +stable build --release --locked, cargo 1.99.0 (5f94df478 2026-08-27), rustc 1.99.0 (b940084d7 2026-09-28), stable-x86_64-unknown-linux-gnu, rustup 1.29.1 with RUSTUP_HOME=/state/cache/rustup and CARGO_HOME=/state/cache/cargo (relocated, exec-capable homes); byte-identical to the previously recorded d02aaab run binary (same hash) because the runtime tree and toolchain homes are unchanged",
+      "param_contract_revision": "6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa"
+    },
+    "oracle_revision": {
+      "repository": "noisefactorllc/noisemaker-for-cpu",
+      "commit": "b93980b512a24ef71ab61a959ed2ce35c1f09666",
+      "tree": "e632c2f0bb74e2e22a320716a14349e1522a1c4c",
+      "runtime": "node v26.5.1, offline test oracle only, full clone at /state/cache/refs/cpu checked out at b93980b512a24 (its published default branch main)"
+    },
+    "result": {
+      "catalog": 205,
+      "compared": 202,
+      "unsupported": 3,
+      "errors": 0,
+      "passed": 202,
+      "failed": 0,
+      "byte_exact": 202
+    },
+    "flow3d_note": "filter3d/flow3d compared byte-exact in-run at 104.957 s (rust) / 1.335 s (js), inside the 120 s timeout; filter/crt compared byte-exact at 0.600 s.",
+    "declared_checks_reexecuted": {
+      "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0, verbatim in CONTRIBUTING order, on the candidate tree carrying this record (the record-carrying commit, which is also the runtime tree: the commit contains only this docs record); cargo 1.99.0 (5f94df478 2026-08-27) / rustc 1.99.0 (b940084d7 2026-09-28) plus toolchain 1.85.0, rustup 1.29.1, node v26.5.1, Python 3.11.2, Linux x86_64. The crate declares no [features] section, so --all-features is a no-op flag. Verbatim command and output for each check are in /workspace/evidence/checks-20261002-b93980b/01-build..10-oracle-gated (job evidence archive).",
+      "commands": [
+        {
+          "command": "cargo +stable build --release --locked",
+          "exit_code": 0,
+          "evidence": "checks-20261002-b93980b/01-build.txt + 01-sha256.txt",
+          "result": "target/release/noisemaker-rs sha256 31e1f64d0d10632f6a960a84c8c12950dd97f7379be8b887cd784207c6b3794d, byte-identical to the binary the recorded parity run executed"
+        },
+        {
+          "command": "cargo +stable fmt --all -- --check",
+          "exit_code": 0,
+          "evidence": "checks-20261002-b93980b/02-fmt.txt"
+        },
+        {
+          "command": "cargo +stable clippy --all-targets --all-features --locked -- -D warnings",
+          "exit_code": 0,
+          "evidence": "checks-20261002-b93980b/03-clippy.txt"
+        },
+        {
+          "command": "cargo +1.85.0 check --all-targets --all-features",
+          "exit_code": 0,
+          "evidence": "checks-20261002-b93980b/04-msrv.txt"
+        },
+        {
+          "command": "cargo +stable test --release --locked --all-features",
+          "exit_code": 0,
+          "evidence": "checks-20261002-b93980b/05-test.txt",
+          "result": "27 test-binary result lines ok, 206 passed, 0 failed, 2 ignored (the NOISEMAKER_JS_CPU_DIR-gated parity_spine tests)"
+        },
+        {
+          "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'",
+          "exit_code": 0,
+          "evidence": "checks-20261002-b93980b/06-unittest.txt",
+          "result": "Ran 19 tests, OK"
+        },
+        {
+          "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check",
+          "exit_code": 0,
+          "evidence": "checks-20261002-b93980b/07-bundle.txt"
+        },
+        {
+          "command": "cargo +stable package --locked",
+          "exit_code": 0,
+          "evidence": "checks-20261002-b93980b/09-package.txt",
+          "result": "Packaged; package verification compiled and finished"
+        },
+        {
+          "command": "NOISEMAKER_JS_CPU_DIR=/state/cache/refs/cpu cargo +stable test --release --locked --test parity_spine -- --ignored",
+          "exit_code": 0,
+          "evidence": "checks-20261002-b93980b/10-oracle-gated.txt",
+          "result": "2 passed, 0 failed (precision_boundaries_are_byte_exact, three_effect_js_oracle_parity_is_byte_exact)"
+        }
+      ]
+    },
+    "artifacts_sha256": {
+      "parity-report-20261002-b93980b.json": "9dd1e88ef00ea4ed6f1cfe5cc76e3dea4a3a53dbbdda58a07e803fc85544a9e1",
+      "parity-log-20261002-b93980b.txt": "482f41a3fd935e0dafd615c6d3f9657f21013c1548c24bc6be807ee59d26852b",
+      "archive": "Raw run artifacts are archived with the job in /workspace/evidence per the no-committed-logs policy; no new logs under docs/parity/.",
+      "cpu_repository_bundle": "noisemaker-for-cpu-b93980b.bundle in /workspace/evidence (sha256 1fca68d4441549c851a36e631619afacc0127694bbda4d544b495edc97c11fbb): a git bundle of the noisemaker-for-cpu main history through b93980b512a24ef71ab61a959ed2ce35c1f09666 (git bundle verify reports a complete history). A reviewer can independently re-verify the full range diff and ancestry: git clone -b main <bundle> <dir>, then git merge-base --is-ancestor d13b0a2100fb2753b0905e301ab6c2eea8d8e1f2 b93980b512a24ef71ab61a959ed2ce35c1f09666, the same for d02aaabbee0f6d292234ce8e4aa9f50347df9dda and 9e202113c4fa1830c5cbdc697c8363b92259515d; all exit 0 (verified 2026-10-02 from a fresh clone of this bundle)."
+    }
+  }
 }
 }
