@@ -1194,11 +1194,11 @@
 ,
   "b0e6c41_range_run": {
   "run_date": "2026-10-02",
-  "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json /workspace/evidence/parity-report-20261002-b0e6c41.json",
+  "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json /workspace/evidence/parity-report-20261002-7d9a4a00.json (re-executed at the published candidate 7d9a4a00 with the from-scratch-rebuilt binary; the receipt /workspace/evidence/parity-receipt-7d9a4a00.txt binds this exact candidate SHA, its tree dedff4682, the rebuilt binary sha256 de26821c..., the CPU oracle b0e6c4130ac tree 31ceb86a..., and all 210 per-case results)",
   "port_revision": {
     "repository": "noisefactorllc/noisemaker-for-rust",
-    "commit": "the record-carrying candidate commit of this sync (the runtime tree is the tree field; the commit carries the external-input import, the regenerated generated bundle, the parity/CLI/test coverage, and this docs record)",
-    "tree": "the committed tree of this record-carrying commit (self-referential hash omitted); the release binary is verifiable as: cargo +stable build --release --locked at this tree reproduces sha256 de26821cec5e41d2c068993e1bb7e9ffd02fa0e2f80723eb3244fa7bf661bc7e",
+    "commit": "7d9a4a00cc26ded864c85c0bd4810b4a65254ce1 (the reviewed, published sync commit; it carries the external-input import, the regenerated generated bundle, the parity/CLI/test coverage, and this docs record)",
+    "tree": "dedff4682d4dd0fa92c1a21693273bf1e5195136 (git rev-parse 7d9a4a00^{tree}); the release binary is verifiable as: git checkout 7d9a4a00 (clean tree), then rm -rf target && cargo +stable build --release --locked reproduces sha256 de26821cec5e41d2c068993e1bb7e9ffd02fa0e2f80723eb3244fa7bf661bc7e (from-scratch rebuild reproduction at the published tree recorded in the job evidence archive, checks-20261002-b0e6c41/01-rebuild-7d9a4a00.txt)",
     "binary_sha256": "de26821cec5e41d2c068993e1bb7e9ffd02fa0e2f80723eb3244fa7bf661bc7e",
     "binary_built_with": "cargo +stable build --release --locked, cargo 1.99.0 with rustc 1.99.0 (stable-x86_64-unknown-linux-gnu), rustup 1.29.1 with RUSTUP_HOME=/state/cache/rustup and CARGO_HOME=/state/cache/cargo (relocated, exec-capable homes); toolchain 1.85.0 MSRV check and clippy -D warnings both exit 0 at the same tree",
     "param_contract_revision": "e24c844f8dada85551ab084f41db8944fbc176c8"
@@ -1269,7 +1269,7 @@
         "result": "Packaged; package verification compiled and finished"
       }
     ],
-    "evidence_archive": "/workspace/evidence (supervisor-mounted job archive): checks-20261002-b0e6c41/ (verbatim publication-check outputs), parity-report-20261002-b0e6c41.json (sha256 b92ce4e0e85f7af14226b85d67cec5c39a6c9a4214395391faae3af10077ac67), parity-run-20261002-b0e6c41.log (sha256 8aa2486d457a7245f1014599487ec495c5786cc2818e461fe4092f4ee7c84269), cpu-range-review-20261002.txt, and noisemaker-for-cpu-b0e6c41.bundle (sha256 0f401c72bbbf33951f712f2c1a10b4a5585a68ff7c36c538a1fbdabed9275d7d, git bundle verify reports a complete history). No logs are committed under docs/parity/."
+    "evidence_archive": "/workspace/evidence (supervisor-mounted job archive): parity-receipt-7d9a4a00.txt (the supervisor-verifiable parity receipt binding candidate 7d9a4a00cc26ded864c85c0bd4810b4a65254ce1, tree dedff4682, the rebuilt binary sha256 de26821c..., oracle b0e6c4130ac tree 31ceb86a..., and all 210 per-case results), parity-report-20261002-7d9a4a00.json (sha256 0aaaeaa99e85d4de234cc3cfd3122dd052a1c805b5bab91a0fd368cb3fa3a146, the run at the published candidate whose result this record states), parity-run-20261002-7d9a4a00.log (sha256 2608c89572ce3a76625413fe9c86a73caeec71c2d216ec02ac41df2479ad800b), checks-20261002-b0e6c41/ (verbatim publication-check outputs plus 01-rebuild-7d9a4a00.txt), the earlier pre-publication artifacts (parity-report-20261002-b0e6c41.json sha256 b92ce4e0..., parity-run-20261002-b0e6c41.log sha256 8aa2486d...), cpu-range-review-20261002.txt, and noisemaker-for-cpu-b0e6c41.bundle (sha256 0f401c72bbbf33951f712f2c1a10b4a5585a68ff7c36c538a1fbdabed9275d7d, git bundle verify reports a complete history). No logs are committed under docs/parity/."
   }
 }
 }
