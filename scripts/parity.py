@@ -20,15 +20,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG_PATH = ROOT / "src/generated/catalog.json"
 TOLERANCE = 0
-OVERLAY_INTERFACE_UNSUPPORTED = {
+OVERLAY_READY_IDS = {
     "filter/fibers",
     "filter/scratches",
     "filter/strayHair",
 }
-OVERLAY_REASON = (
-    "the JavaScript CLI exposes Ready one-shot overlay generation but no Initial one-shot flag; "
-    "the Rust parity CLI path intentionally uses Initial semantics"
-)
+# These three canonical worm-overlay effects only ever expose one-shot overlay
+# generation. The JavaScript CLI renders them in Ready mode and has no Initial
+# one-shot flag, while the Rust parity CLI path uses Initial semantics
+# everywhere else; for exactly these cases the harness compares Ready-mode
+# output from both CLIs instead of skipping them.
 
 
 def _catalog() -> dict:
@@ -414,11 +415,7 @@ def main(argv: list[str] | None = None) -> int:
             directory = Path(temporary)
             fixture = directory / "input.png"
             _write_fixture(fixture, args.size, args.size)
-            if effect_id in OVERLAY_INTERFACE_UNSUPPORTED:
-                record = {"id": effect_id, "status": "unsupported", "side": "js", "reason": OVERLAY_REASON}
-                results.append(record)
-                print(f"[{index}/{len(selected)}] {effect_id}: unsupported: {OVERLAY_REASON}", flush=True)
-                continue
+            overlay_ready = effect_id in OVERLAY_READY_IDS
             program = _program(effect_id, catalog[effect_id])
             rust_png = directory / f"rust-{index}.png"
             js_png = directory / f"js-{index}.png"
@@ -428,7 +425,8 @@ def main(argv: list[str] | None = None) -> int:
             ]
             try:
                 _, rust_elapsed = _run(
-                    [str(args.rust), *common, "--one-shot", "initial", "--output", str(rust_png)],
+                    [str(args.rust), *common, "--one-shot", "ready" if overlay_ready else "initial",
+                     "--output", str(rust_png)],
                     program, args.timeout, ROOT,
                 )
                 js_cwd = args.js.resolve().parents[1]
@@ -453,6 +451,8 @@ def main(argv: list[str] | None = None) -> int:
                         f"shape mismatch: Rust {rust_width}x{rust_height}, JS {js_width}x{js_height}"
                     )
                 record = {"id": effect_id, "status": "compared", **_metrics(rust_bytes, js_bytes)}
+                if overlay_ready:
+                    record["overlay_one_shot"] = "ready"
                 record["rust_seconds"] = rust_elapsed
                 record["js_seconds"] = js_elapsed
                 results.append(record)

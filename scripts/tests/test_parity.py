@@ -22,6 +22,25 @@ class StrictParityTest(unittest.TestCase):
         self.assertEqual(report["byte_exact"], 1)
         self.assertEqual(report["tolerance"], 0)
 
+    def test_worm_overlay_effects_are_compared_in_ready_mode_not_skipped(self):
+        catalog = parity._catalog()
+        self.assertEqual(
+            parity.OVERLAY_READY_IDS,
+            {"filter/fibers", "filter/scratches", "filter/strayHair"},
+        )
+        for effect_id in sorted(parity.OVERLAY_READY_IDS):
+            self.assertIn(effect_id, catalog)
+            metrics = parity._metrics(bytes(4), bytes(4))
+            record = {
+                "id": effect_id,
+                "status": "compared",
+                "overlay_one_shot": "ready",
+                **metrics,
+            }
+            report = parity._summarize([record], 1, 0.25, 1)
+            parity._validate(report, [effect_id])
+            self.assertEqual(report["compared"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
