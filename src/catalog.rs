@@ -10,15 +10,9 @@ use crate::generated::{BUNDLE_LOCK_JSON, CATALOG_JSON, SHADERS_JSON};
 mod validation;
 pub use validation::validate_program_ir;
 
-const EXPECTED_EFFECTS: usize = 205;
-const EXPECTED_PROGRAMS: usize = 289;
-const EXPECTED_EXCLUSIONS: [&str; 5] = [
-    "render/meshLoader",
-    "render/meshRender",
-    "synth/roll",
-    "synth/scope",
-    "synth/spectrum",
-];
+const EXPECTED_EFFECTS: usize = 210;
+const EXPECTED_PROGRAMS: usize = 296;
+const EXPECTED_EXCLUSIONS: [&str; 0] = [];
 
 #[derive(Debug, Error)]
 pub enum CatalogError {
@@ -130,6 +124,10 @@ pub struct ShaderProgram {
 pub struct ProgramIr {
     pub outputs: Vec<String>,
     pub varyings: Vec<String>,
+    /// Declared varying types (draw-mode vertex/fragment pairs declare vec3
+    /// varyings; default vec2 otherwise). Optional so older artifacts load.
+    #[serde(default)]
+    pub varying_types: BTreeMap<String, String>,
     pub structs: Vec<StructDefinition>,
     pub uniforms: Vec<VariableDefinition>,
     pub globals: Vec<VariableDefinition>,

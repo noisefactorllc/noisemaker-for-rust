@@ -22,7 +22,7 @@ const DEFAULT_SMOKE_BATCHES: &[(usize, usize)] = &[
     (137, 140),
     (140, 160),
     (160, 180),
-    (180, 205),
+    (180, 210),
 ];
 
 fn literal(value: &JsonValue) -> String {
@@ -170,12 +170,20 @@ fn smoke_options(effect: &EffectDefinition) -> RenderOptions {
     texture.clear([0.2, 0.4, 0.6, 1.0]);
     external_textures.insert("imageTex".into(), texture.clone());
     external_textures.insert("textTex".into(), texture);
+    // Reactive (MIDI/audio) and mesh (OBJ) effects require host-fed external
+    // inputs; the smoke harness feeds the deterministic defaults to every
+    // effect, mirroring the parity harness fixture binding.
+    let external_inputs = noisemaker_cpu::ExternalInputs {
+        mesh_data: Some(noisemaker_cpu::external_input::mesh_fixture()),
+        ..noisemaker_cpu::ExternalInputs::default()
+    };
     RenderOptions {
         width: size,
         height: size,
         time: 0.25,
         seed: 3,
         external_textures,
+        external_inputs,
         ..RenderOptions::default()
     }
 }
@@ -183,8 +191,8 @@ fn smoke_options(effect: &EffectDefinition) -> RenderOptions {
 #[test]
 fn exact_smoke_inventory_and_registry_coverage_are_locked() {
     let catalog = effect_catalog().unwrap();
-    assert_eq!(catalog.effects.len(), 205);
-    assert_eq!(shader_bundle().unwrap().programs.len(), 289);
+    assert_eq!(catalog.effects.len(), 210);
+    assert_eq!(shader_bundle().unwrap().programs.len(), 296);
     assert_eq!(
         catalog
             .effects
@@ -202,7 +210,7 @@ fn exact_smoke_inventory_and_registry_coverage_are_locked() {
         25
     );
     assert_eq!(fragment_adapter_keys().len(), 4);
-    assert_eq!(draw_op_keys().len(), 7);
+    assert_eq!(draw_op_keys().len(), 8);
     let shaders = &shader_bundle().unwrap().programs;
     let adapters = fragment_adapter_keys().into_iter().collect::<BTreeSet<_>>();
     let draws = draw_op_keys().into_iter().collect::<BTreeSet<_>>();
@@ -228,8 +236,8 @@ fn exact_smoke_inventory_and_registry_coverage_are_locked() {
 }
 
 #[test]
-fn completed_default_smoke_batches_cover_205_exactly_once() {
-    let mut coverage = vec![0_u8; 205];
+fn completed_default_smoke_batches_cover_210_exactly_once() {
+    let mut coverage = vec![0_u8; 210];
     for &(start, end) in DEFAULT_SMOKE_BATCHES {
         assert!(
             start < end && end <= coverage.len(),
@@ -239,11 +247,11 @@ fn completed_default_smoke_batches_cover_205_exactly_once() {
             *count += 1;
         }
     }
-    assert_eq!(coverage, vec![1; 205]);
+    assert_eq!(coverage, vec![1; 210]);
 }
 
 #[test]
-fn all_205_default_programs_are_finite_deterministic_and_aggregated() {
+fn all_210_default_programs_are_finite_deterministic_and_aggregated() {
     let started = Instant::now();
     let catalog = effect_catalog().unwrap();
     let mut failures = Vec::new();

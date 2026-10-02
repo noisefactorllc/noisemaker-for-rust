@@ -31,6 +31,50 @@ OVERLAY_READY_IDS = {
 # everywhere else; for exactly these cases the harness compares Ready-mode
 # output from both CLIs instead of skipping them.
 
+# Reactive (MIDI/audio) and mesh (OBJ) effects consume host-fed external-input
+# fixtures. Neither CLI can render them from catalog defaults alone: the Rust
+# CLI binds the fixture through --external-input, while the JavaScript CPU CLI
+# has no external-input interface at all (its `--effect random` pool excludes
+# them), so the CPU side renders through the CPU checkout's own library with the
+# checkout's scripts/parity/reactive-fixtures.js fixtures -- the exact fixture
+# module the CPU parity gate itself consumes. The programs mirror the CPU
+# checkout's parity/upstream-defaults manifests, and the fixture constants are
+# byte-identical on both sides by construction.
+EXTERNAL_INPUT_IDS = {
+    "synth/roll": "midi",
+    "synth/scope": "audio",
+    "synth/spectrum": "audio",
+    "render/meshLoader": "mesh",
+    "render/meshRender": "mesh",
+}
+EXTERNAL_INPUT_PROGRAMS = {
+    "synth/roll": "search synth\n\nroll()\n.write(o0)\n\nrender(o0)",
+    "synth/scope": "search synth\n\nscope()\n.write(o0)\n\nrender(o0)",
+    "synth/spectrum": "search synth\n\nspectrum()\n.write(o0)\n\nrender(o0)",
+    "render/meshLoader": "search render\n\nmeshLoader().write(o0)\n\nrender(o0)",
+    "render/meshRender": "search render\n\nmeshLoader()\n  .meshRender()\n  .write(o0)\n\nrender(o0)",
+}
+
+EXTERNAL_INPUT_NODE_SCRIPT = """import { CpuRenderer, Surface, createDefaultRegistry, kernelFactories } from '%CPU%/src/index.js'
+import { externalInputsForCase } from '%CPU%/scripts/parity/reactive-fixtures.js'
+import { writePng } from '%CPU%/src/node/png.js'
+const [caseId, out] = process.argv.slice(2)
+const programs = %PROGRAMS%
+const renderer = new CpuRenderer({ registry: createDefaultRegistry(), kernelFactories })
+const blank = new Surface(Number(process.env.PARITY_WIDTH), Number(process.env.PARITY_HEIGHT))
+blank.format = 'rgba16f'
+const rendered = renderer.render(programs[caseId], {
+  width: Number(process.env.PARITY_WIDTH),
+  height: Number(process.env.PARITY_HEIGHT),
+  time: Number(process.env.PARITY_TIME),
+  seed: Number(process.env.PARITY_SEED),
+  externalTextures: { imageTex: blank, textTex: blank },
+  externalInputs: externalInputsForCase(caseId),
+  oneShot: 'initial',
+})
+await writePng(out, rendered)
+"""
+
 
 def _catalog() -> dict:
     return json.loads(CATALOG_PATH.read_text(encoding="utf-8"))["effects"]
@@ -409,6 +453,22 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(f"unknown --only IDs: {', '.join(sorted(missing))}")
         selected = [effect_id for effect_id in selected if effect_id in requested]
 
+    # One shared node harness for every external-input case: the JavaScript CPU
+    # CLI cannot bind external inputs, so the CPU side renders through the CPU
+    # checkout's library (see EXTERNAL_INPUT_IDS above).
+    node_harness = None
+    if any(effect_id in EXTERNAL_INPUT_IDS for effect_id in selected):
+        if args.js is None:
+            parser.error("--js is required")
+        cpu_root = args.js.resolve().parents[1]
+        node_harness = Path(tempfile.mkstemp(prefix="noisemaker-rust-parity-ext-", suffix=".mjs")[1])
+        node_harness.write_text(
+            EXTERNAL_INPUT_NODE_SCRIPT.replace("%CPU%", cpu_root.as_posix()).replace(
+                "%PROGRAMS%", json.dumps(EXTERNAL_INPUT_PROGRAMS)
+            ),
+            encoding="utf-8",
+        )
+
     results: list[dict] = []
     for index, effect_id in enumerate(selected, 1):
         with tempfile.TemporaryDirectory(prefix=f"noisemaker-rust-parity-{index:03d}-") as temporary:
@@ -416,13 +476,20 @@ def main(argv: list[str] | None = None) -> int:
             fixture = directory / "input.png"
             _write_fixture(fixture, args.size, args.size)
             overlay_ready = effect_id in OVERLAY_READY_IDS
-            program = _program(effect_id, catalog[effect_id])
+            external_fixture = EXTERNAL_INPUT_IDS.get(effect_id)
+            program = (
+                EXTERNAL_INPUT_PROGRAMS[effect_id]
+                if external_fixture
+                else _program(effect_id, catalog[effect_id])
+            )
             rust_png = directory / f"rust-{index}.png"
             js_png = directory / f"js-{index}.png"
             common = [
                 "render", "-", "--width", str(args.size), "--height", str(args.size),
                 "--time", str(args.time), "--seed", str(args.seed), "--input", str(fixture),
             ]
+            if external_fixture:
+                common += ["--external-input", external_fixture]
             try:
                 _, rust_elapsed = _run(
                     [str(args.rust), *common, "--one-shot", "ready" if overlay_ready else "initial",
@@ -430,10 +497,32 @@ def main(argv: list[str] | None = None) -> int:
                     program, args.timeout, ROOT,
                 )
                 js_cwd = args.js.resolve().parents[1]
-                _, js_elapsed = _run(
-                    ["node", str(args.js), *common, "--output", str(js_png)],
-                    program, args.timeout, js_cwd,
-                )
+                if external_fixture:
+                    js_started = time.monotonic()
+                    harness = subprocess.run(
+                        ["node", str(node_harness), effect_id, str(js_png)],
+                        cwd=js_cwd,
+                        env={
+                            **os.environ,
+                            "PARITY_WIDTH": str(args.size),
+                            "PARITY_HEIGHT": str(args.size),
+                            "PARITY_TIME": str(args.time),
+                            "PARITY_SEED": str(args.seed),
+                        },
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        timeout=args.timeout,
+                        check=False,
+                    )
+                    js_elapsed = time.monotonic() - js_started
+                    if harness.returncode != 0:
+                        diagnostic = harness.stderr.strip() or harness.stdout.strip() or f"exit {harness.returncode}"
+                        raise RuntimeError(f"external-input CPU harness: {diagnostic}")
+                else:
+                    _, js_elapsed = _run(
+                        ["node", str(args.js), *common, "--output", str(js_png)],
+                        program, args.timeout, js_cwd,
+                    )
                 rust_width, rust_height, rust_bytes = _decode_png(rust_png)
                 js_width, js_height, js_bytes = _decode_png(js_png)
                 if (rust_width, rust_height) != (args.size, args.size):
@@ -453,6 +542,8 @@ def main(argv: list[str] | None = None) -> int:
                 record = {"id": effect_id, "status": "compared", **_metrics(rust_bytes, js_bytes)}
                 if overlay_ready:
                     record["overlay_one_shot"] = "ready"
+                if external_fixture:
+                    record["external_inputs"] = external_fixture
                 record["rust_seconds"] = rust_elapsed
                 record["js_seconds"] = js_elapsed
                 results.append(record)
@@ -482,6 +573,9 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError as error:
         print(f"parity validation failed: {error}", file=sys.stderr)
         return 1
+    finally:
+        if node_harness is not None:
+            node_harness.unlink(missing_ok=True)
     return 0
 
 

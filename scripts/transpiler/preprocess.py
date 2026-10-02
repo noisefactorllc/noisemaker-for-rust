@@ -40,6 +40,7 @@ def normalize(source: str, runtime_defines: dict | None = None) -> dict:
     out_lines = []
     outputs = []
     varyings = []
+    varying_types = {}
     for line in body.split("\n"):
         m = re.match(r"\s*(?:layout\s*\([^)]*\)\s*)?out\s+(\w+)\s+(\w+)\s*;\s*$", line)
         if m:
@@ -49,12 +50,18 @@ def normalize(source: str, runtime_defines: dict | None = None) -> dict:
         m = re.match(r"\s*(?:flat\s+)?in\s+(\w+)\s+(\w+)\s*;\s*$", line)
         if m:
             varyings.append(m.group(2))
+            varying_types[m.group(2)] = m.group(1)
             continue  # codegen maps varyings to ctx.uv
         out_lines.append(line)
 
     # Declare runtime-define uniforms (they were lowered to runtime branches).
     decls = "".join(f"uniform {'float' if t == 'float' else 'int'} {name};\n" for name, t in runtime_defines.items())
-    return {"source": decls + "\n".join(out_lines), "outputs": outputs or ["fragColor"], "varyings": varyings}
+    return {
+        "source": decls + "\n".join(out_lines),
+        "outputs": outputs or ["fragColor"],
+        "varyings": varyings,
+        "varyingTypes": varying_types,
+    }
 
 
 def _preprocess(source: str, runtime_defines: dict) -> list:

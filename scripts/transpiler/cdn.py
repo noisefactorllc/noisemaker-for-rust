@@ -75,12 +75,17 @@ _HERE = Path(__file__).resolve().parent
 _CACHE_ROOT = _HERE / ".cdn-cache"
 _USER_AGENT = "noisemaker-python-transpiler (+https://noisedeck.app)"
 
-# Mesh and live audio/MIDI effects remain outside the CPU catalog. Stateful,
-# particle, volume, cubemap, and render-loop effects are supported.
+# Reactive (MIDI/audio) and mesh (OBJ) effects are imported into the catalog and
+# graded through host-fed external-input fixtures (noisemaker-for-cpu GAP-003
+# closing contract counts them as expected cases; see src/runtime/external_input.rs
+# for the CPU-side state). Stateful, particle, volume, cubemap, and render-loop
+# effects are supported.
 _RENDER_ALLOWLIST = frozenset(
     {
         "render/loopBegin",
         "render/loopEnd",
+        "render/meshLoader",
+        "render/meshRender",
         "render/pointsBillboardRender",
         "render/pointsEmit",
         "render/pointsRender",
@@ -91,13 +96,7 @@ _RENDER_ALLOWLIST = frozenset(
         "render/renderLit3d",
     }
 )
-_ID_EXCLUSIONS = frozenset(
-    {
-        "synth/roll",
-        "synth/scope",
-        "synth/spectrum",
-    }
-)
+_ID_EXCLUSIONS = frozenset()
 _ITERATED_IDS = frozenset(
     {
         "filter/convolutionFeedback",
@@ -219,6 +218,7 @@ def fetch_manifest(version: str = CDN_VERSION) -> dict:
 # ---------------------------------------------------------------------------
 
 _GLSL_PROGRAM_RE = re.compile(r"(\w+)\s*:\s*\{\s*glsl\s*:\s*`")
+_FRAGMENT_PROGRAM_RE = re.compile(r"(\w+)\s*:\s*\{\s*vertex\s*:\s*`")
 
 
 def _skip_string(text: str, i: int) -> int:
@@ -379,11 +379,30 @@ def _definition_region(bundle: str) -> str:
 
 def _extract_programs(bundle: str) -> dict[str, str]:
     """Extract every program's GLSL template literal from the bundle's
-    `shaders` object: `<program>:{glsl:`...`,...}`."""
+    `shaders` object: `<program>:{glsl:`...`,...}`.
+
+    Programs declared as a vertex/fragment pair (`<program>:{vertex:`...`,
+    fragment:`...`,wgsl:`...`}` -- draw-mode effects such as
+    render/meshRender) contribute their `fragment` source: the canonical
+    registry consumes the fragment kernel (draw passes rasterize through a
+    dedicated adapter instead of the per-pixel fragment machinery), while the
+    vertex stage is mirrored by that adapter's vertex transform.
+    """
     programs: dict[str, str] = {}
     for m in _GLSL_PROGRAM_RE.finditer(bundle):
         program = m.group(1)
         backtick_start = m.end() - 1
+        end = _skip_string(bundle, backtick_start)
+        programs[program] = bundle[backtick_start + 1 : end - 1]
+    for m in _FRAGMENT_PROGRAM_RE.finditer(bundle):
+        program = m.group(1)
+        if program in programs:
+            continue
+        # Locate the fragment template literal inside this vertex/fragment pair.
+        fragment_key = bundle.find("fragment:", m.end())
+        if fragment_key == -1:
+            continue
+        backtick_start = bundle.index("`", fragment_key)
         end = _skip_string(bundle, backtick_start)
         programs[program] = bundle[backtick_start + 1 : end - 1]
     return programs

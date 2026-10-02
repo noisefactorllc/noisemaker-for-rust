@@ -24,13 +24,7 @@ if __package__ in (None, ""):
 from scripts.transpiler.typed_ir import emit_typed_ir
 
 
-EXPECTED_EXCLUSIONS = [
-    "render/meshLoader",
-    "render/meshRender",
-    "synth/roll",
-    "synth/scope",
-    "synth/spectrum",
-]
+EXPECTED_EXCLUSIONS = []
 PARAM_CONTRACT = Path(__file__).with_name("upstream-param-contract.json")
 PARAM_OVERRIDE_FIELDS = frozenset({"min", "max"})
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -85,12 +79,19 @@ def _effects_markdown(catalog: dict) -> str:
             "",
             "## Upstream exclusions",
             "",
-            "These five effects require media/runtime interfaces that are not part of this "
-            "standalone CPU port:",
-            "",
         ]
     )
-    lines.extend(f"- `{effect_id}`" for effect_id in catalog["excludedEffects"])
+    if catalog["excludedEffects"]:
+        lines.extend(
+            [
+                "These effects require media/runtime interfaces that are not part of this "
+                "standalone CPU port:",
+                "",
+            ]
+        )
+        lines.extend(f"- `{effect_id}`" for effect_id in catalog["excludedEffects"])
+    else:
+        lines.append("None: every eligible upstream effect ships in this port.")
     lines.extend(["", "## Effect IDs", ""])
     for namespace, effect_ids in sorted(by_namespace.items()):
         lines.extend([f"### {namespace} ({len(effect_ids)})", ""])
@@ -284,7 +285,11 @@ def _build(source: Path) -> tuple[dict, dict, dict]:
                 "ir": emit_typed_ir(
                     shader_source,
                     outputs=_pass_outputs(render_pass),
-                    varyings=[],
+                    # Vertex/fragment draw-mode pairs (render/meshRender)
+                    # declare varyings; the preprocessor captures them and the
+                    # typed emitter resolves the identifiers. Fragment-only
+                    # programs have none, so behavior is unchanged.
+                    varyings=None,
                     runtime_defines=defines,
                 ),
             }

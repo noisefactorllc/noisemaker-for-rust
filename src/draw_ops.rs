@@ -14,18 +14,19 @@ use crate::{
     sample_nearest,
 };
 
-pub const DRAW_OP_KEYS: [&str; 7] = [
+pub const DRAW_OP_KEYS: [&str; 8] = [
     "filter/wormhole:deposit",
     "filter3d/flow3d:deposit",
     "points/dla:depositGrid",
     "points/lenia:deposit",
     "points/physarum:deposit",
+    "render/meshRender:render",
     "render/pointsBillboardRender:deposit",
     "render/pointsRender:deposit",
 ];
 
 #[must_use]
-pub const fn draw_op_keys() -> [&'static str; 7] {
+pub const fn draw_op_keys() -> [&'static str; 8] {
     DRAW_OP_KEYS
 }
 
@@ -35,7 +36,7 @@ pub fn is_draw_pass(pass: &RenderPass) -> bool {
         pass.execution
             .get("drawMode")
             .and_then(serde_json::Value::as_str),
-        Some("points" | "billboards")
+        Some("points" | "billboards" | "triangles")
     )
 }
 
@@ -226,6 +227,32 @@ pub fn execute_draw_pass(
     height: u32,
     formats: &BTreeMap<String, TextureFormat>,
 ) -> Result<usize, RenderError> {
+    execute_draw_pass_with(
+        key,
+        pass,
+        uniforms,
+        resources,
+        width,
+        height,
+        formats,
+        &crate::external_input::ExternalInputs::default(),
+    )
+}
+
+/// [`execute_draw_pass`] with the render's external inputs (reactive MIDI/audio
+/// state and packed mesh data); the deposit adapters ignore them, the mesh
+/// triangles adapter consumes them.
+#[allow(clippy::too_many_arguments)]
+pub fn execute_draw_pass_with(
+    key: &str,
+    pass: &RenderPass,
+    uniforms: &BTreeMap<String, Value>,
+    resources: &mut BTreeMap<String, Surface>,
+    width: u32,
+    height: u32,
+    formats: &BTreeMap<String, TextureFormat>,
+    external_inputs: &crate::external_input::ExternalInputs,
+) -> Result<usize, RenderError> {
     if !DRAW_OP_KEYS.contains(&key) {
         return Err(RenderError::MissingDrawOp {
             key: key.into(),
@@ -257,6 +284,9 @@ pub fn execute_draw_pass(
         "points/dla:depositGrid" => dla(pass, uniforms, resources, &mut destination)?,
         "points/lenia:deposit" => lenia(pass, uniforms, resources, &mut destination)?,
         "points/physarum:deposit" => physarum(pass, uniforms, resources, &mut destination)?,
+        "render/meshRender:render" => {
+            mesh_render_triangles(uniforms, external_inputs, &mut destination)?
+        }
         "render/pointsRender:deposit" => {
             points_render(pass, uniforms, resources, &mut destination)?
         }
@@ -809,4 +839,449 @@ fn billboard(
         Ok(())
     })?;
     Ok(pixels)
+}
+
+// ---------------------------------------------------------------------------
+// render/meshRender triangle-mesh rasterizer
+// ---------------------------------------------------------------------------
+
+/// CPU triangle-mesh rasterizer for `drawMode: 'triangles'` passes
+/// (`render/meshRender`).
+///
+/// Byte-for-byte port of the the JavaScript CPU port `src/effects/cpu/mesh-render.js`
+/// adapter, which follows the upstream draw exactly (shaders/src/runtime/
+/// backends/webgl2.js triangle-mesh mode):
+///   - drawArrays(TRIANGLES) over one texel per vertex of the mesh positions
+///     texture, consecutive texel triples forming a de-indexed triangle soup
+///     (`parse_obj` packs exactly that order, so no index buffer exists on
+///     either side);
+///   - depth test LESS against a per-pass depth buffer cleared to 1.0, back-face
+///     culling with CCW = front, blending disabled;
+///   - the vertex stage is `render.vert` (mesh texture fetch, scale/offset,
+///     Rz*Ry*Rx rotation in degrees, orthographic projection with viewScale and
+///     aspect divide, z mapped to [0, 1] over nearZ -10 / farZ 10) and the
+///     fragment stage is `render.frag` (Blinn-Phong diffuse/specular, ambient,
+///     Fresnel rim, optional wireframe discard via screen-space normal
+///     derivatives, gamma 1/2.2).
+///
+/// Floating point follows GLSL f32 semantics: every elementary operation is a
+/// native f32 computation (the CPU port's `Math.fround` discipline), while the
+/// transcendentals (`cos`, `sin`, `pow`, `hypot`, `sqrt`) evaluate in f64 on the
+/// f32 operands exactly like JavaScript's `Math.*` and are rounded back to f32.
+#[allow(clippy::too_many_lines, clippy::neg_cmp_op_on_partial_ord)]
+fn mesh_render_triangles(
+    uniforms: &BTreeMap<String, Value>,
+    external_inputs: &crate::external_input::ExternalInputs,
+    destination: &mut Surface,
+) -> Result<usize, RenderError> {
+    let Some(mesh_data) = &external_inputs.mesh_data else {
+        return Err(RenderError::InvalidGraph {
+            message: "render/meshRender requires external mesh data (external_inputs.mesh_data)"
+                .into(),
+        });
+    };
+    let positions = &mesh_data.position_data;
+    let normals = &mesh_data.normal_data;
+    let tex_width = if mesh_data.tex_width == 0 {
+        256
+    } else {
+        mesh_data.tex_width
+    };
+    let tex_height = if mesh_data.tex_height == 0 {
+        256
+    } else {
+        mesh_data.tex_height
+    };
+    let width = destination.width();
+    let height = destination.height();
+    let aspect = width as f32 / height as f32;
+    let wireframe = scalar_or(uniforms, "wireframe", 0.0)? as i32;
+    let view = MeshUniforms::from_uniforms(uniforms, aspect, wireframe)?;
+
+    // Per-pixel depth buffer cleared to 1.0 (gl.clear(DEPTH_BUFFER_BIT) each pass).
+    let mut depth = vec![1.0_f32; (width * height) as usize];
+    let mut covered = 0_usize;
+    let vertex_count = tex_width * tex_height;
+    let triangle_count = vertex_count / 3;
+    for tri in 0..triangle_count {
+        let mut verts = [MeshVertex::default(); 3];
+        let mut all_invalid = true;
+        for (v, vert) in verts.iter_mut().enumerate() {
+            let texel = tri * 3 + v;
+            let x = texel % tex_width;
+            let y = texel / tex_width;
+            let pi = (y * tex_width + x) * 4;
+            let pos_w = positions[pi + 3];
+            if pos_w != 0.0 {
+                all_invalid = false;
+            }
+            *vert = vertex_stage(
+                [positions[pi], positions[pi + 1], positions[pi + 2], pos_w],
+                [
+                    normals[pi],
+                    normals[pi + 1],
+                    normals[pi + 2],
+                    normals[pi + 3],
+                ],
+                &view,
+                width,
+                height,
+            );
+        }
+        if all_invalid {
+            continue;
+        }
+        let [v0, v1, v2] = verts;
+        // Signed area in GL window space (y-up); CCW = front face.
+        let area = (v1.px - v0.px) * (v2.py - v0.py) - (v2.px - v0.px) * (v1.py - v0.py);
+        if !(area > 0.0) {
+            continue; // back face or degenerate: culled
+        }
+        // Analytic screen-space derivatives of the interpolated normal (wireframe).
+        let det = v0.px * (v1.py - v2.py) + v1.px * (v2.py - v0.py) + v2.px * (v0.py - v1.py);
+        let mut d_fdx_normal = [0.0_f32; 3];
+        let mut d_fdy_normal = [0.0_f32; 3];
+        if view.wireframe == 1 && det != 0.0 {
+            // dFdx(vNormal) and dFdy(vNormal): standard barycentric-gradient
+            // numerators with the full determinant dividing the SUM (the det
+            // division applies to the complete edge-function numerator, not just
+            // its last term).
+            let d_ndx = |comp: usize| {
+                (v0.normal[comp] * (v1.py - v2.py)
+                    + v1.normal[comp] * (v2.py - v0.py)
+                    + v2.normal[comp] * (v0.py - v1.py))
+                    / det
+            };
+            let d_ndy = |comp: usize| {
+                (v0.normal[comp] * (v2.px - v1.px)
+                    + v1.normal[comp] * (v0.px - v2.px)
+                    + v2.normal[comp] * (v1.px - v0.px))
+                    / det
+            };
+            d_fdx_normal = [d_ndx(0), d_ndx(1), d_ndx(2)];
+            d_fdy_normal = [d_ndy(0), d_ndy(1), d_ndy(2)];
+        }
+        // Bounding box of the triangle, clamped to the viewport.
+        let min_px = v0.px.min(v1.px).min(v2.px);
+        let max_px = v0.px.max(v1.px).max(v2.px);
+        let min_py = v0.py.min(v1.py).min(v2.py);
+        let max_py = v0.py.max(v1.py).max(v2.py);
+        let min_x = ((min_px - 0.5).floor() as i64).max(0);
+        let max_x = ((max_px - 0.5).ceil() as i64)
+            .min(i64::from(width) - 1)
+            .max(-1);
+        let min_y_gl = ((min_py - 0.5).floor() as i64).max(0);
+        let max_y_gl = ((max_py - 0.5).ceil() as i64)
+            .min(i64::from(height) - 1)
+            .max(-1);
+        let data = destination.data_mut();
+        for py_gl in min_y_gl..=max_y_gl {
+            // Surface rows are top-down; GL window y is bottom-up.
+            let row = (i64::from(height) - 1 - py_gl) as usize;
+            let cy = py_gl as f32 + 0.5;
+            for px_gl in min_x..=max_x {
+                let cx = px_gl as f32 + 0.5;
+                // Barycentric coordinates via edge functions (CCW, positive area).
+                let b0 = ((v1.px - v0.px) * (cy - v0.py) - (v1.py - v0.py) * (cx - v0.px)) / area;
+                let b1 = ((v2.px - v1.px) * (cy - v1.py) - (v2.py - v1.py) * (cx - v1.px)) / area;
+                let b2 = 1.0 - (b0 + b1);
+                if !(b0 >= 0.0 && b1 >= 0.0 && b2 >= 0.0) {
+                    continue;
+                }
+                let z = (b0 * v0.z + b1 * v1.z) + b2 * v2.z;
+                let depth_index = row * width as usize + px_gl as usize;
+                if !(z < depth[depth_index]) {
+                    continue; // depthFunc LESS
+                }
+                depth[depth_index] = z;
+                let v_normal = [
+                    (b0 * v0.normal[0] + b1 * v1.normal[0]) + b2 * v2.normal[0],
+                    (b0 * v0.normal[1] + b1 * v1.normal[1]) + b2 * v2.normal[1],
+                    (b0 * v0.normal[2] + b1 * v1.normal[2]) + b2 * v2.normal[2],
+                ];
+                // The CPU port computes the interpolated position and passes it to
+                // the fragment stage, which ignores it; keep the computation for
+                // parity shape and let the unused-value lint stay silent.
+                let _v_position = [
+                    (b0 * v0.position[0] + b1 * v1.position[0]) + b2 * v2.position[0],
+                    (b0 * v0.position[1] + b1 * v1.position[1]) + b2 * v2.position[1],
+                    (b0 * v0.position[2] + b1 * v1.position[2]) + b2 * v2.position[2],
+                ];
+                let Some(color) = fragment_stage(v_normal, &view, d_fdx_normal, d_fdy_normal)
+                else {
+                    continue; // wireframe discard
+                };
+                let out_index = depth_index * 4;
+                data[out_index] = color[0];
+                data[out_index + 1] = color[1];
+                data[out_index + 2] = color[2];
+                data[out_index + 3] = 1.0;
+                covered += 1;
+            }
+        }
+    }
+    Ok(covered)
+}
+
+#[derive(Clone, Copy, Default)]
+struct MeshVertex {
+    px: f32,
+    py: f32,
+    z: f32,
+    normal: [f32; 3],
+    position: [f32; 3],
+}
+
+/// Flattened uniform bag for the mesh vertex/fragment stages.
+#[derive(Clone, Copy)]
+struct MeshUniforms {
+    mesh_scale: f32,
+    mesh_offset_x: f32,
+    mesh_offset_y: f32,
+    mesh_offset_z: f32,
+    rotate_x: f32,
+    rotate_y: f32,
+    rotate_z: f32,
+    view_scale: f32,
+    pos_x: f32,
+    pos_y: f32,
+    light_direction: [f32; 3],
+    diffuse_color: [f32; 3],
+    diffuse_intensity: f32,
+    specular_color: [f32; 3],
+    specular_intensity: f32,
+    shininess: f32,
+    ambient_color: [f32; 3],
+    rim_intensity: f32,
+    rim_power: f32,
+    mesh_color: [f32; 3],
+    wireframe: i32,
+    aspect: f32,
+}
+
+impl MeshUniforms {
+    fn from_uniforms(
+        uniforms: &BTreeMap<String, Value>,
+        aspect: f32,
+        wireframe: i32,
+    ) -> Result<Self, RenderError> {
+        fn float(uniforms: &BTreeMap<String, Value>, name: &str) -> Result<f32, RenderError> {
+            scalar(uniforms, name)
+        }
+        fn vec3(uniforms: &BTreeMap<String, Value>, name: &str) -> Result<[f32; 3], RenderError> {
+            match uniforms.get(name) {
+                Some(Value::Vec(values)) if values.len() == 3 => {
+                    Ok([values[0], values[1], values[2]])
+                }
+                value => Err(RenderError::InvalidGraph {
+                    message: format!("mesh uniform {name:?} is not a vec3: {value:?}"),
+                }),
+            }
+        }
+        Ok(Self {
+            mesh_scale: float(uniforms, "meshScale")?,
+            mesh_offset_x: float(uniforms, "meshOffsetX")?,
+            mesh_offset_y: float(uniforms, "meshOffsetY")?,
+            mesh_offset_z: float(uniforms, "meshOffsetZ")?,
+            rotate_x: float(uniforms, "rotateX")?,
+            rotate_y: float(uniforms, "rotateY")?,
+            rotate_z: float(uniforms, "rotateZ")?,
+            view_scale: float(uniforms, "viewScale")?,
+            pos_x: float(uniforms, "posX")?,
+            pos_y: float(uniforms, "posY")?,
+            light_direction: vec3(uniforms, "lightDirection")?,
+            diffuse_color: vec3(uniforms, "diffuseColor")?,
+            diffuse_intensity: float(uniforms, "diffuseIntensity")?,
+            specular_color: vec3(uniforms, "specularColor")?,
+            specular_intensity: float(uniforms, "specularIntensity")?,
+            shininess: float(uniforms, "shininess")?,
+            ambient_color: vec3(uniforms, "ambientColor")?,
+            rim_intensity: float(uniforms, "rimIntensity")?,
+            rim_power: float(uniforms, "rimPower")?,
+            mesh_color: vec3(uniforms, "meshColor")?,
+            wireframe,
+            aspect,
+        })
+    }
+}
+
+/// Vertex stage of render.vert for one mesh texel.
+#[allow(clippy::many_single_char_names)]
+fn vertex_stage(
+    pos_data: [f32; 4],
+    normal_data: [f32; 4],
+    u: &MeshUniforms,
+    width: u32,
+    height: u32,
+) -> MeshVertex {
+    let position = vec3(pos_data[0], pos_data[1], pos_data[2]);
+    let normal = vec3(normal_data[0], normal_data[1], normal_data[2]);
+    let position = vec3(
+        position[0] * u.mesh_scale,
+        position[1] * u.mesh_scale,
+        position[2] * u.mesh_scale,
+    );
+    let position = vec3(
+        position[0] + u.mesh_offset_x,
+        position[1] + u.mesh_offset_y,
+        position[2] + u.mesh_offset_z,
+    );
+    let deg2rad: f32 = 3.141_592_65 / 180.0;
+    let rx = u.rotate_x * deg2rad;
+    let ry = u.rotate_y * deg2rad;
+    let rz = u.rotate_z * deg2rad;
+    // Math.cos / Math.sin evaluate in f64 on the f32 operand (JavaScript
+    // semantics), then round back to f32.
+    let cx = (f64::from(rx).cos()) as f32;
+    let sx = (f64::from(rx).sin()) as f32;
+    let cy = (f64::from(ry).cos()) as f32;
+    let sy = (f64::from(ry).sin()) as f32;
+    let cz = (f64::from(rz).cos()) as f32;
+    let sz = (f64::from(rz).sin()) as f32;
+    // mat3 rotationZ * rotationY * rotationX (GLSL column-major constructor
+    // values inlined).
+    let rot_x = [1.0, 0.0, 0.0, 0.0, cx, sx, 0.0, -sx, cx];
+    let rot_y = [cy, 0.0, sy, 0.0, 1.0, 0.0, -sy, 0.0, cy];
+    let rot_z = [cz, -sz, 0.0, sz, cz, 0.0, 0.0, 0.0, 1.0];
+    let rotation = mul_mat3(&mul_mat3(&rot_z, &rot_y), &rot_x);
+    let rotated_pos = apply_mat3(&rotation, &position);
+    let rotated_normal = apply_mat3(&rotation, &normal);
+    let rotated_pos = vec3(
+        rotated_pos[0] + u.pos_x,
+        rotated_pos[1] + u.pos_y,
+        rotated_pos[2],
+    );
+    let mut clip_x = rotated_pos[0] * u.view_scale;
+    let clip_y = rotated_pos[1] * u.view_scale;
+    clip_x /= u.aspect;
+    let near_z = -10.0_f32;
+    let far_z = 10.0_f32;
+    let ndc_z = (rotated_pos[2] - near_z) / (far_z - near_z);
+    // Window coordinates, GL bottom-up: px = (ndcX + 1) / 2 * width.
+    let px = ((clip_x + 1.0) * 0.5) * width as f32;
+    let py = ((clip_y + 1.0) * 0.5) * height as f32;
+    MeshVertex {
+        px,
+        py,
+        z: ndc_z,
+        normal: rotated_normal,
+        position: rotated_pos,
+    }
+}
+
+/// Fragment stage of render.frag for one covered pixel. Returns `None` for the
+/// wireframe interior discard (the interpolated position argument exists for
+/// parity with the CPU port's signature).
+fn fragment_stage(
+    v_normal: [f32; 3],
+    u: &MeshUniforms,
+    d_fdx_normal: [f32; 3],
+    d_fdy_normal: [f32; 3],
+) -> Option<[f32; 3]> {
+    let normal = vec3_normalize(v_normal);
+    let light_dir = vec3_normalize(u.light_direction);
+    let view_dir = [0.0_f32, 0.0, 1.0];
+    let mesh_color = u.mesh_color;
+    let ambient = [
+        u.ambient_color[0] * mesh_color[0],
+        u.ambient_color[1] * mesh_color[1],
+        u.ambient_color[2] * mesh_color[2],
+    ];
+    let diffuse_factor =
+        (normal[0] * light_dir[0] + normal[1] * light_dir[1] + normal[2] * light_dir[2]).max(0.0);
+    let diffuse = [
+        (u.diffuse_color[0] * diffuse_factor) * mesh_color[0] * u.diffuse_intensity,
+        (u.diffuse_color[1] * diffuse_factor) * mesh_color[1] * u.diffuse_intensity,
+        (u.diffuse_color[2] * diffuse_factor) * mesh_color[2] * u.diffuse_intensity,
+    ];
+    let half_dir = vec3_normalize([
+        light_dir[0] + view_dir[0],
+        light_dir[1] + view_dir[1],
+        light_dir[2] + view_dir[2],
+    ]);
+    let spec_angle =
+        (half_dir[0] * normal[0] + half_dir[1] * normal[1] + half_dir[2] * normal[2]).max(0.0);
+    let specular_factor = if spec_angle == 0.0 && u.shininess == 0.0 {
+        1.0
+    } else {
+        // Math.pow evaluates in f64 on the f32 operands (JavaScript semantics).
+        f64::from(spec_angle).powf(f64::from(u.shininess)) as f32
+    };
+    let specular = [
+        (u.specular_color[0] * specular_factor) * u.specular_intensity,
+        (u.specular_color[1] * specular_factor) * u.specular_intensity,
+        (u.specular_color[2] * specular_factor) * u.specular_intensity,
+    ];
+    let rim_base = 1.0
+        - (normal[0] * view_dir[0] + normal[1] * view_dir[1] + normal[2] * view_dir[2]).max(0.0);
+    let rim = if rim_base == 0.0 && u.rim_power == 0.0 {
+        1.0
+    } else {
+        f64::from(rim_base).powf(f64::from(u.rim_power)) as f32
+    };
+    let rim_light = [
+        rim * u.rim_intensity,
+        rim * u.rim_intensity,
+        rim * u.rim_intensity,
+    ];
+    let mut color = [
+        (ambient[0] + diffuse[0]) + (specular[0] + rim_light[0]),
+        (ambient[1] + diffuse[1]) + (specular[1] + rim_light[1]),
+        (ambient[2] + diffuse[2]) + (specular[2] + rim_light[2]),
+    ];
+    if u.wireframe == 1 {
+        // dFdx/dFdy of the interpolated normal, evaluated analytically per
+        // triangle by the caller (screen-space derivatives are
+        // per-triangle-constant here up to the GPU's 2x2 helper-quad mixing at
+        // edges). The caller passes them via the derivative arguments.
+        // Math.hypot(a, b, c) with f32 components evaluated in f64.
+        let hypot = |v: [f32; 3]| (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt();
+        let normal_edge = hypot(d_fdx_normal) + hypot(d_fdy_normal);
+        if normal_edge < 0.1 {
+            return None; // discard: interior pixel
+        }
+        color = mesh_color;
+    }
+    // Gamma correction: pow(color, 1/2.2)
+    let gamma: f32 = 1.0 / 2.2;
+    Some([
+        (f64::from(color[0]).powf(f64::from(gamma))) as f32,
+        (f64::from(color[1]).powf(f64::from(gamma))) as f32,
+        (f64::from(color[2]).powf(f64::from(gamma))) as f32,
+    ])
+}
+
+fn vec3(x: f32, y: f32, z: f32) -> [f32; 3] {
+    [x, y, z]
+}
+
+fn vec3_normalize(v: [f32; 3]) -> [f32; 3] {
+    let len_sq = (v[0] * v[0] + v[1] * v[1]) + v[2] * v[2];
+    if len_sq == 0.0 {
+        return [0.0, 0.0, 0.0];
+    }
+    let inv_len = (1.0 / f64::from(len_sq).sqrt()) as f32;
+    [v[0] * inv_len, v[1] * inv_len, v[2] * inv_len]
+}
+
+/// `a * b` with column-major mat3 layout:
+/// `out[col*3+row] = sum a[k*3+row]*b[col*3+k]`, every product/sum f32-rounded.
+fn mul_mat3(a: &[f32; 9], b: &[f32; 9]) -> [f32; 9] {
+    let mut out = [0.0_f32; 9];
+    for col in 0..3 {
+        for row in 0..3 {
+            out[col * 3 + row] = (a[row] * b[col * 3])
+                + (a[3 + row] * b[col * 3 + 1])
+                + (a[6 + row] * b[col * 3 + 2]);
+        }
+    }
+    out
+}
+
+fn apply_mat3(m: &[f32; 9], v: &[f32; 3]) -> [f32; 3] {
+    [
+        (m[0] * v[0]) + (m[3] * v[1]) + (m[6] * v[2]),
+        (m[1] * v[0]) + (m[4] * v[1]) + (m[7] * v[2]),
+        (m[2] * v[0]) + (m[5] * v[1]) + (m[8] * v[2]),
+    ]
 }

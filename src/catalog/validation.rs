@@ -195,7 +195,13 @@ impl<'a> Validator<'a> {
             "texCoord",
         ]) {
             if varyings.insert(varying) {
-                self.define(varying, "vec2", StorageClass::Varying, false)?;
+                let value_type = self
+                    .ir
+                    .varying_types
+                    .get(varying)
+                    .cloned()
+                    .unwrap_or_else(|| "vec2".into());
+                self.define(varying, &value_type, StorageClass::Varying, false)?;
             }
         }
         for uniform in &self.ir.uniforms {

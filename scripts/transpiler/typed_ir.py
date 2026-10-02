@@ -95,6 +95,7 @@ class TypedIrEmitter:
         self.program = program
         self.outputs = list(outputs)
         self.varyings = list(varyings)
+        self.varying_types = program.get("varyingTypes") or {}
         self.root = Scope()
         self.structs: dict[str, list[tuple[str, str, object]]] = {}
         self.functions: dict[str, list[dict]] = {}
@@ -110,6 +111,7 @@ class TypedIrEmitter:
         return {
             "outputs": self.outputs,
             "varyings": self.varyings,
+            **({"varyingTypes": dict(self.varying_types)} if self.varying_types else {}),
             "structs": [
                 {
                     "name": name,
@@ -129,7 +131,7 @@ class TypedIrEmitter:
         for name, type_name in self._BUILTIN_VALUES.items():
             self.root.define(name, type_name, "builtin")
         for name in self.varyings:
-            self.root.define(name, "vec2", "varying")
+            self.root.define(name, self.varying_types.get(name, "vec2"), "varying")
         for declaration in self.program["decls"]:
             if declaration["k"] == "struct":
                 self.structs[declaration["name"]] = declaration["fields"]
@@ -513,4 +515,5 @@ def emit_typed_ir(
     actual_outputs = list(outputs) if outputs is not None else normalized["outputs"]
     actual_varyings = list(varyings) if varyings is not None else normalized["varyings"]
     program = parse(normalized["source"])
+    program["varyingTypes"] = normalized.get("varyingTypes", {})
     return TypedIrEmitter(copy.deepcopy(program), actual_outputs, actual_varyings).emit()

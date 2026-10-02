@@ -1,6 +1,6 @@
 {
   "source": "noisemaker-for-cpu upstream-snapshot.js",
-  "revision": "6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa",
+  "revision": "e24c844f8dada85551ab084f41db8944fbc176c8",
   "effects": {
     "classicNoisedeck/bitEffects": {
       "paramNames": [
@@ -1955,6 +1955,38 @@
       "paramNames": [],
       "paramAliases": {}
     },
+    "render/meshLoader": {
+      "paramNames": [],
+      "paramAliases": {}
+    },
+    "render/meshRender": {
+      "paramNames": [
+        "scale",
+        "offsetX",
+        "offsetY",
+        "offsetZ",
+        "rotateX",
+        "rotateY",
+        "rotateZ",
+        "viewScale",
+        "posX",
+        "posY",
+        "lightDirection",
+        "diffuseColor",
+        "diffuseIntensity",
+        "specularColor",
+        "specularIntensity",
+        "shininess",
+        "ambientColor",
+        "rimIntensity",
+        "rimPower",
+        "meshColor",
+        "bgColor",
+        "bgAlpha",
+        "wireframe"
+      ],
+      "paramAliases": {}
+    },
     "render/pointsBillboardRender": {
       "paramNames": [
         "shapeMode",
@@ -2728,6 +2760,14 @@
       ],
       "paramAliases": {}
     },
+    "synth/roll": {
+      "paramNames": [
+        "color",
+        "gain",
+        "speed"
+      ],
+      "paramAliases": {}
+    },
     "synth/sacredGeometry": {
       "paramNames": [
         "geometry",
@@ -2742,6 +2782,14 @@
         "animation",
         "speed",
         "pulseDepth"
+      ],
+      "paramAliases": {}
+    },
+    "synth/scope": {
+      "paramNames": [
+        "color",
+        "thickness",
+        "gain"
       ],
       "paramAliases": {}
     },
@@ -2765,6 +2813,14 @@
       "paramNames": [
         "color",
         "alpha"
+      ],
+      "paramAliases": {}
+    },
+    "synth/spectrum": {
+      "paramNames": [
+        "color",
+        "thickness",
+        "gain"
       ],
       "paramAliases": {}
     },

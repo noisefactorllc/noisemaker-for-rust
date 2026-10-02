@@ -279,7 +279,17 @@ pub fn compile_dsl(source: &str, source_name: &str) -> Result<RenderPlan, DslErr
                 _ => {}
             }
             let normalized = normalize_arguments(&effect_id, definition, &args, &call_loc)?;
-            if requires_bound_surface_to_start && normalized.surface_params.is_empty() {
+            // External-input effects (render/meshLoader) begin a chain with no
+            // surface binding at all: their pass inputs are host-fed data
+            // textures, so only effects that declare surface parameters must
+            // have one bound to start.
+            if requires_bound_surface_to_start
+                && normalized.surface_params.is_empty()
+                && definition
+                    .params
+                    .values()
+                    .any(|spec| spec.parameter_type == "surface")
+            {
                 return Err(DslError::new(
                     format!(
                         "{} {effect_id} requires at least one surface input to begin a chain",

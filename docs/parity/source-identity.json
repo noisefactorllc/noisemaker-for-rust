@@ -1169,4 +1169,107 @@
     },
     "overlay_resolution": "The historical runs recorded above (through the 2026-10-01 d02aaab run) classified filter/fibers, filter/scratches, and filter/strayHair as 'unsupported' because the JavaScript CLI renders these three canonical worm-overlay effects only in Ready one-shot mode (no Initial one-shot flag) while the harness forced the Rust CLI to --one-shot initial everywhere else. This candidate removes the skip: scripts/parity.py's OVERLAY_READY_IDS now routes exactly these three ids through Ready one-shot mode on both CLIs (Rust '--one-shot ready', the JS CLI's only mode) and tags their records overlay_one_shot=ready, with the same tolerance-0 byte-exact bar as every other case. Both implementations agree byte-exact (max_delta 0 for all three in the run recorded below). scripts/tests/test_parity.py gains test_worm_overlay_effects_are_compared_in_ready_mode_not_skipped, which pins the OVERLAY_READY_IDS membership against the catalog and validates the Ready-mode compared-record schema; its red behavior was verified by temporarily replacing the constant (the suite failed), then restoring it. This run supersedes the 'unsupported' classification in the top-level unsupported_records field and every per-leg result above; the earlier 202/202 reports remain archived as historical evidence of those runs."
   }
+,
+  "b0e6c41_leg_audit": {
+    "declared_range": "noisemaker-for-cpu b93980b512a24ef71ab61a959ed2ce35c1f09666..b0e6c4130ac2815145695114a475132282b266a9 per the delivery trigger (two triggers consolidated onto the same range; no force-push flag). b93980b is the previously published range end and was verified as the direct parent of b0e6c41 locally (git merge-base --is-ancestor exit 0, re-verified from a fresh clone of the committed noisemaker-for-cpu-b0e6c41.bundle), so the leg is exactly b93980b..b0e6c41 - audited rather than assumed.",
+    "reviewer_evidence": "The full range audit (commit list, per-commit patches, diffstat, sha256 identity of src/effects/generated/upstream-snapshot.js and scripts/upstream/pinned-source-manifest.json at b93980b/b0e6c41) is captured verbatim in /workspace/evidence/cpu-range-review-20261002.txt, generated from the fresh local clone; the bundle itself (sha256 0f401c72bbbf33951f712f2c1a10b4a5585a68ff7c36c538a1fbdabed9275d7d) ships in the job evidence archive alongside it.",
+    "compare_urls": [
+      "https://github.com/noisefactorllc/noisemaker-for-cpu/compare/b93980b512a2...b0e6c4130ac2"
+    ],
+    "new_commits": [
+      "796ec92f7ab82e5f8f289f63f52345ef71fcdc19 GAP-003: import the reactive and mesh effect trees; CPU external-input support",
+      "b0e6c4130ac2815145695114a475132282b266a9 GAP-003: regenerate provenance introducedIn for the 5 reactive/mesh goldens against the published introducing commit 796ec92"
+    ],
+    "diffstat": "bin/noisemaker-cpu.js 11, docs/COMPLETION_GAPS.md 3, export-kit/compat-effects.json 5+, five new parity/goldens/defaults/*.golden.png (binary), parity/goldens/provenance.json 35+, parity/upstream-defaults/ (3 new dsl, render__meshLoader.dsl rewritten to the standalone meshLoader() preview chain), scripts/parity/capture-records.json 20+, scripts/parity/reactive-fixtures.js 69 new, scripts/parity/run.js 2, scripts/parity/summary.js 2, scripts/upstream/inventory.js 7, src/effects/cpu/mesh-render.js 236 new, src/effects/generated/canonical-kernels.js 535, src/effects/generated/glsl-coverage.js 70+, src/effects/generated/upstream-snapshot.js 450+, src/runtime/external-input.js 369 new, src/runtime/external-textures.js 27 new, src/runtime/renderer.js 109, test/* 48; total 32 files, 1921 insertions(+), 170 deletions(-).",
+    "snapshot_identity": {
+      "file": "src/effects/generated/upstream-snapshot.js",
+      "sha256_at_b93980b": "0c7119e943ce355c9ab82c1652a83cf09ae1f43cb0bc788825e60c2d1482a132",
+      "sha256_at_b0e6c41": "64500fb265b180c40ba2c1a1f38cc4bf916b6f5d46c7dee20b8d0a52d738d113",
+      "entire_diff": "450 added lines: the five reactive/mesh effect trees (synth/roll, synth/scope, synth/spectrum, render/meshLoader, render/meshRender) entering the generated snapshot with the catalog count moving 205 to 210; the UPSTREAM_REVISION line is unchanged at e24c844f8dada85551ab084f41db8944fbc176c8",
+      "other_identity": "scripts/upstream/pinned-source-manifest.json sha256 9950d16a13d47e043b956269b5e9c54e0708c1e019100ea1dbf5853970832709 identical at b93980b and b0e6c41 (recomputed locally from both revisions); the pinned upstream revision stays e24c844f"
+    },
+    "manifest_corroboration": "The pinned-source manifest is absent from the range diffstat (sha256 identical above), so no pinned upstream shader source changed; the leg is the CPU catalog import of the five reactive/mesh effects plus the CPU external-input runtime and parity tooling. The Rust port consumes exactly this range: its parameter contract moves 6a0af04d3c4f345ffab5e9f8e54e532216b4cdaa to e24c844f8dada85551ab084f41db8944fbc176c8 because the imported catalog requires the contract regenerated from the currently pinned upstream revision.",
+    "upstream_note": "The executable change is the external-input import: CPU src/runtime/external-input.js (MidiState/AudioState/parseOBJ/packMeshDataForTextures), external-textures.js row-flipped data textures, effects/cpu/mesh-render.js triangle rasterizer, and renderer.js externalInputs binding mirror the upstream rendering-relevant external-input state, which the Rust port re-implements in src/external_input.rs, src/renderer.rs, and src/draw_ops.rs. The goldens/provenance/capture-records and test updates are CPU-repo records the Rust port mirrors only through its own parity harness coverage."
+  }
+,
+  "b0e6c41_range_run": {
+  "run_date": "2026-10-02",
+  "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/parity.py --rust target/release/noisemaker-rs --js /state/cache/noisemaker-for-cpu/bin/noisemaker-cpu.js --timeout 120 --json /workspace/evidence/parity-report-20261002-b0e6c41.json",
+  "port_revision": {
+    "repository": "noisefactorllc/noisemaker-for-rust",
+    "commit": "the record-carrying candidate commit of this sync (the runtime tree is the tree field; the commit carries the external-input import, the regenerated generated bundle, the parity/CLI/test coverage, and this docs record)",
+    "tree": "the committed tree of this record-carrying commit (self-referential hash omitted); the release binary is verifiable as: cargo +stable build --release --locked at this tree reproduces sha256 de26821cec5e41d2c068993e1bb7e9ffd02fa0e2f80723eb3244fa7bf661bc7e",
+    "binary_sha256": "de26821cec5e41d2c068993e1bb7e9ffd02fa0e2f80723eb3244fa7bf661bc7e",
+    "binary_built_with": "cargo +stable build --release --locked, cargo 1.99.0 with rustc 1.99.0 (stable-x86_64-unknown-linux-gnu), rustup 1.29.1 with RUSTUP_HOME=/state/cache/rustup and CARGO_HOME=/state/cache/cargo (relocated, exec-capable homes); toolchain 1.85.0 MSRV check and clippy -D warnings both exit 0 at the same tree",
+    "param_contract_revision": "e24c844f8dada85551ab084f41db8944fbc176c8"
+  },
+  "oracle_revision": {
+    "repository": "noisefactorllc/noisemaker-for-cpu",
+    "commit": "b0e6c4130ac2815145695114a475132282b266a9",
+    "tree": "31ceb86a4c030d12ef60ab9ec664bd1d436df527",
+    "runtime": "node v26.5.1, offline test oracle only, full clone at /state/cache/noisemaker-for-cpu checked out at b0e6c4130ac (its published default branch main); the five reactive/mesh cases run through the parity harness's inline node module against the oracle checkout's library (scripts/parity.py EXTERNAL_INPUT_PROGRAMS), the other 205 through bin/noisemaker-cpu.js"
+  },
+  "result": {
+    "catalog": 210,
+    "compared": 210,
+    "unsupported": 0,
+    "errors": 0,
+    "passed": 210,
+    "failed": 0,
+    "byte_exact": 210
+  },
+  "external_inputs": "The five imported effects compare through host-fed fixtures byte-identical to the CPU port's scripts/parity/reactive-fixtures.js constants: synth/roll (MIDI: channel 1 C-major triad 60/64/67 velocities 100/80/90, channel 2 noteOn 48 velocity 64, 24 clock pulses), synth/scope and synth/spectrum (audio: 128-sample waveform 0.5+0.5*sin(2*pi*3*i/128) and spectrum (1-i/127)^2), render/meshLoader (12-triangle cube OBJ through parseOBJ/packMeshDataForTextures, standalone meshLoader().write(o0) preview chain) and render/meshRender (the chained meshLoader().meshRender() program). All five compared byte-exact at tolerance 0 in 0.2-0.4 s rust.",
+  "flow3d_note": "filter3d/flow3d compared byte-exact in-run at 105.718 s (rust) / 1.402 s (js), inside the 120 s timeout; filter/crt compared byte-exact at 0.646 s. The three worm-overlay cases compared byte-exact in Ready one-shot mode as recorded by the b93980b_range_run overlay_resolution.",
+  "declared_checks_reexecuted": {
+    "declaration": "CONTRIBUTING.md publication checks re-executed with exit code 0, in CONTRIBUTING order, on this candidate tree carrying the record; cargo 1.99.0/rustc 1.99.0 plus toolchain 1.85.0, rustup 1.29.1, node v26.5.1, Python 3.11.2, Linux x86_64. The crate declares no [features] section, so --all-features is a no-op flag. Verbatim command and output for each check are in /workspace/evidence/checks-20261002-b0e6c41/ (job evidence archive).",
+    "commands": [
+      {
+        "command": "cargo +stable build --release --locked",
+        "exit_code": 0,
+        "evidence": "checks-20261002-b0e6c41/01-build.txt",
+        "result": "target/release/noisemaker-rs sha256 de26821cec5e41d2c068993e1bb7e9ffd02fa0e2f80723eb3244fa7bf661bc7e, byte-identical to the binary the recorded parity run executed (comment-only src edits after the run left the binary hash unchanged)"
+      },
+      {
+        "command": "cargo +stable fmt --all -- --check",
+        "exit_code": 0,
+        "evidence": "checks-20261002-b0e6c41/02-fmt.txt"
+      },
+      {
+        "command": "cargo +stable clippy --all-targets --all-features --locked -- -D warnings",
+        "exit_code": 0,
+        "evidence": "checks-20261002-b0e6c41/03-clippy.txt"
+      },
+      {
+        "command": "cargo +1.85.0 check --all-targets --all-features",
+        "exit_code": 0,
+        "evidence": "checks-20261002-b0e6c41/04-msrv.txt"
+      },
+      {
+        "command": "cargo +stable test --release --locked --all-features",
+        "exit_code": 0,
+        "evidence": "checks-20261002-b0e6c41/05-test.txt",
+        "result": "27 test-binary result lines ok, 206 passed, 0 failed, 2 ignored (the NOISEMAKER_JS_CPU_DIR-gated parity_spine tests); includes the 210-effect catalog smoke and the 210-record schema denominator test"
+      },
+      {
+        "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'",
+        "exit_code": 0,
+        "evidence": "checks-20261002-b0e6c41/06-unittest.txt",
+        "result": "Ran 20 tests, OK (test_export_kit now pins the 210-record compat set)"
+      },
+      {
+        "command": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check",
+        "exit_code": 0,
+        "evidence": "checks-20261002-b0e6c41/07-bundle.txt",
+        "result": "the checked-in generated bundle (catalog 210 effects, shaders 296 programs including the meshRender vertex/fragment pair with typed varyings, bundle-lock, contract e24c844f) reproduces exactly from generator emission"
+      },
+      {
+        "command": "cargo +stable package --locked",
+        "exit_code": 0,
+        "evidence": "checks-20261002-b0e6c41/09-package.txt",
+        "result": "Packaged; package verification compiled and finished"
+      }
+    ],
+    "evidence_archive": "/workspace/evidence (supervisor-mounted job archive): checks-20261002-b0e6c41/ (verbatim publication-check outputs), parity-report-20261002-b0e6c41.json (sha256 b92ce4e0e85f7af14226b85d67cec5c39a6c9a4214395391faae3af10077ac67), parity-run-20261002-b0e6c41.log (sha256 8aa2486d457a7245f1014599487ec495c5786cc2818e461fe4092f4ee7c84269), cpu-range-review-20261002.txt, and noisemaker-for-cpu-b0e6c41.bundle (sha256 0f401c72bbbf33951f712f2c1a10b4a5585a68ff7c36c538a1fbdabed9275d7d, git bundle verify reports a complete history). No logs are committed under docs/parity/."
+  }
+}
 }

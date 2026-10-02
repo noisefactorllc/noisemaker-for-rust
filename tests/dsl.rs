@@ -452,6 +452,9 @@ fn compiler_allows_surface_only_mixer_to_begin_a_chain() {
             .message
             .contains("requires at least one surface input")
     );
+    // External-input mesh effects begin a chain with no surface binding: their
+    // pass inputs are host-fed data textures, not surface parameters.
+    compile_dsl("search render; meshLoader().write(o0)", "mesh-loader.dsl").unwrap();
 }
 
 #[test]

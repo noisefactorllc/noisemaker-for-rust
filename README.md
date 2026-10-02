@@ -79,7 +79,7 @@ noisemaker-rs effects
 `generate` renders an image generator. It also accepts `random` as the effect. This deterministically selects from the sorted eligible generator pool using `--seed` and prints the resolved ID first. `apply` renders an image filter or
 mixer at the input image dimensions. `run` reads DSL from a file or standard
 input, and `render` is its compatibility alias. `effect` constructs a bounded,
-meaningful program for any catalog domain. `effects` prints all 205 sorted
+meaningful program for any catalog domain. `effects` prints all 210 sorted
 `ID<TAB>KIND` records.
 
 Common options are:
@@ -93,6 +93,11 @@ Common options are:
 --input PATH        bind a PNG to imageTex and textTex
 --texture NAME=PATH bind a named external PNG; repeatable
 --param NAME=VALUE  override a catalog parameter; repeatable, last value wins
+--external-input FIX bind a deterministic external-input fixture (repeatable):
+                    `midi`, `audio`, or `mesh`. Required by the reactive
+                    (`synth/roll`, `synth/scope`, `synth/spectrum`) and mesh
+                    (`render/meshLoader`, `render/meshRender`) effects; the
+                    fixtures byte-match the CPU port's parity fixtures.
 ```
 
 `animate` additionally accepts `--frame-count` (50), `--fps` (30), `--speed`
@@ -106,11 +111,16 @@ Width times height is limited to 16,777,216 pixels.
 
 ## Catalog and execution model
 
-The catalog contains 205 CPU effects across image, volume, particle, renderer,
-and loop domains. Five upstream effects are intentionally excluded because they
-depend on media/runtime interfaces absent from this standalone CPU port:
-`render/meshLoader`, `render/meshRender`, `synth/roll`, `synth/scope`, and
-`synth/spectrum`. The complete generated inventory and the 458 non-null
+The catalog contains all 210 CPU effects across image, volume, particle, renderer,
+and loop domains, including the five upstream external-input effects that were
+formerly excluded: the reactive `synth/roll`, `synth/scope`, and `synth/spectrum`
+(MIDI/audio state bound as uniforms through `--external-input midi` or `audio`)
+and the mesh `render/meshLoader` and `render/meshRender` (a parsed OBJ packed
+into data textures and rasterized by a native CPU triangle-mesh draw adapter
+matching the upstream `drawMode: 'triangles'` semantics: depth test LESS, CCW
+back-face culling, Blinn-Phong shading, gamma 1/2.2). Their fixtures are the
+deterministic constants shared with the CPU port's parity harness. The complete
+generated inventory and the 458 non-null
 compile-time choices are listed in [docs/EFFECTS.md](docs/EFFECTS.md).
 
 External-texture effects require `--input` or a matching `--texture` binding.

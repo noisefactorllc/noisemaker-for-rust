@@ -6,6 +6,7 @@ pub mod cli;
 pub mod draw_ops;
 pub mod dsl;
 mod error;
+pub mod external_input;
 mod generated;
 pub mod iteration;
 mod overlay;
@@ -27,6 +28,10 @@ pub use dsl::{
     parse_dsl, tokenize_dsl,
 };
 pub use error::{PngError, SurfaceError, VmError};
+pub use external_input::{
+    AudioState, ExternalInputs, MeshData, MidiState, audio_fixture, external_inputs_for_case,
+    mesh_fixture, midi_fixture, pack_mesh_data_for_textures, parse_obj,
+};
 pub use iteration::{
     ITERATION_DELTA_TIME, IterationError, IterationFrame, IterationGroup, IterationStep,
     compute_iteration_groups, is_particle_state_name, iteration_schedule, wrap01,

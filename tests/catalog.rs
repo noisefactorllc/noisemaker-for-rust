@@ -5,7 +5,7 @@ use noisemaker_cpu::catalog::{Expression, Statement, effect_catalog, shader_bund
 #[test]
 fn embedded_catalog_is_the_exact_cpu_inventory() {
     let catalog = effect_catalog().unwrap();
-    assert_eq!(catalog.effects.len(), 205);
+    assert_eq!(catalog.effects.len(), 210);
     assert_eq!(
         catalog.namespace_counts(),
         BTreeMap::from([
@@ -14,11 +14,13 @@ fn embedded_catalog_is_the_exact_cpu_inventory() {
             ("filter3d", 2),
             ("mixer", 15),
             ("points", 11),
-            ("render", 10),
-            ("synth", 26),
+            ("render", 12),
+            ("synth", 29),
             ("synth3d", 8),
         ])
     );
+    // The formerly excluded reactive (MIDI/audio) and mesh (OBJ) effects are
+    // imported into the catalog with host-fed external-input fixtures.
     for id in [
         "synth/roll",
         "synth/scope",
@@ -26,14 +28,9 @@ fn embedded_catalog_is_the_exact_cpu_inventory() {
         "render/meshLoader",
         "render/meshRender",
     ] {
-        assert!(!catalog.effects.contains_key(id));
-        assert!(
-            catalog
-                .excluded_effects
-                .iter()
-                .any(|excluded| excluded == id)
-        );
+        assert!(catalog.effects.contains_key(id));
     }
+    assert!(catalog.excluded_effects.is_empty());
 }
 
 #[test]
@@ -71,7 +68,7 @@ fn embedded_program_inventory_is_complete_and_structural() {
         .flat_map(|effect| effect.passes.iter())
         .filter_map(|pass| pass.key.as_deref())
         .collect::<std::collections::BTreeSet<_>>();
-    assert_eq!(shaders.programs.len(), 289);
+    assert_eq!(shaders.programs.len(), 296);
     assert_eq!(
         pass_keys,
         shaders.programs.keys().map(String::as_str).collect()

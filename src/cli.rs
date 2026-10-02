@@ -43,6 +43,10 @@ struct Cli {
     texture: Vec<String>,
     #[arg(long, global = true, action = clap::ArgAction::Append)]
     param: Vec<String>,
+    /// Bind a deterministic external-input fixture (repeatable): midi, audio, or
+    /// mesh. Byte-identical to the oracle's scripts/parity/reactive-fixtures.js.
+    #[arg(long, global = true, action = clap::ArgAction::Append)]
+    external_input: Vec<String>,
     #[arg(long, global = true, hide = true, default_value = "ready")]
     one_shot: String,
 }
@@ -166,11 +170,23 @@ fn generate(cli: &Cli, requested: &str) -> Result<(), String> {
 
 fn deterministic_random_effect(seed: i32) -> Result<String, String> {
     let catalog = effect_catalog().map_err(|error| error.to_string())?;
+    // Reactive/mesh effects require external inputs the CLI binds no fixture for
+    // (`--effect random` must not select them -- same exclusion rationale as
+    // iterated and externalTexture effects). Keep the id list in sync with the
+    // catalog imports.
+    const EXTERNAL_INPUT_EFFECT_IDS: [&str; 5] = [
+        "synth/roll",
+        "synth/scope",
+        "synth/spectrum",
+        "render/meshLoader",
+        "render/meshRender",
+    ];
     let eligible = catalog
         .effects
         .iter()
-        .filter(|(_, effect)| {
-            effect.kind == "generator"
+        .filter(|(id, effect)| {
+            !EXTERNAL_INPUT_EFFECT_IDS.contains(&id.as_str())
+                && effect.kind == "generator"
                 && effect.domain == "image"
                 && !effect.iterated
                 && effect.external_texture.is_none()
@@ -389,11 +405,25 @@ fn render_source_to_png(cli: &Cli, source: &str, output: &Path) -> Result<(), St
 }
 
 fn options(cli: &Cli, width: u32, height: u32, time: f32) -> Result<RenderOptions, String> {
+    let mut external_inputs = crate::external_input::ExternalInputs::default();
+    for name in &cli.external_input {
+        match name.as_str() {
+            "midi" => external_inputs.midi_state = Some(crate::external_input::midi_fixture()),
+            "audio" => external_inputs.audio_state = Some(crate::external_input::audio_fixture()),
+            "mesh" => external_inputs.mesh_data = Some(crate::external_input::mesh_fixture()),
+            other => {
+                return Err(format!(
+                    "unknown external input fixture {other:?} (midi, audio, mesh)"
+                ));
+            }
+        }
+    }
     Ok(RenderOptions {
         width,
         height,
         time,
         seed: cli.seed,
+        external_inputs,
         one_shot: if cli.one_shot == "initial" {
             OneShot::Initial
         } else {

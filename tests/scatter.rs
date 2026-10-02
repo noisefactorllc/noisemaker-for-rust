@@ -37,6 +37,7 @@ fn draw_registry_and_point_origin_rules_are_exact() {
             "points/dla:depositGrid",
             "points/lenia:deposit",
             "points/physarum:deposit",
+            "render/meshRender:render",
             "render/pointsBillboardRender:deposit",
             "render/pointsRender:deposit",
         ]

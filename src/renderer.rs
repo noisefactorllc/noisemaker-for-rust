@@ -3,8 +3,9 @@ use std::time::{Duration, Instant};
 
 use thiserror::Error;
 
-use crate::catalog::{CatalogError, Expression, effect_catalog, shader_bundle};
+use crate::catalog::{CatalogError, EffectDefinition, Expression, effect_catalog, shader_bundle};
 use crate::dsl::{DslError, RenderPlan, RenderStep, SurfaceBinding, compile_dsl};
+use crate::external_input::{ExternalInputs, flip_rgba_rows};
 use crate::iteration::{
     IterationStep, compute_iteration_groups, is_particle_state_name, iteration_schedule,
 };
@@ -12,7 +13,7 @@ use crate::pass_runner::{
     RESERVED_FEEDBACK_RESOURCE, apply_pass_uniform_aliases, canonical_uniforms, execute_pass,
     normalize_parameters, pass_enabled, repeat_count, texture_dimensions,
 };
-use crate::{ParamValue, Surface, SurfaceError, TextureFormat, Value, VmError};
+use crate::{FilterMode, ParamValue, Surface, SurfaceError, TextureFormat, Value, VmError};
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum OneShot {
@@ -30,6 +31,7 @@ pub struct RenderOptions {
     pub delta_time: f32,
     pub seed: i32,
     pub external_textures: BTreeMap<String, Surface>,
+    pub external_inputs: ExternalInputs,
     pub one_shot: OneShot,
 }
 
@@ -43,6 +45,7 @@ impl Default for RenderOptions {
             delta_time: 0.0,
             seed: 1,
             external_textures: BTreeMap::new(),
+            external_inputs: ExternalInputs::default(),
             one_shot: OneShot::Ready,
         }
     }
@@ -518,6 +521,11 @@ fn execute_effect_bundle_with_state(
             remap_uniform_data(&normalized.values, inputs, options.width, options.height),
         );
     }
+    bind_external_inputs(
+        effect_id,
+        &mut normalized.uniforms,
+        &options.external_inputs,
+    )?;
     let effective_seed = match normalized.values.get("seed") {
         Some(Value::Int(seed)) => *seed,
         Some(Value::Float(seed)) => *seed as i32,
@@ -535,6 +543,7 @@ fn execute_effect_bundle_with_state(
     let mut resources = persistent.clone();
     resources.extend(inputs.clone());
     resources.extend(options.external_textures.clone());
+    bind_external_input_resources(effect_id, effect, &options.external_inputs, &mut resources)?;
     if let Some(image) = &input_bundle.image {
         resources.insert("inputTex".into(), image.clone());
     }
@@ -680,7 +689,7 @@ fn execute_effect_bundle_with_state(
         if crate::draw_ops::is_draw_pass(render_pass) {
             let key = format!("{effect_id}:{}", render_pass.program);
             for _ in 0..repeats {
-                crate::draw_ops::execute_draw_pass(
+                crate::draw_ops::execute_draw_pass_with(
                     &key,
                     render_pass,
                     &pass_uniforms,
@@ -688,6 +697,7 @@ fn execute_effect_bundle_with_state(
                     options.width,
                     options.height,
                     &formats,
+                    &options.external_inputs,
                 )?;
             }
             if let Some(name) = render_pass.outputs.values().next() {
@@ -805,6 +815,120 @@ fn execute_effect_bundle_with_state(
         geometry,
         volume_size,
     })
+}
+
+/// Reactive (MIDI/audio) uniform defaults and mesh/external data-texture bindings.
+/// Mirrors the upstream pipeline's global-uniform stage (updateGlobalUniforms): the
+/// 128-float audio arrays and the MIDI clock counter are bound only for the effects
+/// whose kernels declare them, zero-initialized when no external state is supplied.
+const REACTIVE_EFFECT_IDS: [&str; 3] = ["synth/roll", "synth/scope", "synth/spectrum"];
+const MESH_TEX_WIDTH: usize = 256;
+const MESH_TEX_HEIGHT: usize = 256;
+
+fn bind_external_inputs(
+    effect_id: &str,
+    uniforms: &mut BTreeMap<String, Value>,
+    external_inputs: &ExternalInputs,
+) -> Result<(), RenderError> {
+    if REACTIVE_EFFECT_IDS.contains(&effect_id) {
+        let clock_count = external_inputs
+            .midi_state
+            .as_ref()
+            .map_or(0.0_f32, |midi| midi.clock_count as f32);
+        uniforms.insert("midiClockCount".into(), Value::Float(clock_count));
+        // GLSL uniform arrays are zero-initialized when the upstream pipeline has no
+        // external state; the CPU kernels index them unconditionally, so always bind
+        // 128-float arrays (zeros when no audio state is supplied).
+        let zero = vec![Value::Float(0.0); 128];
+        let audio = external_inputs.audio_state.as_ref();
+        uniforms.insert(
+            "audioWaveform".into(),
+            audio.map_or_else(
+                || Value::Array(zero.clone()),
+                |state| Value::Array(state.waveform.iter().map(|&v| Value::Float(v)).collect()),
+            ),
+        );
+        uniforms.insert(
+            "audioSpectrum".into(),
+            audio.map_or_else(
+                || Value::Array(zero),
+                |state| Value::Array(state.spectrum.iter().map(|&v| Value::Float(v)).collect()),
+            ),
+        );
+    }
+    Ok(())
+}
+
+fn bind_external_input_resources(
+    effect_id: &str,
+    effect: &EffectDefinition,
+    external_inputs: &ExternalInputs,
+    resources: &mut BTreeMap<String, Surface>,
+) -> Result<(), RenderError> {
+    let pass_input_names: std::collections::BTreeSet<&str> = effect
+        .passes
+        .iter()
+        .flat_map(|pass| pass.inputs.values())
+        .map(String::as_str)
+        .collect();
+    if REACTIVE_EFFECT_IDS.contains(&effect_id) && pass_input_names.contains("midiNoteGrid") {
+        let grid: Vec<f32> = external_inputs
+            .midi_state
+            .as_ref()
+            .map_or_else(|| vec![0.0; 128 * 16 * 4], |midi| midi.note_grid.clone());
+        let mut surface =
+            Surface::from_f32(128, 16, flip_rgba_rows(&grid, 128, 16)).map_err(|error| {
+                RenderError::InvalidGraph {
+                    message: format!("midiNoteGrid data texture rejected: {error}"),
+                }
+            })?;
+        surface.set_filter_mode(FilterMode::Nearest);
+        resources.insert("midiNoteGrid".into(), surface);
+    }
+    let mesh_names: Vec<&str> = pass_input_names
+        .iter()
+        .copied()
+        .filter(|name| name.starts_with("global_mesh0_"))
+        .collect();
+    if mesh_names.is_empty() {
+        return Ok(());
+    }
+    let Some(mesh_data) = &external_inputs.mesh_data else {
+        return Err(RenderError::InvalidGraph {
+            message: format!(
+                "{effect_id} requires external mesh data (RenderOptions.external_inputs.mesh_data)"
+            ),
+        });
+    };
+    let tex_width = if mesh_data.tex_width == 0 {
+        MESH_TEX_WIDTH
+    } else {
+        mesh_data.tex_width
+    };
+    let tex_height = if mesh_data.tex_height == 0 {
+        MESH_TEX_HEIGHT
+    } else {
+        mesh_data.tex_height
+    };
+    for (name, data) in [
+        ("global_mesh0_positions", &mesh_data.position_data),
+        ("global_mesh0_normals", &mesh_data.normal_data),
+        ("global_mesh0_uvs", &mesh_data.uv_data),
+    ] {
+        if mesh_names.contains(&name) {
+            let mut surface = Surface::from_f32(
+                tex_width as u32,
+                tex_height as u32,
+                flip_rgba_rows(data, tex_width, tex_height),
+            )
+            .map_err(|error| RenderError::InvalidGraph {
+                message: format!("{name} data texture rejected: {error}"),
+            })?;
+            surface.set_filter_mode(FilterMode::Nearest);
+            resources.insert(name.into(), surface);
+        }
+    }
+    Ok(())
 }
 
 fn remap_uniform_data(
