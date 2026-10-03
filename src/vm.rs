@@ -370,21 +370,16 @@ impl ShaderVm {
                                 ));
                             };
                             // The canonical JS CPU compiler emits an untyped `var` here.
-                            // Since the GAP-003 integer-division leg a146f22 it wraps the
-                            // component-indexed dividend (`pixelCoord[1] / volSize`) in
-                            // Math.trunc, while the plain-identifier dividend
-                            // (`yAtlas / volSize` in the shape3d precompute) keeps the
-                            // untyped float64 division the broader widening leg at
-                            // d13b0a2 measured and rejected. Emulate each shape exactly,
+                            // Both the component-indexed dividend and shape3d's
+                            // plain-identifier dividend now use Math.trunc in the
+                            // pinned CPU compiler. Emulate both shapes exactly,
                             // and keep the fingerprint loud: a type_error here means the
                             // operand typing drifted away from the shapes the CPU
                             // compiler's lowering keys on.
                             match emission {
-                                JavascriptAtlasZEmission::TruncatedComponentIndexed => {
+                                JavascriptAtlasZEmission::TruncatedComponentIndexed
+                                | JavascriptAtlasZEmission::TruncatedIdentifier => {
                                     Value::Int(left / right)
-                                }
-                                JavascriptAtlasZEmission::UntypedFloat => {
-                                    Value::Float((f64::from(left) / f64::from(right)) as f32)
                                 }
                             }
                         } else {
@@ -1063,17 +1058,12 @@ fn is_javascript_atlas_z_declaration(declaration: &VariableDefinition) -> bool {
     javascript_atlas_z_emission(declaration).is_some()
 }
 
-/// Which untyped-`var` atlas-z emission the canonical JS CPU compiler produces for
-/// this declaration shape. `restoreIntegerDivision` (GAP-003 leg a146f22) rewrites
-/// only `var z = vec[i] / intName;` statements whose dividend is component-indexed
-/// into `Math.trunc(...)`; the plain-identifier dividend (`yAtlas / volSize` in the
-/// shape3d precompute) stays an untyped float64 division because a broader
-/// expression-level widening was measured and rejected against the GPU authority
-/// (GAP-003 record at d13b0a2). The port must emulate each shape exactly.
+/// Which atlas-z declaration shape the canonical JS CPU compiler emits.
+/// Both shapes are truncated by its current integer-division lowering.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum JavascriptAtlasZEmission {
     TruncatedComponentIndexed,
-    UntypedFloat,
+    TruncatedIdentifier,
 }
 
 fn javascript_atlas_z_emission(
@@ -1142,7 +1132,7 @@ fn javascript_atlas_z_emission(
             storage,
         } => {
             if value_type.0 == "int" && name == "yAtlas" && *storage == StorageClass::Local {
-                Some(JavascriptAtlasZEmission::UntypedFloat)
+                Some(JavascriptAtlasZEmission::TruncatedIdentifier)
             } else {
                 None
             }
@@ -2068,15 +2058,14 @@ mod tests {
         let already_exact = &shader_bundle().unwrap().programs["synth3d/noise3d:precompute"].ir;
         assert!(!is_javascript_atlas_program(already_exact));
 
-        // The two matched programs carry different CPU emissions: the component-indexed
-        // dividend is wrapped in Math.trunc, the plain-identifier one is not.
+        // The two matched programs carry different division expression shapes.
         assert_eq!(
             javascript_atlas_z_emission(&atlas_declaration("synth3d/reactionDiffusion3d:simulate")),
             Some(JavascriptAtlasZEmission::TruncatedComponentIndexed)
         );
         assert_eq!(
             javascript_atlas_z_emission(&atlas_declaration("synth3d/shape3d:precompute")),
-            Some(JavascriptAtlasZEmission::UntypedFloat)
+            Some(JavascriptAtlasZEmission::TruncatedIdentifier)
         );
     }
 

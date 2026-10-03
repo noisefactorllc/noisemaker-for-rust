@@ -162,7 +162,7 @@ fn navier_stokes_matches_js_n1_n4_full_frame_oracles() {
     );
     assert_eq!(
         format!("{:x}", Sha256::digest(n4.to_rgba8())),
-        "ac1bd04a4754ef4d78d3f20c403d535537f180ae018603de63c6a760216481e2"
+        "cf84752f2ff5e9b493c3e9fe2a05574c333fc96602147d763d4e250542c06296"
     );
 }
 

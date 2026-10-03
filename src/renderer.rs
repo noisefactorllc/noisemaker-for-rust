@@ -1011,9 +1011,20 @@ fn execute_iteration_group(
             message: "iterated group must begin with an effect".into(),
         });
     };
-    let count = match owner_params.get("iterationCount") {
+    let requested_count = match owner_params.get("iterationCount") {
         Some(ParamValue::Int(count)) => *count,
         _ => 60,
+    };
+    // A pass with its own repeat count already performs the requested work in
+    // one frame. Do not multiply it by the enclosing group's iteration count.
+    let count = if catalog.effects[owner_id]
+        .passes
+        .iter()
+        .any(|pass| pass.execution.contains_key("repeat"))
+    {
+        requested_count.min(1)
+    } else {
+        requested_count
     };
     if count <= 0 {
         return Ok(IterationExecution {
