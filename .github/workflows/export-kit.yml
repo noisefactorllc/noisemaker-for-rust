@@ -19,6 +19,8 @@ on:
       - "Cargo.lock"
       - "src/**"
 
+permissions: {}
+
 concurrency:
   group: export-kit-${{ github.ref }}
   cancel-in-progress: false
