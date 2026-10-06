@@ -55,7 +55,7 @@ jobs:
         run: cargo +stable build --release --locked --bin noisemaker-rs
 
       - name: Compare rendered catalog against pinned oracle
-        run: python3 scripts/parity.py --rust "$GITHUB_WORKSPACE/target/release/noisemaker-rs" --js "$GITHUB_WORKSPACE/oracle/bin/noisemaker-cpu.js" --json parity-report.json
+        run: python3 scripts/parity.py --rust "$GITHUB_WORKSPACE/target/release/noisemaker-rs" --js "$GITHUB_WORKSPACE/oracle/bin/noisemaker-cpu.js" --timeout 120 --json parity-report.json
 
       - name: Retain parity report
         if: always()
