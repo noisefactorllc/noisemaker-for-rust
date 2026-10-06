@@ -467,7 +467,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.js is None:
             parser.error("--js is required")
         cpu_root = args.js.resolve().parents[1]
-        node_harness = Path(tempfile.mkstemp(prefix="noisemaker-rust-parity-ext-", suffix=".mjs")[1])
+        harness_fd, harness_path = tempfile.mkstemp(prefix="noisemaker-rust-parity-ext-", suffix=".mjs")
+        os.close(harness_fd)
+        node_harness = Path(harness_path)
         node_harness.write_text(_external_input_script(cpu_root), encoding="utf-8")
 
     results: list[dict] = []
