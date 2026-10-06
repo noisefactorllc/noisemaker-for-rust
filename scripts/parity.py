@@ -76,6 +76,12 @@ await writePng(out, rendered)
 """
 
 
+def _external_input_script(cpu_root: Path) -> str:
+    return EXTERNAL_INPUT_NODE_SCRIPT.replace("%CPU%", cpu_root.as_uri()).replace(
+        "%PROGRAMS%", json.dumps(EXTERNAL_INPUT_PROGRAMS)
+    )
+
+
 def _catalog() -> dict:
     return json.loads(CATALOG_PATH.read_text(encoding="utf-8"))["effects"]
 
@@ -462,12 +468,7 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("--js is required")
         cpu_root = args.js.resolve().parents[1]
         node_harness = Path(tempfile.mkstemp(prefix="noisemaker-rust-parity-ext-", suffix=".mjs")[1])
-        node_harness.write_text(
-            EXTERNAL_INPUT_NODE_SCRIPT.replace("%CPU%", cpu_root.as_posix()).replace(
-                "%PROGRAMS%", json.dumps(EXTERNAL_INPUT_PROGRAMS)
-            ),
-            encoding="utf-8",
-        )
+        node_harness.write_text(_external_input_script(cpu_root), encoding="utf-8")
 
     results: list[dict] = []
     for index, effect_id in enumerate(selected, 1):

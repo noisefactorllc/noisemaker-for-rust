@@ -1,9 +1,15 @@
 import unittest
+from pathlib import PureWindowsPath
 
 from scripts import parity
 
 
 class StrictParityTest(unittest.TestCase):
+    def test_external_input_harness_uses_file_urls_for_windows_paths(self):
+        script = parity._external_input_script(PureWindowsPath("D:/work/noisemaker-for-cpu"))
+        self.assertIn("from 'file:///D:/work/noisemaker-for-cpu/src/index.js'", script)
+        self.assertNotIn("from 'D:", script)
+
     def test_one_byte_difference_fails_without_changing_the_over_two_metric(self):
         metrics = parity._metrics(bytes([60, 105, 165, 255]), bytes([61, 105, 165, 255]))
         self.assertFalse(metrics["pass"])
