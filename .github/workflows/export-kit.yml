@@ -26,8 +26,48 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  rendered-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check out Rust source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check out pinned JavaScript CPU oracle
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: noisefactorllc/noisemaker-for-cpu
+          ref: 15f126a8af9ae3ff8ebddc2e52107986c4f8c67e
+          path: oracle
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: Install stable Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Build parity CLI
+        run: cargo +stable build --release --locked --bin noisemaker-rs
+
+      - name: Compare rendered catalog against pinned oracle
+        run: python3 scripts/parity.py --rust "$GITHUB_WORKSPACE/target/release/noisemaker-rs" --js "$GITHUB_WORKSPACE/oracle/bin/noisemaker-cpu.js" --json parity-report.json
+
+      - name: Retain parity report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
+        with:
+          name: rust-rendered-parity-${{ github.sha }}
+          path: parity-report.json
+          if-no-files-found: warn
+
   dispatch:
     if: github.ref == 'refs/heads/main'
+    needs: rendered-parity
     runs-on: ubuntu-latest
     steps:
       - name: Mint scaffold-dispatch token
