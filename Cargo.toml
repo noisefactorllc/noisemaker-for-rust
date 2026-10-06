@@ -18,7 +18,6 @@ include = [
     "examples/**",
     "README.md",
     "docs/EFFECTS.md",
-    "CODE_OF_CONDUCT.md",
     "CONTRIBUTING.md",
     "LICENSE",
     "SECURITY.md",

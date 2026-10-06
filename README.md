@@ -171,8 +171,9 @@ machine-readable runs. JavaScript is an offline test oracle only. It is never a 
 
 ## Contributing and security
 
-Focused contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for
-the complete local verification commands and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution policy and the
+complete local verification commands, and the
+[Code of Conduct](https://github.com/noisefactorllc/.github/blob/main/CODE_OF_CONDUCT.md)
 for participation expectations. Report suspected vulnerabilities privately as
 described in [SECURITY.md](SECURITY.md), not in a public issue.
 
