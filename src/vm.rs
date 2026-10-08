@@ -1764,6 +1764,82 @@ mod tests {
     use super::*;
     use crate::catalog::{Type, shader_bundle};
 
+    fn hash_uint_call(program: &ProgramIr, argument: u32) -> Result<Value, VmError> {
+        let mut vm = ShaderVm::new(program, Runtime::new())?;
+        vm.push();
+        vm.eval(&Expression::Call {
+            value_type: Type("uint".into()),
+            name: "hash_uint".into(),
+            target: "hash_uint__uint".into(),
+            arguments: vec![Expression::Literal {
+                value_type: Type("uint".into()),
+                value: serde_json::json!(argument),
+                source: Some(format!("{argument}u")),
+            }],
+        })
+    }
+
+    #[test]
+    fn hash_uint_routes_by_body_lcg_kernels_use_the_lcg_finalizer() {
+        // Pinned LCG values (seed * 747796405 + 2891336453, xor-shift-multiply).
+        let expected = [
+            (0, 129_708_002),
+            (1, 2_831_084_092),
+            (123_456_789, 4_272_394_698),
+        ];
+        for kernel in [
+            "render/pointsEmit:init",
+            "points/buddhabrot:agent",
+            "filter3d/flow3d:agent",
+        ] {
+            let program = &shader_bundle().unwrap().programs[kernel].ir;
+            assert!(
+                is_javascript_lcg_hash_uint(
+                    program
+                        .functions
+                        .iter()
+                        .find(|function| function.mangled_name == "hash_uint__uint")
+                        .unwrap()
+                ),
+                "{kernel} lost the LCG hash_uint body"
+            );
+            for (argument, value) in expected {
+                assert_eq!(
+                    hash_uint_call(program, argument).unwrap(),
+                    Value::Uint(value),
+                    "{kernel} hash_uint({argument}) left the murmur routing"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn hash_uint_routes_by_body_murmur_kernels_keep_the_finalizer() {
+        // Pinned murmur values (xor-shift 16/15/16 with 0x7feb352d/0x846ca68b).
+        let expected = [(0, 0), (1, 1_753_845_952), (123_456_789, 2_834_422_664)];
+        let program = &shader_bundle().unwrap().programs["filter/texture:texture"].ir;
+        let function = program
+            .functions
+            .iter()
+            .find(|function| function.mangled_name == "hash_uint__uint")
+            .unwrap();
+        assert!(!is_javascript_lcg_hash_uint(function));
+        for (argument, value) in expected {
+            assert_eq!(
+                hash_uint_call(program, argument).unwrap(),
+                Value::Uint(value),
+                "filter/texture hash_uint({argument}) left the murmur routing"
+            );
+        }
+    }
+
+    #[test]
+    fn hash_uint_routing_is_absent_without_a_hash_uint_declaration() {
+        let program = &shader_bundle().unwrap().programs["classicNoisedeck/noise:noise"].ir;
+        let vm = ShaderVm::new(program, Runtime::new()).unwrap();
+        assert!(!vm.javascript_lcg_hash_compatibility);
+    }
+
     #[test]
     fn canonical_simplex_corner_defers_only_the_matched_vector_storage() {
         let program = &shader_bundle().unwrap().programs["classicNoisedeck/noise:noise"].ir;
