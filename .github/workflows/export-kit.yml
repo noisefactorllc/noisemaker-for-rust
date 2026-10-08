@@ -6,17 +6,28 @@ name: Export kit
 # docs/runbook/export-kits.md.
 
 # The kit releases only after the rendered cross-port parity against the pinned
-# JavaScript CPU oracle passes. That parity renders the catalog on the CPU, so it
-# runs weekly and on manual dispatch rather than on push (ci.yml gates pushes).
+# JavaScript CPU oracle passes, and only from the weekly run or a manual
+# dispatch. A push to main that changes the renderer runs the same parity as a
+# push gate without releasing a kit. The parity renders 210 cases at 8x8 in
+# under five minutes on the runner, which keeps the push gate under ten
+# minutes. The catalog smoke tests and the Windows parity stay weekly in ci.yml.
 on:
   workflow_dispatch:
   schedule:
     - cron: '53 8 * * 1'
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "scripts/parity.py"
+      - ".github/workflows/export-kit.yml"
 
 permissions: {}
 
 concurrency:
-  group: export-kit-${{ github.ref }}
+  group: export-kit-${{ github.ref }}-${{ github.event_name == 'push' && 'gate' || 'full' }}
   cancel-in-progress: false
 
 jobs:
@@ -60,7 +71,7 @@ jobs:
           if-no-files-found: warn
 
   dispatch:
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name != 'push' && github.ref == 'refs/heads/main'
     needs: rendered-parity
     runs-on: ubuntu-latest
     steps:

@@ -176,11 +176,12 @@ Use `--only ID`, `--size N`, `--timeout SECONDS`, and `--json PATH` for focused 
 machine-readable runs. JavaScript is an offline test oracle only. It is never a production runtime dependency.
 
 On every push, CI checks formatting, lints, the 1.85 minimum, the generator, and
-the test suite without the catalog smoke tests. The catalog smoke tests (every
-default program and every compile-time choice) and the cross-port parity on
-Linux and Windows run weekly and on manual dispatch against the CPU port
-revision pinned in the workflows, and a green Linux parity run releases the
-export kit.
+the test suite without the catalog smoke tests. A push that changes `src/**`,
+the Cargo manifests, or `scripts/parity.py` also runs the Linux cross-port
+parity against the pinned CPU port revision. The catalog smoke tests (every
+default program and every compile-time choice) and the Windows cross-port
+parity run weekly and on manual dispatch. Only a weekly or manually dispatched
+run releases the export kit, after its Linux parity passes.
 
 ## Current support and limits
 
