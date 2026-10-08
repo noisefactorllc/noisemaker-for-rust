@@ -140,10 +140,30 @@ fn validate_common(cli: &Cli) -> Result<(), String> {
 }
 
 fn print_effects() -> Result<(), String> {
-    for (id, effect) in &effect_catalog().map_err(|error| error.to_string())?.effects {
-        println!("{id}\t{}", effect.kind);
+    let catalog = effect_catalog().map_err(|error| error.to_string())?;
+    print_lines(
+        catalog
+            .effects
+            .iter()
+            .map(|(id, effect)| format!("{id}\t{}", effect.kind)),
+    )
+}
+
+/// Writes lines to standard output. A reader that closes the pipe early (for
+/// example `noisemaker-rs effects | head -1`) ends the output without an error.
+fn print_lines(lines: impl IntoIterator<Item = String>) -> Result<(), String> {
+    let mut stdout = std::io::stdout().lock();
+    for line in lines {
+        match writeln!(stdout, "{line}") {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::BrokenPipe => return Ok(()),
+            Err(error) => return Err(error.to_string()),
+        }
     }
-    Ok(())
+    match stdout.flush() {
+        Err(error) if error.kind() != std::io::ErrorKind::BrokenPipe => Err(error.to_string()),
+        _ => Ok(()),
+    }
 }
 
 fn generate(cli: &Cli, requested: &str) -> Result<(), String> {
@@ -159,7 +179,7 @@ fn generate(cli: &Cli, requested: &str) -> Result<(), String> {
     let source = image_program(&resolved, definition, &cli.param, false)?;
     require_external_texture(cli, definition)?;
     if requested == "random" {
-        println!("{resolved}");
+        print_lines([resolved.clone()])?;
     }
     render_source_to_png(
         cli,

@@ -672,3 +672,24 @@ fn every_validation_branch_fails_before_output_mutation() {
     }
     fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn effects_ends_quietly_when_the_reader_closes_the_pipe() {
+    // Close the read end before the command writes, as `| head -1` can.
+    for _ in 0..30 {
+        let mut child = cli()
+            .arg("effects")
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        drop(child.stdout.take());
+        let output = child.wait_with_output().unwrap();
+        assert!(output.status.success(), "exit {:?}", output.status.code());
+        assert!(
+            output.stderr.is_empty(),
+            "stderr: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+}
