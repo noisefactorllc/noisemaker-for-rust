@@ -347,7 +347,7 @@ fn oracle_non_finite_choice(id: &str, name: &str, value: &JsonValue) -> Option<&
 }
 
 #[test]
-fn all_458_non_null_compile_choices_execute_without_skips() {
+fn all_460_non_null_compile_choices_execute_without_skips() {
     let catalog = effect_catalog().unwrap();
     let mut failures = Vec::new();
     let mut executed = 0;
@@ -360,7 +360,7 @@ fn all_458_non_null_compile_choices_execute_without_skips() {
     let end = std::env::var("NM_CHOICE_END")
         .ok()
         .and_then(|value| value.parse::<usize>().ok())
-        .unwrap_or(458);
+        .unwrap_or(460);
     let only = std::env::var("NM_CHOICE_ONLY").ok();
     let mut catalog_index = 0;
     for (id, effect) in &catalog.effects {
@@ -422,15 +422,15 @@ fn all_458_non_null_compile_choices_execute_without_skips() {
             }
         }
     }
-    assert_eq!(catalog_index, 458);
+    assert_eq!(catalog_index, 460);
     let expected = if only.is_some() {
         executed
     } else {
-        end.min(458).saturating_sub(start.min(458))
+        end.min(460).saturating_sub(start.min(460))
     };
     assert_eq!(executed, expected);
-    if only.is_none() && start == 0 && end >= 458 {
-        assert_eq!(finite, 455);
+    if only.is_none() && start == 0 && end >= 460 {
+        assert_eq!(finite, 457);
         assert_eq!(
             expected_non_finite,
             BTreeSet::from([

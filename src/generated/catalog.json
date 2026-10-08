@@ -18033,9 +18033,9 @@
       },
       "paramNames": [
         "tex",
+        "baseTex",
         "mix",
-        "maskMode",
-        "baseTex"
+        "maskMode"
       ],
       "params": {
         "baseTex": {
@@ -23015,9 +23015,9 @@
         "viewScale",
         "posX",
         "posY",
-        "matteOpacity",
         "posZ",
         "fieldOfView",
+        "matteOpacity",
         "iterationCount"
       ],
       "params": {
@@ -23713,7 +23713,8 @@
         "posX",
         "posY",
         "posZ",
-        "fieldOfView"
+        "fieldOfView",
+        "filtering"
       ],
       "params": {
         "ambient": {
@@ -23789,6 +23790,19 @@
             "label": "field of view"
           },
           "uniform": "fieldOfView"
+        },
+        "filtering": {
+          "choices": {
+            "isosurface": 0,
+            "voxel": 1
+          },
+          "default": 1,
+          "define": "FILTERING",
+          "type": "int",
+          "ui": {
+            "control": "dropdown",
+            "label": "filtering"
+          }
         },
         "lightDirection": {
           "default": [
@@ -31190,7 +31204,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "90dd6ca56b20e160c5dcf816d73709bab1fc3db6",
+    "paramContractRevision": "15c9114e864fcc8cd2557669f2ac6d36f0ea080f",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"

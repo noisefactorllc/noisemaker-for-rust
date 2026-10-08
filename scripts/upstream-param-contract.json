@@ -1,6 +1,6 @@
 {
   "source": "noisemaker-for-cpu upstream-snapshot.js",
-  "revision": "90dd6ca56b20e160c5dcf816d73709bab1fc3db6",
+  "revision": "15c9114e864fcc8cd2557669f2ac6d36f0ea080f",
   "effects": {
     "classicNoisedeck/bitEffects": {
       "paramNames": [
@@ -1621,9 +1621,9 @@
     "mixer/alphaMask": {
       "paramNames": [
         "tex",
+        "baseTex",
         "mix",
-        "maskMode",
-        "baseTex"
+        "maskMode"
       ],
       "paramAliases": {
         "mixAmt": "mix"
@@ -2047,9 +2047,9 @@
         "viewScale",
         "posX",
         "posY",
-        "matteOpacity",
         "posZ",
         "fieldOfView",
+        "matteOpacity",
         "iterationCount"
       ],
       "paramAliases": {}
@@ -2480,6 +2480,7 @@
         "zone0_tex",
         "zone0_count",
         "zone0_alpha",
+        "zone0_bounds",
         "zone0_v0",
         "zone0_v1",
         "zone0_v2",
@@ -2515,6 +2516,7 @@
         "zone1_tex",
         "zone1_count",
         "zone1_alpha",
+        "zone1_bounds",
         "zone1_v0",
         "zone1_v1",
         "zone1_v2",
@@ -2550,6 +2552,7 @@
         "zone2_tex",
         "zone2_count",
         "zone2_alpha",
+        "zone2_bounds",
         "zone2_v0",
         "zone2_v1",
         "zone2_v2",
@@ -2585,6 +2588,7 @@
         "zone3_tex",
         "zone3_count",
         "zone3_alpha",
+        "zone3_bounds",
         "zone3_v0",
         "zone3_v1",
         "zone3_v2",
@@ -2620,6 +2624,7 @@
         "zone4_tex",
         "zone4_count",
         "zone4_alpha",
+        "zone4_bounds",
         "zone4_v0",
         "zone4_v1",
         "zone4_v2",
@@ -2655,6 +2660,7 @@
         "zone5_tex",
         "zone5_count",
         "zone5_alpha",
+        "zone5_bounds",
         "zone5_v0",
         "zone5_v1",
         "zone5_v2",
@@ -2690,6 +2696,7 @@
         "zone6_tex",
         "zone6_count",
         "zone6_alpha",
+        "zone6_bounds",
         "zone6_v0",
         "zone6_v1",
         "zone6_v2",
@@ -2725,6 +2732,7 @@
         "zone7_tex",
         "zone7_count",
         "zone7_alpha",
+        "zone7_bounds",
         "zone7_v0",
         "zone7_v1",
         "zone7_v2",
@@ -2983,7 +2991,8 @@
         "posX",
         "posY",
         "posZ",
-        "fieldOfView"
+        "fieldOfView",
+        "filtering"
       ],
       "paramAliases": {}
     },
