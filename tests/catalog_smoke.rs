@@ -251,6 +251,7 @@ fn completed_default_smoke_batches_cover_210_exactly_once() {
 }
 
 #[test]
+#[ignore = "renders every catalog program; CI runs it weekly with --include-ignored"]
 fn all_210_default_programs_are_finite_deterministic_and_aggregated() {
     let started = Instant::now();
     let catalog = effect_catalog().unwrap();
@@ -347,6 +348,7 @@ fn oracle_non_finite_choice(id: &str, name: &str, value: &JsonValue) -> Option<&
 }
 
 #[test]
+#[ignore = "renders every catalog program; CI runs it weekly with --include-ignored"]
 fn all_460_non_null_compile_choices_execute_without_skips() {
     let catalog = effect_catalog().unwrap();
     let mut failures = Vec::new();

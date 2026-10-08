@@ -39,10 +39,18 @@ NOISEMAKER_JS_CPU_DIR=../noisemaker-for-cpu \
   cargo +stable test --test parity_spine -- --ignored
 ```
 
-The complete Rust test suite exercises all 205 eligible effects and all 458
-non-null compile-time choices, so it can take several minutes. The JavaScript
-CPU port is used only as an offline maintenance oracle by `scripts/parity.py`;
-it must never become a production dependency.
+`cargo test` skips the two catalog smoke tests that render every default
+program and all 460 non-null compile-time choices; they take several minutes.
+Run them, with the cross-port spine above, before changing generated shaders or
+the runtime:
+
+```sh
+NOISEMAKER_JS_CPU_DIR=../noisemaker-for-cpu \
+  cargo +stable test --release --test catalog_smoke --test parity_spine -- --include-ignored
+```
+
+The JavaScript CPU port is used only as an offline maintenance oracle by
+`scripts/parity.py`; it must never become a production dependency.
 
 Keep changes focused and include regression coverage for behavior changes. If
 generated catalog or typed-IR files need to change, update their canonical

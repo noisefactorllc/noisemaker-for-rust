@@ -5,19 +5,13 @@ name: Export kit
 # SHA and ships it to kits.noisedeck.app. See scaffold
 # docs/runbook/export-kits.md.
 
+# The kit releases only after the rendered cross-port parity against the pinned
+# JavaScript CPU oracle passes. That parity renders the catalog on the CPU, so it
+# runs weekly and on manual dispatch rather than on push (ci.yml gates pushes).
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "export-kit/**"
-      - ".github/workflows/export-kit.yml"
-      # LICENSE is shipped kit content (vendored into LICENSES/): a relicense must auto-publish.
-      - "LICENSE"
-      # The kit vendors the crate itself, so an engine edit changes shipped kit bytes.
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "src/**"
+  schedule:
+    - cron: '53 8 * * 1'
 
 permissions: {}
 
@@ -39,7 +33,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: noisefactorllc/noisemaker-for-cpu
-          ref: 15f126a8af9ae3ff8ebddc2e52107986c4f8c67e
+          ref: 6cc7c2a22b39c9529ae0532d04fab1650c09ceb5
           path: oracle
           persist-credentials: false
 
@@ -70,7 +64,24 @@ jobs:
     needs: rendered-parity
     runs-on: ubuntu-latest
     steps:
+      # scaffold mints a new kit version for every dispatch, so a weekly run on
+      # an unchanged main must not release the same SHA again.
+      - name: Skip a SHA that is already released
+        id: released
+        env:
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          tags=$(git ls-remote --tags "https://github.com/$REPO.git" 'refs/tags/kit-*')
+          if printf '%s\n' "$tags" | awk '$2 ~ /\^\{\}$/ { print $1 }' | grep -qx "$SHA"; then
+            echo "$SHA already carries a kit tag; nothing to release."
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Mint scaffold-dispatch token
+        if: steps.released.outputs.released == 'false'
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
@@ -80,6 +91,7 @@ jobs:
           repositories: scaffold
 
       - name: Dispatch export-kit-release
+        if: steps.released.outputs.released == 'false'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |

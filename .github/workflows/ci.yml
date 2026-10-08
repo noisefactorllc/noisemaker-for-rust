@@ -14,13 +14,18 @@ on:
       - 'docs/EFFECTS.md'
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '23 8 * * 1'
 
 permissions:
   contents: read
 
+# A push runs the quality checks and the test suite. Everything that renders
+# the catalog on the CPU (the catalog smoke tests, the cross-port spine and the
+# Windows rendered parity) runs weekly and on manual dispatch.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.ref }}-${{ github.event_name == 'push' && 'gate' || 'full' }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   quality:
@@ -98,6 +103,7 @@ jobs:
         run: cargo +stable package --locked
 
   parity-windows:
+    if: github.event_name != 'push'
     runs-on: windows-latest
     timeout-minutes: 90
     steps:
@@ -114,7 +120,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: noisefactorllc/noisemaker-for-cpu
-          ref: 15f126a8af9ae3ff8ebddc2e52107986c4f8c67e
+          ref: 6cc7c2a22b39c9529ae0532d04fab1650c09ceb5
           path: oracle
           persist-credentials: false
 
@@ -142,3 +148,39 @@ jobs:
           name: rust-windows-parity-${{ github.sha }}
           path: parity-report-windows.json
           if-no-files-found: warn
+
+  catalog-smoke:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check out pinned JavaScript CPU oracle
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: noisefactorllc/noisemaker-for-cpu
+          ref: 6cc7c2a22b39c9529ae0532d04fab1650c09ceb5
+          path: oracle
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Install stable Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Catalog smoke and cross-port spine tests
+        env:
+          NOISEMAKER_JS_CPU_DIR: ${{ github.workspace }}/oracle
+        run: >-
+          cargo +stable test --release --all-features --locked
+          --test catalog_smoke --test parity_spine -- --include-ignored
