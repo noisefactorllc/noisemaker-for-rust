@@ -5,10 +5,6 @@
 
 # Noisemaker for Rust
 
-Current measured support: [compatibility report](docs/COMPATIBILITY.md).
-
-Current qualification limits: [completion gaps](docs/COMPLETION_GAPS.md).
-
 > This package supports the "Export Shader Pipeline" feature in Noisedeck.app. The feature runs shader compositions on other platforms. Noise Factor derives this package from the upstream Noisemaker Engine project and tests it for pixel-level parity.
 
 Noisemaker for Rust is a standalone CPU renderer for Noisemaker's generated
@@ -120,7 +116,7 @@ into data textures and rasterized by a native CPU triangle-mesh draw adapter
 matching the upstream `drawMode: 'triangles'` semantics: depth test LESS, CCW
 back-face culling, Blinn-Phong shading, gamma 1/2.2). Their fixtures are the
 deterministic constants shared with the CPU port's parity harness. The complete
-generated inventory and the 458 non-null
+generated inventory and the 460 non-null
 compile-time choices are listed in [docs/EFFECTS.md](docs/EFFECTS.md).
 
 External-texture effects require `--input` or a matching `--texture` binding.
@@ -157,8 +153,18 @@ Supplying `--source PATH` rebuilds from a source tree containing
 `metadata.json`, `bundle-lock.json`, and `effects.json` or `effects/`. Existing shader hashes are immutable. There is no update-lock mode. The packaged
 maintainer generator includes its complete `scripts/transpiler` dependency.
 
+To move to a new upstream release, fetch every eligible effect with
+`NM_SHADER_VERSION=<release>` through `scripts/transpiler/cdn.py`, which caches
+`effects/<id>.json` under `scripts/transpiler/.cdn-cache/<release>/`. Build the
+source tree from that cache (keeping only the programs the catalog's passes
+name), a `metadata.json` that is `src/generated/catalog.json` without
+`paramNames` and `paramAliases` plus any changed definitions, and a copy of
+`src/generated/bundle-lock.json` whose hashes are updated for the programs that
+intentionally changed. Take `scripts/upstream-param-contract.json` from the CPU
+port's `upstream-snapshot.js` at the same upstream revision.
+
 Cross-language maintenance parity compares one shared DSL program through the
-built Rust and JavaScript CLIs. It writes exactly one sorted record for every catalog effect and requires exact RGBA8 bytes (zero tolerance). It reports every unsupported interface with a stable reason. It treats timeouts or render errors as failures:
+built Rust and JavaScript CLIs, at 8×8 pixels unless `--size` says otherwise. It writes exactly one sorted record for every catalog effect and requires exact RGBA8 bytes (zero tolerance). It reports every unsupported interface with a stable reason. It treats timeouts or render errors as failures:
 
 ```sh
 python3 scripts/parity.py \
@@ -166,8 +172,15 @@ python3 scripts/parity.py \
   --js ../noisemaker-for-cpu/bin/noisemaker-cpu.js
 ```
 
-Use `--only ID`, `--timeout SECONDS`, and `--json PATH` for focused or
+Use `--only ID`, `--size N`, `--timeout SECONDS`, and `--json PATH` for focused or
 machine-readable runs. JavaScript is an offline test oracle only. It is never a production runtime dependency.
+
+On every push, CI checks formatting, lints, the 1.85 minimum, the generator, and
+the test suite without the catalog smoke tests. The catalog smoke tests (every
+default program and every compile-time choice) and the cross-port parity on
+Linux and Windows run weekly and on manual dispatch against the CPU port
+revision pinned in the workflows, and a green Linux parity run releases the
+export kit.
 
 ## Contributing and security
 
