@@ -76,6 +76,7 @@ pub struct ShaderVm {
     temporal_aberration_factory_compatibility: bool,
     javascript_simplex_corner_compatibility: bool,
     javascript_crt_hash_compatibility: bool,
+    javascript_lcg_hash_compatibility: bool,
     javascript_pattern_smoothstep_compatibility: bool,
     javascript_sine_hash_random_functions: BTreeSet<String>,
     javascript_atlas_z_program: bool,
@@ -116,6 +117,8 @@ impl ShaderVm {
             .map(|function| function.mangled_name.clone())
             .collect();
         let javascript_atlas_z_program = is_javascript_atlas_program(program);
+        let javascript_lcg_hash_compatibility =
+            program.functions.iter().any(is_javascript_lcg_hash_uint);
         Ok(Self {
             program: program.clone(),
             runtime,
@@ -124,6 +127,7 @@ impl ShaderVm {
             temporal_aberration_factory_compatibility: false,
             javascript_simplex_corner_compatibility: false,
             javascript_crt_hash_compatibility: false,
+            javascript_lcg_hash_compatibility,
             javascript_pattern_smoothstep_compatibility: false,
             javascript_sine_hash_random_functions,
             javascript_atlas_z_program,
@@ -872,7 +876,13 @@ impl ShaderVm {
                     actual: values.len(),
                 });
             };
-            return Ok(Flow::Return(Value::Uint(canonical_hash_uint(*value))));
+            return Ok(Flow::Return(Value::Uint(
+                if self.javascript_lcg_hash_compatibility {
+                    canonical_hash_uint_lcg(*value)
+                } else {
+                    canonical_hash_uint(*value)
+                },
+            )));
         }
         if self.call_depth >= CALL_DEPTH_LIMIT {
             return Err(VmError::CallDepthLimit {
@@ -1148,6 +1158,43 @@ fn canonical_hash_uint(value: u32) -> u32 {
     value ^= value >> 15;
     value = value.wrapping_mul(0x846c_a68b);
     value ^ (value >> 16)
+}
+
+fn canonical_hash_uint_lcg(value: u32) -> u32 {
+    let state = value.wrapping_mul(747_796_405).wrapping_add(2_891_336_453);
+    let word = ((state >> ((state >> 28) + 4)) ^ state).wrapping_mul(277_803_737);
+    (word >> 22) ^ word
+}
+
+/// The pinned authority declares two different `uint hash_uint(uint)` bodies
+/// under one name: the murmur-style finalizer (filter/texture,
+/// filter/spookyTicker) and the LCG-seeded xor-shift-multiply mix
+/// (render/pointsEmit init, the points/* agent kernels, filter3d/flow3d
+/// agent). The JavaScript CPU compiler routes the shared mangled target by
+/// GLSL body, so the interpreter must too: mapping the LCG body to the murmur
+/// implementation produced agent sequences the CPU port's bytes never contain.
+fn is_javascript_lcg_hash_uint(function: &Function) -> bool {
+    if function.name != "hash_uint" || function.mangled_name != "hash_uint__uint" {
+        return false;
+    }
+    let mut lcg_constant = false;
+    let mut murmur_constant = false;
+    for statement in &function.body {
+        statement.visit_expressions(&mut |expression| {
+            if let Expression::Literal {
+                value: serde_json::Value::Number(constant),
+                ..
+            } = expression
+            {
+                match constant.as_u64() {
+                    Some(747_796_405) => lcg_constant = true,
+                    Some(2_146_121_005) | Some(2_221_713_035) => murmur_constant = true,
+                    _ => {}
+                }
+            }
+        });
+    }
+    !murmur_constant && lcg_constant
 }
 
 fn is_javascript_sine_hash_random(function: &Function) -> bool {

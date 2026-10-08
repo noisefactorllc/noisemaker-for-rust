@@ -135,7 +135,11 @@ Four programs use complete native fragment replacements for semantics that the
 generic typed IR cannot represent directly. Snow uses an exact-key float32
 semantic adapter to preserve the JavaScript CPU port's operation boundaries.
 CRT remains on typed IR but selects one exact-key builtin-semantic adapter for its reduced-turn float32 sine. This matches the JavaScript CPU port without changing `sin` for any other shader. Temporal Aberration preserves the JavaScript factory's current true-branch assignment quirk behind its exact program key. Ordinary typed-IR conditional assignments retain their standard behavior.
-The canonical `hash_uint(uint)` helper uses the JavaScript CPU compiler's source-compatibility hash at its exact mangled function target. Differently named user functions continue to execute their typed-IR bodies.
+The canonical `hash_uint(uint)` helper follows the JavaScript CPU compiler's
+body routing at its exact mangled function target: a murmur-style finalizer
+body keeps the source-compatibility hash, while the LCG-seeded mix body (the
+points-pipeline agent kernels) executes the authority's LCG sequence.
+Differently named user functions continue to execute their typed-IR bodies.
 
 Compact CSL syntax is deliberately not implemented. Use the documented chained
 DSL, whose parser provides source locations and catalog-aware validation.

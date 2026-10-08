@@ -19,7 +19,46 @@ if ! command -v cargo >/dev/null 2>&1; then
   export CARGO_HOME="${CARGO_HOME:-/state/cache/cargo}"
   export PATH="$CARGO_HOME/bin:$PATH"
 fi
+# A writable probe: the home must exist (or be creatable) and accept writes.
+writable_home() {
+  { mkdir -p -- "$1" && touch -- "$1/.rw-probe" && rm -f -- "$1/.rw-probe"; } 2>/dev/null
+}
+# A rustup home must also be exec-capable: toolchain binaries run from it.
+exec_capable_home() {
+  { mkdir -p -- "$1" && printf '#!/bin/sh\n' > "$1/.exec-probe" && chmod 755 \
+      "$1/.exec-probe" && "$1/.exec-probe" && rm -f -- "$1/.exec-probe"; } 2>/dev/null
+}
 if command -v cargo >/dev/null 2>&1; then
+  # Some hosts ship read-only toolchain homes: /opt/rust/cargo cannot take
+  # the crates.io index/cache writes, /opt/rust/rustup cannot install the
+  # 1.85.0 MSRV toolchain, and a shared /state/cache can be read-only too.
+  # Probe the first usable home (the checkout itself is writable and
+  # exec-capable) and relocate there; rust-toolchain.toml's components make
+  # an auto-installed stable toolchain complete.
+  if ! writable_home "${CARGO_HOME:-${HOME:-/root}/.cargo}" \
+    || ! exec_capable_home "${RUSTUP_HOME:-${HOME:-/root}/.rustup}"; then
+    for candidate in /state/cache/cargo .cargo-home "${TMPDIR:-/tmp}/noisemaker-cargo"; do
+      if writable_home "$candidate"; then
+        export CARGO_HOME="$candidate"
+        break
+      fi
+    done
+    for candidate in /state/cache/rustup .rustup-home "${TMPDIR:-/tmp}/noisemaker-rustup"; do
+      if exec_capable_home "$candidate"; then
+        export RUSTUP_HOME="$candidate"
+        break
+      fi
+    done
+    if command -v rustup >/dev/null 2>&1; then
+      # A relocated home may lack the toolchains and components the checks
+      # need; provision them exactly like the ci workflow does. Disable the
+      # self-update check first: the running rustup may live on a read-only
+      # volume, and its self-update probe would fail the install.
+      rustup set auto-self-update disable 2>/dev/null || true
+      rustup toolchain install stable --profile minimal --component rustfmt --component clippy
+      rustup toolchain install 1.85.0 --profile minimal
+    fi
+  fi
   cargo fmt --all -- --check
   cargo clippy --all-targets --all-features -- -D warnings
   cargo +1.85.0 check --all-targets --all-features
