@@ -182,6 +182,15 @@ Linux and Windows run weekly and on manual dispatch against the CPU port
 revision pinned in the workflows, and a green Linux parity run releases the
 export kit.
 
+## Current support and limits
+
+The live [compatibility report](https://github.com/noisefactorllc/noisemaker-for-rust/issues/7)
+is the current measured support: the tested source and oracle revisions, the
+platforms, and the parity counts. The
+[issues labelled `gap`](https://github.com/noisefactorllc/noisemaker-for-rust/issues?q=label%3Agap)
+are the current qualification limits. Both are GitHub issues in this
+repository and are updated as results change.
+
 ## Contributing and security
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution policy and the
