@@ -31203,10 +31203,10 @@
   "provenance": {
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
-    "lockVersion": "1.0",
-    "paramContractRevision": "1fa59423497d62f1c5f893d7bd3cfd4a04eb9b1a",
+    "lockVersion": "1.0.278",
+    "paramContractRevision": "16d97cdff4c44c06818ebe710c2ef4f12c3d2dd9",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
-    "version": "1.0"
+    "version": "1.0.278"
   }
 }
