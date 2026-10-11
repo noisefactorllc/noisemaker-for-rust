@@ -51,15 +51,28 @@ pub fn canonical_uniforms(
     ]);
     uniforms.extend(effect_uniforms.clone());
     let resolution = Value::Vec(vec![width as f32, height as f32]);
+    // Upstream's Pipeline computes these scalar reciprocals on the CPU and
+    // uploads them as uniforms instead of dividing in-shader (relaxed-math
+    // backends lower a division to an approximate reciprocal multiply), so
+    // build them the same way from the full image's dimensions.
+    let aspect_value = f64::from(width) / f64::from(height);
     uniforms.extend([
         ("resolution".into(), resolution.clone()),
         ("fullResolution".into(), resolution),
         ("tileOffset".into(), Value::Vec(vec![0.0, 0.0])),
+        ("aspectRatio".into(), Value::Float(aspect_value as f32)),
+        ("aspect".into(), Value::Float(aspect_value as f32)),
         (
-            "aspectRatio".into(),
-            Value::Float(width as f32 / height as f32),
+            "aspectInv".into(),
+            Value::Float((1.0 / aspect_value) as f32),
         ),
-        ("aspect".into(), Value::Float(width as f32 / height as f32)),
+        (
+            "invFullResolution".into(),
+            Value::Vec(vec![
+                (1.0 / f64::from(width)) as f32,
+                (1.0 / f64::from(height)) as f32,
+            ]),
+        ),
         ("time".into(), Value::Float(time)),
         ("globalTime".into(), Value::Float(time)),
         ("frame".into(), Value::Int(frame as i32)),
@@ -69,12 +82,14 @@ pub fn canonical_uniforms(
     uniforms
 }
 
-const RESERVED_CANONICAL_UNIFORMS: [&str; 10] = [
+const RESERVED_CANONICAL_UNIFORMS: [&str; 12] = [
     "resolution",
     "fullResolution",
     "tileOffset",
     "aspect",
     "aspectRatio",
+    "aspectInv",
+    "invFullResolution",
     "time",
     "globalTime",
     "frame",
@@ -267,11 +282,9 @@ pub fn execute_pass(
     context
         .uniforms
         .insert("resolution".into(), pass_resolution);
-    let pass_aspect = Value::Float(pass_width as f32 / pass_height as f32);
-    context
-        .uniforms
-        .insert("aspect".into(), pass_aspect.clone());
-    context.uniforms.insert("aspectRatio".into(), pass_aspect);
+    // The aspect uniforms stay bound to the full image's aspect: the CPU
+    // oracle derives them from the complete resolution in every pass, so a
+    // destination-sized pass keeps the canonical aspect values.
     for uniform in &program.uniforms {
         if uniform.value_type.0 != "sampler2D" {
             if let Some(value) = context.uniforms.get(&uniform.name).cloned() {

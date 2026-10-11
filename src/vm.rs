@@ -1329,12 +1329,48 @@ fn javascript_simplex_corner_operands(
     else {
         return None;
     };
+    // The canonical kernel clamps the corner dot before the Number-precision
+    // sum: uv - i + min(max(dot(i, C.xx), -1e38), 1e38). Match the clamp so a
+    // changed bound or nesting fails loudly instead of silently disabling the
+    // deferred-Number path.
+    let Expression::Call {
+        value_type: clamp_type,
+        name: clamp_name,
+        target: clamp_target,
+        arguments: clamp_arguments,
+    } = right.as_ref()
+    else {
+        return None;
+    };
+    let [clamped, upper] = clamp_arguments.as_slice() else {
+        return None;
+    };
+    let Expression::Call {
+        value_type: limit_type,
+        name: limit_name,
+        target: limit_target,
+        arguments: limit_arguments,
+    } = clamped
+    else {
+        return None;
+    };
+    let [dot_call, lower] = limit_arguments.as_slice() else {
+        return None;
+    };
+    let Expression::Unary {
+        operator: lower_operator,
+        operand: lower_operand,
+        ..
+    } = lower
+    else {
+        return None;
+    };
     let Expression::Call {
         value_type: dot_type,
         name,
         target,
         arguments,
-    } = right.as_ref()
+    } = dot_call
     else {
         return None;
     };
@@ -1360,6 +1396,15 @@ fn javascript_simplex_corner_operands(
         && difference_operator == "-"
         && local(uv, "uv", "vec2")
         && local(index, "i", "vec2")
+        && clamp_type.0 == "float"
+        && clamp_name == "min"
+        && clamp_target == "builtin:min"
+        && is_exact_float_literal(upper, "1e38", 1e38)
+        && limit_type.0 == "float"
+        && limit_name == "max"
+        && limit_target == "builtin:max"
+        && lower_operator == "-"
+        && is_exact_float_literal(lower_operand, "1e38", 1e38)
         && dot_type.0 == "float"
         && name == "dot"
         && target == "builtin:dot"
@@ -1601,7 +1646,11 @@ fn javascript_sine_hash_random(x: f32, y: f32) -> f32 {
     const A: f32 = 12.9898_f32;
     const B: f32 = 78.233_f32;
     const SCALE: f32 = f32::from_bits(0x472a_ee8c);
-    let dot = (f64::from(x) * f64::from(A) + f64::from(y) * f64::from(B)) as f32;
+    // The CPU oracle's dot is a fused-multiply-add chain with one f32 rounding
+    // per accumulated term.
+    let mut dot = 0.0_f32;
+    dot = (f64::from(x) * f64::from(A) + f64::from(dot)) as f32;
+    dot = (f64::from(y) * f64::from(B) + f64::from(dot)) as f32;
     let sine = f64::from(dot).sin() as f32;
     let product = f64::from(sine) * f64::from(SCALE);
     (product - product.floor()) as f32

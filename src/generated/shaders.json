@@ -67162,6 +67162,120 @@
           {
             "body": [
               {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "kind": "binary",
+                      "left": {
+                        "kind": "identifier",
+                        "name": "inMax",
+                        "storage": "parameter",
+                        "type": "float"
+                      },
+                      "operator": "-",
+                      "right": {
+                        "kind": "identifier",
+                        "name": "inMin",
+                        "storage": "parameter",
+                        "type": "float"
+                      },
+                      "type": "float"
+                    },
+                    "name": "span",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "kind": "binary",
+                      "left": {
+                        "kind": "literal",
+                        "source": "1.0",
+                        "type": "float",
+                        "value": 1.0
+                      },
+                      "operator": "/",
+                      "right": {
+                        "kind": "identifier",
+                        "name": "span",
+                        "storage": "local",
+                        "type": "float"
+                      },
+                      "type": "float"
+                    },
+                    "name": "rmul",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "kind": "identifier",
+                                "name": "span",
+                                "storage": "local",
+                                "type": "float"
+                              },
+                              "operator": "*",
+                              "right": {
+                                "kind": "identifier",
+                                "name": "rmul",
+                                "storage": "local",
+                                "type": "float"
+                              },
+                              "type": "float"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
+                          "type": "float"
+                        },
+                        {
+                          "kind": "literal",
+                          "source": "1e38",
+                          "type": "float",
+                          "value": 1e+38
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "min",
+                      "target": "builtin:min",
+                      "type": "float"
+                    },
+                    "name": "mc",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
                 "kind": "return",
                 "value": {
                   "kind": "binary",
@@ -67177,24 +67291,24 @@
                     "left": {
                       "kind": "binary",
                       "left": {
-                        "kind": "binary",
-                        "left": {
-                          "kind": "identifier",
-                          "name": "outMax",
-                          "storage": "parameter",
-                          "type": "float"
-                        },
-                        "operator": "-",
-                        "right": {
-                          "kind": "identifier",
-                          "name": "outMin",
-                          "storage": "parameter",
-                          "type": "float"
-                        },
+                        "kind": "identifier",
+                        "name": "outMax",
+                        "storage": "parameter",
                         "type": "float"
                       },
-                      "operator": "*",
+                      "operator": "-",
                       "right": {
+                        "kind": "identifier",
+                        "name": "outMin",
+                        "storage": "parameter",
+                        "type": "float"
+                      },
+                      "type": "float"
+                    },
+                    "operator": "*",
+                    "right": {
+                      "kind": "binary",
+                      "left": {
                         "kind": "binary",
                         "left": {
                           "kind": "identifier",
@@ -67211,22 +67325,33 @@
                         },
                         "type": "float"
                       },
-                      "type": "float"
-                    },
-                    "operator": "/",
-                    "right": {
-                      "kind": "binary",
-                      "left": {
-                        "kind": "identifier",
-                        "name": "inMax",
-                        "storage": "parameter",
-                        "type": "float"
-                      },
-                      "operator": "-",
+                      "operator": "*",
                       "right": {
-                        "kind": "identifier",
-                        "name": "inMin",
-                        "storage": "parameter",
+                        "kind": "binary",
+                        "left": {
+                          "kind": "identifier",
+                          "name": "rmul",
+                          "storage": "local",
+                          "type": "float"
+                        },
+                        "operator": "*",
+                        "right": {
+                          "kind": "binary",
+                          "left": {
+                            "kind": "literal",
+                            "source": "2.0",
+                            "type": "float",
+                            "value": 2.0
+                          },
+                          "operator": "-",
+                          "right": {
+                            "kind": "identifier",
+                            "name": "mc",
+                            "storage": "local",
+                            "type": "float"
+                          },
+                          "type": "float"
+                        },
                         "type": "float"
                       },
                       "type": "float"
@@ -67320,6 +67445,69 @@
                 "expression": {
                   "kind": "assignment",
                   "lvalue": {
+                    "field": "x",
+                    "kind": "member",
+                    "object": {
+                      "kind": "identifier",
+                      "name": "st",
+                      "storage": "parameter",
+                      "type": "vec2"
+                    },
+                    "type": "float"
+                  },
+                  "operator": "=",
+                  "type": "float",
+                  "value": {
+                    "arguments": [
+                      {
+                        "arguments": [
+                          {
+                            "field": "x",
+                            "kind": "member",
+                            "object": {
+                              "kind": "identifier",
+                              "name": "st",
+                              "storage": "parameter",
+                              "type": "vec2"
+                            },
+                            "type": "float"
+                          },
+                          {
+                            "kind": "unary",
+                            "operand": {
+                              "kind": "literal",
+                              "source": "1e38",
+                              "type": "float",
+                              "value": 1e+38
+                            },
+                            "operator": "-",
+                            "type": "float"
+                          }
+                        ],
+                        "kind": "call",
+                        "name": "max",
+                        "target": "builtin:max",
+                        "type": "float"
+                      },
+                      {
+                        "kind": "literal",
+                        "source": "1e38",
+                        "type": "float",
+                        "value": 1e+38
+                      }
+                    ],
+                    "kind": "call",
+                    "name": "min",
+                    "target": "builtin:min",
+                    "type": "float"
+                  }
+                },
+                "kind": "expression"
+              },
+              {
+                "expression": {
+                  "kind": "assignment",
+                  "lvalue": {
                     "kind": "identifier",
                     "name": "rot",
                     "storage": "parameter",
@@ -67396,6 +67584,87 @@
                 "kind": "declaration"
               },
               {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "kind": "binary",
+                                "left": {
+                                  "kind": "literal",
+                                  "source": "0.5",
+                                  "type": "float",
+                                  "value": 0.5
+                                },
+                                "operator": "*",
+                                "right": {
+                                  "field": "x",
+                                  "kind": "member",
+                                  "object": {
+                                    "kind": "identifier",
+                                    "name": "fullResolution",
+                                    "storage": "uniform",
+                                    "type": "vec2"
+                                  },
+                                  "type": "float"
+                                },
+                                "type": "float"
+                              },
+                              "operator": "/",
+                              "right": {
+                                "field": "y",
+                                "kind": "member",
+                                "object": {
+                                  "kind": "identifier",
+                                  "name": "fullResolution",
+                                  "storage": "uniform",
+                                  "type": "vec2"
+                                },
+                                "type": "float"
+                              },
+                              "type": "float"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
+                          "type": "float"
+                        },
+                        {
+                          "kind": "literal",
+                          "source": "1e38",
+                          "type": "float",
+                          "value": 1e+38
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "min",
+                      "target": "builtin:min",
+                      "type": "float"
+                    },
+                    "name": "ox",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
                 "expression": {
                   "kind": "assignment",
                   "lvalue": {
@@ -67409,41 +67678,9 @@
                   "value": {
                     "arguments": [
                       {
-                        "kind": "binary",
-                        "left": {
-                          "kind": "binary",
-                          "left": {
-                            "kind": "literal",
-                            "source": "0.5",
-                            "type": "float",
-                            "value": 0.5
-                          },
-                          "operator": "*",
-                          "right": {
-                            "field": "x",
-                            "kind": "member",
-                            "object": {
-                              "kind": "identifier",
-                              "name": "fullResolution",
-                              "storage": "uniform",
-                              "type": "vec2"
-                            },
-                            "type": "float"
-                          },
-                          "type": "float"
-                        },
-                        "operator": "/",
-                        "right": {
-                          "field": "y",
-                          "kind": "member",
-                          "object": {
-                            "kind": "identifier",
-                            "name": "fullResolution",
-                            "storage": "uniform",
-                            "type": "vec2"
-                          },
-                          "type": "float"
-                        },
+                        "kind": "identifier",
+                        "name": "ox",
+                        "storage": "local",
                         "type": "float"
                       },
                       {
@@ -67460,6 +67697,319 @@
                 "kind": "expression"
               },
               {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "arguments": [
+                        {
+                          "kind": "identifier",
+                          "name": "angle",
+                          "storage": "local",
+                          "type": "float"
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "cos",
+                      "target": "builtin:cos",
+                      "type": "float"
+                    },
+                    "name": "ca",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "arguments": [
+                        {
+                          "kind": "identifier",
+                          "name": "angle",
+                          "storage": "local",
+                          "type": "float"
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "sin",
+                      "target": "builtin:sin",
+                      "type": "float"
+                    },
+                    "name": "sa",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "kind": "identifier",
+                                "name": "ca",
+                                "storage": "local",
+                                "type": "float"
+                              },
+                              "operator": "*",
+                              "right": {
+                                "field": "x",
+                                "kind": "member",
+                                "object": {
+                                  "kind": "identifier",
+                                  "name": "st",
+                                  "storage": "parameter",
+                                  "type": "vec2"
+                                },
+                                "type": "float"
+                              },
+                              "type": "float"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
+                          "type": "float"
+                        },
+                        {
+                          "kind": "literal",
+                          "source": "1e38",
+                          "type": "float",
+                          "value": 1e+38
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "min",
+                      "target": "builtin:min",
+                      "type": "float"
+                    },
+                    "name": "px",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "kind": "identifier",
+                                "name": "sa",
+                                "storage": "local",
+                                "type": "float"
+                              },
+                              "operator": "*",
+                              "right": {
+                                "field": "y",
+                                "kind": "member",
+                                "object": {
+                                  "kind": "identifier",
+                                  "name": "st",
+                                  "storage": "parameter",
+                                  "type": "vec2"
+                                },
+                                "type": "float"
+                              },
+                              "type": "float"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
+                          "type": "float"
+                        },
+                        {
+                          "kind": "literal",
+                          "source": "1e38",
+                          "type": "float",
+                          "value": 1e+38
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "min",
+                      "target": "builtin:min",
+                      "type": "float"
+                    },
+                    "name": "py",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "kind": "unary",
+                                "operand": {
+                                  "kind": "identifier",
+                                  "name": "sa",
+                                  "storage": "local",
+                                  "type": "float"
+                                },
+                                "operator": "-",
+                                "type": "float"
+                              },
+                              "operator": "*",
+                              "right": {
+                                "field": "x",
+                                "kind": "member",
+                                "object": {
+                                  "kind": "identifier",
+                                  "name": "st",
+                                  "storage": "parameter",
+                                  "type": "vec2"
+                                },
+                                "type": "float"
+                              },
+                              "type": "float"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
+                          "type": "float"
+                        },
+                        {
+                          "kind": "literal",
+                          "source": "1e38",
+                          "type": "float",
+                          "value": 1e+38
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "min",
+                      "target": "builtin:min",
+                      "type": "float"
+                    },
+                    "name": "qx",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "kind": "identifier",
+                                "name": "ca",
+                                "storage": "local",
+                                "type": "float"
+                              },
+                              "operator": "*",
+                              "right": {
+                                "field": "y",
+                                "kind": "member",
+                                "object": {
+                                  "kind": "identifier",
+                                  "name": "st",
+                                  "storage": "parameter",
+                                  "type": "vec2"
+                                },
+                                "type": "float"
+                              },
+                              "type": "float"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
+                          "type": "float"
+                        },
+                        {
+                          "kind": "literal",
+                          "source": "1e38",
+                          "type": "float",
+                          "value": 1e+38
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "min",
+                      "target": "builtin:min",
+                      "type": "float"
+                    },
+                    "name": "qy",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
                 "expression": {
                   "kind": "assignment",
                   "lvalue": {
@@ -67471,81 +68021,43 @@
                   "operator": "=",
                   "type": "vec2",
                   "value": {
-                    "kind": "binary",
-                    "left": {
-                      "arguments": [
-                        {
-                          "arguments": [
-                            {
-                              "kind": "identifier",
-                              "name": "angle",
-                              "storage": "local",
-                              "type": "float"
-                            }
-                          ],
-                          "kind": "call",
-                          "name": "cos",
-                          "target": "builtin:cos",
+                    "arguments": [
+                      {
+                        "kind": "binary",
+                        "left": {
+                          "kind": "identifier",
+                          "name": "px",
+                          "storage": "local",
                           "type": "float"
                         },
-                        {
-                          "kind": "unary",
-                          "operand": {
-                            "arguments": [
-                              {
-                                "kind": "identifier",
-                                "name": "angle",
-                                "storage": "local",
-                                "type": "float"
-                              }
-                            ],
-                            "kind": "call",
-                            "name": "sin",
-                            "target": "builtin:sin",
-                            "type": "float"
-                          },
-                          "operator": "-",
+                        "operator": "+",
+                        "right": {
+                          "kind": "identifier",
+                          "name": "py",
+                          "storage": "local",
                           "type": "float"
                         },
-                        {
-                          "arguments": [
-                            {
-                              "kind": "identifier",
-                              "name": "angle",
-                              "storage": "local",
-                              "type": "float"
-                            }
-                          ],
-                          "kind": "call",
-                          "name": "sin",
-                          "target": "builtin:sin",
+                        "type": "float"
+                      },
+                      {
+                        "kind": "binary",
+                        "left": {
+                          "kind": "identifier",
+                          "name": "qx",
+                          "storage": "local",
                           "type": "float"
                         },
-                        {
-                          "arguments": [
-                            {
-                              "kind": "identifier",
-                              "name": "angle",
-                              "storage": "local",
-                              "type": "float"
-                            }
-                          ],
-                          "kind": "call",
-                          "name": "cos",
-                          "target": "builtin:cos",
+                        "operator": "+",
+                        "right": {
+                          "kind": "identifier",
+                          "name": "qy",
+                          "storage": "local",
                           "type": "float"
-                        }
-                      ],
-                      "kind": "construct",
-                      "type": "mat2"
-                    },
-                    "operator": "*",
-                    "right": {
-                      "kind": "identifier",
-                      "name": "st",
-                      "storage": "parameter",
-                      "type": "vec2"
-                    },
+                        },
+                        "type": "float"
+                      }
+                    ],
+                    "kind": "construct",
                     "type": "vec2"
                   }
                 },
@@ -67565,41 +68077,9 @@
                   "value": {
                     "arguments": [
                       {
-                        "kind": "binary",
-                        "left": {
-                          "kind": "binary",
-                          "left": {
-                            "kind": "literal",
-                            "source": "0.5",
-                            "type": "float",
-                            "value": 0.5
-                          },
-                          "operator": "*",
-                          "right": {
-                            "field": "x",
-                            "kind": "member",
-                            "object": {
-                              "kind": "identifier",
-                              "name": "fullResolution",
-                              "storage": "uniform",
-                              "type": "vec2"
-                            },
-                            "type": "float"
-                          },
-                          "type": "float"
-                        },
-                        "operator": "/",
-                        "right": {
-                          "field": "y",
-                          "kind": "member",
-                          "object": {
-                            "kind": "identifier",
-                            "name": "fullResolution",
-                            "storage": "uniform",
-                            "type": "vec2"
-                          },
-                          "type": "float"
-                        },
+                        "kind": "identifier",
+                        "name": "ox",
+                        "storage": "local",
                         "type": "float"
                       },
                       {
@@ -67629,34 +68109,78 @@
                     },
                     "type": "float"
                   },
-                  "operator": "/=",
+                  "operator": "*=",
                   "type": "float",
                   "value": {
-                    "kind": "binary",
-                    "left": {
-                      "field": "x",
-                      "kind": "member",
-                      "object": {
-                        "kind": "identifier",
-                        "name": "fullResolution",
-                        "storage": "uniform",
-                        "type": "vec2"
-                      },
-                      "type": "float"
-                    },
-                    "operator": "/",
-                    "right": {
-                      "field": "y",
-                      "kind": "member",
-                      "object": {
-                        "kind": "identifier",
-                        "name": "fullResolution",
-                        "storage": "uniform",
-                        "type": "vec2"
-                      },
-                      "type": "float"
-                    },
+                    "kind": "identifier",
+                    "name": "aspectInv",
+                    "storage": "uniform",
                     "type": "float"
+                  }
+                },
+                "kind": "expression"
+              },
+              {
+                "expression": {
+                  "kind": "assignment",
+                  "lvalue": {
+                    "kind": "identifier",
+                    "name": "st",
+                    "storage": "parameter",
+                    "type": "vec2"
+                  },
+                  "operator": "=",
+                  "type": "vec2",
+                  "value": {
+                    "arguments": [
+                      {
+                        "arguments": [
+                          {
+                            "kind": "identifier",
+                            "name": "st",
+                            "storage": "parameter",
+                            "type": "vec2"
+                          },
+                          {
+                            "arguments": [
+                              {
+                                "kind": "unary",
+                                "operand": {
+                                  "kind": "literal",
+                                  "source": "1e38",
+                                  "type": "float",
+                                  "value": 1e+38
+                                },
+                                "operator": "-",
+                                "type": "float"
+                              }
+                            ],
+                            "kind": "construct",
+                            "type": "vec2"
+                          }
+                        ],
+                        "kind": "call",
+                        "name": "max",
+                        "target": "builtin:max",
+                        "type": "vec2"
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "kind": "literal",
+                            "source": "1e38",
+                            "type": "float",
+                            "value": 1e+38
+                          }
+                        ],
+                        "kind": "construct",
+                        "type": "vec2"
+                      }
+                    ],
+                    "kind": "call",
+                    "name": "min",
+                    "target": "builtin:min",
+                    "type": "vec2"
                   }
                 },
                 "kind": "expression"
@@ -81038,6 +81562,22 @@
                 "kind": "declaration"
               },
               {
+                "declarations": [
+                  {
+                    "arraySize": {
+                      "kind": "literal",
+                      "source": "41",
+                      "type": "int",
+                      "value": 41
+                    },
+                    "initializer": null,
+                    "name": "products",
+                    "type": "vec3[]"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
                 "body": {
                   "body": [
                     {
@@ -81083,6 +81623,66 @@
                         {
                           "arraySize": null,
                           "initializer": {
+                            "arguments": [
+                              {
+                                "arguments": [
+                                  {
+                                    "kind": "binary",
+                                    "left": {
+                                      "kind": "identifier",
+                                      "name": "percent",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    "operator": "*",
+                                    "right": {
+                                      "kind": "identifier",
+                                      "name": "percent",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    "type": "float"
+                                  },
+                                  {
+                                    "kind": "unary",
+                                    "operand": {
+                                      "kind": "literal",
+                                      "source": "1e38",
+                                      "type": "float",
+                                      "value": 1e+38
+                                    },
+                                    "operator": "-",
+                                    "type": "float"
+                                  }
+                                ],
+                                "kind": "call",
+                                "name": "max",
+                                "target": "builtin:max",
+                                "type": "float"
+                              },
+                              {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              }
+                            ],
+                            "kind": "call",
+                            "name": "min",
+                            "target": "builtin:min",
+                            "type": "float"
+                          },
+                          "name": "percentSq",
+                          "type": "float"
+                        }
+                      ],
+                      "kind": "declaration"
+                    },
+                    {
+                      "declarations": [
+                        {
+                          "arraySize": null,
+                          "initializer": {
                             "kind": "binary",
                             "left": {
                               "kind": "literal",
@@ -81101,20 +81701,9 @@
                               },
                               "operator": "-",
                               "right": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "identifier",
-                                  "name": "percent",
-                                  "storage": "local",
-                                  "type": "float"
-                                },
-                                "operator": "*",
-                                "right": {
-                                  "kind": "identifier",
-                                  "name": "percent",
-                                  "storage": "local",
-                                  "type": "float"
-                                },
+                                "kind": "identifier",
+                                "name": "percentSq",
+                                "storage": "local",
                                 "type": "float"
                               },
                               "type": "float"
@@ -81180,6 +81769,166 @@
                         {
                           "arraySize": null,
                           "initializer": {
+                            "kind": "binary",
+                            "left": {
+                              "kind": "identifier",
+                              "name": "toCenter",
+                              "storage": "local",
+                              "type": "vec2"
+                            },
+                            "operator": "*",
+                            "right": {
+                              "kind": "identifier",
+                              "name": "percent",
+                              "storage": "local",
+                              "type": "float"
+                            },
+                            "type": "vec2"
+                          },
+                          "name": "tapA",
+                          "type": "vec2"
+                        }
+                      ],
+                      "kind": "declaration"
+                    },
+                    {
+                      "declarations": [
+                        {
+                          "arraySize": null,
+                          "initializer": {
+                            "kind": "binary",
+                            "left": {
+                              "arguments": [
+                                {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "tapA",
+                                      "storage": "local",
+                                      "type": "vec2"
+                                    },
+                                    {
+                                      "arguments": [
+                                        {
+                                          "kind": "unary",
+                                          "operand": {
+                                            "kind": "literal",
+                                            "source": "1e38",
+                                            "type": "float",
+                                            "value": 1e+38
+                                          },
+                                          "operator": "-",
+                                          "type": "float"
+                                        }
+                                      ],
+                                      "kind": "construct",
+                                      "type": "vec2"
+                                    }
+                                  ],
+                                  "kind": "call",
+                                  "name": "max",
+                                  "target": "builtin:max",
+                                  "type": "vec2"
+                                },
+                                {
+                                  "arguments": [
+                                    {
+                                      "kind": "literal",
+                                      "source": "1e38",
+                                      "type": "float",
+                                      "value": 1e+38
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec2"
+                                }
+                              ],
+                              "kind": "call",
+                              "name": "min",
+                              "target": "builtin:min",
+                              "type": "vec2"
+                            },
+                            "operator": "*",
+                            "right": {
+                              "kind": "identifier",
+                              "name": "strength",
+                              "storage": "local",
+                              "type": "float"
+                            },
+                            "type": "vec2"
+                          },
+                          "name": "tap",
+                          "type": "vec2"
+                        }
+                      ],
+                      "kind": "declaration"
+                    },
+                    {
+                      "declarations": [
+                        {
+                          "arraySize": null,
+                          "initializer": {
+                            "arguments": [
+                              {
+                                "arguments": [
+                                  {
+                                    "kind": "identifier",
+                                    "name": "tap",
+                                    "storage": "local",
+                                    "type": "vec2"
+                                  },
+                                  {
+                                    "arguments": [
+                                      {
+                                        "kind": "unary",
+                                        "operand": {
+                                          "kind": "literal",
+                                          "source": "1e38",
+                                          "type": "float",
+                                          "value": 1e+38
+                                        },
+                                        "operator": "-",
+                                        "type": "float"
+                                      }
+                                    ],
+                                    "kind": "construct",
+                                    "type": "vec2"
+                                  }
+                                ],
+                                "kind": "call",
+                                "name": "max",
+                                "target": "builtin:max",
+                                "type": "vec2"
+                              },
+                              {
+                                "arguments": [
+                                  {
+                                    "kind": "literal",
+                                    "source": "1e38",
+                                    "type": "float",
+                                    "value": 1e+38
+                                  }
+                                ],
+                                "kind": "construct",
+                                "type": "vec2"
+                              }
+                            ],
+                            "kind": "call",
+                            "name": "min",
+                            "target": "builtin:min",
+                            "type": "vec2"
+                          },
+                          "name": "tapB",
+                          "type": "vec2"
+                        }
+                      ],
+                      "kind": "declaration"
+                    },
+                    {
+                      "declarations": [
+                        {
+                          "arraySize": null,
+                          "initializer": {
                             "arguments": [
                               {
                                 "kind": "identifier",
@@ -81197,31 +81946,9 @@
                                 },
                                 "operator": "+",
                                 "right": {
-                                  "kind": "binary",
-                                  "left": {
-                                    "kind": "binary",
-                                    "left": {
-                                      "kind": "identifier",
-                                      "name": "toCenter",
-                                      "storage": "local",
-                                      "type": "vec2"
-                                    },
-                                    "operator": "*",
-                                    "right": {
-                                      "kind": "identifier",
-                                      "name": "percent",
-                                      "storage": "local",
-                                      "type": "float"
-                                    },
-                                    "type": "vec2"
-                                  },
-                                  "operator": "*",
-                                  "right": {
-                                    "kind": "identifier",
-                                    "name": "strength",
-                                    "storage": "local",
-                                    "type": "float"
-                                  },
+                                  "kind": "identifier",
+                                  "name": "tapB",
+                                  "storage": "local",
                                   "type": "vec2"
                                 },
                                 "type": "vec2"
@@ -81242,33 +81969,94 @@
                       "expression": {
                         "kind": "assignment",
                         "lvalue": {
-                          "kind": "identifier",
-                          "name": "color",
-                          "storage": "local",
+                          "index": {
+                            "arguments": [
+                              {
+                                "kind": "identifier",
+                                "name": "t",
+                                "storage": "local",
+                                "type": "float"
+                              }
+                            ],
+                            "kind": "construct",
+                            "type": "int"
+                          },
+                          "kind": "index",
+                          "object": {
+                            "kind": "identifier",
+                            "name": "products",
+                            "storage": "local",
+                            "type": "vec3[]"
+                          },
                           "type": "vec3"
                         },
-                        "operator": "+=",
+                        "operator": "=",
                         "type": "vec3",
                         "value": {
-                          "kind": "binary",
-                          "left": {
-                            "field": "rgb",
-                            "kind": "member",
-                            "object": {
-                              "kind": "identifier",
-                              "name": "tex",
-                              "storage": "local",
-                              "type": "vec4"
+                          "arguments": [
+                            {
+                              "arguments": [
+                                {
+                                  "kind": "binary",
+                                  "left": {
+                                    "field": "rgb",
+                                    "kind": "member",
+                                    "object": {
+                                      "kind": "identifier",
+                                      "name": "tex",
+                                      "storage": "local",
+                                      "type": "vec4"
+                                    },
+                                    "type": "vec3"
+                                  },
+                                  "operator": "*",
+                                  "right": {
+                                    "kind": "identifier",
+                                    "name": "weight",
+                                    "storage": "local",
+                                    "type": "float"
+                                  },
+                                  "type": "vec3"
+                                },
+                                {
+                                  "arguments": [
+                                    {
+                                      "kind": "unary",
+                                      "operand": {
+                                        "kind": "literal",
+                                        "source": "1e38",
+                                        "type": "float",
+                                        "value": 1e+38
+                                      },
+                                      "operator": "-",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
+                              ],
+                              "kind": "call",
+                              "name": "max",
+                              "target": "builtin:max",
+                              "type": "vec3"
                             },
-                            "type": "vec3"
-                          },
-                          "operator": "*",
-                          "right": {
-                            "kind": "identifier",
-                            "name": "weight",
-                            "storage": "local",
-                            "type": "float"
-                          },
+                            {
+                              "arguments": [
+                                {
+                                  "kind": "literal",
+                                  "source": "1e38",
+                                  "type": "float",
+                                  "value": 1e+38
+                                }
+                              ],
+                              "kind": "construct",
+                              "type": "vec3"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "min",
+                          "target": "builtin:min",
                           "type": "vec3"
                         }
                       },
@@ -81286,9 +82074,42 @@
                         "operator": "+=",
                         "type": "float",
                         "value": {
-                          "kind": "identifier",
-                          "name": "weight",
-                          "storage": "local",
+                          "arguments": [
+                            {
+                              "arguments": [
+                                {
+                                  "kind": "identifier",
+                                  "name": "weight",
+                                  "storage": "local",
+                                  "type": "float"
+                                },
+                                {
+                                  "kind": "unary",
+                                  "operand": {
+                                    "kind": "literal",
+                                    "source": "1e38",
+                                    "type": "float",
+                                    "value": 1e+38
+                                  },
+                                  "operator": "-",
+                                  "type": "float"
+                                }
+                              ],
+                              "kind": "call",
+                              "name": "max",
+                              "target": "builtin:max",
+                              "type": "float"
+                            },
+                            {
+                              "kind": "literal",
+                              "source": "1e38",
+                              "type": "float",
+                              "value": 1e+38
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "min",
+                          "target": "builtin:min",
                           "type": "float"
                         }
                       },
@@ -81344,6 +82165,217 @@
                 }
               },
               {
+                "body": {
+                  "body": [
+                    {
+                      "expression": {
+                        "kind": "assignment",
+                        "lvalue": {
+                          "kind": "identifier",
+                          "name": "color",
+                          "storage": "local",
+                          "type": "vec3"
+                        },
+                        "operator": "+=",
+                        "type": "vec3",
+                        "value": {
+                          "index": {
+                            "kind": "identifier",
+                            "name": "i",
+                            "storage": "local",
+                            "type": "int"
+                          },
+                          "kind": "index",
+                          "object": {
+                            "kind": "identifier",
+                            "name": "products",
+                            "storage": "local",
+                            "type": "vec3[]"
+                          },
+                          "type": "vec3"
+                        }
+                      },
+                      "kind": "expression"
+                    }
+                  ],
+                  "kind": "block"
+                },
+                "condition": {
+                  "kind": "binary",
+                  "left": {
+                    "kind": "identifier",
+                    "name": "i",
+                    "storage": "local",
+                    "type": "int"
+                  },
+                  "operator": "<",
+                  "right": {
+                    "kind": "literal",
+                    "source": "41",
+                    "type": "int",
+                    "value": 41
+                  },
+                  "type": "bool"
+                },
+                "initializer": {
+                  "declarations": [
+                    {
+                      "arraySize": null,
+                      "initializer": {
+                        "kind": "literal",
+                        "source": "0",
+                        "type": "int",
+                        "value": 0
+                      },
+                      "name": "i",
+                      "type": "int"
+                    }
+                  ],
+                  "kind": "declaration"
+                },
+                "kind": "for",
+                "update": {
+                  "kind": "postfix",
+                  "lvalue": {
+                    "kind": "identifier",
+                    "name": "i",
+                    "storage": "local",
+                    "type": "int"
+                  },
+                  "operator": "++",
+                  "type": "int"
+                }
+              },
+              {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "kind": "binary",
+                      "left": {
+                        "kind": "literal",
+                        "source": "1.0",
+                        "type": "float",
+                        "value": 1.0
+                      },
+                      "operator": "/",
+                      "right": {
+                        "kind": "identifier",
+                        "name": "total",
+                        "storage": "local",
+                        "type": "float"
+                      },
+                      "type": "float"
+                    },
+                    "name": "r",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "kind": "identifier",
+                                "name": "total",
+                                "storage": "local",
+                                "type": "float"
+                              },
+                              "operator": "*",
+                              "right": {
+                                "kind": "identifier",
+                                "name": "r",
+                                "storage": "local",
+                                "type": "float"
+                              },
+                              "type": "float"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
+                          "type": "float"
+                        },
+                        {
+                          "kind": "literal",
+                          "source": "1e38",
+                          "type": "float",
+                          "value": 1e+38
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "min",
+                      "target": "builtin:min",
+                      "type": "float"
+                    },
+                    "name": "tr",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
+                "expression": {
+                  "kind": "assignment",
+                  "lvalue": {
+                    "kind": "identifier",
+                    "name": "r",
+                    "storage": "local",
+                    "type": "float"
+                  },
+                  "operator": "=",
+                  "type": "float",
+                  "value": {
+                    "kind": "binary",
+                    "left": {
+                      "kind": "identifier",
+                      "name": "r",
+                      "storage": "local",
+                      "type": "float"
+                    },
+                    "operator": "*",
+                    "right": {
+                      "kind": "binary",
+                      "left": {
+                        "kind": "literal",
+                        "source": "2.0",
+                        "type": "float",
+                        "value": 2.0
+                      },
+                      "operator": "-",
+                      "right": {
+                        "kind": "identifier",
+                        "name": "tr",
+                        "storage": "local",
+                        "type": "float"
+                      },
+                      "type": "float"
+                    },
+                    "type": "float"
+                  }
+                },
+                "kind": "expression"
+              },
+              {
                 "expression": {
                   "kind": "assignment",
                   "lvalue": {
@@ -81352,11 +82384,11 @@
                     "storage": "local",
                     "type": "vec3"
                   },
-                  "operator": "/=",
+                  "operator": "*=",
                   "type": "vec3",
                   "value": {
                     "kind": "identifier",
-                    "name": "total",
+                    "name": "r",
                     "storage": "local",
                     "type": "float"
                   }
@@ -81473,10 +82505,10 @@
                         "storage": "local",
                         "type": "vec2"
                       },
-                      "operator": "/",
+                      "operator": "*",
                       "right": {
                         "kind": "identifier",
-                        "name": "fullResolution",
+                        "name": "invFullResolution",
                         "storage": "uniform",
                         "type": "vec2"
                       },
@@ -81518,15 +82550,124 @@
                       "kind": "binary",
                       "left": {
                         "kind": "literal",
-                        "source": "100.0",
+                        "source": "1.0",
                         "type": "float",
-                        "value": 100.0
+                        "value": 1.0
                       },
                       "operator": "/",
                       "right": {
                         "kind": "identifier",
                         "name": "scaleAmt",
                         "storage": "uniform",
+                        "type": "float"
+                      },
+                      "type": "float"
+                    },
+                    "name": "sR",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "kind": "identifier",
+                                "name": "scaleAmt",
+                                "storage": "uniform",
+                                "type": "float"
+                              },
+                              "operator": "*",
+                              "right": {
+                                "kind": "identifier",
+                                "name": "sR",
+                                "storage": "local",
+                                "type": "float"
+                              },
+                              "type": "float"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
+                          "type": "float"
+                        },
+                        {
+                          "kind": "literal",
+                          "source": "1e38",
+                          "type": "float",
+                          "value": 1e+38
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "min",
+                      "target": "builtin:min",
+                      "type": "float"
+                    },
+                    "name": "sC",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "kind": "binary",
+                      "left": {
+                        "kind": "literal",
+                        "source": "100.0",
+                        "type": "float",
+                        "value": 100.0
+                      },
+                      "operator": "*",
+                      "right": {
+                        "kind": "binary",
+                        "left": {
+                          "kind": "identifier",
+                          "name": "sR",
+                          "storage": "local",
+                          "type": "float"
+                        },
+                        "operator": "*",
+                        "right": {
+                          "kind": "binary",
+                          "left": {
+                            "kind": "literal",
+                            "source": "2.0",
+                            "type": "float",
+                            "value": 2.0
+                          },
+                          "operator": "-",
+                          "right": {
+                            "kind": "identifier",
+                            "name": "sC",
+                            "storage": "local",
+                            "type": "float"
+                          },
+                          "type": "float"
+                        },
                         "type": "float"
                       },
                       "type": "float"
@@ -81667,6 +82808,71 @@
                     "storage": "local",
                     "type": "vec2"
                   },
+                  "operator": "=",
+                  "type": "vec2",
+                  "value": {
+                    "arguments": [
+                      {
+                        "arguments": [
+                          {
+                            "kind": "identifier",
+                            "name": "uv",
+                            "storage": "local",
+                            "type": "vec2"
+                          },
+                          {
+                            "arguments": [
+                              {
+                                "kind": "unary",
+                                "operand": {
+                                  "kind": "literal",
+                                  "source": "1e38",
+                                  "type": "float",
+                                  "value": 1e+38
+                                },
+                                "operator": "-",
+                                "type": "float"
+                              }
+                            ],
+                            "kind": "construct",
+                            "type": "vec2"
+                          }
+                        ],
+                        "kind": "call",
+                        "name": "max",
+                        "target": "builtin:max",
+                        "type": "vec2"
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "kind": "literal",
+                            "source": "1e38",
+                            "type": "float",
+                            "value": 1e+38
+                          }
+                        ],
+                        "kind": "construct",
+                        "type": "vec2"
+                      }
+                    ],
+                    "kind": "call",
+                    "name": "min",
+                    "target": "builtin:min",
+                    "type": "vec2"
+                  }
+                },
+                "kind": "expression"
+              },
+              {
+                "expression": {
+                  "kind": "assignment",
+                  "lvalue": {
+                    "kind": "identifier",
+                    "name": "uv",
+                    "storage": "local",
+                    "type": "vec2"
+                  },
                   "operator": "+=",
                   "type": "vec2",
                   "value": {
@@ -81717,41 +82923,9 @@
                         "left": {
                           "kind": "binary",
                           "left": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "field": "x",
-                                "kind": "member",
-                                "object": {
-                                  "kind": "identifier",
-                                  "name": "resolution",
-                                  "storage": "uniform",
-                                  "type": "vec2"
-                                },
-                                "type": "float"
-                              },
-                              "operator": "/",
-                              "right": {
-                                "field": "x",
-                                "kind": "member",
-                                "object": {
-                                  "kind": "identifier",
-                                  "name": "imageSize",
-                                  "storage": "local",
-                                  "type": "vec2"
-                                },
-                                "type": "float"
-                              },
-                              "type": "float"
-                            },
-                            "operator": "*",
-                            "right": {
-                              "kind": "identifier",
-                              "name": "scale",
-                              "storage": "local",
-                              "type": "float"
-                            },
+                            "kind": "identifier",
+                            "name": "scale",
+                            "storage": "local",
                             "type": "float"
                           },
                           "operator": "*",
@@ -81844,41 +83018,9 @@
                           "left": {
                             "kind": "binary",
                             "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "field": "y",
-                                  "kind": "member",
-                                  "object": {
-                                    "kind": "identifier",
-                                    "name": "resolution",
-                                    "storage": "uniform",
-                                    "type": "vec2"
-                                  },
-                                  "type": "float"
-                                },
-                                "operator": "/",
-                                "right": {
-                                  "field": "y",
-                                  "kind": "member",
-                                  "object": {
-                                    "kind": "identifier",
-                                    "name": "imageSize",
-                                    "storage": "local",
-                                    "type": "vec2"
-                                  },
-                                  "type": "float"
-                                },
-                                "type": "float"
-                              },
-                              "operator": "*",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "scale",
-                                "storage": "local",
-                                "type": "float"
-                              },
+                              "kind": "identifier",
+                              "name": "scale",
+                              "storage": "local",
                               "type": "float"
                             },
                             "operator": "*",
@@ -81956,285 +83098,237 @@
                 "kind": "expression"
               },
               {
-                "expression": {
-                  "kind": "assignment",
-                  "lvalue": {
-                    "field": "x",
-                    "kind": "member",
-                    "object": {
-                      "kind": "identifier",
-                      "name": "uv",
-                      "storage": "local",
-                      "type": "vec2"
-                    },
-                    "type": "float"
-                  },
-                  "operator": "-=",
-                  "type": "float",
-                  "value": {
-                    "kind": "binary",
-                    "left": {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
                       "arguments": [
                         {
-                          "kind": "identifier",
-                          "name": "offsetX",
-                          "storage": "uniform",
-                          "type": "float"
-                        },
-                        {
-                          "kind": "unary",
-                          "operand": {
-                            "kind": "literal",
-                            "source": "100.0",
-                            "type": "float",
-                            "value": 100.0
-                          },
-                          "operator": "-",
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "arguments": [
+                                  {
+                                    "kind": "identifier",
+                                    "name": "offsetX",
+                                    "storage": "uniform",
+                                    "type": "float"
+                                  },
+                                  {
+                                    "kind": "unary",
+                                    "operand": {
+                                      "kind": "literal",
+                                      "source": "100.0",
+                                      "type": "float",
+                                      "value": 100.0
+                                    },
+                                    "operator": "-",
+                                    "type": "float"
+                                  },
+                                  {
+                                    "kind": "literal",
+                                    "source": "100.0",
+                                    "type": "float",
+                                    "value": 100.0
+                                  },
+                                  {
+                                    "kind": "unary",
+                                    "operand": {
+                                      "kind": "identifier",
+                                      "name": "scale",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    "operator": "-",
+                                    "type": "float"
+                                  },
+                                  {
+                                    "kind": "identifier",
+                                    "name": "scale",
+                                    "storage": "local",
+                                    "type": "float"
+                                  }
+                                ],
+                                "kind": "call",
+                                "name": "map",
+                                "target": "map__float_float_float_float_float",
+                                "type": "float"
+                              },
+                              "operator": "*",
+                              "right": {
+                                "kind": "literal",
+                                "source": "1.5",
+                                "type": "float",
+                                "value": 1.5
+                              },
+                              "type": "float"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
                           "type": "float"
                         },
                         {
                           "kind": "literal",
-                          "source": "100.0",
+                          "source": "1e38",
                           "type": "float",
-                          "value": 100.0
-                        },
-                        {
-                          "kind": "binary",
-                          "left": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "unary",
-                              "operand": {
-                                "field": "x",
-                                "kind": "member",
-                                "object": {
-                                  "kind": "identifier",
-                                  "name": "resolution",
-                                  "storage": "uniform",
-                                  "type": "vec2"
-                                },
-                                "type": "float"
-                              },
-                              "operator": "-",
-                              "type": "float"
-                            },
-                            "operator": "/",
-                            "right": {
-                              "field": "x",
-                              "kind": "member",
-                              "object": {
-                                "kind": "identifier",
-                                "name": "imageSize",
-                                "storage": "local",
-                                "type": "vec2"
-                              },
-                              "type": "float"
-                            },
-                            "type": "float"
-                          },
-                          "operator": "*",
-                          "right": {
-                            "kind": "identifier",
-                            "name": "scale",
-                            "storage": "local",
-                            "type": "float"
-                          },
-                          "type": "float"
-                        },
-                        {
-                          "kind": "binary",
-                          "left": {
-                            "kind": "binary",
-                            "left": {
-                              "field": "x",
-                              "kind": "member",
-                              "object": {
-                                "kind": "identifier",
-                                "name": "resolution",
-                                "storage": "uniform",
-                                "type": "vec2"
-                              },
-                              "type": "float"
-                            },
-                            "operator": "/",
-                            "right": {
-                              "field": "x",
-                              "kind": "member",
-                              "object": {
-                                "kind": "identifier",
-                                "name": "imageSize",
-                                "storage": "local",
-                                "type": "vec2"
-                              },
-                              "type": "float"
-                            },
-                            "type": "float"
-                          },
-                          "operator": "*",
-                          "right": {
-                            "kind": "identifier",
-                            "name": "scale",
-                            "storage": "local",
-                            "type": "float"
-                          },
-                          "type": "float"
+                          "value": 1e+38
                         }
                       ],
                       "kind": "call",
-                      "name": "map",
-                      "target": "map__float_float_float_float_float",
+                      "name": "min",
+                      "target": "builtin:min",
                       "type": "float"
                     },
-                    "operator": "*",
-                    "right": {
-                      "kind": "literal",
-                      "source": "1.5",
-                      "type": "float",
-                      "value": 1.5
-                    },
+                    "name": "shiftXv",
                     "type": "float"
                   }
-                },
-                "kind": "expression"
+                ],
+                "kind": "declaration"
+              },
+              {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "arguments": [
+                                  {
+                                    "kind": "identifier",
+                                    "name": "offsetY",
+                                    "storage": "uniform",
+                                    "type": "float"
+                                  },
+                                  {
+                                    "kind": "unary",
+                                    "operand": {
+                                      "kind": "literal",
+                                      "source": "100.0",
+                                      "type": "float",
+                                      "value": 100.0
+                                    },
+                                    "operator": "-",
+                                    "type": "float"
+                                  },
+                                  {
+                                    "kind": "literal",
+                                    "source": "100.0",
+                                    "type": "float",
+                                    "value": 100.0
+                                  },
+                                  {
+                                    "kind": "unary",
+                                    "operand": {
+                                      "kind": "identifier",
+                                      "name": "scale",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    "operator": "-",
+                                    "type": "float"
+                                  },
+                                  {
+                                    "kind": "identifier",
+                                    "name": "scale",
+                                    "storage": "local",
+                                    "type": "float"
+                                  }
+                                ],
+                                "kind": "call",
+                                "name": "map",
+                                "target": "map__float_float_float_float_float",
+                                "type": "float"
+                              },
+                              "operator": "*",
+                              "right": {
+                                "kind": "literal",
+                                "source": "1.5",
+                                "type": "float",
+                                "value": 1.5
+                              },
+                              "type": "float"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
+                          "type": "float"
+                        },
+                        {
+                          "kind": "literal",
+                          "source": "1e38",
+                          "type": "float",
+                          "value": 1e+38
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "min",
+                      "target": "builtin:min",
+                      "type": "float"
+                    },
+                    "name": "shiftYv",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
               },
               {
                 "expression": {
                   "kind": "assignment",
                   "lvalue": {
-                    "field": "y",
-                    "kind": "member",
-                    "object": {
-                      "kind": "identifier",
-                      "name": "uv",
-                      "storage": "local",
-                      "type": "vec2"
-                    },
-                    "type": "float"
+                    "kind": "identifier",
+                    "name": "uv",
+                    "storage": "local",
+                    "type": "vec2"
                   },
                   "operator": "-=",
-                  "type": "float",
+                  "type": "vec2",
                   "value": {
-                    "kind": "binary",
-                    "left": {
-                      "arguments": [
-                        {
-                          "kind": "identifier",
-                          "name": "offsetY",
-                          "storage": "uniform",
-                          "type": "float"
-                        },
-                        {
-                          "kind": "unary",
-                          "operand": {
-                            "kind": "literal",
-                            "source": "100.0",
-                            "type": "float",
-                            "value": 100.0
-                          },
-                          "operator": "-",
-                          "type": "float"
-                        },
-                        {
-                          "kind": "literal",
-                          "source": "100.0",
-                          "type": "float",
-                          "value": 100.0
-                        },
-                        {
-                          "kind": "binary",
-                          "left": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "unary",
-                              "operand": {
-                                "field": "y",
-                                "kind": "member",
-                                "object": {
-                                  "kind": "identifier",
-                                  "name": "resolution",
-                                  "storage": "uniform",
-                                  "type": "vec2"
-                                },
-                                "type": "float"
-                              },
-                              "operator": "-",
-                              "type": "float"
-                            },
-                            "operator": "/",
-                            "right": {
-                              "field": "y",
-                              "kind": "member",
-                              "object": {
-                                "kind": "identifier",
-                                "name": "imageSize",
-                                "storage": "local",
-                                "type": "vec2"
-                              },
-                              "type": "float"
-                            },
-                            "type": "float"
-                          },
-                          "operator": "*",
-                          "right": {
-                            "kind": "identifier",
-                            "name": "scale",
-                            "storage": "local",
-                            "type": "float"
-                          },
-                          "type": "float"
-                        },
-                        {
-                          "kind": "binary",
-                          "left": {
-                            "kind": "binary",
-                            "left": {
-                              "field": "y",
-                              "kind": "member",
-                              "object": {
-                                "kind": "identifier",
-                                "name": "resolution",
-                                "storage": "uniform",
-                                "type": "vec2"
-                              },
-                              "type": "float"
-                            },
-                            "operator": "/",
-                            "right": {
-                              "field": "y",
-                              "kind": "member",
-                              "object": {
-                                "kind": "identifier",
-                                "name": "imageSize",
-                                "storage": "local",
-                                "type": "vec2"
-                              },
-                              "type": "float"
-                            },
-                            "type": "float"
-                          },
-                          "operator": "*",
-                          "right": {
-                            "kind": "identifier",
-                            "name": "scale",
-                            "storage": "local",
-                            "type": "float"
-                          },
-                          "type": "float"
-                        }
-                      ],
-                      "kind": "call",
-                      "name": "map",
-                      "target": "map__float_float_float_float_float",
-                      "type": "float"
-                    },
-                    "operator": "*",
-                    "right": {
-                      "kind": "literal",
-                      "source": "1.5",
-                      "type": "float",
-                      "value": 1.5
-                    },
-                    "type": "float"
+                    "arguments": [
+                      {
+                        "kind": "identifier",
+                        "name": "shiftXv",
+                        "storage": "local",
+                        "type": "float"
+                      },
+                      {
+                        "kind": "identifier",
+                        "name": "shiftYv",
+                        "storage": "local",
+                        "type": "float"
+                      }
+                    ],
+                    "kind": "construct",
+                    "type": "vec2"
                   }
                 },
                 "kind": "expression"
@@ -82557,7 +83651,7 @@
                                               },
                                               "type": "float"
                                             },
-                                            "operator": "<",
+                                            "operator": ">",
                                             "right": {
                                               "kind": "literal",
                                               "source": "0.5",
@@ -82711,7 +83805,7 @@
                                             },
                                             "type": "float"
                                           },
-                                          "operator": ">",
+                                          "operator": "<",
                                           "right": {
                                             "kind": "literal",
                                             "source": "0.5",
@@ -82865,7 +83959,7 @@
                                           },
                                           "type": "float"
                                         },
-                                        "operator": "<",
+                                        "operator": ">",
                                         "right": {
                                           "kind": "literal",
                                           "source": "0.5",
@@ -83019,7 +84113,7 @@
                                         },
                                         "type": "float"
                                       },
-                                      "operator": ">",
+                                      "operator": "<",
                                       "right": {
                                         "kind": "literal",
                                         "source": "0.5",
@@ -83100,7 +84194,7 @@
                                       },
                                       "type": "float"
                                     },
-                                    "operator": "<",
+                                    "operator": ">",
                                     "right": {
                                       "kind": "literal",
                                       "source": "0.5",
@@ -83181,7 +84275,7 @@
                                     },
                                     "type": "float"
                                   },
-                                  "operator": ">",
+                                  "operator": "<",
                                   "right": {
                                     "kind": "literal",
                                     "source": "0.5",
@@ -84454,6 +85548,10 @@
             "type": "int"
           },
           {
+            "name": "aspectInv",
+            "type": "float"
+          },
+          {
             "name": "effectAmt",
             "type": "float"
           },
@@ -84468,6 +85566,10 @@
           {
             "name": "intensity",
             "type": "float"
+          },
+          {
+            "name": "invFullResolution",
+            "type": "vec2"
           },
           {
             "name": "offsetX",
@@ -84509,7 +85611,7 @@
         "varyings": []
       },
       "program": "effects",
-      "sourceSha256": "ce9b266d79deea4f9ce595ea9a6973c0832f2dba757c0ee69d4c1dfc5ab29129"
+      "sourceSha256": "53f09dd48a9a4ac39b719ba934f46919c446628b1dfd9a435123f72b7a6df4f6"
     },
     "classicNoisedeck/fractal:fractal": {
       "effectId": "classicNoisedeck/fractal",
@@ -171893,26 +172995,59 @@
                           "right": {
                             "arguments": [
                               {
-                                "kind": "identifier",
-                                "name": "uv",
-                                "storage": "local",
-                                "type": "vec2"
+                                "arguments": [
+                                  {
+                                    "arguments": [
+                                      {
+                                        "kind": "identifier",
+                                        "name": "uv",
+                                        "storage": "local",
+                                        "type": "vec2"
+                                      },
+                                      {
+                                        "field": "yy",
+                                        "kind": "member",
+                                        "object": {
+                                          "kind": "identifier",
+                                          "name": "C",
+                                          "storage": "local",
+                                          "type": "vec4"
+                                        },
+                                        "type": "vec2"
+                                      }
+                                    ],
+                                    "kind": "call",
+                                    "name": "dot",
+                                    "target": "builtin:dot",
+                                    "type": "float"
+                                  },
+                                  {
+                                    "kind": "unary",
+                                    "operand": {
+                                      "kind": "literal",
+                                      "source": "1e38",
+                                      "type": "float",
+                                      "value": 1e+38
+                                    },
+                                    "operator": "-",
+                                    "type": "float"
+                                  }
+                                ],
+                                "kind": "call",
+                                "name": "max",
+                                "target": "builtin:max",
+                                "type": "float"
                               },
                               {
-                                "field": "yy",
-                                "kind": "member",
-                                "object": {
-                                  "kind": "identifier",
-                                  "name": "C",
-                                  "storage": "local",
-                                  "type": "vec4"
-                                },
-                                "type": "vec2"
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
                               }
                             ],
                             "kind": "call",
-                            "name": "dot",
-                            "target": "builtin:dot",
+                            "name": "min",
+                            "target": "builtin:min",
                             "type": "float"
                           },
                           "type": "vec2"
@@ -171956,26 +173091,59 @@
                       "right": {
                         "arguments": [
                           {
-                            "kind": "identifier",
-                            "name": "i",
-                            "storage": "local",
-                            "type": "vec2"
+                            "arguments": [
+                              {
+                                "arguments": [
+                                  {
+                                    "kind": "identifier",
+                                    "name": "i",
+                                    "storage": "local",
+                                    "type": "vec2"
+                                  },
+                                  {
+                                    "field": "xx",
+                                    "kind": "member",
+                                    "object": {
+                                      "kind": "identifier",
+                                      "name": "C",
+                                      "storage": "local",
+                                      "type": "vec4"
+                                    },
+                                    "type": "vec2"
+                                  }
+                                ],
+                                "kind": "call",
+                                "name": "dot",
+                                "target": "builtin:dot",
+                                "type": "float"
+                              },
+                              {
+                                "kind": "unary",
+                                "operand": {
+                                  "kind": "literal",
+                                  "source": "1e38",
+                                  "type": "float",
+                                  "value": 1e+38
+                                },
+                                "operator": "-",
+                                "type": "float"
+                              }
+                            ],
+                            "kind": "call",
+                            "name": "max",
+                            "target": "builtin:max",
+                            "type": "float"
                           },
                           {
-                            "field": "xx",
-                            "kind": "member",
-                            "object": {
-                              "kind": "identifier",
-                              "name": "C",
-                              "storage": "local",
-                              "type": "vec4"
-                            },
-                            "type": "vec2"
+                            "kind": "literal",
+                            "source": "1e38",
+                            "type": "float",
+                            "value": 1e+38
                           }
                         ],
                         "kind": "call",
-                        "name": "dot",
-                        "target": "builtin:dot",
+                        "name": "min",
+                        "target": "builtin:min",
                         "type": "float"
                       },
                       "type": "vec2"
@@ -172320,85 +173488,130 @@
                               {
                                 "arguments": [
                                   {
-                                    "kind": "identifier",
-                                    "name": "x0",
-                                    "storage": "local",
-                                    "type": "vec2"
+                                    "arguments": [
+                                      {
+                                        "arguments": [
+                                          {
+                                            "kind": "identifier",
+                                            "name": "x0",
+                                            "storage": "local",
+                                            "type": "vec2"
+                                          },
+                                          {
+                                            "kind": "identifier",
+                                            "name": "x0",
+                                            "storage": "local",
+                                            "type": "vec2"
+                                          }
+                                        ],
+                                        "kind": "call",
+                                        "name": "dot",
+                                        "target": "builtin:dot",
+                                        "type": "float"
+                                      },
+                                      {
+                                        "arguments": [
+                                          {
+                                            "field": "xy",
+                                            "kind": "member",
+                                            "object": {
+                                              "kind": "identifier",
+                                              "name": "x12",
+                                              "storage": "local",
+                                              "type": "vec4"
+                                            },
+                                            "type": "vec2"
+                                          },
+                                          {
+                                            "field": "xy",
+                                            "kind": "member",
+                                            "object": {
+                                              "kind": "identifier",
+                                              "name": "x12",
+                                              "storage": "local",
+                                              "type": "vec4"
+                                            },
+                                            "type": "vec2"
+                                          }
+                                        ],
+                                        "kind": "call",
+                                        "name": "dot",
+                                        "target": "builtin:dot",
+                                        "type": "float"
+                                      },
+                                      {
+                                        "arguments": [
+                                          {
+                                            "field": "zw",
+                                            "kind": "member",
+                                            "object": {
+                                              "kind": "identifier",
+                                              "name": "x12",
+                                              "storage": "local",
+                                              "type": "vec4"
+                                            },
+                                            "type": "vec2"
+                                          },
+                                          {
+                                            "field": "zw",
+                                            "kind": "member",
+                                            "object": {
+                                              "kind": "identifier",
+                                              "name": "x12",
+                                              "storage": "local",
+                                              "type": "vec4"
+                                            },
+                                            "type": "vec2"
+                                          }
+                                        ],
+                                        "kind": "call",
+                                        "name": "dot",
+                                        "target": "builtin:dot",
+                                        "type": "float"
+                                      }
+                                    ],
+                                    "kind": "construct",
+                                    "type": "vec3"
                                   },
                                   {
-                                    "kind": "identifier",
-                                    "name": "x0",
-                                    "storage": "local",
-                                    "type": "vec2"
+                                    "arguments": [
+                                      {
+                                        "kind": "unary",
+                                        "operand": {
+                                          "kind": "literal",
+                                          "source": "1e38",
+                                          "type": "float",
+                                          "value": 1e+38
+                                        },
+                                        "operator": "-",
+                                        "type": "float"
+                                      }
+                                    ],
+                                    "kind": "construct",
+                                    "type": "vec3"
                                   }
                                 ],
                                 "kind": "call",
-                                "name": "dot",
-                                "target": "builtin:dot",
-                                "type": "float"
+                                "name": "max",
+                                "target": "builtin:max",
+                                "type": "vec3"
                               },
                               {
                                 "arguments": [
                                   {
-                                    "field": "xy",
-                                    "kind": "member",
-                                    "object": {
-                                      "kind": "identifier",
-                                      "name": "x12",
-                                      "storage": "local",
-                                      "type": "vec4"
-                                    },
-                                    "type": "vec2"
-                                  },
-                                  {
-                                    "field": "xy",
-                                    "kind": "member",
-                                    "object": {
-                                      "kind": "identifier",
-                                      "name": "x12",
-                                      "storage": "local",
-                                      "type": "vec4"
-                                    },
-                                    "type": "vec2"
+                                    "kind": "literal",
+                                    "source": "1e38",
+                                    "type": "float",
+                                    "value": 1e+38
                                   }
                                 ],
-                                "kind": "call",
-                                "name": "dot",
-                                "target": "builtin:dot",
-                                "type": "float"
-                              },
-                              {
-                                "arguments": [
-                                  {
-                                    "field": "zw",
-                                    "kind": "member",
-                                    "object": {
-                                      "kind": "identifier",
-                                      "name": "x12",
-                                      "storage": "local",
-                                      "type": "vec4"
-                                    },
-                                    "type": "vec2"
-                                  },
-                                  {
-                                    "field": "zw",
-                                    "kind": "member",
-                                    "object": {
-                                      "kind": "identifier",
-                                      "name": "x12",
-                                      "storage": "local",
-                                      "type": "vec4"
-                                    },
-                                    "type": "vec2"
-                                  }
-                                ],
-                                "kind": "call",
-                                "name": "dot",
-                                "target": "builtin:dot",
-                                "type": "float"
+                                "kind": "construct",
+                                "type": "vec3"
                               }
                             ],
-                            "kind": "construct",
+                            "kind": "call",
+                            "name": "min",
+                            "target": "builtin:min",
                             "type": "vec3"
                           },
                           "type": "vec3"
@@ -172663,53 +173876,152 @@
                     },
                     "operator": "-",
                     "right": {
-                      "kind": "binary",
-                      "left": {
-                        "kind": "literal",
-                        "source": "0.85373472095314",
-                        "type": "float",
-                        "value": 0.85373472095314
-                      },
-                      "operator": "*",
-                      "right": {
-                        "kind": "binary",
-                        "left": {
-                          "kind": "binary",
-                          "left": {
-                            "kind": "identifier",
-                            "name": "a0",
-                            "storage": "local",
-                            "type": "vec3"
-                          },
-                          "operator": "*",
-                          "right": {
-                            "kind": "identifier",
-                            "name": "a0",
-                            "storage": "local",
-                            "type": "vec3"
-                          },
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "kind": "literal",
+                                "source": "0.85373472095314",
+                                "type": "float",
+                                "value": 0.85373472095314
+                              },
+                              "operator": "*",
+                              "right": {
+                                "kind": "binary",
+                                "left": {
+                                  "arguments": [
+                                    {
+                                      "arguments": [
+                                        {
+                                          "kind": "binary",
+                                          "left": {
+                                            "kind": "identifier",
+                                            "name": "a0",
+                                            "storage": "local",
+                                            "type": "vec3"
+                                          },
+                                          "operator": "*",
+                                          "right": {
+                                            "kind": "identifier",
+                                            "name": "a0",
+                                            "storage": "local",
+                                            "type": "vec3"
+                                          },
+                                          "type": "vec3"
+                                        },
+                                        {
+                                          "kind": "unary",
+                                          "operand": {
+                                            "kind": "literal",
+                                            "source": "1e38",
+                                            "type": "float",
+                                            "value": 1e+38
+                                          },
+                                          "operator": "-",
+                                          "type": "float"
+                                        }
+                                      ],
+                                      "kind": "call",
+                                      "name": "max",
+                                      "target": "builtin:max",
+                                      "type": "vec3"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "1e38",
+                                      "type": "float",
+                                      "value": 1e+38
+                                    }
+                                  ],
+                                  "kind": "call",
+                                  "name": "min",
+                                  "target": "builtin:min",
+                                  "type": "vec3"
+                                },
+                                "operator": "+",
+                                "right": {
+                                  "arguments": [
+                                    {
+                                      "arguments": [
+                                        {
+                                          "kind": "binary",
+                                          "left": {
+                                            "kind": "identifier",
+                                            "name": "h",
+                                            "storage": "local",
+                                            "type": "vec3"
+                                          },
+                                          "operator": "*",
+                                          "right": {
+                                            "kind": "identifier",
+                                            "name": "h",
+                                            "storage": "local",
+                                            "type": "vec3"
+                                          },
+                                          "type": "vec3"
+                                        },
+                                        {
+                                          "kind": "unary",
+                                          "operand": {
+                                            "kind": "literal",
+                                            "source": "1e38",
+                                            "type": "float",
+                                            "value": 1e+38
+                                          },
+                                          "operator": "-",
+                                          "type": "float"
+                                        }
+                                      ],
+                                      "kind": "call",
+                                      "name": "max",
+                                      "target": "builtin:max",
+                                      "type": "vec3"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "1e38",
+                                      "type": "float",
+                                      "value": 1e+38
+                                    }
+                                  ],
+                                  "kind": "call",
+                                  "name": "min",
+                                  "target": "builtin:min",
+                                  "type": "vec3"
+                                },
+                                "type": "vec3"
+                              },
+                              "type": "vec3"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
                           "type": "vec3"
                         },
-                        "operator": "+",
-                        "right": {
-                          "kind": "binary",
-                          "left": {
-                            "kind": "identifier",
-                            "name": "h",
-                            "storage": "local",
-                            "type": "vec3"
-                          },
-                          "operator": "*",
-                          "right": {
-                            "kind": "identifier",
-                            "name": "h",
-                            "storage": "local",
-                            "type": "vec3"
-                          },
-                          "type": "vec3"
-                        },
-                        "type": "vec3"
-                      },
+                        {
+                          "kind": "literal",
+                          "source": "1e38",
+                          "type": "float",
+                          "value": 1e+38
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "min",
+                      "target": "builtin:min",
                       "type": "vec3"
                     },
                     "type": "vec3"
@@ -172747,58 +174059,124 @@
                   "value": {
                     "kind": "binary",
                     "left": {
-                      "kind": "binary",
-                      "left": {
-                        "field": "x",
-                        "kind": "member",
-                        "object": {
-                          "kind": "identifier",
-                          "name": "a0",
-                          "storage": "local",
-                          "type": "vec3"
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "field": "x",
+                                "kind": "member",
+                                "object": {
+                                  "kind": "identifier",
+                                  "name": "a0",
+                                  "storage": "local",
+                                  "type": "vec3"
+                                },
+                                "type": "float"
+                              },
+                              "operator": "*",
+                              "right": {
+                                "field": "x",
+                                "kind": "member",
+                                "object": {
+                                  "kind": "identifier",
+                                  "name": "x0",
+                                  "storage": "local",
+                                  "type": "vec2"
+                                },
+                                "type": "float"
+                              },
+                              "type": "float"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
+                          "type": "float"
                         },
-                        "type": "float"
-                      },
-                      "operator": "*",
-                      "right": {
-                        "field": "x",
-                        "kind": "member",
-                        "object": {
-                          "kind": "identifier",
-                          "name": "x0",
-                          "storage": "local",
-                          "type": "vec2"
-                        },
-                        "type": "float"
-                      },
+                        {
+                          "kind": "literal",
+                          "source": "1e38",
+                          "type": "float",
+                          "value": 1e+38
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "min",
+                      "target": "builtin:min",
                       "type": "float"
                     },
                     "operator": "+",
                     "right": {
-                      "kind": "binary",
-                      "left": {
-                        "field": "x",
-                        "kind": "member",
-                        "object": {
-                          "kind": "identifier",
-                          "name": "h",
-                          "storage": "local",
-                          "type": "vec3"
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "field": "x",
+                                "kind": "member",
+                                "object": {
+                                  "kind": "identifier",
+                                  "name": "h",
+                                  "storage": "local",
+                                  "type": "vec3"
+                                },
+                                "type": "float"
+                              },
+                              "operator": "*",
+                              "right": {
+                                "field": "y",
+                                "kind": "member",
+                                "object": {
+                                  "kind": "identifier",
+                                  "name": "x0",
+                                  "storage": "local",
+                                  "type": "vec2"
+                                },
+                                "type": "float"
+                              },
+                              "type": "float"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
+                          "type": "float"
                         },
-                        "type": "float"
-                      },
-                      "operator": "*",
-                      "right": {
-                        "field": "y",
-                        "kind": "member",
-                        "object": {
-                          "kind": "identifier",
-                          "name": "x0",
-                          "storage": "local",
-                          "type": "vec2"
-                        },
-                        "type": "float"
-                      },
+                        {
+                          "kind": "literal",
+                          "source": "1e38",
+                          "type": "float",
+                          "value": 1e+38
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "min",
+                      "target": "builtin:min",
                       "type": "float"
                     },
                     "type": "float"
@@ -172825,58 +174203,124 @@
                   "value": {
                     "kind": "binary",
                     "left": {
-                      "kind": "binary",
-                      "left": {
-                        "field": "yz",
-                        "kind": "member",
-                        "object": {
-                          "kind": "identifier",
-                          "name": "a0",
-                          "storage": "local",
-                          "type": "vec3"
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "field": "yz",
+                                "kind": "member",
+                                "object": {
+                                  "kind": "identifier",
+                                  "name": "a0",
+                                  "storage": "local",
+                                  "type": "vec3"
+                                },
+                                "type": "vec2"
+                              },
+                              "operator": "*",
+                              "right": {
+                                "field": "xz",
+                                "kind": "member",
+                                "object": {
+                                  "kind": "identifier",
+                                  "name": "x12",
+                                  "storage": "local",
+                                  "type": "vec4"
+                                },
+                                "type": "vec2"
+                              },
+                              "type": "vec2"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
+                          "type": "vec2"
                         },
-                        "type": "vec2"
-                      },
-                      "operator": "*",
-                      "right": {
-                        "field": "xz",
-                        "kind": "member",
-                        "object": {
-                          "kind": "identifier",
-                          "name": "x12",
-                          "storage": "local",
-                          "type": "vec4"
-                        },
-                        "type": "vec2"
-                      },
+                        {
+                          "kind": "literal",
+                          "source": "1e38",
+                          "type": "float",
+                          "value": 1e+38
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "min",
+                      "target": "builtin:min",
                       "type": "vec2"
                     },
                     "operator": "+",
                     "right": {
-                      "kind": "binary",
-                      "left": {
-                        "field": "yz",
-                        "kind": "member",
-                        "object": {
-                          "kind": "identifier",
-                          "name": "h",
-                          "storage": "local",
-                          "type": "vec3"
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "field": "yz",
+                                "kind": "member",
+                                "object": {
+                                  "kind": "identifier",
+                                  "name": "h",
+                                  "storage": "local",
+                                  "type": "vec3"
+                                },
+                                "type": "vec2"
+                              },
+                              "operator": "*",
+                              "right": {
+                                "field": "yw",
+                                "kind": "member",
+                                "object": {
+                                  "kind": "identifier",
+                                  "name": "x12",
+                                  "storage": "local",
+                                  "type": "vec4"
+                                },
+                                "type": "vec2"
+                              },
+                              "type": "vec2"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
+                          "type": "vec2"
                         },
-                        "type": "vec2"
-                      },
-                      "operator": "*",
-                      "right": {
-                        "field": "yw",
-                        "kind": "member",
-                        "object": {
-                          "kind": "identifier",
-                          "name": "x12",
-                          "storage": "local",
-                          "type": "vec4"
-                        },
-                        "type": "vec2"
-                      },
+                        {
+                          "kind": "literal",
+                          "source": "1e38",
+                          "type": "float",
+                          "value": 1e+38
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "min",
+                      "target": "builtin:min",
                       "type": "vec2"
                     },
                     "type": "vec2"
@@ -182751,6 +184195,93 @@
                 }
               },
               {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "kind": "binary",
+                      "left": {
+                        "kind": "literal",
+                        "source": "1.0",
+                        "type": "float",
+                        "value": 1.0
+                      },
+                      "operator": "/",
+                      "right": {
+                        "kind": "identifier",
+                        "name": "multiplicand",
+                        "storage": "local",
+                        "type": "float"
+                      },
+                      "type": "float"
+                    },
+                    "name": "rmul",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "kind": "binary",
+                              "left": {
+                                "kind": "identifier",
+                                "name": "multiplicand",
+                                "storage": "local",
+                                "type": "float"
+                              },
+                              "operator": "*",
+                              "right": {
+                                "kind": "identifier",
+                                "name": "rmul",
+                                "storage": "local",
+                                "type": "float"
+                              },
+                              "type": "float"
+                            },
+                            {
+                              "kind": "unary",
+                              "operand": {
+                                "kind": "literal",
+                                "source": "1e38",
+                                "type": "float",
+                                "value": 1e+38
+                              },
+                              "operator": "-",
+                              "type": "float"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "max",
+                          "target": "builtin:max",
+                          "type": "float"
+                        },
+                        {
+                          "kind": "literal",
+                          "source": "1e38",
+                          "type": "float",
+                          "value": 1e+38
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "min",
+                      "target": "builtin:min",
+                      "type": "float"
+                    },
+                    "name": "mc",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
                 "expression": {
                   "kind": "assignment",
                   "lvalue": {
@@ -182764,12 +184295,34 @@
                     },
                     "type": "vec3"
                   },
-                  "operator": "/=",
+                  "operator": "*=",
                   "type": "vec3",
                   "value": {
-                    "kind": "identifier",
-                    "name": "multiplicand",
-                    "storage": "local",
+                    "kind": "binary",
+                    "left": {
+                      "kind": "identifier",
+                      "name": "rmul",
+                      "storage": "local",
+                      "type": "float"
+                    },
+                    "operator": "*",
+                    "right": {
+                      "kind": "binary",
+                      "left": {
+                        "kind": "literal",
+                        "source": "2.0",
+                        "type": "float",
+                        "value": 2.0
+                      },
+                      "operator": "-",
+                      "right": {
+                        "kind": "identifier",
+                        "name": "mc",
+                        "storage": "local",
+                        "type": "float"
+                      },
+                      "type": "float"
+                    },
                     "type": "float"
                   }
                 },
@@ -186019,7 +187572,7 @@
         "varyings": []
       },
       "program": "noise",
-      "sourceSha256": "d432e6dcfd26d64121dab87051ce6506ee1080150d590852526e5bb2676c07c4"
+      "sourceSha256": "b1594dc42080c0436656bef90256de285828b44f639170a47f16e90929eec53e"
     },
     "classicNoisedeck/refract:refract": {
       "effectId": "classicNoisedeck/refract",
@@ -712210,43 +713763,9 @@
                     "initializer": {
                       "kind": "binary",
                       "left": {
-                        "kind": "binary",
-                        "left": {
-                          "kind": "identifier",
-                          "name": "cameraPosition",
-                          "storage": "uniform",
-                          "type": "vec3"
-                        },
-                        "operator": "*",
-                        "right": {
-                          "arguments": [
-                            {
-                              "kind": "unary",
-                              "operand": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "operator": "-",
-                              "type": "float"
-                            },
-                            {
-                              "kind": "literal",
-                              "source": "1.0",
-                              "type": "float",
-                              "value": 1.0
-                            },
-                            {
-                              "kind": "literal",
-                              "source": "1.0",
-                              "type": "float",
-                              "value": 1.0
-                            }
-                          ],
-                          "kind": "construct",
-                          "type": "vec3"
-                        },
+                        "kind": "identifier",
+                        "name": "cameraPosition",
+                        "storage": "uniform",
                         "type": "vec3"
                       },
                       "operator": "*",
@@ -712495,10 +714014,23 @@
                               "value": 0.0
                             },
                             {
-                              "kind": "literal",
-                              "source": "1.0",
-                              "type": "float",
-                              "value": 1.0
+                              "arguments": [
+                                {
+                                  "field": "y",
+                                  "kind": "member",
+                                  "object": {
+                                    "kind": "identifier",
+                                    "name": "forward",
+                                    "storage": "local",
+                                    "type": "vec3"
+                                  },
+                                  "type": "float"
+                                }
+                              ],
+                              "kind": "call",
+                              "name": "sign",
+                              "target": "builtin:sign",
+                              "type": "float"
                             }
                           ],
                           "kind": "construct",
@@ -712521,13 +714053,13 @@
                           "arguments": [
                             {
                               "kind": "identifier",
-                              "name": "worldUp",
+                              "name": "forward",
                               "storage": "local",
                               "type": "vec3"
                             },
                             {
                               "kind": "identifier",
-                              "name": "forward",
+                              "name": "worldUp",
                               "storage": "local",
                               "type": "vec3"
                             }
@@ -712557,13 +714089,13 @@
                       "arguments": [
                         {
                           "kind": "identifier",
-                          "name": "forward",
+                          "name": "right",
                           "storage": "local",
                           "type": "vec3"
                         },
                         {
                           "kind": "identifier",
-                          "name": "right",
+                          "name": "forward",
                           "storage": "local",
                           "type": "vec3"
                         }
@@ -712664,43 +714196,9 @@
                     "initializer": {
                       "arguments": [
                         {
-                          "kind": "binary",
-                          "left": {
-                            "kind": "identifier",
-                            "name": "lightDirection",
-                            "storage": "uniform",
-                            "type": "vec3"
-                          },
-                          "operator": "*",
-                          "right": {
-                            "arguments": [
-                              {
-                                "kind": "unary",
-                                "operand": {
-                                  "kind": "literal",
-                                  "source": "1.0",
-                                  "type": "float",
-                                  "value": 1.0
-                                },
-                                "operator": "-",
-                                "type": "float"
-                              },
-                              {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              }
-                            ],
-                            "kind": "construct",
-                            "type": "vec3"
-                          },
+                          "kind": "identifier",
+                          "name": "lightDirection",
+                          "storage": "uniform",
                           "type": "vec3"
                         }
                       ],
@@ -712724,9 +714222,14 @@
                       "left": {
                         "kind": "binary",
                         "left": {
-                          "kind": "identifier",
-                          "name": "time",
-                          "storage": "uniform",
+                          "kind": "unary",
+                          "operand": {
+                            "kind": "identifier",
+                            "name": "time",
+                            "storage": "uniform",
+                            "type": "float"
+                          },
+                          "operator": "-",
                           "type": "float"
                         },
                         "operator": "*",
@@ -713883,7 +715386,7 @@
         "varyings": []
       },
       "program": "renderLit3d",
-      "sourceSha256": "28608e1ac25231586e7105fa6fedc0cda3c3f94801c9668b0df9deae722aa5d5"
+      "sourceSha256": "d0bfd1fd9cc7223c364d0f3cf78639a6f661d7fe7b69fb2c9850dbcbb263387b"
     },
     "synth/bitwise:bitwise": {
       "effectId": "synth/bitwise",
@@ -895121,47 +896624,8 @@
                     "initializer": {
                       "arguments": [
                         {
-                          "kind": "binary",
-                          "left": {
-                            "arguments": [
-                              {
-                                "kind": "identifier",
-                                "name": "volSize",
-                                "storage": "local",
-                                "type": "int"
-                              }
-                            ],
-                            "kind": "construct",
-                            "type": "float"
-                          },
-                          "operator": "*",
-                          "right": {
-                            "kind": "identifier",
-                            "name": "renderScale",
-                            "storage": "uniform",
-                            "type": "float"
-                          },
-                          "type": "float"
-                        }
-                      ],
-                      "kind": "construct",
-                      "type": "int"
-                    },
-                    "name": "scaledVolSize",
-                    "type": "int"
-                  }
-                ],
-                "kind": "declaration"
-              },
-              {
-                "declarations": [
-                  {
-                    "arraySize": null,
-                    "initializer": {
-                      "arguments": [
-                        {
                           "kind": "identifier",
-                          "name": "scaledVolSize",
+                          "name": "volSize",
                           "storage": "local",
                           "type": "int"
                         }
@@ -895169,7 +896633,7 @@
                       "kind": "construct",
                       "type": "float"
                     },
-                    "name": "scaledVolSizeF",
+                    "name": "volSizeF",
                     "type": "float"
                   }
                 ],
@@ -895180,43 +896644,16 @@
                   {
                     "arraySize": null,
                     "initializer": {
-                      "kind": "binary",
-                      "left": {
-                        "field": "xy",
-                        "kind": "member",
-                        "object": {
-                          "kind": "identifier",
-                          "name": "gl_FragCoord",
-                          "storage": "builtin",
-                          "type": "vec4"
-                        },
-                        "type": "vec2"
-                      },
-                      "operator": "+",
-                      "right": {
-                        "kind": "identifier",
-                        "name": "tileOffset",
-                        "storage": "uniform",
-                        "type": "vec2"
-                      },
-                      "type": "vec2"
-                    },
-                    "name": "globalPixelCoord",
-                    "type": "vec2"
-                  }
-                ],
-                "kind": "declaration"
-              },
-              {
-                "declarations": [
-                  {
-                    "arraySize": null,
-                    "initializer": {
                       "arguments": [
                         {
-                          "kind": "identifier",
-                          "name": "globalPixelCoord",
-                          "storage": "local",
+                          "field": "xy",
+                          "kind": "member",
+                          "object": {
+                            "kind": "identifier",
+                            "name": "gl_FragCoord",
+                            "storage": "builtin",
+                            "type": "vec4"
+                          },
                           "type": "vec2"
                         }
                       ],
@@ -895234,40 +896671,14 @@
                   {
                     "arraySize": null,
                     "initializer": {
-                      "arguments": [
-                        {
-                          "arguments": [
-                            {
-                              "arguments": [
-                                {
-                                  "field": "x",
-                                  "kind": "member",
-                                  "object": {
-                                    "kind": "identifier",
-                                    "name": "pixelCoord",
-                                    "storage": "local",
-                                    "type": "ivec2"
-                                  },
-                                  "type": "int"
-                                }
-                              ],
-                              "kind": "construct",
-                              "type": "float"
-                            },
-                            {
-                              "kind": "identifier",
-                              "name": "scaledVolSizeF",
-                              "storage": "local",
-                              "type": "float"
-                            }
-                          ],
-                          "kind": "call",
-                          "name": "mod",
-                          "target": "builtin:mod",
-                          "type": "float"
-                        }
-                      ],
-                      "kind": "construct",
+                      "field": "x",
+                      "kind": "member",
+                      "object": {
+                        "kind": "identifier",
+                        "name": "pixelCoord",
+                        "storage": "local",
+                        "type": "ivec2"
+                      },
                       "type": "int"
                     },
                     "name": "x",
@@ -895296,7 +896707,7 @@
                       "operator": "%",
                       "right": {
                         "kind": "identifier",
-                        "name": "scaledVolSize",
+                        "name": "volSize",
                         "storage": "local",
                         "type": "int"
                       },
@@ -895328,7 +896739,7 @@
                       "operator": "/",
                       "right": {
                         "kind": "identifier",
-                        "name": "scaledVolSize",
+                        "name": "volSize",
                         "storage": "local",
                         "type": "int"
                       },
@@ -895356,7 +896767,7 @@
                       "operator": ">=",
                       "right": {
                         "kind": "identifier",
-                        "name": "scaledVolSize",
+                        "name": "volSize",
                         "storage": "local",
                         "type": "int"
                       },
@@ -895374,7 +896785,7 @@
                       "operator": ">=",
                       "right": {
                         "kind": "identifier",
-                        "name": "scaledVolSize",
+                        "name": "volSize",
                         "storage": "local",
                         "type": "int"
                       },
@@ -895394,7 +896805,7 @@
                     "operator": ">=",
                     "right": {
                       "kind": "identifier",
-                      "name": "scaledVolSize",
+                      "name": "volSize",
                       "storage": "local",
                       "type": "int"
                     },
@@ -895544,7 +896955,7 @@
                               "kind": "binary",
                               "left": {
                                 "kind": "identifier",
-                                "name": "scaledVolSizeF",
+                                "name": "volSizeF",
                                 "storage": "local",
                                 "type": "float"
                               },
@@ -896401,14 +897812,6 @@
             "type": "float"
           },
           {
-            "name": "renderScale",
-            "type": "float"
-          },
-          {
-            "name": "tileOffset",
-            "type": "vec2"
-          },
-          {
             "name": "volumeSize",
             "type": "int"
           }
@@ -896416,7 +897819,7 @@
         "varyings": []
       },
       "program": "precompute",
-      "sourceSha256": "8ab3dfe63e16d4406deee719c1f822d405c712bae21bd1348ae5b75b79a14d41"
+      "sourceSha256": "4bc39fb7920cf0829cc6a6fc4670cdac9f5ea68c5438f569050a4732c1e6de19"
     },
     "synth3d/heightmap3d:precompute": {
       "effectId": "synth3d/heightmap3d",
@@ -910812,7 +912215,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "700ac32e8b4f80a221754e62302e63ac76f5ecc5",
+    "paramContractRevision": "a3d96b664e32c72095ee325871a0221fa35f320c",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"

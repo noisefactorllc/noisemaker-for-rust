@@ -219,12 +219,25 @@ fn navier_hash11(x: f64) -> f32 {
     (product - product.floor()) as f32
 }
 
+/// The CPU oracle folds a GLSL `dot` into a fused-multiply-add chain with one
+/// f32 rounding per accumulated term, so the splat adapter accumulates the
+/// same way (f64 products of f32 values are exact, and the f64 add keeps the
+/// single final rounding of an fma).
+fn navier_dot(a: [f32; 2], b: [f32; 2]) -> f32 {
+    let mut sum = 0.0_f32;
+    for index in 0..2 {
+        sum = (f64::from(a[index]) * f64::from(b[index]) + f64::from(sum)) as f32;
+    }
+    sum
+}
+
 fn navier_hash22(mut p: [f32; 2]) -> [f32; 2] {
     const SCALE: f32 = 43_758.546_875;
-    p[0] = (f64::from(p[0]) * f64::from(127.099_998_474_121_1_f32)
-        + f64::from(p[1]) * f64::from(311.700_012_207_031_25_f32)) as f32;
-    p[1] = (f64::from(p[0]) * f64::from(269.5_f32)
-        + f64::from(p[1]) * f64::from(183.300_003_051_757_8_f32)) as f32;
+    p[0] = navier_dot(
+        [p[0], p[1]],
+        [127.099_998_474_121_1_f32, 311.700_012_207_031_25_f32],
+    );
+    p[1] = navier_dot([p[0], p[1]], [269.5_f32, 183.300_003_051_757_8_f32]);
     p.map(|value| {
         let sine = f64::from(value).sin() as f32;
         let product = (f64::from(sine) * f64::from(SCALE)) as f32;
@@ -289,9 +302,11 @@ fn render_navier_splat(
                         (f64::from(uv[0]) - f64::from(center[0])) as f32,
                         (f64::from(uv[1]) - f64::from(center[1])) as f32,
                     ];
-                    let radius_squared = (f64::from(delta[0]) * f64::from(delta[0])
-                        + f64::from(delta[1]) * f64::from(delta[1]))
-                        as f32;
+                    let mut radius_squared = 0.0_f32;
+                    radius_squared = (f64::from(delta[0]) * f64::from(delta[0])
+                        + f64::from(radius_squared)) as f32;
+                    radius_squared = (f64::from(delta[1]) * f64::from(delta[1])
+                        + f64::from(radius_squared)) as f32;
                     let falloff =
                         (-f64::from(radius_squared) / ((2.0 * radius) * radius)).exp() as f32;
                     let tangent = [-delta[1], delta[0]];

@@ -135,11 +135,11 @@ fn cellular_automata_resets_and_matches_js_n1_n4_oracles() {
     assert_eq!(n4, n4_again);
     assert_eq!(
         format!("{:x}", Sha256::digest(n1.to_rgba8())),
-        "27776d19891e6feb4b7df91836fdc318a86edf3b999c081597d8bbf95cddd925"
+        "880a61dab9be88cc3429b0cab3a0f8afe4c82886b921a4cbca5c39a466843810"
     );
     assert_eq!(
         format!("{:x}", Sha256::digest(n4.to_rgba8())),
-        "72ef208d71700639a38f397fc2b71aec637c441e539769c228d364dbebd5fce7"
+        "2e3905c0cce91bc2eab96059a46428e68232cab214fb7b1b88a064a2b0ff9ce8"
     );
 }
 
@@ -158,11 +158,11 @@ fn navier_stokes_matches_js_n1_n4_full_frame_oracles() {
     let n4 = renderer.render(&source(4), &options).unwrap().surface;
     assert_eq!(
         format!("{:x}", Sha256::digest(n1.to_rgba8())),
-        "cf84752f2ff5e9b493c3e9fe2a05574c333fc96602147d763d4e250542c06296"
+        "7939eeca71e9fe77e6ffea802323d80d10a4b180ff53f432717bceb7cbb0eed8"
     );
     assert_eq!(
         format!("{:x}", Sha256::digest(n4.to_rgba8())),
-        "cf84752f2ff5e9b493c3e9fe2a05574c333fc96602147d763d4e250542c06296"
+        "7939eeca71e9fe77e6ffea802323d80d10a4b180ff53f432717bceb7cbb0eed8"
     );
 }
 

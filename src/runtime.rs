@@ -851,10 +851,15 @@ fn dot(a: &Value, b: &Value) -> Result<f32, VmError> {
     if a.len() != b.len() {
         return Err(type_error("dot width mismatch"));
     }
-    Ok(a.iter()
-        .zip(b)
-        .map(|(x, y)| f64::from(*x) * f64::from(y))
-        .sum::<f64>() as f32)
+    // GPU backends fold a dot product into a fused-multiply-add chain with one
+    // f32 rounding per accumulated term; emulate that provenance exactly by
+    // rounding each accumulated term to f32 (f64 products of f32 values are
+    // exact, so the f64 add keeps the single final rounding of an fma).
+    let mut sum = 0.0f32;
+    for (x, y) in a.iter().zip(b) {
+        sum = (f64::from(*x) * f64::from(y) + f64::from(sum)) as f32;
+    }
+    Ok(sum)
 }
 fn length(v: &Value) -> Result<f32, VmError> {
     let v = float_lanes(v)?;
