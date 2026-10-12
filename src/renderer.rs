@@ -605,7 +605,7 @@ fn execute_effect_bundle_with_state(
                     Surface::new(width, height)?
                 } else {
                     let density = match normalized.values.get("density") {
-                        Some(Value::Float(value)) => *value,
+                        Some(Value::Float(value)) => *value as f32,
                         Some(Value::Int(value)) => *value as f32,
                         _ => 0.0,
                     };
@@ -834,7 +834,7 @@ fn bind_external_inputs(
         let clock_count = external_inputs
             .midi_state
             .as_ref()
-            .map_or(0.0_f32, |midi| midi.clock_count as f32);
+            .map_or(0.0_f64, |midi| f64::from(midi.clock_count));
         uniforms.insert("midiClockCount".into(), Value::Float(clock_count));
         // GLSL uniform arrays are zero-initialized when the upstream pipeline has no
         // external state; the CPU kernels index them unconditionally, so always bind
@@ -845,14 +845,30 @@ fn bind_external_inputs(
             "audioWaveform".into(),
             audio.map_or_else(
                 || Value::Array(zero.clone()),
-                |state| Value::Array(state.waveform.iter().map(|&v| Value::Float(v)).collect()),
+                |state| {
+                    Value::Array(
+                        state
+                            .waveform
+                            .iter()
+                            .map(|&v| Value::Float(f64::from(v)))
+                            .collect(),
+                    )
+                },
             ),
         );
         uniforms.insert(
             "audioSpectrum".into(),
             audio.map_or_else(
                 || Value::Array(zero),
-                |state| Value::Array(state.spectrum.iter().map(|&v| Value::Float(v)).collect()),
+                |state| {
+                    Value::Array(
+                        state
+                            .spectrum
+                            .iter()
+                            .map(|&v| Value::Float(f64::from(v)))
+                            .collect(),
+                    )
+                },
             ),
         );
     }
@@ -961,7 +977,7 @@ fn remap_uniform_data(
         _ => vec![0.0; 3],
     };
     let alpha = match values.get("bgAlpha") {
-        Some(Value::Float(value)) => *value,
+        Some(Value::Float(value)) => *value as f32,
         Some(Value::Int(value)) => *value as f32,
         _ => 1.0,
     };
@@ -976,7 +992,7 @@ fn remap_uniform_data(
         _ => 0.0,
     };
     let smooth_edge = match values.get("smoothEdge") {
-        Some(Value::Float(value)) => *value,
+        Some(Value::Float(value)) => *value as f32,
         _ => 0.04,
     };
     data[1] = Value::Vec(vec![zone_count, smooth_edge, 0.0, 0.0]);

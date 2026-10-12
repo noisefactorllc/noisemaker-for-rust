@@ -23,6 +23,10 @@ pub struct DerivativeDiff {
 pub struct Runtime {
     textures: Vec<Surface>,
     reduced_turn_sine: bool,
+    // The exempt program's hand-written JS factory shifts its uint-valued
+    // Numbers with `>>` (ToUint32 -> int32 arithmetic shift); transpiled
+    // kernels shift uints with `>>>` (logical).
+    javascript_arithmetic_uint_shift: bool,
     derivative_mode: DerivativeMode,
     derivative_log: Vec<(String, Value)>,
     derivative_diffs: Vec<DerivativeDiff>,
@@ -33,6 +37,10 @@ impl Runtime {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn set_javascript_arithmetic_uint_shift(&mut self, enabled: bool) {
+        self.javascript_arithmetic_uint_shift = enabled;
     }
 
     pub fn add_texture(&mut self, surface: Surface) -> Value {
@@ -126,7 +134,7 @@ impl Runtime {
                 .map(Value::Uint),
             "float" => unary_argument(value_type, arguments)
                 .and_then(to_f32)
-                .map(Value::Float),
+                .map(|x| Value::Float(f64::from(x))),
             "sampler2D" => match unary_argument(value_type, arguments)? {
                 Value::Sampler(index) => Ok(Value::Sampler(*index)),
                 value => Err(type_error(format!(
@@ -211,6 +219,14 @@ impl Runtime {
     }
 
     pub fn convert(&self, value_type: &str, value: &Value) -> Result<Value, VmError> {
+        // Implicit scalar-float conversions mirror the oracle's dynamic
+        // Number passing: an existing scalar float stays unrounded (explicit
+        // float() casts go through `construct`, which rounds).
+        if value_type == "float" {
+            if let value @ Value::Float(_) = value {
+                return Ok(value.clone());
+            }
+        }
         if let (Some(base), Value::Array(values)) = (value_type.strip_suffix("[]"), value) {
             return values
                 .iter()
@@ -295,17 +311,50 @@ impl Runtime {
             }
         }
         match (left, right) {
-            (Value::Float(a), Value::Float(b)) => float_binary(operator, *a, *b).map(Value::Float),
-            (Value::Int(a), Value::Int(b)) => int_binary(operator, *a, *b).map(Value::Int),
-            (Value::Uint(a), Value::Uint(b)) => uint_binary(operator, *a, *b).map(Value::Uint),
-            (Value::Vec(a), Value::Vec(b)) => {
-                zip_map(a, b, |a, b| float_binary(operator, a, b)).map(Value::Vec)
+            (Value::Float(a), Value::Float(b)) => {
+                float_number_binary(operator, *a, *b).map(Value::Float)
             }
+            (Value::Int(a), Value::Int(b)) => int_binary(operator, *a, *b).map(Value::Int),
+            // The exempt JS-authored factories carry int-typed locals as raw
+            // f64 Numbers, so mixed scalar arithmetic stays in f64.
+            (Value::Float(a), Value::Int(b))
+                if operator == "+"
+                    || operator == "-"
+                    || operator == "*"
+                    || operator == "/"
+                    || operator == "%" =>
+            {
+                float_number_binary(operator, *a, f64::from(*b)).map(Value::Float)
+            }
+            (Value::Int(a), Value::Float(b))
+                if operator == "+"
+                    || operator == "-"
+                    || operator == "*"
+                    || operator == "/"
+                    || operator == "%" =>
+            {
+                float_number_binary(operator, f64::from(*a), *b).map(Value::Float)
+            }
+            // Remaining mixed-scalar operators are the JavaScript bitwise and
+            // shift coercions (`row >> (6 - gx)`, `cellX | 0`).
+            (Value::Float(a), Value::Int(b)) => int_binary(operator, *a as i32, *b).map(Value::Int),
+            (Value::Int(a), Value::Float(b)) => int_binary(operator, *a, *b as i32).map(Value::Int),
+            (Value::Uint(a), Value::Uint(b)) => {
+                if operator == ">>" && self.javascript_arithmetic_uint_shift {
+                    Ok(Value::Uint(((*a as i32) >> (*b & 31)) as u32))
+                } else {
+                    uint_binary(operator, *a, *b).map(Value::Uint)
+                }
+            }
+            (Value::Vec(a), Value::Vec(b)) => zip_map(a, b, |a, b| {
+                float_binary(operator, f64::from(a), f64::from(b))
+            })
+            .map(Value::Vec),
             (Value::Vec(a), Value::Float(b)) => {
-                map(a, |a| float_binary(operator, a, *b)).map(Value::Vec)
+                map(a, |a| float_binary(operator, f64::from(a), *b)).map(Value::Vec)
             }
             (Value::Float(a), Value::Vec(b)) => {
-                map(b, |b| float_binary(operator, *a, b)).map(Value::Vec)
+                map(b, |b| float_binary(operator, *a, f64::from(b))).map(Value::Vec)
             }
             (Value::IVec(a), Value::IVec(b)) => {
                 zip_map(a, b, |a, b| int_binary(operator, a, b)).map(Value::IVec)
@@ -326,7 +375,13 @@ impl Runtime {
                 map(b, |b| uint_binary(operator, *a, b)).map(Value::UVec)
             }
             (Value::Uint(a), Value::Int(b)) if operator == "<<" || operator == ">>" => {
-                uint_binary(operator, *a, *b as u32).map(Value::Uint)
+                if operator == ">>" && self.javascript_arithmetic_uint_shift {
+                    // The exempt program's factory uses `>>` on its uint-valued
+                    // Numbers (int32 arithmetic shift).
+                    Ok(Value::Uint(((*a as i32) >> (*b & 31)) as u32))
+                } else {
+                    uint_binary(operator, *a, *b as u32).map(Value::Uint)
+                }
             }
             (Value::UVec(a), Value::Int(b)) if operator == "<<" || operator == ">>" => {
                 map(a, |a| uint_binary(operator, a, *b as u32)).map(Value::UVec)
@@ -340,6 +395,9 @@ impl Runtime {
     }
 
     pub fn call_builtin(&mut self, name: &str, arguments: &[Value]) -> Result<Value, VmError> {
+        self.call_builtin_inner(name, arguments)
+    }
+    fn call_builtin_inner(&mut self, name: &str, arguments: &[Value]) -> Result<Value, VmError> {
         let arities: &[usize] = match name {
             "atan" => &[1, 2],
             "abs" | "acos" | "all" | "any" | "ceil" | "cos" | "dFdx" | "dFdy" | "degrees"
@@ -377,11 +435,11 @@ impl Runtime {
             "texelFetch" => self.texel_fetch(&arguments[0], &arguments[1]),
             "textureSize" => self.texture_size(&arguments[0]),
             "dFdx" | "dFdy" | "fwidth" => self.derivative(name, &arguments[0]),
-            "dot" => dot(&arguments[0], &arguments[1]).map(Value::Float),
-            "length" => length(&arguments[0]).map(Value::Float),
+            "dot" => dot(&arguments[0], &arguments[1]).map(|x| Value::Float(f64::from(x))),
+            "length" => length(&arguments[0]).map(|x| Value::Float(f64::from(x))),
             "distance" => difference(&arguments[0], &arguments[1])
                 .and_then(|v| length(&v))
-                .map(Value::Float),
+                .map(|x| Value::Float(f64::from(x))),
             "normalize" => normalize(&arguments[0]),
             "cross" => cross(&arguments[0], &arguments[1]),
             "reflect" => reflect(&arguments[0], &arguments[1]),
@@ -503,7 +561,7 @@ fn reduced_turn_sine(value: &Value) -> Result<Value, VmError> {
         })
         .collect::<Vec<_>>();
     Ok(if matches!(value, Value::Float(_)) {
-        Value::Float(output[0])
+        Value::Float(f64::from(output[0]))
     } else {
         Value::Vec(output)
     })
@@ -537,7 +595,7 @@ fn flatten(args: &[Value]) -> Vec<Value> {
     let mut out = Vec::new();
     for arg in args {
         match arg {
-            Value::Vec(v) => out.extend(v.iter().copied().map(Value::Float)),
+            Value::Vec(v) => out.extend(v.iter().copied().map(|x| Value::Float(f64::from(x)))),
             Value::IVec(v) => out.extend(v.iter().copied().map(Value::Int)),
             Value::UVec(v) => out.extend(v.iter().copied().map(Value::Uint)),
             Value::BVec(v) => out.extend(v.iter().copied().map(Value::Bool)),
@@ -569,7 +627,7 @@ fn build_vector<'a>(base: &str, values: impl Iterator<Item = &'a Value>) -> Resu
 }
 fn to_f32(v: &Value) -> Result<f32, VmError> {
     match v {
-        Value::Float(x) => Ok(*x),
+        Value::Float(x) => Ok(*x as f32),
         Value::Int(x) => Ok(*x as f32),
         Value::Uint(x) => Ok(*x as f32),
         Value::Bool(x) => Ok(if *x { 1.0 } else { 0.0 }),
@@ -600,7 +658,16 @@ fn to_bool(v: &Value) -> Result<bool, VmError> {
         _ => Err(type_error(format!("cannot convert {} to bool", v.kind()))),
     }
 }
-fn float_binary(op: &str, a: f32, b: f32) -> Result<f32, VmError> {
+fn float_binary(op: &str, a: f64, b: f64) -> Result<f32, VmError> {
+    // Vector lanes are float32-rounded after every operation, exactly like the
+    // oracle's Float32Array-backed stdlib vector math.
+    Ok(float_number_binary(op, a, b)? as f32)
+}
+
+/// Scalar float arithmetic mirrors the oracle's JavaScript Numbers: the
+/// result keeps full f64 precision (only explicit casts and vector stores
+/// round to float32).
+fn float_number_binary(op: &str, a: f64, b: f64) -> Result<f64, VmError> {
     Ok(match op {
         "+" => a + b,
         "-" => a - b,
@@ -609,6 +676,16 @@ fn float_binary(op: &str, a: f32, b: f32) -> Result<f32, VmError> {
         "%" => a % b,
         _ => return Err(type_error(format!("unsupported float operator {op}"))),
     })
+}
+
+fn numeric_scalar(v: &Value) -> Result<f64, VmError> {
+    match v {
+        Value::Float(x) => Ok(*x),
+        Value::Int(x) => Ok(f64::from(*x)),
+        Value::Uint(x) => Ok(f64::from(*x)),
+        Value::Bool(x) => Ok(if *x { 1.0 } else { 0.0 }),
+        _ => Err(type_error(format!("cannot convert {} to float", v.kind()))),
+    }
 }
 fn int_binary(op: &str, a: i32, b: i32) -> Result<i32, VmError> {
     Ok(match op {
@@ -629,7 +706,9 @@ fn int_binary(op: &str, a: i32, b: i32) -> Result<i32, VmError> {
         "|" => a | b,
         "^" => a ^ b,
         "<<" => a.wrapping_shl(b as u32 & 31),
-        ">>" => a.wrapping_shr(b as u32 & 31),
+        // JavaScript `>>` converts to int32 first, so a uint operand whose
+        // high bit is set shifts arithmetically, not logically.
+        ">>" => a >> (b & 31),
         _ => return Err(type_error(format!("unsupported int operator {op}"))),
     })
 }
@@ -650,7 +729,7 @@ fn uint_binary(op: &str, a: u32, b: u32) -> Result<u32, VmError> {
         "|" => a | b,
         "^" => a ^ b,
         "<<" => a.wrapping_shl(b & 31),
-        ">>" => a.wrapping_shr(b & 31),
+        ">>" => a >> (b & 31),
         _ => return Err(type_error(format!("unsupported uint operator {op}"))),
     })
 }
@@ -718,7 +797,7 @@ fn numeric_pairs(a: &Value, b: &Value) -> Result<Vec<(f64, f64)>, VmError> {
 }
 fn numeric_lanes(v: &Value) -> Result<Vec<f64>, VmError> {
     match v {
-        Value::Float(x) => Ok(vec![*x as f64]),
+        Value::Float(x) => Ok(vec![*x]),
         Value::Int(x) => Ok(vec![*x as f64]),
         Value::Uint(x) => Ok(vec![*x as f64]),
         Value::Vec(x) => Ok(x.iter().map(|x| *x as f64).collect()),
@@ -729,7 +808,7 @@ fn numeric_lanes(v: &Value) -> Result<Vec<f64>, VmError> {
 }
 fn float_lanes(v: &Value) -> Result<Vec<f32>, VmError> {
     match v {
-        Value::Float(x) => Ok(vec![*x]),
+        Value::Float(x) => Ok(vec![*x as f32]),
         Value::Vec(x) => Ok(x.clone()),
         _ => Err(type_error(format!(
             "expected float value, found {}",
@@ -863,10 +942,23 @@ fn dot(a: &Value, b: &Value) -> Result<f32, VmError> {
 }
 fn length(v: &Value) -> Result<f32, VmError> {
     let v = float_lanes(v)?;
-    Ok(v.iter()
-        .map(|x| f64::from(*x) * f64::from(*x))
-        .sum::<f64>()
-        .sqrt() as f32)
+    let result = if v.len() <= 1 {
+        // Scalar length has no accumulation to round.
+        v.iter()
+            .map(|x| f64::from(*x) * f64::from(*x))
+            .sum::<f64>()
+            .sqrt() as f32
+    } else {
+        // The CPU oracle's length is F32(sqrt(dot(value, value))) with dot's
+        // per-term f32 FMA rounding; mirror that provenance exactly instead of
+        // accumulating the exact f64 squares.
+        let mut sum = 0.0f32;
+        for x in &v {
+            sum = (f64::from(*x) * f64::from(*x) + f64::from(sum)) as f32;
+        }
+        sum.sqrt()
+    };
+    Ok(result)
 }
 fn normalize(v: &Value) -> Result<Value, VmError> {
     let lanes = float_lanes(v)?;
@@ -880,7 +972,7 @@ fn normalize(v: &Value) -> Result<Value, VmError> {
     }
     let out: Vec<f32> = lanes.iter().map(|x| *x / mag).collect();
     Ok(if out.len() == 1 && matches!(v, Value::Float(_)) {
-        Value::Float(out[0])
+        Value::Float(f64::from(out[0]))
     } else {
         Value::Vec(out)
     })
@@ -898,13 +990,15 @@ fn cross(a: &Value, b: &Value) -> Result<Value, VmError> {
     ]))
 }
 fn reflect(i: &Value, n: &Value) -> Result<Value, VmError> {
-    let scale = Value::Float(2.0 * dot(n, i)?);
+    let scale = Value::Float(f64::from(2.0 * dot(n, i)?));
     let r = Runtime::new();
     r.binary("-", i, &r.binary("*", n, &scale)?)
 }
 fn refract(i: &Value, n: &Value, eta: &Value) -> Result<Value, VmError> {
-    let e = to_f32(eta)?;
-    let d = dot(n, i)?;
+    // The oracle keeps eta, the k factor and the refraction scale as f64
+    // Numbers and only rounds at the per-lane f32 vector multiplies.
+    let e = numeric_scalar(eta)?;
+    let d = f64::from(dot(n, i)?);
     let k = 1.0 - e * e * (1.0 - d * d);
     if k < 0.0 {
         return zero_like(i);
@@ -933,14 +1027,30 @@ fn relational(name: &str, a: &Value, b: &Value) -> Result<Value, VmError> {
     Ok(Value::BVec(v))
 }
 fn component_builtin(name: &str, args: &[Value]) -> Result<Value, VmError> {
-    let widths: Vec<Vec<f32>> = args.iter().map(float_lanes).collect::<Result<_, _>>()?;
+    // Scalar operands keep their f64 Number precision per lane; only vector
+    // lanes are float32 values. Rounding a scalar bound to f32 here diverges
+    // from the oracle's ternary component() helper.
+    let widths: Vec<Vec<f64>> = args
+        .iter()
+        .map(|arg| match arg {
+            Value::Float(x) => Ok(vec![*x]),
+            Value::Vec(values) => Ok(values.iter().map(|x| f64::from(*x)).collect()),
+            Value::Int(x) => Ok(vec![f64::from(*x)]),
+            Value::Uint(x) => Ok(vec![f64::from(*x)]),
+            Value::Bool(x) => Ok(vec![if *x { 1.0 } else { 0.0 }]),
+            _ => Err(type_error(format!(
+                "cannot use {} as a float operand",
+                arg.kind()
+            ))),
+        })
+        .collect::<Result<_, _>>()?;
     let width = widths.iter().map(Vec::len).max().unwrap_or(1);
     if widths.iter().any(|v| v.len() != 1 && v.len() != width) {
         return Err(type_error(format!("{name} argument width mismatch")));
     }
     let mut out = Vec::with_capacity(width);
     for lane in 0..width {
-        let get = |i: usize| widths[i][if widths[i].len() == 1 { 0 } else { lane }] as f64;
+        let get = |i: usize| widths[i][if widths[i].len() == 1 { 0 } else { lane }];
         let x = match name {
             "abs" => get(0).abs(),
             "acos" => get(0).acos(),
@@ -972,6 +1082,7 @@ fn component_builtin(name: &str, args: &[Value]) -> Result<Value, VmError> {
             "sign" => {
                 let value = get(0);
                 if value == 0.0 || value.is_nan() {
+                    // Math.sign preserves -0 and returns NaN for NaN.
                     value
                 } else if value < 0.0 {
                     -1.0
@@ -999,7 +1110,7 @@ fn component_builtin(name: &str, args: &[Value]) -> Result<Value, VmError> {
         out.push(x as f32);
     }
     Ok(if width == 1 && matches!(args[0], Value::Float(_)) {
-        Value::Float(out[0])
+        Value::Float(f64::from(out[0]))
     } else {
         Value::Vec(out)
     })
@@ -1127,9 +1238,9 @@ fn isnan_value(v: &Value) -> Result<Value, VmError> {
 }
 fn bitcast_float_uint(v: &Value, to_uint: bool) -> Result<Value, VmError> {
     match (v, to_uint) {
-        (Value::Float(x), true) => Ok(Value::Uint(x.to_bits())),
+        (Value::Float(x), true) => Ok(Value::Uint((*x as f32).to_bits())),
         (Value::Vec(x), true) => Ok(Value::UVec(x.iter().map(|x| x.to_bits()).collect())),
-        (Value::Uint(x), false) => Ok(Value::Float(f32::from_bits(*x))),
+        (Value::Uint(x), false) => Ok(Value::Float(f64::from(f32::from_bits(*x)))),
         (Value::UVec(x), false) => Ok(Value::Vec(x.iter().map(|x| f32::from_bits(*x)).collect())),
         _ => Err(type_error("invalid bit cast")),
     }

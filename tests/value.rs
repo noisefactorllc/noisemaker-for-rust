@@ -12,9 +12,10 @@ fn values_store_float_lanes_at_f32_boundaries_and_copy_by_value() {
 
     let mut copy = value.clone();
     copy.write_swizzle("x", Value::Float(9.0)).unwrap();
+    // Lane reads widen the exact f32 value into the f64 Number storage.
     assert_eq!(
         value.read_swizzle("x").unwrap(),
-        Value::Float(1.0_f32 / 3.0)
+        Value::Float(f64::from(1.0_f32 / 3.0))
     );
     assert_eq!(copy.read_swizzle("xy").unwrap(), Value::Vec(vec![9.0, 2.0]));
 }

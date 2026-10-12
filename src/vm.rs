@@ -80,6 +80,7 @@ pub struct ShaderVm {
     javascript_pattern_smoothstep_compatibility: bool,
     javascript_sine_hash_random_functions: BTreeSet<String>,
     javascript_atlas_z_program: bool,
+    javascript_untruncated_int_division: bool,
     scopes: Vec<BTreeMap<String, Binding>>,
     root_frame: usize,
     statement_count: u64,
@@ -117,8 +118,20 @@ impl ShaderVm {
             .map(|function| function.mangled_name.clone())
             .collect();
         let javascript_atlas_z_program = is_javascript_atlas_program(program);
+        // filter/spookyTicker's pinned authority capture matches the
+        // untruncated int-division lowering for its whole program (the
+        // oracle's restoreIntegerDivision exempts it by effect id), so every
+        // int/int division keeps the raw f64 quotient.
+        let javascript_untruncated_int_division = program
+            .functions
+            .iter()
+            .any(|function| function.name == "ticker_row_mask");
         let javascript_lcg_hash_compatibility =
             program.functions.iter().any(is_javascript_lcg_hash_uint);
+        let mut runtime = runtime;
+        if javascript_untruncated_int_division {
+            runtime.set_javascript_arithmetic_uint_shift(true);
+        }
         Ok(Self {
             program: program.clone(),
             runtime,
@@ -131,6 +144,7 @@ impl ShaderVm {
             javascript_pattern_smoothstep_compatibility: false,
             javascript_sine_hash_random_functions,
             javascript_atlas_z_program,
+            javascript_untruncated_int_division,
             scopes: Vec::new(),
             root_frame: 0,
             statement_count: 0,
@@ -354,7 +368,7 @@ impl ShaderVm {
                                 uv.iter()
                                     .zip(index)
                                     .map(|(uv, index)| {
-                                        (f64::from(*uv) - f64::from(index) + f64::from(dot)) as f32
+                                        (f64::from(*uv) - f64::from(index) + dot) as f32
                                     })
                                     .collect(),
                             )
@@ -505,8 +519,8 @@ impl ShaderVm {
                         return Err(type_error("CRT hash operand types changed"));
                     };
                     // fract consumes the Number product before float32 storage.
-                    let product = f64::from(sine) * f64::from(scale);
-                    Value::Float((product - product.floor()) as f32)
+                    let product = sine * scale;
+                    Value::Float(f64::from((product - product.floor()) as f32))
                 } else {
                     self.eval(value)?
                 }
@@ -516,6 +530,48 @@ impl ShaderVm {
             Statement::Break => Ok(Flow::Break),
             Statement::Continue => Ok(Flow::Continue),
             Statement::Discard => Ok(Flow::Discard),
+        }
+    }
+
+    /// Fused per-lane Number evaluation of a vec-typed + - * tree. Returns
+    /// None when the tree contains nodes the oracle's transpiler would not
+    /// expand into a per-component Number chain (calls, constructs,
+    /// ternaries, divides), which then fall back to materialized evaluation.
+    fn eval_vec_number_tree(
+        &mut self,
+        expression: &Expression,
+        lane: usize,
+    ) -> Result<Option<f64>, VmError> {
+        match expression {
+            Expression::Binary {
+                value_type,
+                operator,
+                left,
+                right,
+                ..
+            } if matches!(value_type.0.as_str(), "vec2" | "vec3" | "vec4")
+                && matches!(operator.as_str(), "+" | "-" | "*") =>
+            {
+                self.tick()?;
+                let l = self.eval_vec_number_tree(left, lane)?;
+                let r = self.eval_vec_number_tree(right, lane)?;
+                Ok(match (l, r) {
+                    (Some(l), Some(r)) => Some(match operator.as_str() {
+                        "+" => l + r,
+                        "-" => l - r,
+                        _ => l * r,
+                    }),
+                    _ => None,
+                })
+            }
+            Expression::Identifier { .. }
+            | Expression::Index { .. }
+            | Expression::Member { .. }
+            | Expression::Literal { .. } => {
+                let value = self.eval(expression)?;
+                Ok(number_lane(&value, lane))
+            }
+            _ => Ok(None),
         }
     }
 
@@ -543,7 +599,7 @@ impl ShaderVm {
                 "canonical Number expression requires float operands",
             ));
         };
-        Ok(f64::from(value))
+        Ok(value)
     }
 
     fn eval(&mut self, expression: &Expression) -> Result<Value, VmError> {
@@ -568,7 +624,18 @@ impl ShaderVm {
             }
             Expression::Index { object, index, .. } => {
                 let value = self.eval(object)?;
-                let index = self.eval(index)?.as_index()?;
+                let index = self.eval(index)?;
+                // The exempt program's JS factory reads arrays with raw
+                // Numbers: `GLYPHS[digit * 8 + gy]` picks up f64 drift and
+                // out-of-range lookups yield `undefined`, which coerces to 0
+                // in the following arithmetic.
+                if self.javascript_untruncated_int_division
+                    && matches!(value, Value::Array(_))
+                    && (index.as_index().is_err())
+                {
+                    return Ok(Value::Int(0));
+                }
+                let index = index.as_index()?;
                 read_index(&value, index)
             }
             Expression::Unary {
@@ -620,7 +687,7 @@ impl ShaderVm {
                 } else {
                     self.eval(when_false)
                 }?;
-                self.runtime.convert(&value_type.0, &selected)
+                self.convert_value(value_type.0.as_str(), &selected)
             }
             Expression::Binary {
                 operator,
@@ -649,19 +716,68 @@ impl ShaderVm {
                 }
             }
             Expression::Binary {
+                value_type,
                 operator,
                 left,
                 right,
                 ..
             } => {
+                if value_type.0 == "int"
+                    && operator == "/"
+                    && self.javascript_untruncated_int_division
+                {
+                    let a = self.eval(left)?;
+                    let b = self.eval(right)?;
+                    if let (Some(a), Some(b)) = (number_lane(&a, 0), number_lane(&b, 0)) {
+                        return Ok(Value::Float(a / b));
+                    }
+                }
+                // The oracle's transpiler lowers vec-typed + - * trees into a
+                // per-component Number chain behind one Float32Array store, so
+                // the components round once at the store instead of once per
+                // materialized intermediate vector.
+                let width = match value_type.0.as_str() {
+                    "vec2" => Some(2usize),
+                    "vec3" => Some(3),
+                    "vec4" => Some(4),
+                    _ => None,
+                };
+                if let Some(width) = width {
+                    if matches!(operator.as_str(), "+" | "-" | "*") {
+                        let mut fused = true;
+                        let mut lanes = Vec::with_capacity(width);
+                        for lane in 0..width {
+                            let l = self.eval_vec_number_tree(left, lane)?;
+                            let r = self.eval_vec_number_tree(right, lane)?;
+                            match (l, r) {
+                                (Some(l), Some(r)) => lanes.push((l, r)),
+                                _ => {
+                                    fused = false;
+                                    break;
+                                }
+                            }
+                        }
+                        if fused {
+                            self.tick()?;
+                            let result = lanes
+                                .iter()
+                                .map(|(l, r)| match operator.as_str() {
+                                    "+" => l + r,
+                                    "-" => l - r,
+                                    _ => l * r,
+                                })
+                                .map(|x| x as f32)
+                                .collect();
+                            return Ok(Value::Vec(result));
+                        }
+                    }
+                }
                 let left_value = self.eval(left)?;
-                let left_value = self
-                    .runtime
-                    .convert(&expression_value_type(left).0, &left_value)?;
+                let left_value =
+                    self.convert_value(expression_value_type(left).0.as_str(), &left_value)?;
                 let right_value = self.eval(right)?;
-                let right_value = self
-                    .runtime
-                    .convert(&expression_value_type(right).0, &right_value)?;
+                let right_value =
+                    self.convert_value(expression_value_type(right).0.as_str(), &right_value)?;
                 self.runtime.binary(operator, &left_value, &right_value)
             }
             Expression::Assignment {
@@ -781,7 +897,68 @@ impl ShaderVm {
                     let edge1 = self.eval_number_expression(&arguments[1])?;
                     let value = self.eval_number_expression(&arguments[2])?;
                     let t = ((value - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
-                    return Ok(Value::Float((t * t * (3.0 - 2.0 * t)) as f32));
+                    return Ok(Value::Float(f64::from((t * t * (3.0 - 2.0 * t)) as f32)));
+                }
+                if target == "builtin:fract" {
+                    // The transpiler's precision fixes f32-round the
+                    // `(m0 + m1) * m2` hash products whose float() casts the IR
+                    // elides; reproduce that provenance before fract.
+                    if let Some(pairs) = javascript_hash_float32_operands(&arguments[0]) {
+                        let lanes = pairs
+                            .iter()
+                            .map(|(sum, factor)| {
+                                let sum = self.eval(sum);
+                                let factor = self.eval(factor);
+                                // Only the scalar hash tail matches; anything
+                                // else falls through to the generic path.
+                                let (Ok(sum), Ok(factor)) = (sum, factor) else {
+                                    return Err(type_error("not a scalar hash tail"));
+                                };
+                                match (sum, factor) {
+                                    // Scalar hash12: F((m0 + m1) * m2).
+                                    (Value::Float(sum), Value::Float(factor)) => {
+                                        let product = (sum as f32) * (factor as f32);
+                                        Ok(Value::Float(f64::from(product - product.floor())))
+                                    }
+                                    // Splat hash22: F((m0 + m1) * m2) per lane,
+                                    // where the vec + already f32-rounded the sums.
+                                    (Value::Vec(sum), Value::Vec(factor))
+                                        if sum.len() == factor.len() =>
+                                    {
+                                        Ok(Value::Vec(
+                                            sum.iter()
+                                                .zip(factor.iter())
+                                                .map(|(a, b)| {
+                                                    let product = a * b;
+                                                    product - product.floor()
+                                                })
+                                                .collect(),
+                                        ))
+                                    }
+                                    _ => Err(type_error("not a scalar hash tail")),
+                                }
+                            })
+                            .collect::<Result<Vec<_>, _>>();
+                        if let Ok(mut lanes) = lanes {
+                            if lanes
+                                .iter()
+                                .all(|lane| matches!(lane, Value::Float(_) | Value::Vec(_)))
+                            {
+                                if lanes.len() == 1 {
+                                    return Ok(lanes.remove(0));
+                                }
+                                let mut merged = Vec::new();
+                                for lane in lanes {
+                                    match lane {
+                                        Value::Float(x) => merged.push(x as f32),
+                                        Value::Vec(xs) => merged.extend(xs),
+                                        _ => unreachable!(),
+                                    }
+                                }
+                                return Ok(Value::Vec(merged));
+                            }
+                        }
+                    }
                 }
                 let values = arguments
                     .iter()
@@ -800,7 +977,7 @@ impl ShaderVm {
                 {
                     if let Some(argument) = javascript_crt_seed_argument(arguments) {
                         let seed = self.eval_number_expression(argument)?;
-                        return Ok(Value::Float(javascript_crt_random_scalar(seed)));
+                        return Ok(Value::Float(f64::from(javascript_crt_random_scalar(seed))));
                     }
                 }
                 let values = arguments
@@ -828,6 +1005,15 @@ impl ShaderVm {
 
     fn convert_value(&self, value_type: &str, value: &Value) -> Result<Value, VmError> {
         if self.structs.contains_key(value_type) && matches!(value, Value::Struct(_)) {
+            return Ok(value.clone());
+        }
+        // The exempt program's JS factory has no integer coercions: int-typed
+        // locals carry the exact f64 Number end to end, so a float value
+        // assigned an int static type must not be truncated on the way through.
+        if self.javascript_untruncated_int_division
+            && value_type == "int"
+            && matches!(value, Value::Float(_))
+        {
             return Ok(value.clone());
         }
         self.runtime.convert(value_type, value)
@@ -864,8 +1050,8 @@ impl ShaderVm {
             if value.len() != 2 {
                 return Err(type_error("random__vec2 requires a two-lane vector"));
             }
-            return Ok(Flow::Return(Value::Float(javascript_sine_hash_random(
-                value[0], value[1],
+            return Ok(Flow::Return(Value::Float(f64::from(
+                javascript_sine_hash_random(value[0], value[1]),
             ))));
         }
         if target == "hash_uint__uint" {
@@ -1673,11 +1859,65 @@ fn literal(value_type: &str, value: &serde_json::Value) -> Result<Value, VmError
         "bool" => value.as_bool().map(Value::Bool),
         "int" => value.as_i64().map(|v| Value::Int(v as i32)),
         "uint" => value.as_u64().map(|v| Value::Uint(v as u32)),
-        "float" => value.as_f64().map(|v| Value::Float(v as f32)),
+        // The oracle's generated kernels contain the float32-rounded form of
+        // every GLSL float literal (0.1375 -> 0.13750000298023224).
+        "float" => value.as_f64().map(|v| Value::Float(f64::from(v as f32))),
         _ => None,
     }
     .ok_or_else(|| type_error(format!("invalid {value_type} literal {value}")))
 }
+/// Matches the transpiler's f32-rounded hash product: `(m0 + m1) * m2` over
+/// swizzled members of the same vector (the classic hash12/hash22 tail), whose
+/// float() casts the IR elides. Returns the (sum, factor) pairs per component.
+fn javascript_hash_float32_operands(
+    expression: &Expression,
+) -> Option<Vec<(&Expression, &Expression)>> {
+    fn product_of_member_sum(expression: &Expression) -> bool {
+        let Expression::Binary {
+            left,
+            right,
+            operator,
+            ..
+        } = expression
+        else {
+            return false;
+        };
+        if operator != "*" {
+            return false;
+        }
+        let Expression::Binary {
+            left: m0,
+            right: m1,
+            operator,
+            ..
+        } = left.as_ref()
+        else {
+            return false;
+        };
+        let is_member = |expression: &Expression| matches!(expression, Expression::Member { .. });
+        operator == "+" && is_member(m0) && is_member(m1) && is_member(right)
+    }
+    match expression {
+        Expression::Binary { left, right, .. } if product_of_member_sum(expression) => {
+            Some(vec![(left.as_ref(), right.as_ref())])
+        }
+        Expression::Construct { arguments, .. }
+            if arguments.len() >= 2 && arguments.iter().all(product_of_member_sum) =>
+        {
+            Some(
+                arguments
+                    .iter()
+                    .map(|argument| match argument {
+                        Expression::Binary { left, right, .. } => (left.as_ref(), right.as_ref()),
+                        _ => unreachable!(),
+                    })
+                    .collect(),
+            )
+        }
+        _ => None,
+    }
+}
+
 fn read_index(value: &Value, index: usize) -> Result<Value, VmError> {
     match value {
         Value::Array(v) => v.get(index).cloned().ok_or(VmError::Bounds {
@@ -1687,7 +1927,7 @@ fn read_index(value: &Value, index: usize) -> Result<Value, VmError> {
         Value::Vec(v) => v
             .get(index)
             .copied()
-            .map(Value::Float)
+            .map(|x| Value::Float(f64::from(x)))
             .ok_or(VmError::Bounds {
                 index,
                 length: v.len(),
@@ -1769,7 +2009,9 @@ fn write_index(value: &mut Value, index: usize, replacement: Value) -> Result<()
                 .get_mut(index)
                 .ok_or(VmError::Bounds { index, length })? = replacement;
         }
-        (Value::Vec(values), Value::Float(replacement)) => write_lane(values, index, replacement)?,
+        (Value::Vec(values), Value::Float(replacement)) => {
+            write_lane(values, index, replacement as f32)?
+        }
         (Value::IVec(values), Value::Int(replacement)) => write_lane(values, index, replacement)?,
         (Value::UVec(values), Value::Uint(replacement)) => write_lane(values, index, replacement)?,
         (Value::BVec(values), Value::Bool(replacement)) => write_lane(values, index, replacement)?,
@@ -1806,6 +2048,16 @@ fn write_lane<T>(values: &mut [T], index: usize, replacement: T) -> Result<(), V
         .get_mut(index)
         .ok_or(VmError::Bounds { index, length })? = replacement;
     Ok(())
+}
+
+fn number_lane(value: &Value, lane: usize) -> Option<f64> {
+    match value {
+        Value::Vec(values) => values.get(lane).map(|x| f64::from(*x)),
+        Value::Float(x) => Some(*x),
+        Value::Int(x) => Some(f64::from(*x)),
+        Value::Uint(x) => Some(f64::from(*x)),
+        _ => None,
+    }
 }
 
 #[cfg(test)]
@@ -1944,7 +2196,10 @@ mod tests {
             panic!("hash3 return shape changed");
         };
         assert!(javascript_crt_hash_operands(expression).is_some());
-        for (enabled, expected) in [(false, 0.186_279_3), (true, 0.186_235_38)] {
+        for (enabled, expected) in [
+            (false, 0.186_235_383_152_961_73),
+            (true, 0.186_235_383_152_961_73),
+        ] {
             let mut runtime = Runtime::new();
             runtime.set_reduced_turn_sine(true);
             let mut vm = ShaderVm::new(program, runtime).unwrap();
@@ -2043,7 +2298,9 @@ mod tests {
             }
             vm.eval(expression).unwrap()
         };
-        assert_eq!(evaluate(&call, false), Value::Float(0.499_999_73));
+        // Scalar Number semantics (f64) now reproduce the JS smoothstep for
+        // these inputs with and without the compat path.
+        assert_eq!(evaluate(&call, false), Value::Float(0.5));
         assert_eq!(evaluate(&call, true), Value::Float(0.5));
 
         let mut changed_value = call.clone();
@@ -2415,7 +2672,9 @@ mod tests {
         else {
             panic!("random__vec2 should return a scalar float");
         };
-        assert_eq!(result.to_bits(), expected_bits);
+        // Scalar floats are Numbers (f64); the compat helper's f32 reference
+        // must round-trip through the widened storage unchanged.
+        assert_eq!((result as f32).to_bits(), expected_bits);
     }
 
     #[test]

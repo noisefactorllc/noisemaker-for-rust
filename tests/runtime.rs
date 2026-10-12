@@ -42,10 +42,22 @@ fn integer_ops_wrap_and_float_division_preserves_signed_zero_semantics() {
             .unwrap(),
         Value::Uint(u32::MAX.wrapping_mul(2))
     );
+    // Transpiled-kernel provenance shifts uints logically (the transpiler
+    // emits js `>>>`). The default runtime therefore shifts logically...
     assert_eq!(
         rt.binary(">>", &Value::Uint(0x8000_0000), &Value::Uint(16))
             .unwrap(),
-        Value::Uint(0x8000)
+        Value::Uint(0x0000_8000)
+    );
+    // ...while the hand-written factories shift with js `>>` (int32-first),
+    // reproduced by the arithmetic-uint-shift provenance flag.
+    let mut flagged = runtime();
+    flagged.set_javascript_arithmetic_uint_shift(true);
+    assert_eq!(
+        flagged
+            .binary(">>", &Value::Uint(0x8000_0000), &Value::Uint(16))
+            .unwrap(),
+        Value::Uint(0xFFFF_8000)
     );
     let positive = rt
         .binary("/", &Value::Float(1.0), &Value::Float(0.0))
@@ -53,8 +65,8 @@ fn integer_ops_wrap_and_float_division_preserves_signed_zero_semantics() {
     let negative = rt
         .binary("/", &Value::Float(1.0), &Value::Float(-0.0))
         .unwrap();
-    assert_eq!(positive, Value::Float(f32::INFINITY));
-    assert_eq!(negative, Value::Float(f32::NEG_INFINITY));
+    assert_eq!(positive, Value::Float(f64::INFINITY));
+    assert_eq!(negative, Value::Float(f64::NEG_INFINITY));
 }
 
 #[test]

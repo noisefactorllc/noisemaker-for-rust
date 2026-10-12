@@ -9,7 +9,9 @@ pub enum Value {
     Bool(bool),
     Int(i32),
     Uint(u32),
-    Float(f32),
+    /// Scalar floats mirror the CPU oracle's JavaScript Numbers (f64);
+    /// only vector lanes are float32-rounded.
+    Float(f64),
     BVec(Vec<bool>),
     IVec(Vec<i32>),
     UVec(Vec<u32>),
@@ -60,7 +62,9 @@ impl Value {
     pub fn read_swizzle(&self, swizzle: &str) -> Result<Self, VmError> {
         let indices = swizzle_indices(swizzle)?;
         match self {
-            Self::Vec(values) => swizzle_read(values, &indices, Self::Float, Self::Vec),
+            Self::Vec(values) => {
+                swizzle_read(values, &indices, |x| Self::Float(f64::from(x)), Self::Vec)
+            }
             Self::IVec(values) => swizzle_read(values, &indices, Self::Int, Self::IVec),
             Self::UVec(values) => swizzle_read(values, &indices, Self::Uint, Self::UVec),
             Self::BVec(values) => swizzle_read(values, &indices, Self::Bool, Self::BVec),
@@ -71,7 +75,7 @@ impl Value {
     pub fn write_swizzle(&mut self, swizzle: &str, value: Self) -> Result<(), VmError> {
         let indices = swizzle_indices(swizzle)?;
         match (self, value) {
-            (Self::Vec(base), Self::Float(value)) => swizzle_write(base, &indices, &[value]),
+            (Self::Vec(base), Self::Float(value)) => swizzle_write(base, &indices, &[value as f32]),
             (Self::Vec(base), Self::Vec(value)) => swizzle_write(base, &indices, &value),
             (Self::IVec(base), Self::Int(value)) => swizzle_write(base, &indices, &[value]),
             (Self::IVec(base), Self::IVec(value)) => swizzle_write(base, &indices, &value),
@@ -165,6 +169,13 @@ impl Value {
         match self {
             Self::Int(value) if *value >= 0 => Ok(*value as usize),
             Self::Uint(value) => Ok(*value as usize),
+            // JavaScript array indexing accepts integral Numbers (e.g. the
+            // exempt program's `digit * 8 + gy` stays a Number end to end).
+            Self::Float(value)
+                if value.fract() == 0.0 && *value >= 0.0 && *value <= 4_503_599_627_370_496.0 =>
+            {
+                Ok(*value as usize)
+            }
             _ => Err(type_error(format!(
                 "expected non-negative integer index, found {}",
                 self.kind()

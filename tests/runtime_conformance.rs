@@ -1,6 +1,6 @@
 use noisemaker_cpu::{FilterMode, Runtime, Surface, Value};
 
-fn scalar(runtime: &mut Runtime, name: &str, arguments: &[Value]) -> f32 {
+fn scalar(runtime: &mut Runtime, name: &str, arguments: &[Value]) -> f64 {
     match runtime.call_builtin(name, arguments).unwrap() {
         Value::Float(value) => value,
         value => panic!("{name} returned {}", value.kind()),
@@ -14,7 +14,7 @@ fn vector(runtime: &mut Runtime, name: &str, arguments: &[Value]) -> Vec<f32> {
     }
 }
 
-fn close(actual: f32, expected: f32) {
+fn close(actual: f64, expected: f64) {
     assert!(
         (actual - expected).abs() <= 2.0e-6,
         "{actual:?} != {expected:?}"
@@ -26,15 +26,15 @@ fn standard_sine_matches_javascript_math_sin_then_float32() {
     let mut runtime = Runtime::new();
     assert_eq!(
         scalar(&mut runtime, "sin", &[Value::Float(1.0)]),
-        f32::from_bits(0x3f57_6aa4)
+        f64::from(f32::from_bits(0x3f57_6aa4))
     );
     assert_eq!(
         scalar(
             &mut runtime,
             "sin",
-            &[Value::Float(f32::from_bits(0x4308_d58e))]
+            &[Value::Float(f64::from(f32::from_bits(0x4308_d58e)))]
         ),
-        f32::from_bits(0xbf7c_17fb)
+        f64::from(f32::from_bits(0xbf7c_17fb))
     );
 }
 
@@ -43,16 +43,16 @@ fn float_component_builtins_match_sibling_edge_semantics() {
     let rt = &mut Runtime::new();
     assert_eq!(scalar(rt, "abs", &[Value::Float(-3.0)]), 3.0);
     assert_eq!(
-        scalar(rt, "abs", &[Value::Float(f32::NEG_INFINITY)]),
-        f32::INFINITY
+        scalar(rt, "abs", &[Value::Float(f64::NEG_INFINITY)]),
+        f64::INFINITY
     );
     close(
         scalar(rt, "acos", &[Value::Float(0.5)]),
-        std::f32::consts::FRAC_PI_3,
+        f64::from(std::f32::consts::FRAC_PI_3),
     );
     close(
         scalar(rt, "atan", &[Value::Float(1.0), Value::Float(-1.0)]),
-        3.0 * std::f32::consts::PI / 4.0,
+        f64::from(3.0 * std::f32::consts::PI / 4.0),
     );
     assert_eq!(scalar(rt, "ceil", &[Value::Float(-1.25)]), -1.0);
     assert_eq!(
@@ -67,16 +67,20 @@ fn float_component_builtins_match_sibling_edge_semantics() {
         scalar(
             rt,
             "clamp",
-            &[Value::Float(f32::NAN), Value::Float(0.0), Value::Float(1.0)]
+            &[Value::Float(f64::NAN), Value::Float(0.0), Value::Float(1.0)]
         )
         .is_nan()
     );
     close(
-        scalar(rt, "cos", &[Value::Float(std::f32::consts::PI)]),
+        scalar(rt, "cos", &[Value::Float(f64::from(std::f32::consts::PI))]),
         -1.0,
     );
     close(
-        scalar(rt, "degrees", &[Value::Float(std::f32::consts::PI)]),
+        scalar(
+            rt,
+            "degrees",
+            &[Value::Float(f64::from(std::f32::consts::PI))],
+        ),
         180.0,
     );
     assert_eq!(scalar(rt, "exp", &[Value::Float(0.0)]), 1.0);
@@ -88,10 +92,13 @@ fn float_component_builtins_match_sibling_edge_semantics() {
             .unwrap(),
         Value::BVec(vec![true, false, false])
     );
-    close(scalar(rt, "log", &[Value::Float(std::f32::consts::E)]), 1.0);
+    close(
+        scalar(rt, "log", &[Value::Float(f64::from(std::f32::consts::E))]),
+        1.0,
+    );
     assert_eq!(scalar(rt, "log2", &[Value::Float(8.0)]), 3.0);
-    assert!(scalar(rt, "min", &[Value::Float(f32::NAN), Value::Float(1.0)]).is_nan());
-    assert!(scalar(rt, "max", &[Value::Float(1.0), Value::Float(f32::NAN)]).is_nan());
+    assert!(scalar(rt, "min", &[Value::Float(f64::NAN), Value::Float(1.0)]).is_nan());
+    assert!(scalar(rt, "max", &[Value::Float(1.0), Value::Float(f64::NAN)]).is_nan());
     assert_eq!(
         scalar(
             rt,
@@ -110,29 +117,33 @@ fn float_component_builtins_match_sibling_edge_semantics() {
     );
     close(
         scalar(rt, "radians", &[Value::Float(180.0)]),
-        std::f32::consts::PI,
+        f64::from(std::f32::consts::PI),
     );
     assert_eq!(scalar(rt, "round", &[Value::Float(-1.5)]), -1.0);
     assert_eq!(scalar(rt, "round", &[Value::Float(1.5)]), 2.0);
     assert_eq!(scalar(rt, "sign", &[Value::Float(-3.0)]), -1.0);
     assert_eq!(
-        scalar(rt, "sign", &[Value::Float(-0.0)]).to_bits(),
+        (scalar(rt, "sign", &[Value::Float(-0.0)]) as f32).to_bits(),
         (-0.0_f32).to_bits()
     );
     close(
-        scalar(rt, "sin", &[Value::Float(std::f32::consts::FRAC_PI_2)]),
+        scalar(
+            rt,
+            "sin",
+            &[Value::Float(f64::from(std::f32::consts::FRAC_PI_2))],
+        ),
         1.0,
     );
     let large_angle = 12_345.678_f32;
-    let standard = scalar(rt, "sin", &[Value::Float(large_angle)]);
+    let standard = scalar(rt, "sin", &[Value::Float(f64::from(large_angle))]);
     assert_eq!(
-        standard.to_bits(),
+        (standard as f32).to_bits(),
         (f64::from(large_angle).sin() as f32).to_bits()
     );
     let turns = large_angle * (1.0_f32 / std::f32::consts::TAU);
     let reduced =
         (f64::from(turns - turns.floor()) * f64::from(std::f32::consts::TAU)).sin() as f32;
-    assert_ne!(standard.to_bits(), reduced.to_bits());
+    assert_ne!((standard as f32).to_bits(), reduced.to_bits());
     assert_eq!(
         scalar(
             rt,
@@ -302,10 +313,21 @@ fn integer_bit_half_and_matrix_operations_are_bit_exact() {
         rt.binary("<<", &Value::Uint(1), &Value::Int(32)).unwrap(),
         Value::Uint(1)
     );
+    // Transpiled-kernel provenance shifts uints logically (js `>>>`).
     assert_eq!(
         rt.binary(">>", &Value::Uint(0x8000_0000), &Value::Int(16))
             .unwrap(),
-        Value::Uint(0x8000)
+        Value::Uint(0x0000_8000)
+    );
+    // Hand-written factories shift with js `>>` (int32-first arithmetic),
+    // selected by the arithmetic-uint-shift provenance flag.
+    let mut flagged = Runtime::new();
+    flagged.set_javascript_arithmetic_uint_shift(true);
+    assert_eq!(
+        flagged
+            .binary(">>", &Value::Uint(0x8000_0000), &Value::Int(16))
+            .unwrap(),
+        Value::Uint(0xFFFF_8000)
     );
     assert_eq!(
         rt.call_builtin("abs", &[Value::Int(i32::MIN)]).unwrap(),

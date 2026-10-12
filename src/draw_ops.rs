@@ -42,7 +42,7 @@ pub fn is_draw_pass(pass: &RenderPass) -> bool {
 
 fn scalar(uniforms: &BTreeMap<String, Value>, name: &str) -> Result<f32, RenderError> {
     match uniforms.get(name) {
-        Some(Value::Float(value)) => Ok(*value),
+        Some(Value::Float(value)) => Ok(*value as f32),
         Some(Value::Int(value)) => Ok(*value as f32),
         Some(Value::Uint(value)) => Ok(*value as f32),
         value => Err(RenderError::InvalidGraph {

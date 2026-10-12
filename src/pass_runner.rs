@@ -60,11 +60,18 @@ pub fn canonical_uniforms(
         ("resolution".into(), resolution.clone()),
         ("fullResolution".into(), resolution),
         ("tileOffset".into(), Value::Vec(vec![0.0, 0.0])),
-        ("aspectRatio".into(), Value::Float(aspect_value as f32)),
-        ("aspect".into(), Value::Float(aspect_value as f32)),
+        // The oracle's canonical bindings f32-round these aspect helpers.
+        (
+            "aspectRatio".into(),
+            Value::Float(f64::from(aspect_value as f32)),
+        ),
+        (
+            "aspect".into(),
+            Value::Float(f64::from(aspect_value as f32)),
+        ),
         (
             "aspectInv".into(),
-            Value::Float((1.0 / aspect_value) as f32),
+            Value::Float(f64::from((1.0 / aspect_value) as f32)),
         ),
         (
             "invFullResolution".into(),
@@ -73,10 +80,11 @@ pub fn canonical_uniforms(
                 (1.0 / f64::from(height)) as f32,
             ]),
         ),
-        ("time".into(), Value::Float(time)),
-        ("globalTime".into(), Value::Float(time)),
+        // The oracle's canonical bindings f32-round time uniforms.
+        ("time".into(), Value::Float(f64::from(time))),
+        ("globalTime".into(), Value::Float(f64::from(time))),
         ("frame".into(), Value::Int(frame as i32)),
-        ("deltaTime".into(), Value::Float(delta_time)),
+        ("deltaTime".into(), Value::Float(f64::from(delta_time))),
         ("seed".into(), Value::Int(seed)),
     ]);
     uniforms
@@ -532,7 +540,7 @@ fn numeric_value(value: &Value) -> Option<f64> {
     match value {
         Value::Int(value) => Some(f64::from(*value)),
         Value::Uint(value) => Some(f64::from(*value)),
-        Value::Float(value) => Some(f64::from(*value)),
+        Value::Float(value) => Some(*value),
         _ => None,
     }
 }
@@ -543,7 +551,7 @@ fn json_to_value(value: &JsonValue) -> Option<Value> {
     match value {
         JsonValue::Bool(value) => Some(Value::Bool(*value)),
         JsonValue::Number(value) if value.is_i64() => Some(Value::Int(value.as_i64()? as i32)),
-        JsonValue::Number(value) => Some(Value::Float(value.as_f64()? as f32)),
+        JsonValue::Number(value) => Some(Value::Float(value.as_f64()?)),
         _ => None,
     }
 }

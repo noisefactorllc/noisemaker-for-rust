@@ -197,7 +197,7 @@ fn coerce(
                             "must be representable as a finite f32 number",
                         ));
                     }
-                    Ok(Value::Float(number))
+                    Ok(Value::Float(f64::from(number)))
                 }
                 "int" | "enum" | "member" | "palette" => {
                     validate_parameter_number(name, spec, number, true)
@@ -267,7 +267,7 @@ fn coerce(
                 ParamValue::Float(value) => {
                     validate_parameter_float32(name, spec, *value)
                         .map_err(|message| RenderError::InvalidParameter { message })?;
-                    return Ok(Value::Float(*value));
+                    return Ok(Value::Float(f64::from(*value)));
                 }
                 ParamValue::Int(value) => f64::from(*value),
                 ParamValue::String(value) => value.parse::<f64>().map_err(|_| bad())?,
@@ -282,7 +282,7 @@ fn coerce(
                     "must be representable as a finite f32 number",
                 ));
             }
-            Ok(Value::Float(number))
+            Ok(Value::Float(f64::from(number)))
         }
         "int" | "enum" | "member" | "palette" => {
             let number = match value {
