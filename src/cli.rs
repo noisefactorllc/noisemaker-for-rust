@@ -505,14 +505,10 @@ fn effect_program(
     let mut bounded = assignments.to_vec();
     let mut supplied = assignments
         .iter()
-        .filter_map(|assignment| parse_assignment(assignment).ok().map(|(name, _)| name))
-        .map(|name| {
-            definition
-                .param_aliases
-                .get(name)
-                .map(String::as_str)
-                .unwrap_or(name)
-                .to_owned()
+        .filter_map(|assignment| {
+            parse_assignment(assignment)
+                .ok()
+                .map(|(name, _)| name.to_owned())
         })
         .collect::<std::collections::BTreeSet<_>>();
     let mut inject = |name: &str, value: String| {
@@ -651,11 +647,7 @@ fn effect_arguments(
     let mut values = BTreeMap::new();
     for assignment in assignments {
         let (supplied, value) = parse_assignment(assignment)?;
-        let name = definition
-            .param_aliases
-            .get(supplied)
-            .map(String::as_str)
-            .unwrap_or(supplied);
+        let name = supplied;
         let spec = definition.params.get(name).ok_or_else(|| {
             format!(
                 "Unknown parameter {supplied:?} for {}/{}",
@@ -695,11 +687,7 @@ fn resolved_integer_parameter(
     let mut selected = None;
     for assignment in assignments {
         let (supplied, value) = parse_assignment(assignment)?;
-        let name = definition
-            .param_aliases
-            .get(supplied)
-            .map(String::as_str)
-            .unwrap_or(supplied);
+        let name = supplied;
         if name == requested {
             selected = Some(value.trim());
         }

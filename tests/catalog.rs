@@ -34,27 +34,16 @@ fn embedded_catalog_is_the_exact_cpu_inventory() {
 }
 
 #[test]
-fn catalog_preserves_canonical_parameter_aliases_and_declaration_order() {
+fn catalog_retires_parameter_aliases_and_keeps_declaration_order() {
     let catalog = effect_catalog().unwrap();
-    assert_eq!(
-        catalog
-            .effects
-            .values()
-            .filter(|effect| !effect.param_aliases.is_empty())
-            .count(),
-        44
-    );
     let noise = &catalog.effects["synth/noise"];
-    assert_eq!(noise.param_aliases["xScale"], "scaleX");
-    assert_eq!(noise.param_aliases["yScale"], "scaleY");
-    assert_eq!(noise.param_aliases["noiseType"], "type");
     assert_eq!(
         &noise.param_names[..5],
         &["type", "octaves", "scaleX", "scaleY", "seed"]
     );
-    assert_eq!(
-        catalog.effects["synth/osc2d"].param_aliases["frequency"],
-        "freq"
+    assert!(
+        !include_str!("../src/generated/catalog.json").contains("paramAliases"),
+        "parameter aliases are retired and must not reappear in the generated catalog"
     );
 }
 

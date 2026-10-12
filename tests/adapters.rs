@@ -61,7 +61,7 @@ fn cosine_and_historic_palette_adapters_match_oracle_pixels() {
     let mut renderer = CpuRenderer::new().unwrap();
     let palette = renderer
         .render(
-            "search synth,filter; solid(color:#789abc).palette(paletteIndex:1).write(o0)",
+            "search synth,filter; solid(color:#789abc).palette(index:1).write(o0)",
             &options(),
         )
         .unwrap()
@@ -70,7 +70,7 @@ fn cosine_and_historic_palette_adapters_match_oracle_pixels() {
     assert_eq!(&palette[..16], &[255, 255, 193, 255].repeat(4));
     let historic = renderer
         .render(
-            "search synth,filter; solid(color:#789abc).historicPalette(paletteIndex:1).write(o0)",
+            "search synth,filter; solid(color:#789abc).historicPalette(index:1).write(o0)",
             &options(),
         )
         .unwrap()

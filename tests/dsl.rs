@@ -325,13 +325,12 @@ fn compiler_merges_named_and_positional_partials_and_rejects_mode_changes() {
 }
 
 #[test]
-fn compiler_uses_canonical_positional_order_and_locked_aliases() {
+fn compiler_uses_canonical_positional_order_and_rejects_aliases() {
     let solid = effect_step("search synth; solid(#123456, .5).write(o0)");
     assert!(matches!(solid, RenderStep::Effect { ref params, .. }
         if params["color"] == ParamValue::Vector(vec![0x12 as f32/255.0,0x34 as f32/255.0,0x56 as f32/255.0])
         && params["alpha"] == ParamValue::Float(0.5)));
-    let noise =
-        effect_step("search synth; noise(xScale:20, yScale:30, noiseType:linear).write(o0)");
+    let noise = effect_step("search synth; noise(scaleX:20, scaleY:30, type:linear).write(o0)");
     assert!(
         matches!(noise, RenderStep::Effect { ref params, ref explicit_params, .. }
         if params["scaleX"] == ParamValue::Float(20.0)
@@ -339,9 +338,18 @@ fn compiler_uses_canonical_positional_order_and_locked_aliases() {
         && params["type"] == ParamValue::Int(1)
         && explicit_params == &["scaleX", "scaleY", "type"])
     );
-    let osc = effect_step("search synth; osc2d(frequency:25).write(o0)");
+    let osc = effect_step("search synth; osc2d(freq:25).write(o0)");
     assert!(matches!(osc, RenderStep::Effect { ref params, .. }
         if params["freq"] == ParamValue::Int(25)));
+    let error = compile_dsl(
+        "search synth; noise(noiseType:linear).write(o0)",
+        "retired-alias.dsl",
+    )
+    .unwrap_err();
+    assert!(
+        error.message.contains("Unknown parameter \"noiseType\""),
+        "unexpected error: {error}"
+    );
 }
 
 #[test]

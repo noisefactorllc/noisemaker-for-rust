@@ -219,29 +219,16 @@ def _apply_param_contract(source: Path, catalog_effects: dict) -> tuple[dict, di
         params = definition.get("params", {})
         record = records[effect_id]
         source_names = record.get("paramNames")
-        aliases = record.get("paramAliases")
         overrides = record.get("paramOverrides", {})
         if not isinstance(source_names, list) or not all(isinstance(name, str) for name in source_names):
             raise RuntimeError(f"parameter contract for {effect_id} has invalid paramNames")
         names = [name for name in source_names if name in params]
         if len(names) != len(set(names)) or set(names) != set(params):
             raise RuntimeError(f"parameter contract for {effect_id} does not exactly order canonical params")
-        if not isinstance(aliases, dict) or not all(
-            isinstance(alias, str) and isinstance(target, str)
-            for alias, target in aliases.items()
-        ):
-            raise RuntimeError(f"parameter contract for {effect_id} has invalid paramAliases")
+        if "paramAliases" in record:
+            raise RuntimeError(f"parameter contract for {effect_id} still carries retired paramAliases")
         if not isinstance(overrides, dict):
             raise RuntimeError(f"parameter contract for {effect_id} has invalid paramOverrides")
-        for alias, target in aliases.items():
-            if alias in params:
-                raise RuntimeError(
-                    f"parameter alias {effect_id}.{alias} collides with canonical parameter"
-                )
-            if target not in params:
-                raise RuntimeError(
-                    f"parameter alias {effect_id}.{alias} targets unknown parameter {target}"
-                )
         for name, values in overrides.items():
             if name not in params or not isinstance(values, dict):
                 raise RuntimeError(
@@ -254,7 +241,6 @@ def _apply_param_contract(source: Path, catalog_effects: dict) -> tuple[dict, di
                 raise RuntimeError(f"parameter override {effect_id}.{name} is invalid")
             params[name].update(values)
         definition["paramNames"] = names
-        definition["paramAliases"] = aliases
     return enriched, contract
 
 
@@ -431,7 +417,7 @@ def check_generated(
         compatible_names = [name for name in record["paramNames"] if name in effect.get("params", {})]
         if effect.get("paramNames") != compatible_names:
             raise RuntimeError(f"generated paramNames drift for {effect_id}")
-        if effect.get("paramAliases") != record["paramAliases"]:
+        if "paramAliases" in effect:
             raise RuntimeError(f"generated paramAliases drift for {effect_id}")
         for name, values in record.get("paramOverrides", {}).items():
             for field, value in values.items():

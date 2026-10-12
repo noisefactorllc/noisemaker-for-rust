@@ -75,7 +75,6 @@ def fixture_source(root: Path) -> Path:
         "effects": {
             "synth/test": {
                 "paramNames": ["gain"],
-                "paramAliases": {"strength": "gain"},
             }
         },
     }), encoding="utf-8")
@@ -241,7 +240,7 @@ class GeneratorTests(unittest.TestCase):
             self.assertEqual(len(backups), 1)
             real_rmtree(backups[0])
 
-    def test_canonical_parameter_order_and_aliases_are_emitted_from_locked_contract(self):
+    def test_canonical_parameter_order_is_emitted_from_locked_contract(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             source = fixture_source(root)
@@ -257,21 +256,17 @@ class GeneratorTests(unittest.TestCase):
             generate_bundle(source, output)
             effect = json.loads((output / "catalog.json").read_text())["effects"]["synth/test"]
             self.assertEqual(effect["paramNames"], ["offset", "gain"])
-            self.assertEqual(effect["paramAliases"], {"strength": "gain"})
+            self.assertNotIn("paramAliases", effect)
 
-    def test_parameter_contract_rejects_alias_collision_and_missing_target(self):
-        for aliases, message in [
-            ({"gain": "gain"}, "collides with canonical parameter"),
-            ({"strength": "missing"}, "targets unknown parameter"),
-        ]:
-            with self.subTest(aliases=aliases), tempfile.TemporaryDirectory() as td:
-                root = Path(td)
-                source = fixture_source(root)
-                contract = json.loads((source / "param-contract.json").read_text())
-                contract["effects"]["synth/test"]["paramAliases"] = aliases
-                (source / "param-contract.json").write_text(json.dumps(contract), encoding="utf-8")
-                with self.assertRaisesRegex(RuntimeError, message):
-                    generate_bundle(source, root / "out")
+    def test_parameter_contract_rejects_retired_parameter_aliases(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source = fixture_source(root)
+            contract = json.loads((source / "param-contract.json").read_text())
+            contract["effects"]["synth/test"]["paramAliases"] = {"strength": "gain"}
+            (source / "param-contract.json").write_text(json.dumps(contract), encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "still carries retired paramAliases"):
+                generate_bundle(source, root / "out")
 
     def test_parameter_contract_restores_canonical_numeric_bounds(self):
         with tempfile.TemporaryDirectory() as td:

@@ -10,9 +10,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "loopAmp": "speed"
-      },
       "paramNames": [
         "mode",
         "speed",
@@ -331,9 +328,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "loopAmp": "speed"
-      },
       "paramNames": [
         "interp",
         "noiseScale",
@@ -475,11 +469,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "cellSmooth": "smooth",
-        "cellVariation": "variation",
-        "loopAmp": "speed"
-      },
       "paramNames": [
         "shape",
         "scale",
@@ -806,13 +795,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "cellSmooth": "smooth",
-        "cellVariation": "variation",
-        "loopAmp": "speed",
-        "refractAmt": "amount",
-        "refractDir": "direction"
-      },
       "paramNames": [
         "amount",
         "direction",
@@ -1020,9 +1002,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "mixAmt": "mix"
-      },
       "paramNames": [
         "tex",
         "blendMode",
@@ -1166,7 +1145,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "colorMode",
         "palette",
@@ -1460,9 +1438,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "mixAmt": "mix"
-      },
       "paramNames": [
         "tex",
         "blendMode",
@@ -1571,7 +1546,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "effect",
         "effectAmt",
@@ -1749,11 +1723,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "backgroundColor": "bgColor",
-        "backgroundOpacity": "bgAlpha",
-        "fractalType": "type"
-      },
       "paramNames": [
         "type",
         "symmetry",
@@ -2152,9 +2121,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "aberrationAmt": "aberration"
-      },
       "paramNames": [
         "glitchiness",
         "aberration",
@@ -2307,10 +2273,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "kaleido": "sides",
-        "loopAmp": "speed"
-      },
       "paramNames": [
         "sides",
         "metric",
@@ -2549,11 +2511,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "aberrationAmt": "aberration",
-        "loopAmp": "speed",
-        "opacity": "alpha"
-      },
       "paramNames": [
         "shape",
         "distortion",
@@ -2797,9 +2754,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "loopAmp": "speed"
-      },
       "paramNames": [
         "interp",
         "noiseScale",
@@ -2985,10 +2939,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "loopAmp": "speed",
-        "noiseType": "type"
-      },
       "paramNames": [
         "type",
         "octaves",
@@ -3433,10 +3383,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "noiseScale": "scale",
-        "noiseType": "type"
-      },
       "paramNames": [
         "type",
         "ridges",
@@ -3618,10 +3564,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "mixAmt": "mix",
-        "refractDir": "direction"
-      },
       "paramNames": [
         "blendMode",
         "mix",
@@ -3749,7 +3691,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "tex",
         "blendMode",
@@ -4051,10 +3992,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "loopAAmp": "speedA",
-        "loopBAmp": "speedB"
-      },
       "paramNames": [
         "loopAOffset",
         "loopBOffset",
@@ -4420,10 +4357,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "backgroundColor": "bgColor",
-        "backgroundOpacity": "bgAlpha"
-      },
       "paramNames": [
         "shapeA",
         "shapeB",
@@ -4931,15 +4864,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "splatColor": "color",
-        "splatCutoff": "cutoff",
-        "splatMode": "mode",
-        "splatScale": "scale",
-        "splatSeed": "seed",
-        "splatSpeed": "speed",
-        "useSplats": "enabled"
-      },
       "paramNames": [
         "enabled",
         "mode",
@@ -5219,7 +5143,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "mode",
         "rotation",
@@ -5333,7 +5256,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "threshold",
         "softKnee",
@@ -5477,7 +5399,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "radiusX",
         "radiusY"
@@ -5552,7 +5473,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "strength",
         "aspectLens",
@@ -5642,10 +5562,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "mixAmount": "mix",
-        "shadingStrength": "strength"
-      },
       "paramNames": [
         "mix",
         "levels",
@@ -5837,7 +5753,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "channel",
         "scale",
@@ -5899,7 +5814,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "targetHue",
         "range",
@@ -5968,9 +5882,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "aberrationAmt": "aberration"
-      },
       "paramNames": [
         "aberration",
         "passthru"
@@ -6024,7 +5935,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "detail",
         "smoothness",
@@ -6124,7 +6034,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "seed",
         "scale",
@@ -6199,7 +6108,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "targetColor",
         "replaceColor",
@@ -6322,7 +6230,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "sharpenRadius",
         "sharpenAmount",
@@ -6480,7 +6387,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "intensity",
         "bandHeight",
@@ -6631,7 +6537,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "spacing",
         "depth",
@@ -6709,7 +6614,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "alpha",
         "speed",
@@ -6784,7 +6688,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "displacement",
         "direction",
@@ -6871,7 +6774,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "amount"
       ],
@@ -6914,7 +6816,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "angle",
         "distance"
@@ -6968,10 +6869,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "ditherType": "type",
-        "mixAmount": "mix"
-      },
       "paramNames": [
         "type",
         "matrixScale",
@@ -7099,7 +6996,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "kernel",
         "level",
@@ -7284,7 +7180,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "style",
         "amount",
@@ -7384,7 +7279,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "type",
         "size",
@@ -7477,10 +7371,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "aberrationAmt": "aberration",
-        "mixAmt": "mix"
-      },
       "paramNames": [
         "blendMode",
         "mix",
@@ -7721,7 +7611,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "density",
         "seed",
@@ -7800,7 +7689,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "mode"
       ],
@@ -7854,7 +7742,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "strength",
         "sharpness",
@@ -7921,7 +7808,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "shape",
         "width",
@@ -8000,7 +7886,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "cellSize",
         "seed",
@@ -8068,9 +7953,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "vignetteHighlightProtect": "vigHiProtect"
-      },
       "paramNames": [
         "preset",
         "alpha",
@@ -8769,7 +8651,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "alpha",
         "pause"
@@ -8826,7 +8707,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "strength",
         "seed"
@@ -8887,7 +8767,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "mode",
         "pattern",
@@ -9101,7 +8980,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "mode",
         "strokeLength",
@@ -9250,7 +9128,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "radius",
         "mono"
@@ -9337,9 +9214,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "paletteIndex": "index"
-      },
       "paramNames": [
         "index",
         "rotation",
@@ -9469,7 +9343,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "mode"
       ],
@@ -9513,7 +9386,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "displacement",
         "aspectLens",
@@ -9576,7 +9448,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "brightness",
         "centerX",
@@ -9672,7 +9543,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "displacement",
         "antialias"
@@ -9729,7 +9599,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "alpha",
         "color",
@@ -9818,7 +9687,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "normalStrength",
         "smoothing",
@@ -10022,10 +9890,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "freq": "scale",
-        "nth": "mode"
-      },
       "paramNames": [
         "scale",
         "seed",
@@ -10191,7 +10055,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "radius",
         "threshold"
@@ -10246,7 +10109,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "mode",
         "radius",
@@ -10333,7 +10195,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "mode",
         "tileSize",
@@ -10494,7 +10355,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "amount",
         "resetState",
@@ -10573,7 +10433,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [],
       "params": {},
       "passes": [
@@ -10601,7 +10460,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [],
       "params": {},
       "passes": [
@@ -10679,9 +10537,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "frequency": "freq"
-      },
       "paramNames": [
         "freq",
         "octaves",
@@ -10810,7 +10665,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "mode",
         "size",
@@ -10942,7 +10796,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "alpha",
         "seed",
@@ -11034,7 +10887,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "shape",
         "thickness",
@@ -11137,12 +10989,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "paletteIndex": "index",
-        "paletteOffset": "offset",
-        "paletteRepeat": "repeat",
-        "paletteRotation": "rotation"
-      },
       "paramNames": [
         "index",
         "rotation",
@@ -11296,7 +11142,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "heightMap",
         "direction",
@@ -11365,7 +11210,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "squareSize",
         "relief",
@@ -11431,7 +11275,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "detail",
         "darkness",
@@ -11547,7 +11390,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "strength",
         "aspectLens",
@@ -11637,7 +11479,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "angled",
         "darkest",
@@ -11815,7 +11656,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "size"
       ],
@@ -11859,7 +11699,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "highlight",
         "detail",
@@ -11974,7 +11813,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "mode",
         "scale",
@@ -12075,7 +11913,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "amount",
         "ridges",
@@ -12183,7 +12020,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "levels",
         "gamma",
@@ -12249,9 +12085,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "aberrationAmt": "aberration"
-      },
       "paramNames": [
         "aberration",
         "modulate",
@@ -12351,7 +12184,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "displacement"
       ],
@@ -12429,7 +12261,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "mode",
         "smoothness",
@@ -12604,7 +12435,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "x",
         "y",
@@ -12699,7 +12529,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "iterations",
         "ridges",
@@ -12790,7 +12619,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "level"
       ],
@@ -12836,7 +12664,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "rotation",
         "wrap",
@@ -12910,7 +12737,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "x",
         "y",
@@ -13005,7 +12831,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "mode",
         "timeOffset",
@@ -13109,7 +12934,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "radius",
         "mode",
@@ -13209,7 +13033,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "density",
         "alpha",
@@ -13288,7 +13111,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "x",
         "y",
@@ -13383,7 +13205,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "blend",
         "repeat",
@@ -13457,7 +13278,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "amount"
       ],
@@ -13500,7 +13320,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "displacement"
       ],
@@ -13546,7 +13365,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "amount",
         "colorMode"
@@ -13608,7 +13426,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "skew",
         "rotate",
@@ -13678,7 +13495,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "type",
         "strength",
@@ -13815,7 +13631,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "edge0",
         "edge1"
@@ -13873,7 +13688,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "alpha",
         "pause",
@@ -13944,7 +13758,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "amount",
         "alpha"
@@ -14001,7 +13814,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "color",
         "density",
@@ -14090,7 +13902,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "amount",
         "centerX",
@@ -14156,7 +13967,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "strength",
         "speed",
@@ -14260,7 +14070,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "rows",
         "seed",
@@ -14348,7 +14157,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "smoothness",
         "balance",
@@ -14476,7 +14284,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "threshold",
         "antialias"
@@ -14531,7 +14338,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "mode",
         "cellSize",
@@ -14656,7 +14462,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "density",
         "seed",
@@ -14735,7 +14540,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "mode",
         "length",
@@ -14871,7 +14675,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "redDelay",
         "greenDelay",
@@ -15085,7 +14888,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "colorMode",
         "colorCount",
@@ -15579,7 +15381,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "colorMode",
         "offsetR",
@@ -15854,11 +15655,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "bgAlpha": "matteOpacity",
-        "bgColor": "matteColor",
-        "bgOpacity": "matteOpacity"
-      },
       "paramNames": [
         "text",
         "font",
@@ -16033,7 +15829,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "mode",
         "alpha",
@@ -16170,7 +15965,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "level",
         "sharpness"
@@ -16224,7 +16018,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "symmetry",
         "scale",
@@ -16351,7 +16144,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "color",
         "alpha",
@@ -16423,7 +16215,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "x",
         "y",
@@ -16498,7 +16289,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "shape",
         "scale",
@@ -16617,7 +16407,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "amount",
         "radius",
@@ -16719,7 +16508,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "alpha"
       ],
@@ -16765,7 +16553,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "brightness",
         "alpha"
@@ -16821,7 +16608,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "strength",
         "scale",
@@ -16925,7 +16711,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "detail",
         "shadowIntensity",
@@ -17021,7 +16806,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "strength",
         "scale",
@@ -17125,7 +16909,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "method",
         "direction",
@@ -17208,7 +16991,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "speed",
         "range",
@@ -17290,7 +17072,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "kink",
         "stride",
@@ -17430,7 +17211,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "strength"
       ],
@@ -17473,7 +17253,6 @@
       "outputGeo": "geoBuffer",
       "outputTex": null,
       "outputTex3d": "global_flow3d_blended",
-      "paramAliases": {},
       "paramNames": [
         "volumeSize",
         "behavior",
@@ -17827,12 +17606,6 @@
       "outputGeo": "inputGeo",
       "outputTex": null,
       "outputTex3d": "volumeCache",
-      "paramAliases": {
-        "paletteIndex": "index",
-        "paletteOffset": "offset",
-        "paletteRepeat": "repeat",
-        "paletteRotation": "rotation"
-      },
       "paramNames": [
         "volumeSize",
         "index",
@@ -18028,9 +17801,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "mixAmt": "mix"
-      },
       "paramNames": [
         "tex",
         "baseTex",
@@ -18112,9 +17882,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "mixAmt": "mix"
-      },
       "paramNames": [
         "tex",
         "mode",
@@ -18183,9 +17950,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "mixAmt": "mix"
-      },
       "paramNames": [
         "tex",
         "mode",
@@ -18267,7 +18031,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "tex",
         "invert",
@@ -18383,9 +18146,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "mixAmt": "mix"
-      },
       "paramNames": [
         "tex",
         "blendMode",
@@ -18496,7 +18256,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "rTex",
         "gTex",
@@ -18588,7 +18347,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "tex",
         "mapSource",
@@ -18729,7 +18487,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "tex",
         "depthSource",
@@ -18821,7 +18578,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "source",
         "layers",
@@ -18924,7 +18680,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "tex",
         "invert",
@@ -19047,7 +18802,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "tex",
         "maskSource",
@@ -19222,7 +18976,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "tex",
         "invert",
@@ -19376,7 +19129,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "tex",
         "invert",
@@ -19484,7 +19236,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "tex",
         "mode",
@@ -19697,7 +19448,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "tex",
         "mapSource",
@@ -19806,7 +19556,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "stateSize",
         "attractor",
@@ -19914,7 +19663,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "stateSize",
         "mode",
@@ -20098,7 +19846,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "stateSize",
         "anchorDensity",
@@ -20324,7 +20071,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "separation",
         "alignment",
@@ -20531,7 +20277,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "stateSize",
         "behavior",
@@ -20690,7 +20435,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "heightTex",
         "diffuseTex",
@@ -20803,7 +20547,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "stride",
         "quantize",
@@ -20914,7 +20657,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "muK",
         "sigmaK",
@@ -21140,7 +20882,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "stateSize",
         "typeCount",
@@ -21400,7 +21141,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "moveSpeed",
         "turnSpeed",
@@ -21622,7 +21362,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "stateSize",
         "gravity",
@@ -21778,7 +21517,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "alpha",
         "intensity",
@@ -21842,7 +21580,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [],
       "params": {},
       "passes": [
@@ -21881,7 +21618,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [],
       "params": {},
       "passes": [
@@ -21910,7 +21646,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "scale",
         "offsetX",
@@ -22310,9 +22045,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "rotationVariation": "rotationVar"
-      },
       "paramNames": [
         "shapeMode",
         "tex",
@@ -24093,7 +23825,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "stateSize",
         "layout",
@@ -24266,7 +23997,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "density",
         "intensity",
@@ -24561,7 +24291,6 @@
       "outputGeo": "screenGeoBuffer",
       "outputTex": null,
       "outputTex3d": "inputTex3d",
-      "paramAliases": {},
       "paramNames": [
         "volumeSize",
         "filtering",
@@ -24689,7 +24418,6 @@
       "outputGeo": "screenGeoBuffer",
       "outputTex": null,
       "outputTex3d": "inputTex3d",
-      "paramAliases": {},
       "paramNames": [
         "volumeSize",
         "filtering",
@@ -24823,7 +24551,6 @@
       "outputGeo": "screenGeoBuffer",
       "outputTex": null,
       "outputTex3d": "inputTex3d",
-      "paramAliases": {},
       "paramNames": [
         "volumeSize",
         "density",
@@ -24954,7 +24681,6 @@
       "outputGeo": "screenGeoBuffer",
       "outputTex": null,
       "outputTex3d": "inputTex3d",
-      "paramAliases": {},
       "paramNames": [
         "volumeSize",
         "threshold",
@@ -25310,7 +25036,6 @@
       "outputGeo": "screenGeoBuffer",
       "outputTex": null,
       "outputTex3d": "inputTex3d",
-      "paramAliases": {},
       "paramNames": [
         "volumeSize",
         "shape",
@@ -25598,7 +25323,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "operation",
         "mask",
@@ -25787,10 +25511,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "cellVariation": "variation",
-        "loopAmp": "speed"
-      },
       "paramNames": [
         "shape",
         "scale",
@@ -25912,7 +25632,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "tex",
         "zoom",
@@ -26123,7 +25842,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "scale",
         "octaves",
@@ -26239,7 +25957,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "scale",
         "orientation",
@@ -26364,7 +26081,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "type",
         "rotation",
@@ -26565,7 +26281,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "poi",
         "outputMode",
@@ -26914,7 +26629,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "scale",
         "rotation",
@@ -27168,9 +26882,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "poiMode": "poi"
-      },
       "paramNames": [
         "poi",
         "outputMode",
@@ -27402,10 +27113,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "backgroundColor": "bgColor",
-        "backgroundOpacity": "bgAlpha"
-      },
       "paramNames": [
         "position",
         "tiling",
@@ -27591,7 +27298,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "tex",
         "zoom",
@@ -27935,7 +27641,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "shape1",
         "scale1",
@@ -28152,7 +27857,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "tex",
         "zoom",
@@ -28467,7 +28171,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "poi",
         "outputMode",
@@ -28733,12 +28436,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "loopAmp": "speed",
-        "noiseType": "type",
-        "xScale": "scaleX",
-        "yScale": "scaleY"
-      },
       "paramNames": [
         "type",
         "octaves",
@@ -28938,9 +28635,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "frequency": "freq"
-      },
       "paramNames": [
         "oscType",
         "freq",
@@ -29034,9 +28728,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "patternType": "type"
-      },
       "paramNames": [
         "type",
         "scale",
@@ -29244,7 +28935,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "scale",
         "octaves",
@@ -29398,7 +29088,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "sides",
         "radius",
@@ -29534,7 +29223,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "tex",
         "zoom",
@@ -29878,7 +29566,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "zoneCount",
         "bgColor",
@@ -33023,7 +32710,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "color",
         "gain",
@@ -33111,7 +32797,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "geometry",
         "scale",
@@ -33325,7 +33010,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "color",
         "thickness",
@@ -33393,10 +33077,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {
-        "loopAAmp": "speedA",
-        "loopBAmp": "speedB"
-      },
       "paramNames": [
         "loopAOffset",
         "loopBOffset",
@@ -33608,7 +33288,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "color",
         "alpha"
@@ -33663,7 +33342,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "color",
         "thickness",
@@ -33731,7 +33409,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "tex",
         "mode",
@@ -33910,7 +33587,6 @@
       "outputGeo": null,
       "outputTex": null,
       "outputTex3d": null,
-      "paramAliases": {},
       "paramNames": [
         "pattern",
         "gridSize"
@@ -33978,9 +33654,6 @@
       "outputGeo": "geoBuffer",
       "outputTex": null,
       "outputTex3d": "volumeCache",
-      "paramAliases": {
-        "cellVariation": "variation"
-      },
       "paramNames": [
         "volumeSize",
         "metric",
@@ -34129,7 +33802,6 @@
       "outputGeo": "geoBuffer",
       "outputTex": null,
       "outputTex3d": "global_ca_state",
-      "paramAliases": {},
       "paramNames": [
         "volumeSize",
         "seed",
@@ -34369,9 +34041,6 @@
       "outputGeo": "geoBuffer",
       "outputTex": null,
       "outputTex3d": "volumeCache",
-      "paramAliases": {
-        "fractalType": "type"
-      },
       "paramNames": [
         "volumeSize",
         "type",
@@ -34549,9 +34218,6 @@
       "outputGeo": "geoBuffer",
       "outputTex": null,
       "outputTex3d": "volumeCache",
-      "paramAliases": {
-        "fractalType": "type"
-      },
       "paramNames": [
         "volumeSize",
         "type",
@@ -34766,7 +34432,6 @@
       "outputGeo": "geoBuffer",
       "outputTex": null,
       "outputTex3d": "volumeCache",
-      "paramAliases": {},
       "paramNames": [
         "heightTex",
         "tex",
@@ -34897,7 +34562,6 @@
       "outputGeo": "geoBuffer",
       "outputTex": null,
       "outputTex3d": "volumeCache",
-      "paramAliases": {},
       "paramNames": [
         "volumeSize",
         "scale",
@@ -35052,7 +34716,6 @@
       "outputGeo": "geoBuffer",
       "outputTex": null,
       "outputTex3d": "global_rd_state",
-      "paramAliases": {},
       "paramNames": [
         "volumeSize",
         "seed",
@@ -35304,7 +34967,6 @@
       "outputGeo": "geoBuffer",
       "outputTex": null,
       "outputTex3d": "volumeCache",
-      "paramAliases": {},
       "paramNames": [
         "volumeSize",
         "colorMode",
@@ -35499,7 +35161,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "3f5775c64d55c31906eab114087e09827cb2a1cc",
+    "paramContractRevision": "a1a3fa2a84223dfc1f5ec2c7a54a6f4269139c15",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"

@@ -66,8 +66,6 @@ pub struct EffectDefinition {
     pub params: BTreeMap<String, ParameterSpec>,
     pub param_names: Vec<String>,
     #[serde(default)]
-    pub param_aliases: BTreeMap<String, String>,
-    #[serde(default)]
     pub textures: BTreeMap<String, Value>,
     pub passes: Vec<RenderPass>,
     #[serde(default)]
@@ -487,18 +485,6 @@ fn validate_catalog(catalog: &EffectCatalog) -> Result<(), CatalogError> {
             return Err(CatalogError::Invalid(format!(
                 "effect {effect_id} paramNames do not exactly order its parameters"
             )));
-        }
-        for (alias, target) in &effect.param_aliases {
-            if effect.params.contains_key(alias) {
-                return Err(CatalogError::Invalid(format!(
-                    "effect {effect_id} parameter alias {alias:?} collides with a canonical parameter"
-                )));
-            }
-            if !effect.params.contains_key(target) {
-                return Err(CatalogError::Invalid(format!(
-                    "effect {effect_id} parameter alias {alias:?} targets unknown parameter {target:?}"
-                )));
-            }
         }
         match effect.domain.as_str() {
             "image" | "loop-begin" | "loop-end" | "volume-filter" | "volume-generator"

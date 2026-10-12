@@ -534,22 +534,13 @@ fn normalize_arguments(
             .name
             .clone()
             .or_else(|| definition.param_names.get(index).cloned());
-        let canonical_name = supplied_name.as_ref().and_then(|name| {
-            definition
-                .param_aliases
-                .get(name)
-                .cloned()
-                .or_else(|| Some(name.clone()))
-        });
-        let Some(name) = canonical_name.filter(|name| definition.params.contains_key(name)) else {
+        let Some(name) = supplied_name
+            .as_ref()
+            .filter(|name| definition.params.contains_key(*name))
+            .cloned()
+        else {
             let bad = supplied_name.unwrap_or_else(|| format!("argument {}", index + 1));
-            let accepted = definition
-                .param_names
-                .iter()
-                .chain(definition.param_aliases.keys())
-                .cloned()
-                .collect::<Vec<_>>()
-                .join(", ");
+            let accepted = definition.param_names.join(", ");
             return Err(DslError::new(
                 format!("Unknown parameter {bad:?} for {effect_id}; accepted: {accepted}"),
                 loc,

@@ -100487,6 +100487,97 @@
                 "kind": "expression"
               },
               {
+                "expression": {
+                  "kind": "assignment",
+                  "lvalue": {
+                    "field": "rgb",
+                    "kind": "member",
+                    "object": {
+                      "kind": "identifier",
+                      "name": "color",
+                      "storage": "local",
+                      "type": "vec4"
+                    },
+                    "type": "vec3"
+                  },
+                  "operator": "=",
+                  "type": "vec3",
+                  "value": {
+                    "kind": "binary",
+                    "left": {
+                      "arguments": [
+                        {
+                          "kind": "binary",
+                          "left": {
+                            "kind": "binary",
+                            "left": {
+                              "arguments": [
+                                {
+                                  "field": "rgb",
+                                  "kind": "member",
+                                  "object": {
+                                    "kind": "identifier",
+                                    "name": "color",
+                                    "storage": "local",
+                                    "type": "vec4"
+                                  },
+                                  "type": "vec3"
+                                },
+                                {
+                                  "kind": "literal",
+                                  "source": "0.0",
+                                  "type": "float",
+                                  "value": 0.0
+                                },
+                                {
+                                  "kind": "literal",
+                                  "source": "1.0",
+                                  "type": "float",
+                                  "value": 1.0
+                                }
+                              ],
+                              "kind": "call",
+                              "name": "clamp",
+                              "target": "builtin:clamp",
+                              "type": "vec3"
+                            },
+                            "operator": "*",
+                            "right": {
+                              "kind": "literal",
+                              "source": "255.0",
+                              "type": "float",
+                              "value": 255.0
+                            },
+                            "type": "vec3"
+                          },
+                          "operator": "+",
+                          "right": {
+                            "kind": "literal",
+                            "source": "0.5",
+                            "type": "float",
+                            "value": 0.5
+                          },
+                          "type": "vec3"
+                        }
+                      ],
+                      "kind": "call",
+                      "name": "floor",
+                      "target": "builtin:floor",
+                      "type": "vec3"
+                    },
+                    "operator": "/",
+                    "right": {
+                      "kind": "literal",
+                      "source": "255.0",
+                      "type": "float",
+                      "value": 255.0
+                    },
+                    "type": "vec3"
+                  }
+                },
+                "kind": "expression"
+              },
+              {
                 "condition": {
                   "kind": "binary",
                   "left": {
@@ -101288,7 +101379,7 @@
         "varyings": []
       },
       "program": "glitch",
-      "sourceSha256": "06b0deadf6ebf0b9eab6ae8523dc1b1d7099c649dd77a32b6d0470a8ee3d4bad"
+      "sourceSha256": "b47a6b5a41f825c29e3bd6f5b36e925c4cf086ceca0c096b02c8d060a8c219eb"
     },
     "classicNoisedeck/kaleido:kaleido": {
       "effectId": "classicNoisedeck/kaleido",
@@ -284017,6 +284108,83 @@
                 "kind": "expression"
               },
               {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "kind": "binary",
+                      "left": {
+                        "arguments": [
+                          {
+                            "kind": "binary",
+                            "left": {
+                              "kind": "binary",
+                              "left": {
+                                "arguments": [
+                                  {
+                                    "kind": "identifier",
+                                    "name": "color",
+                                    "storage": "local",
+                                    "type": "vec3"
+                                  },
+                                  {
+                                    "kind": "literal",
+                                    "source": "0.0",
+                                    "type": "float",
+                                    "value": 0.0
+                                  },
+                                  {
+                                    "kind": "literal",
+                                    "source": "1.0",
+                                    "type": "float",
+                                    "value": 1.0
+                                  }
+                                ],
+                                "kind": "call",
+                                "name": "clamp",
+                                "target": "builtin:clamp",
+                                "type": "vec3"
+                              },
+                              "operator": "*",
+                              "right": {
+                                "kind": "literal",
+                                "source": "255.0",
+                                "type": "float",
+                                "value": 255.0
+                              },
+                              "type": "vec3"
+                            },
+                            "operator": "+",
+                            "right": {
+                              "kind": "literal",
+                              "source": "0.5",
+                              "type": "float",
+                              "value": 0.5
+                            },
+                            "type": "vec3"
+                          }
+                        ],
+                        "kind": "call",
+                        "name": "floor",
+                        "target": "builtin:floor",
+                        "type": "vec3"
+                      },
+                      "operator": "/",
+                      "right": {
+                        "kind": "literal",
+                        "source": "255.0",
+                        "type": "float",
+                        "value": 255.0
+                      },
+                      "type": "vec3"
+                    },
+                    "name": "effectColor8",
+                    "type": "vec3"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
                 "expression": {
                   "kind": "assignment",
                   "lvalue": {
@@ -284037,7 +284205,7 @@
                       },
                       {
                         "kind": "identifier",
-                        "name": "color",
+                        "name": "effectColor8",
                         "storage": "local",
                         "type": "vec3"
                       },
@@ -284186,7 +284354,7 @@
         "varyings": []
       },
       "program": "crt",
-      "sourceSha256": "62d915eda8e20a458b1df91198cee3e85f0f0b9676cd4d0777264e9cd8b99b7c"
+      "sourceSha256": "dfbba2918a68889c5b82ef619bf472387acec116b4d72bf76d62f35a60c9aa7f"
     },
     "filter/degauss:degauss": {
       "effectId": "filter/degauss",
@@ -678554,7 +678722,7 @@
         "varyings": []
       },
       "program": "depthKeys",
-      "sourceSha256": "579967dd660c692d17773127841d184b3c0ba07043038a8910e78f536262d512"
+      "sourceSha256": "6d2ba95431f4b8110f8409cd7ccf465df79279c3ec9b7413832e099cbc387ab7"
     },
     "render/pointsBillboardRender:depthMerge": {
       "effectId": "render/pointsBillboardRender",
@@ -679877,7 +680045,7 @@
         "varyings": []
       },
       "program": "depthMerge",
-      "sourceSha256": "7f87c49c159d46dbe7a4507cb63893f5f28323408fdd9000a8615bbeca2079a7"
+      "sourceSha256": "7eabb619c49c2261e7ec6563b148b2d60521a547fae66e90a8b566029cf4a49a"
     },
     "render/pointsBillboardRender:diffuse": {
       "effectId": "render/pointsBillboardRender",
@@ -918441,7 +918609,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "3f5775c64d55c31906eab114087e09827cb2a1cc",
+    "paramContractRevision": "a1a3fa2a84223dfc1f5ec2c7a54a6f4269139c15",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"

@@ -1,6 +1,6 @@
 {
   "source": "noisemaker-for-cpu upstream-snapshot.js",
-  "revision": "3f5775c64d55c31906eab114087e09827cb2a1cc",
+  "revision": "a1a3fa2a84223dfc1f5ec2c7a54a6f4269139c15",
   "effects": {
     "classicNoisedeck/bitEffects": {
       "paramNames": [
@@ -20,10 +20,7 @@
         "hueRotation",
         "hueRange",
         "seed"
-      ],
-      "paramAliases": {
-        "loopAmp": "speed"
-      }
+      ]
     },
     "classicNoisedeck/caustic": {
       "paramNames": [
@@ -35,10 +32,7 @@
         "hueRotation",
         "hueRange",
         "intensity"
-      ],
-      "paramAliases": {
-        "loopAmp": "speed"
-      }
+      ]
     },
     "classicNoisedeck/cellNoise": {
       "paramNames": [
@@ -62,12 +56,7 @@
         "tex",
         "texInfluence",
         "texIntensity"
-      ],
-      "paramAliases": {
-        "cellSmooth": "smooth",
-        "cellVariation": "variation",
-        "loopAmp": "speed"
-      }
+      ]
     },
     "classicNoisedeck/cellRefract": {
       "paramNames": [
@@ -83,14 +72,7 @@
         "seed",
         "kernel",
         "effectWidth"
-      ],
-      "paramAliases": {
-        "cellSmooth": "smooth",
-        "cellVariation": "variation",
-        "refractAmt": "amount",
-        "refractDir": "direction",
-        "loopAmp": "speed"
-      }
+      ]
     },
     "classicNoisedeck/coalesce": {
       "paramNames": [
@@ -101,10 +83,7 @@
         "refractBAmt",
         "refractADir",
         "refractBDir"
-      ],
-      "paramAliases": {
-        "mixAmt": "mix"
-      }
+      ]
     },
     "classicNoisedeck/colorLab": {
       "paramNames": [
@@ -126,8 +105,7 @@
         "contrast",
         "levels",
         "dither"
-      ],
-      "paramAliases": {}
+      ]
     },
     "classicNoisedeck/composite": {
       "paramNames": [
@@ -136,10 +114,7 @@
         "inputColor",
         "range",
         "mix"
-      ],
-      "paramAliases": {
-        "mixAmt": "mix"
-      }
+      ]
     },
     "classicNoisedeck/effects": {
       "paramNames": [
@@ -152,8 +127,7 @@
         "flip",
         "intensity",
         "saturation"
-      ],
-      "paramAliases": {}
+      ]
     },
     "classicNoisedeck/fractal": {
       "paramNames": [
@@ -183,12 +157,7 @@
         "bgColor",
         "bgAlpha",
         "cutoff"
-      ],
-      "paramAliases": {
-        "fractalType": "type",
-        "backgroundColor": "bgColor",
-        "backgroundOpacity": "bgAlpha"
-      }
+      ]
     },
     "classicNoisedeck/glitch": {
       "paramNames": [
@@ -202,10 +171,7 @@
         "vignetteAmt",
         "distortion",
         "aspectLens"
-      ],
-      "paramAliases": {
-        "aberrationAmt": "aberration"
-      }
+      ]
     },
     "classicNoisedeck/kaleido": {
       "paramNames": [
@@ -219,11 +185,7 @@
         "direction",
         "kernel",
         "effectWidth"
-      ],
-      "paramAliases": {
-        "kaleido": "sides",
-        "loopAmp": "speed"
-      }
+      ]
     },
     "classicNoisedeck/lensDistortion": {
       "paramNames": [
@@ -243,12 +205,7 @@
         "saturation",
         "passthru",
         "vignetteAmt"
-      ],
-      "paramAliases": {
-        "aberrationAmt": "aberration",
-        "opacity": "alpha",
-        "loopAmp": "speed"
-      }
+      ]
     },
     "classicNoisedeck/moodscape": {
       "paramNames": [
@@ -263,10 +220,7 @@
         "hueRotation",
         "hueRange",
         "intensity"
-      ],
-      "paramAliases": {
-        "loopAmp": "speed"
-      }
+      ]
     },
     "classicNoisedeck/noise": {
       "paramNames": [
@@ -296,11 +250,7 @@
         "paletteAmp",
         "paletteFreq",
         "palettePhase"
-      ],
-      "paramAliases": {
-        "noiseType": "type",
-        "loopAmp": "speed"
-      }
+      ]
     },
     "classicNoisedeck/noise3d": {
       "paramNames": [
@@ -314,11 +264,7 @@
         "colorMode",
         "hueRotation",
         "hueRange"
-      ],
-      "paramAliases": {
-        "noiseScale": "scale",
-        "noiseType": "type"
-      }
+      ]
     },
     "classicNoisedeck/refract": {
       "paramNames": [
@@ -328,11 +274,7 @@
         "amount",
         "direction",
         "wrap"
-      ],
-      "paramAliases": {
-        "refractDir": "direction",
-        "mixAmt": "mix"
-      }
+      ]
     },
     "classicNoisedeck/shapeMixer": {
       "paramNames": [
@@ -353,8 +295,7 @@
         "rotatePalette",
         "repeatPalette",
         "levels"
-      ],
-      "paramAliases": {}
+      ]
     },
     "classicNoisedeck/shapes": {
       "paramNames": [
@@ -375,11 +316,7 @@
         "cyclePalette",
         "rotatePalette",
         "repeatPalette"
-      ],
-      "paramAliases": {
-        "loopAAmp": "speedA",
-        "loopBAmp": "speedB"
-      }
+      ]
     },
     "classicNoisedeck/shapes3d": {
       "paramNames": [
@@ -414,11 +351,7 @@
         "paletteAmp",
         "paletteFreq",
         "palettePhase"
-      ],
-      "paramAliases": {
-        "backgroundColor": "bgColor",
-        "backgroundOpacity": "bgAlpha"
-      }
+      ]
     },
     "classicNoisedeck/splat": {
       "paramNames": [
@@ -436,16 +369,7 @@
         "speckColor",
         "speckCutoff",
         "speckSpeed"
-      ],
-      "paramAliases": {
-        "splatColor": "color",
-        "splatCutoff": "cutoff",
-        "splatMode": "mode",
-        "splatScale": "scale",
-        "splatSeed": "seed",
-        "splatSpeed": "speed",
-        "useSplats": "enabled"
-      }
+      ]
     },
     "filter/adjust": {
       "paramNames": [
@@ -455,8 +379,7 @@
         "saturation",
         "brightness",
         "contrast"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/bloom": {
       "paramNames": [
@@ -466,15 +389,13 @@
         "radius",
         "taps",
         "tint"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/blur": {
       "paramNames": [
         "radiusX",
         "radiusY"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/bulge": {
       "paramNames": [
@@ -483,8 +404,7 @@
         "wrap",
         "rotation",
         "antialias"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/celShading": {
       "paramNames": [
@@ -497,52 +417,41 @@
         "edgeColor",
         "lightDirection",
         "strength"
-      ],
-      "paramAliases": {
-        "shadingStrength": "strength",
-        "mixAmount": "mix"
-      }
+      ]
     },
     "filter/channel": {
       "paramNames": [
         "channel",
         "scale",
         "offset"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/chroma": {
       "paramNames": [
         "targetHue",
         "range",
         "feather"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/chromaticAberration": {
       "paramNames": [
         "aberration",
         "passthru"
-      ],
-      "paramAliases": {
-        "aberrationAmt": "aberration"
-      }
+      ]
     },
     "filter/chrome": {
       "paramNames": [
         "detail",
         "smoothness",
         "distortion"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/clouds": {
       "paramNames": [
         "seed",
         "scale",
         "speed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/colorReplace": {
       "paramNames": [
@@ -553,8 +462,7 @@
         "colorMix",
         "replaceAlpha",
         "keepAlpha"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/convolutionFeedback": {
       "paramNames": [
@@ -565,8 +473,7 @@
         "intensity",
         "resetState",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/corrupt": {
       "paramNames": [
@@ -580,8 +487,7 @@
         "bits",
         "speed",
         "seed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/craquelure": {
       "paramNames": [
@@ -589,16 +495,14 @@
         "depth",
         "brightness",
         "seed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/crt": {
       "paramNames": [
         "alpha",
         "speed",
         "seed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/degauss": {
       "paramNames": [
@@ -606,21 +510,18 @@
         "direction",
         "seed",
         "speed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/deriv": {
       "paramNames": [
         "amount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/directionalBlur": {
       "paramNames": [
         "angle",
         "distance"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/dither": {
       "paramNames": [
@@ -630,11 +531,7 @@
         "palette",
         "levels",
         "mix"
-      ],
-      "paramAliases": {
-        "ditherType": "type",
-        "mixAmount": "mix"
-      }
+      ]
     },
     "filter/edge": {
       "paramNames": [
@@ -648,8 +545,7 @@
         "threshold",
         "blend",
         "mix"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/emboss": {
       "paramNames": [
@@ -658,8 +554,7 @@
         "angle",
         "height",
         "colorAmount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/extrude": {
       "paramNames": [
@@ -668,8 +563,7 @@
         "depth",
         "depthSource",
         "solidFront"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/feedback": {
       "paramNames": [
@@ -687,49 +581,40 @@
         "distortion",
         "resetState",
         "iterationCount"
-      ],
-      "paramAliases": {
-        "mixAmt": "mix",
-        "aberrationAmt": "aberration"
-      }
+      ]
     },
     "filter/fibers": {
       "paramNames": [
         "density",
         "seed",
         "alpha"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/flipMirror": {
       "paramNames": [
         "mode"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/fxaa": {
       "paramNames": [
         "strength",
         "sharpness",
         "threshold"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/glowingEdge": {
       "paramNames": [
         "shape",
         "width",
         "alpha"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/glyphMap": {
       "paramNames": [
         "cellSize",
         "seed",
         "colorMode"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/grade": {
       "paramNames": [
@@ -772,24 +657,19 @@
         "vignetteRoundness",
         "vignetteFeather",
         "vigHiProtect"
-      ],
-      "paramAliases": {
-        "vignetteHighlightProtect": "vigHiProtect"
-      }
+      ]
     },
     "filter/grain": {
       "paramNames": [
         "alpha",
         "pause"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/grime": {
       "paramNames": [
         "strength",
         "seed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/halftone": {
       "paramNames": [
@@ -804,8 +684,7 @@
         "sharpness",
         "inkColor",
         "paperColor"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/hatch": {
       "paramNames": [
@@ -816,15 +695,13 @@
         "pressure",
         "inkColor",
         "paperColor"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/highPass": {
       "paramNames": [
         "radius",
         "mono"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/historicPalette": {
       "paramNames": [
@@ -834,24 +711,19 @@
         "repeat",
         "alpha",
         "smoothness"
-      ],
-      "paramAliases": {
-        "paletteIndex": "index"
-      }
+      ]
     },
     "filter/invert": {
       "paramNames": [
         "mode"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/lens": {
       "paramNames": [
         "displacement",
         "aspectLens",
         "antialias"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/lensFlare": {
       "paramNames": [
@@ -860,15 +732,13 @@
         "centerY",
         "lensType",
         "tint"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/lensWarp": {
       "paramNames": [
         "displacement",
         "antialias"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/lightLeak": {
       "paramNames": [
@@ -876,8 +746,7 @@
         "color",
         "speed",
         "seed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/lighting": {
       "paramNames": [
@@ -893,8 +762,7 @@
         "refraction",
         "aberration",
         "heightMap"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/lowPoly": {
       "paramNames": [
@@ -907,26 +775,20 @@
         "lightIntensity",
         "alpha",
         "speed"
-      ],
-      "paramAliases": {
-        "freq": "scale",
-        "nth": "mode"
-      }
+      ]
     },
     "filter/median": {
       "paramNames": [
         "radius",
         "threshold"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/morphology": {
       "paramNames": [
         "mode",
         "radius",
         "shape"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/mosaicTiles": {
       "paramNames": [
@@ -938,24 +800,20 @@
         "gapFill",
         "backgroundColor",
         "seed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/motionBlur": {
       "paramNames": [
         "amount",
         "resetState",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/normalMap": {
-      "paramNames": [],
-      "paramAliases": {}
+      "paramNames": []
     },
     "filter/normalize": {
-      "paramNames": [],
-      "paramAliases": {}
+      "paramNames": []
     },
     "filter/octaveWarp": {
       "paramNames": [
@@ -966,10 +824,7 @@
         "seed",
         "wrap",
         "antialias"
-      ],
-      "paramAliases": {
-        "frequency": "freq"
-      }
+      ]
     },
     "filter/oilPaint": {
       "paramNames": [
@@ -978,8 +833,7 @@
         "detail",
         "texture",
         "seed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/osd": {
       "paramNames": [
@@ -987,16 +841,14 @@
         "seed",
         "speed",
         "corner"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/outline": {
       "paramNames": [
         "shape",
         "thickness",
         "invert"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/palette": {
       "paramNames": [
@@ -1005,29 +857,21 @@
         "offset",
         "repeat",
         "alpha"
-      ],
-      "paramAliases": {
-        "paletteIndex": "index",
-        "paletteOffset": "offset",
-        "paletteRepeat": "repeat",
-        "paletteRotation": "rotation"
-      }
+      ]
     },
     "filter/parallax": {
       "paramNames": [
         "heightMap",
         "direction",
         "pivot"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/patchwork": {
       "paramNames": [
         "squareSize",
         "relief",
         "lightAngle"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/photocopy": {
       "paramNames": [
@@ -1035,8 +879,7 @@
         "darkness",
         "inkColor",
         "paperColor"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/pinch": {
       "paramNames": [
@@ -1045,8 +888,7 @@
         "wrap",
         "rotation",
         "antialias"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/pixelSort": {
       "paramNames": [
@@ -1054,14 +896,12 @@
         "darkest",
         "wrap",
         "alpha"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/pixels": {
       "paramNames": [
         "size"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/plasticWrap": {
       "paramNames": [
@@ -1069,8 +909,7 @@
         "detail",
         "smoothness",
         "lightDirection"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/polar": {
       "paramNames": [
@@ -1080,8 +919,7 @@
         "speed",
         "aspectLens",
         "antialias"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/pondRipples": {
       "paramNames": [
@@ -1091,16 +929,14 @@
         "style",
         "wrap",
         "antialias"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/posterize": {
       "paramNames": [
         "levels",
         "gamma",
         "antialias"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/prismaticAberration": {
       "paramNames": [
@@ -1110,16 +946,12 @@
         "hueRange",
         "saturation",
         "passthru"
-      ],
-      "paramAliases": {
-        "aberrationAmt": "aberration"
-      }
+      ]
     },
     "filter/reindex": {
       "paramNames": [
         "displacement"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/relief": {
       "paramNames": [
@@ -1131,8 +963,7 @@
         "graininess",
         "inkColor",
         "paperColor"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/repeat": {
       "paramNames": [
@@ -1141,8 +972,7 @@
         "offsetX",
         "offsetY",
         "wrap"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/reverb": {
       "paramNames": [
@@ -1150,22 +980,19 @@
         "ridges",
         "alpha",
         "wrap"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/ridge": {
       "paramNames": [
         "level"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/rotate": {
       "paramNames": [
         "rotation",
         "wrap",
         "speed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/scale": {
       "paramNames": [
@@ -1174,8 +1001,7 @@
         "centerX",
         "centerY",
         "wrap"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/scanlineError": {
       "paramNames": [
@@ -1184,8 +1010,7 @@
         "distortion",
         "noise",
         "speed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/scatter": {
       "paramNames": [
@@ -1193,16 +1018,14 @@
         "mode",
         "smoothness",
         "seed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/scratches": {
       "paramNames": [
         "density",
         "alpha",
         "seed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/scroll": {
       "paramNames": [
@@ -1211,43 +1034,37 @@
         "speedX",
         "speedY",
         "wrap"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/seamless": {
       "paramNames": [
         "blend",
         "repeat",
         "curve"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/sharpen": {
       "paramNames": [
         "amount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/simpleAberration": {
       "paramNames": [
         "displacement"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/sine": {
       "paramNames": [
         "amount",
         "colorMode"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/skew": {
       "paramNames": [
         "skew",
         "rotate",
         "wrap"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/smooth": {
       "paramNames": [
@@ -1257,30 +1074,26 @@
         "radius",
         "samples",
         "searchSteps"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/smoothstep": {
       "paramNames": [
         "edge0",
         "edge1"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/snow": {
       "paramNames": [
         "alpha",
         "pause",
         "density"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/sobel": {
       "paramNames": [
         "amount",
         "alpha"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/spatter": {
       "paramNames": [
@@ -1288,16 +1101,14 @@
         "density",
         "alpha",
         "seed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/spinBlur": {
       "paramNames": [
         "amount",
         "centerX",
         "centerY"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/spiral": {
       "paramNames": [
@@ -1307,8 +1118,7 @@
         "wrap",
         "aspectLens",
         "antialias"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/spookyTicker": {
       "paramNames": [
@@ -1316,8 +1126,7 @@
         "seed",
         "alpha",
         "speed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/stamp": {
       "paramNames": [
@@ -1326,15 +1135,13 @@
         "roughness",
         "inkColor",
         "paperColor"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/step": {
       "paramNames": [
         "threshold",
         "antialias"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/stipple": {
       "paramNames": [
@@ -1344,16 +1151,14 @@
         "density",
         "paperColor",
         "seed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/strayHair": {
       "paramNames": [
         "density",
         "seed",
         "alpha"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/strokes": {
       "paramNames": [
@@ -1362,8 +1167,7 @@
         "balance",
         "intensity",
         "sharpness"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/temporalAberration": {
       "paramNames": [
@@ -1371,8 +1175,7 @@
         "greenDelay",
         "blueDelay",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/tetraColorArray": {
       "paramNames": [
@@ -1400,8 +1203,7 @@
         "offset",
         "alpha",
         "smoothness"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/tetraCosine": {
       "paramNames": [
@@ -1422,8 +1224,7 @@
         "repeat",
         "offset",
         "alpha"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/text": {
       "paramNames": [
@@ -1438,12 +1239,7 @@
         "matteOpacity",
         "justify",
         "style"
-      ],
-      "paramAliases": {
-        "bgOpacity": "matteOpacity",
-        "bgAlpha": "matteOpacity",
-        "bgColor": "matteColor"
-      }
+      ]
     },
     "filter/texture": {
       "paramNames": [
@@ -1453,15 +1249,13 @@
         "intensity",
         "contrast",
         "mono"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/threshold": {
       "paramNames": [
         "level",
         "sharpness"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/tile": {
       "paramNames": [
@@ -1472,24 +1266,21 @@
         "angle",
         "repeat",
         "aspectLens"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/tint": {
       "paramNames": [
         "color",
         "alpha",
         "mode"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/translate": {
       "paramNames": [
         "x",
         "y",
         "wrap"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/tunnel": {
       "paramNames": [
@@ -1500,29 +1291,25 @@
         "center",
         "aspectLens",
         "antialias"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/unsharpMask": {
       "paramNames": [
         "amount",
         "radius",
         "threshold"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/vaseline": {
       "paramNames": [
         "alpha"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/vignette": {
       "paramNames": [
         "brightness",
         "alpha"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/warp": {
       "paramNames": [
@@ -1532,16 +1319,14 @@
         "speed",
         "wrap",
         "antialias"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/watercolor": {
       "paramNames": [
         "detail",
         "shadowIntensity",
         "paperTexture"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/waves": {
       "paramNames": [
@@ -1551,8 +1336,7 @@
         "wrap",
         "rotation",
         "antialias"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/wind": {
       "paramNames": [
@@ -1560,16 +1344,14 @@
         "direction",
         "strength",
         "threshold"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/wobble": {
       "paramNames": [
         "speed",
         "range",
         "wrap"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/wormhole": {
       "paramNames": [
@@ -1578,14 +1360,12 @@
         "rotation",
         "wrap",
         "alpha"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter/zoomBlur": {
       "paramNames": [
         "strength"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter3d/flow3d": {
       "paramNames": [
@@ -1599,8 +1379,7 @@
         "inputIntensity",
         "lifetime",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "filter3d/palette3d": {
       "paramNames": [
@@ -1610,13 +1389,7 @@
         "offset",
         "repeat",
         "alpha"
-      ],
-      "paramAliases": {
-        "paletteIndex": "index",
-        "paletteOffset": "offset",
-        "paletteRepeat": "repeat",
-        "paletteRotation": "rotation"
-      }
+      ]
     },
     "mixer/alphaMask": {
       "paramNames": [
@@ -1624,30 +1397,21 @@
         "baseTex",
         "mix",
         "maskMode"
-      ],
-      "paramAliases": {
-        "mixAmt": "mix"
-      }
+      ]
     },
     "mixer/applyMode": {
       "paramNames": [
         "tex",
         "mode",
         "mix"
-      ],
-      "paramAliases": {
-        "mixAmt": "mix"
-      }
+      ]
     },
     "mixer/blendMode": {
       "paramNames": [
         "tex",
         "mode",
         "mix"
-      ],
-      "paramAliases": {
-        "mixAmt": "mix"
-      }
+      ]
     },
     "mixer/cellSplit": {
       "paramNames": [
@@ -1658,8 +1422,7 @@
         "edgeWidth",
         "seed",
         "speed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "mixer/centerMask": {
       "paramNames": [
@@ -1668,10 +1431,7 @@
         "shape",
         "hardness",
         "mix"
-      ],
-      "paramAliases": {
-        "mixAmt": "mix"
-      }
+      ]
     },
     "mixer/channelCombine": {
       "paramNames": [
@@ -1681,8 +1441,7 @@
         "rLevel",
         "gLevel",
         "bLevel"
-      ],
-      "paramAliases": {}
+      ]
     },
     "mixer/distortion": {
       "paramNames": [
@@ -1694,8 +1453,7 @@
         "smoothing",
         "aberration",
         "antialias"
-      ],
-      "paramAliases": {}
+      ]
     },
     "mixer/focusBlur": {
       "paramNames": [
@@ -1704,8 +1462,7 @@
         "focalDistance",
         "aperture",
         "sampleBias"
-      ],
-      "paramAliases": {}
+      ]
     },
     "mixer/mashup": {
       "paramNames": [
@@ -1720,8 +1477,7 @@
         "layer5_tex",
         "layer6_tex",
         "layer7_tex"
-      ],
-      "paramAliases": {}
+      ]
     },
     "mixer/patternMix": {
       "paramNames": [
@@ -1732,8 +1488,7 @@
         "thickness",
         "smoothness",
         "rotation"
-      ],
-      "paramAliases": {}
+      ]
     },
     "mixer/shadow": {
       "paramNames": [
@@ -1747,8 +1502,7 @@
         "offsetX",
         "offsetY",
         "wrap"
-      ],
-      "paramAliases": {}
+      ]
     },
     "mixer/shapeMask": {
       "paramNames": [
@@ -1761,8 +1515,7 @@
         "posX",
         "posY",
         "speed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "mixer/split": {
       "paramNames": [
@@ -1772,8 +1525,7 @@
         "rotation",
         "softness",
         "speed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "mixer/thresholdMix": {
       "paramNames": [
@@ -1789,8 +1541,7 @@
         "rangeG",
         "thresholdB",
         "rangeB"
-      ],
-      "paramAliases": {}
+      ]
     },
     "mixer/uvRemap": {
       "paramNames": [
@@ -1800,8 +1551,7 @@
         "scale",
         "offset",
         "wrap"
-      ],
-      "paramAliases": {}
+      ]
     },
     "points/attractor": {
       "paramNames": [
@@ -1810,8 +1560,7 @@
         "speed",
         "viewMode",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "points/buddhabrot": {
       "paramNames": [
@@ -1824,7 +1573,6 @@
         "zoom",
         "iterationCount"
       ],
-      "paramAliases": {},
       "paramOverrides": {
         "maxIter": {
           "max": 2000
@@ -1842,8 +1590,7 @@
         "attrition",
         "matteOpacity",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "points/flock": {
       "paramNames": [
@@ -1858,8 +1605,7 @@
         "wallMargin",
         "noiseWeight",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "points/flow": {
       "paramNames": [
@@ -1871,8 +1617,7 @@
         "quantize",
         "inputWeight",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "points/hydraulic": {
       "paramNames": [
@@ -1881,8 +1626,7 @@
         "inverse",
         "inputWeight",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "points/lenia": {
       "paramNames": [
@@ -1895,8 +1639,7 @@
         "searchRadius",
         "depositAmount",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "points/life": {
       "paramNames": [
@@ -1913,8 +1656,7 @@
         "symmetricForces",
         "useTypeColor",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "points/physarum": {
       "paramNames": [
@@ -1927,8 +1669,7 @@
         "decay",
         "resetState",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "points/physical": {
       "paramNames": [
@@ -1940,24 +1681,20 @@
         "deviation",
         "wander",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "render/loopBegin": {
       "paramNames": [
         "alpha",
         "intensity",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "render/loopEnd": {
-      "paramNames": [],
-      "paramAliases": {}
+      "paramNames": []
     },
     "render/meshLoader": {
-      "paramNames": [],
-      "paramAliases": {}
+      "paramNames": []
     },
     "render/meshRender": {
       "paramNames": [
@@ -1984,8 +1721,7 @@
         "bgColor",
         "bgAlpha",
         "wireframe"
-      ],
-      "paramAliases": {}
+      ]
     },
     "render/pointsBillboardRender": {
       "paramNames": [
@@ -2015,9 +1751,6 @@
         "focalDistance",
         "iterationCount"
       ],
-      "paramAliases": {
-        "rotationVariation": "rotationVar"
-      },
       "paramOverrides": {
         "seed": {
           "max": 1000
@@ -2032,8 +1765,7 @@
         "attrition",
         "resetState",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "render/pointsRender": {
       "paramNames": [
@@ -2051,8 +1783,7 @@
         "fieldOfView",
         "matteOpacity",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "render/render3d": {
       "paramNames": [
@@ -2063,8 +1794,7 @@
         "orbitSpeed",
         "bgColor",
         "bgAlpha"
-      ],
-      "paramAliases": {}
+      ]
     },
     "render/renderCubemap3d": {
       "paramNames": [
@@ -2075,8 +1805,7 @@
         "cubeBasis",
         "bgColor",
         "bgAlpha"
-      ],
-      "paramAliases": {}
+      ]
     },
     "render/renderCubemapSurface": {
       "paramNames": [
@@ -2087,8 +1816,7 @@
         "cubeBasis",
         "bgColor",
         "bgAlpha"
-      ],
-      "paramAliases": {}
+      ]
     },
     "render/renderLit3d": {
       "paramNames": [
@@ -2109,8 +1837,7 @@
         "rimIntensity",
         "rimPower",
         "ambientColor"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/bitwise": {
       "paramNames": [
@@ -2124,8 +1851,7 @@
         "speed",
         "colorMode",
         "colorOffset"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/cell": {
       "paramNames": [
@@ -2136,11 +1862,7 @@
         "variation",
         "speed",
         "seed"
-      ],
-      "paramAliases": {
-        "cellVariation": "variation",
-        "loopAmp": "speed"
-      }
+      ]
     },
     "synth/cellularAutomata": {
       "paramNames": [
@@ -2154,8 +1876,7 @@
         "weight",
         "source",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/curl": {
       "paramNames": [
@@ -2166,8 +1887,7 @@
         "intensity",
         "speed",
         "outputMode"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/gabor": {
       "paramNames": [
@@ -2179,8 +1899,7 @@
         "octaves",
         "speed",
         "seed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/gradient": {
       "paramNames": [
@@ -2194,8 +1913,7 @@
         "color3",
         "color4",
         "colorCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/julia": {
       "paramNames": [
@@ -2217,7 +1935,6 @@
         "lightAngle",
         "invert"
       ],
-      "paramAliases": {},
       "paramOverrides": {
         "iterations": {
           "max": 1000
@@ -2242,8 +1959,7 @@
         "animation",
         "speed",
         "pulseDepth"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/mandelbrot": {
       "paramNames": [
@@ -2260,9 +1976,6 @@
         "lightAngle",
         "invert"
       ],
-      "paramAliases": {
-        "poiMode": "poi"
-      },
       "paramOverrides": {
         "iterations": {
           "max": 2000
@@ -2281,11 +1994,7 @@
         "bgColor",
         "bgAlpha",
         "imageSize"
-      ],
-      "paramAliases": {
-        "backgroundColor": "bgColor",
-        "backgroundOpacity": "bgAlpha"
-      }
+      ]
     },
     "synth/mnca": {
       "paramNames": [
@@ -2310,8 +2019,7 @@
         "n2r2",
         "source",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/modPattern": {
       "paramNames": [
@@ -2328,8 +2036,7 @@
         "smoothing",
         "animMode",
         "speed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/navierStokes": {
       "paramNames": [
@@ -2346,8 +2053,7 @@
         "resetState",
         "seed",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/newton": {
       "paramNames": [
@@ -2367,8 +2073,7 @@
         "relaxSpeed",
         "relaxRange",
         "invert"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/noise": {
       "paramNames": [
@@ -2383,13 +2088,7 @@
         "loopScale",
         "speed",
         "colorMode"
-      ],
-      "paramAliases": {
-        "noiseType": "type",
-        "loopAmp": "speed",
-        "xScale": "scaleX",
-        "yScale": "scaleY"
-      }
+      ]
     },
     "synth/osc2d": {
       "paramNames": [
@@ -2398,10 +2097,7 @@
         "speed",
         "rotation",
         "seed"
-      ],
-      "paramAliases": {
-        "frequency": "freq"
-      }
+      ]
     },
     "synth/pattern": {
       "paramNames": [
@@ -2415,10 +2111,7 @@
         "speed",
         "fgColor",
         "bgColor"
-      ],
-      "paramAliases": {
-        "patternType": "type"
-      }
+      ]
     },
     "synth/perlin": {
       "paramNames": [
@@ -2432,8 +2125,7 @@
         "warpIntensity",
         "seed",
         "speed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/polygon": {
       "paramNames": [
@@ -2445,8 +2137,7 @@
         "fgAlpha",
         "bgColor",
         "bgAlpha"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/reactionDiffusion": {
       "paramNames": [
@@ -2468,8 +2159,7 @@
         "weight",
         "inputIntensity",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/remap": {
       "paramNames": [
@@ -2765,16 +2455,14 @@
         "zone7_v29",
         "zone7_v30",
         "zone7_v31"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/roll": {
       "paramNames": [
         "color",
         "gain",
         "speed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/sacredGeometry": {
       "paramNames": [
@@ -2790,16 +2478,14 @@
         "animation",
         "speed",
         "pulseDepth"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/scope": {
       "paramNames": [
         "color",
         "thickness",
         "gain"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/shape": {
       "paramNames": [
@@ -2811,26 +2497,20 @@
         "speedB",
         "seed",
         "wrap"
-      ],
-      "paramAliases": {
-        "loopAAmp": "speedA",
-        "loopBAmp": "speedB"
-      }
+      ]
     },
     "synth/solid": {
       "paramNames": [
         "color",
         "alpha"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/spectrum": {
       "paramNames": [
         "color",
         "thickness",
         "gain"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/subdivide": {
       "paramNames": [
@@ -2844,15 +2524,13 @@
         "inputMix",
         "speed",
         "wrap"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth/testPattern": {
       "paramNames": [
         "pattern",
         "gridSize"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth3d/cell3d": {
       "paramNames": [
@@ -2862,10 +2540,7 @@
         "variation",
         "seed",
         "colorMode"
-      ],
-      "paramAliases": {
-        "cellVariation": "variation"
-      }
+      ]
     },
     "synth3d/cellularAutomata3d": {
       "paramNames": [
@@ -2881,8 +2556,7 @@
         "geoSource",
         "weight",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth3d/flythrough3d": {
       "paramNames": [
@@ -2894,10 +2568,7 @@
         "speed",
         "voiSize",
         "seed"
-      ],
-      "paramAliases": {
-        "fractalType": "type"
-      }
+      ]
     },
     "synth3d/fractal3d": {
       "paramNames": [
@@ -2910,10 +2581,7 @@
         "juliaY",
         "juliaZ",
         "colorMode"
-      ],
-      "paramAliases": {
-        "fractalType": "type"
-      }
+      ]
     },
     "synth3d/noise3d": {
       "paramNames": [
@@ -2924,8 +2592,7 @@
         "ridges",
         "seed",
         "speed"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth3d/reactionDiffusion3d": {
       "paramNames": [
@@ -2943,8 +2610,7 @@
         "geoSource",
         "weight",
         "iterationCount"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth3d/shape3d": {
       "paramNames": [
@@ -2956,8 +2622,7 @@
         "loopBScale",
         "speedA",
         "speedB"
-      ],
-      "paramAliases": {}
+      ]
     },
     "synth3d/heightmap3d": {
       "paramNames": [
@@ -2966,8 +2631,7 @@
         "volumeSize",
         "heightScale",
         "baseHeight"
-      ],
-      "paramAliases": {}
+      ]
     },
     "render/renderLandscape3d": {
       "paramNames": [
@@ -2993,8 +2657,7 @@
         "posZ",
         "fieldOfView",
         "filtering"
-      ],
-      "paramAliases": {}
+      ]
     },
     "points/heightGrid": {
       "paramNames": [
@@ -3003,8 +2666,7 @@
         "gridScale",
         "heightScale",
         "heightOffset"
-      ],
-      "paramAliases": {}
+      ]
     }
   }
 }
