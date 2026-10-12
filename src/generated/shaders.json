@@ -918441,7 +918441,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "38064f6c61f5bd77c88a5ee967e1865b70157c9b",
+    "paramContractRevision": "3f5775c64d55c31906eab114087e09827cb2a1cc",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"
