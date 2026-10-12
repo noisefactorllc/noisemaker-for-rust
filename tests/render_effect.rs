@@ -18,6 +18,102 @@ fn flat(color: [f32; 4]) -> Surface {
 }
 
 #[test]
+fn billboard_pipeline_depth_orders_overlap_and_spreads_defocus() {
+    let state = |pixels: &[[f32; 4]]| {
+        Surface::from_f32(
+            pixels.len() as u32,
+            1,
+            pixels.iter().flatten().copied().collect(),
+        )
+        .unwrap()
+    };
+    let alpha_inputs = BTreeMap::from([
+        ("inputTex".into(), flat([0.0; 4])),
+        ("tex".into(), state(&[[1.0; 4]])),
+        (
+            "global_xyz".into(),
+            state(&[[0.0, 0.0, 2.0, 1.0], [0.0, 0.0, 1.0, 1.0]]),
+        ),
+        (
+            "global_rgba".into(),
+            state(&[[0.5, 0.0, 0.0, 0.5], [0.0, 0.0, 0.5, 0.5]]),
+        ),
+        ("depthOrderA".into(), state(&[[0.0; 4]; 2])),
+        ("depthOrderB".into(), state(&[[0.0; 4]; 2])),
+    ]);
+    let alpha_params = BTreeMap::from([
+        ("blendMode".into(), ParamValue::Int(1)),
+        ("viewMode".into(), ParamValue::Int(1)),
+        ("shapeMode".into(), ParamValue::Int(3)),
+        ("density".into(), ParamValue::Float(100.0)),
+        ("depositOpacity".into(), ParamValue::Float(100.0)),
+        ("pointSize".into(), ParamValue::Float(3.0)),
+        ("rotateX".into(), ParamValue::Float(0.0)),
+        ("intensity".into(), ParamValue::Float(0.0)),
+        ("inputIntensity".into(), ParamValue::Float(0.0)),
+    ]);
+    let alpha = render_effect(
+        "render/pointsBillboardRender",
+        &alpha_params,
+        &alpha_inputs,
+        &options(),
+    )
+    .unwrap();
+    let center = ((4 * 8 + 4) * 4) as usize;
+    assert!(
+        alpha.data()[center] > alpha.data()[center + 2],
+        "far blue must deposit before near red: center={:?}",
+        &alpha.data()[center..center + 4]
+    );
+
+    let blur_inputs = BTreeMap::from([
+        ("inputTex".into(), flat([0.0; 4])),
+        ("tex".into(), state(&[[1.0; 4]])),
+        ("global_xyz".into(), state(&[[0.0, 0.0, 1.0, 1.0]])),
+        ("global_rgba".into(), state(&[[1.0, 0.0, 0.0, 1.0]])),
+    ]);
+    let mut blur_params = BTreeMap::from([
+        ("blendMode".into(), ParamValue::Int(0)),
+        ("viewMode".into(), ParamValue::Int(1)),
+        ("shapeMode".into(), ParamValue::Int(3)),
+        ("density".into(), ParamValue::Float(100.0)),
+        ("depositOpacity".into(), ParamValue::Float(100.0)),
+        ("pointSize".into(), ParamValue::Float(2.0)),
+        ("rotateX".into(), ParamValue::Float(0.0)),
+        ("intensity".into(), ParamValue::Float(0.0)),
+        ("inputIntensity".into(), ParamValue::Float(0.0)),
+        ("focalDistance".into(), ParamValue::Float(40.0)),
+        ("aperture".into(), ParamValue::Float(0.0)),
+    ]);
+    let sharp = render_effect(
+        "render/pointsBillboardRender",
+        &blur_params,
+        &blur_inputs,
+        &options(),
+    )
+    .unwrap();
+    blur_params.insert("aperture".into(), ParamValue::Float(20.0));
+    let blurred = render_effect(
+        "render/pointsBillboardRender",
+        &blur_params,
+        &blur_inputs,
+        &options(),
+    )
+    .unwrap();
+    let lit = |surface: &Surface| {
+        surface
+            .data()
+            .chunks_exact(4)
+            .filter(|pixel| pixel[0] > 0.0)
+            .count()
+    };
+    assert!(
+        lit(&blurred) > lit(&sharp),
+        "defocus must spread the sprite across pixels"
+    );
+}
+
+#[test]
 fn solid_and_invert_have_literal_pixels() {
     let solid = render_effect(
         "synth/solid",
@@ -238,6 +334,47 @@ fn remap_computed_uniform_array_and_shape_global_name_collision_are_supported() 
 }
 
 #[test]
+fn remap_bound_polygon_uses_zone_texture_and_background() {
+    let output = render_effect(
+        "synth/remap",
+        &BTreeMap::from([
+            ("zoneCount".into(), ParamValue::Int(1)),
+            ("bgColor".into(), ParamValue::Vector(vec![0.0, 0.0, 1.0])),
+            ("smoothEdge".into(), ParamValue::Float(0.0)),
+            ("zone0_count".into(), ParamValue::Int(3)),
+            (
+                "zone0_v0".into(),
+                ParamValue::Vector(vec![0.0, 0.0, 1.0, 0.0]),
+            ),
+            (
+                "zone0_v1".into(),
+                ParamValue::Vector(vec![0.0, 1.0, 0.0, 0.0]),
+            ),
+        ]),
+        &BTreeMap::from([("zone0_tex".into(), flat([1.0, 0.0, 0.0, 1.0]))]),
+        &options(),
+    )
+    .unwrap();
+    let pixels = output.to_rgba8();
+    assert!(
+        pixels
+            .chunks_exact(4)
+            .all(|pixel| pixel == [255, 0, 0, 255] || pixel == [0, 0, 255, 255])
+    );
+    assert_eq!(
+        pixels
+            .chunks_exact(8 * 4)
+            .map(|row| {
+                row.chunks_exact(4)
+                    .filter(|pixel| *pixel == [255, 0, 0, 255])
+                    .count()
+            })
+            .collect::<Vec<_>>(),
+        [8, 7, 6, 5, 4, 3, 2, 1]
+    );
+}
+
+#[test]
 fn unknown_effect_is_typed() {
     let error = render_effect(
         "synth/notReal",
@@ -376,4 +513,36 @@ fn direct_parameter_api_accepts_decimal_schema_endpoints_at_f32_precision() {
         ParamValue::Float(f32::from_bits(0.01_f32.to_bits() - 1)),
         &inputs,
     );
+}
+
+#[test]
+fn numbered_test_pattern_preserves_cpu_fractional_digit_extraction() {
+    let output = render_effect(
+        "synth/testPattern",
+        &BTreeMap::new(),
+        &BTreeMap::new(),
+        &RenderOptions {
+            width: 64,
+            height: 64,
+            ..options()
+        },
+    )
+    .unwrap();
+    let pixels = output.to_rgba8();
+    // The CPU factory leaves `temp /= 10` as a Number division. For cells
+    // 11..15 the tens digit is fractional, and its glyph lookup is undefined
+    // (zero bits), while cell 10 still draws its integral tens digit.
+    for y in 53..59 {
+        for (x, expected) in [(6, 255), (22, 0), (38, 255), (54, 0)] {
+            let index = (y * 64 + x) * 4;
+            assert_eq!(
+                &pixels[index..index + 4],
+                &[expected, expected, expected, 255]
+            );
+        }
+    }
+    for y in 37..43 {
+        let index = (y * 64 + 54) * 4;
+        assert_eq!(&pixels[index..index + 4], &[255, 255, 255, 255]);
+    }
 }

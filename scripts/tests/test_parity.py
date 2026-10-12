@@ -1,5 +1,10 @@
+import contextlib
+import io
 import unittest
-from pathlib import PureWindowsPath
+from pathlib import Path, PureWindowsPath
+from tempfile import TemporaryDirectory
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from scripts import parity
 
@@ -184,6 +189,36 @@ class SweepPlanTest(unittest.TestCase):
         self.assertEqual([case["time"] for case in frames], list(parity.SWEEP_TIMES))
         self.assertFalse(any(case["kind"] == "frame" for case in plan["synth/alpha"]))
 
+    def test_all_iterated_catalog_effects_get_frame_cases(self):
+        catalog = parity._catalog()
+        plan = parity._sweep_plan(catalog)
+        for effect_id, effect in catalog.items():
+            if effect.get("iterated"):
+                self.assertEqual(
+                    sum(case["kind"] == "frame" for case in plan[effect_id]),
+                    parity.SWEEP_FRAMES, effect_id,
+                )
+        self.assertEqual(sum(map(len, plan.values())), 697)
+
+    def test_frame_program_reads_the_prior_output_through_media(self):
+        catalog = parity._catalog()
+        base = parity._program("points/life", catalog["points/life"])
+        feedback = parity._feedback_program(base)
+        self.assertIn("media().write(o6)", feedback)
+        self.assertIn("read(o0).blendMode(tex:o6,mode:8,mix:50).write(o0)", feedback)
+        self.assertTrue(feedback.endswith("render(o0)"))
+        external = parity._feedback_program(parity.EXTERNAL_INPUT_PROGRAMS["synth/roll"])
+        self.assertIn("search synth,mixer", external)
+        self.assertIn("read(o0).blendMode(tex:o6,mode:8,mix:50).write(o0)", external)
+        for effect_id, cases in parity._sweep_plan(catalog).items():
+            if any(case["kind"] == "frame" for case in cases):
+                base = (
+                    parity.EXTERNAL_INPUT_PROGRAMS[effect_id]
+                    if effect_id in parity.EXTERNAL_INPUT_IDS
+                    else parity._program(effect_id, catalog[effect_id])
+                )
+                self.assertIn("media().write(o6)", parity._feedback_program(base), effect_id)
+
     def test_full_catalog_plan_ids_are_unique_and_sorted(self):
         plan = parity._sweep_plan(parity._catalog())
         ids = [case["id"] for effect_id in sorted(plan) for case in plan[effect_id]]
@@ -239,6 +274,7 @@ class SweepValidationTest(unittest.TestCase):
         self.assertEqual(report["sweep"]["variants"], parity.SWEEP_VARIANTS)
         self.assertEqual(report["sweep"]["frames"], parity.SWEEP_FRAMES)
         self.assertEqual(report["sweep"]["times"], list(parity.SWEEP_TIMES))
+        self.assertEqual(report["sweep"]["feedback"], "previous-output-surface")
 
     def test_a_byte_difference_fails_at_tolerance_zero(self):
         plan = self._plan()
@@ -268,6 +304,73 @@ class SweepValidationTest(unittest.TestCase):
             parity._validate_sweep(report, plan)
         self.assertEqual(report["failed"], 1)
         self.assertEqual(report["executed"], len(results) - 1)
+
+    def test_missing_sequence_binary_keeps_every_frame_in_the_denominator(self):
+        plan = self._plan()
+        frames = [case for case in plan["points/life"] if case["kind"] == "frame"]
+        with TemporaryDirectory() as temporary:
+            records = parity._compare_frame_sequence(
+                SimpleNamespace(size=1, seed=1, timeout=1),
+                "points/life", parity._catalog()["points/life"], frames,
+                Path(temporary) / "missing-sequence", None, Path(temporary),
+            )
+        self.assertEqual(len(records), parity.SWEEP_FRAMES)
+        self.assertEqual([record["id"] for record in records], [case["id"] for case in frames])
+        self.assertTrue(all(record["status"] == "error" for record in records))
+        self.assertTrue(all("missing-sequence" in record["reason"] for record in records))
+
+    def test_custom_target_uses_explicit_sequence_binary(self):
+        cases = [
+            {"kind": "frame", "id": f"filter/feedback#frame:{index}", "time": time}
+            for index, time in enumerate(parity.SWEEP_TIMES)
+        ]
+        args = SimpleNamespace(
+            rust=Path("/tmp/other-target/debug/noisemaker-rs"),
+            rust_sequence=Path("/tmp/qualified-target/debug/examples/parity_sequence"),
+            js=Path("/tmp/oracle/bin/noisemaker-cpu.js"),
+            size=1, seed=1, time=0.25, timeout=1, json=None,
+        )
+        records = [
+            {"id": case["id"], "effect": "filter/feedback", "case": parity._sweep_case_dict(case),
+             "status": "compared", **parity._metrics(bytes(4), bytes(4)),
+             "rust_seconds": 0.01, "js_seconds": 0.01}
+            for case in cases
+        ]
+        with patch.object(parity, "_sweep_plan", return_value={"filter/feedback": cases}), \
+             patch.object(parity, "_compare_frame_sequence", return_value=records) as compare, \
+             contextlib.redirect_stdout(io.StringIO()):
+            result = parity._sweep_main(args, {"filter/feedback": {}}, ["filter/feedback"])
+        self.assertEqual(result, 0)
+        self.assertEqual(compare.call_args.args[4], args.rust_sequence)
+
+    def test_sweep_with_frames_requires_sequence_binary(self):
+        with patch.object(parity, "_sweep_main", return_value=0) as sweep, \
+             contextlib.redirect_stderr(io.StringIO()) as stderr:
+            with self.assertRaises(SystemExit) as failure:
+                parity.main([
+                    "--rust", "/tmp/other-target/debug/noisemaker-rs",
+                    "--js", "/tmp/oracle/bin/noisemaker-cpu.js",
+                    "--only", "filter/feedback", "--sweep",
+                ])
+        self.assertEqual(failure.exception.code, 2)
+        self.assertIn("--rust-sequence", stderr.getvalue())
+        sweep.assert_not_called()
+
+    def test_non_frame_sweep_does_not_require_sequence_binary(self):
+        with patch.object(parity, "_sweep_main", return_value=0) as sweep:
+            result = parity.main([
+                "--rust", "/tmp/other-target/debug/noisemaker-rs",
+                "--js", "/tmp/oracle/bin/noisemaker-cpu.js",
+                "--only", "synth/gradient", "--sweep",
+            ])
+        self.assertEqual(result, 0)
+        self.assertIsNone(sweep.call_args.args[0].rust_sequence)
+
+    def test_sequence_timings_require_one_finite_value_per_frame(self):
+        self.assertEqual(parity._sequence_timings("[0.1,0.2,0.3]", 3, "Rust"), [0.1, 0.2, 0.3])
+        for output in ("[0.1,0.2]", "[0.1,-1,0.3]", "bad"):
+            with self.assertRaisesRegex(ValueError, "invalid timings"):
+                parity._sequence_timings(output, 3, "Rust")
 
 
 if __name__ == "__main__":

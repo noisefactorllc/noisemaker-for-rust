@@ -8,26 +8,11 @@ only the definition (params/passes) is reproduced here, faithful to the JS.
   into the single render pass's inputs.
 - synth/remap: `f()` generates zone0_tex..zone7_tex surface params (max 8), each
   with a `zoneN_active` colorModeUniform; the std140 `data` block is packed from
-  the params at render time by renderer.remap_uniform_data (see that function's
-  own comment: this renderer has never packed zone polygon vertex data into it,
-  a pre-existing gap predating this file, unrelated to any specific round).
-- render/pointsBillboardRender: the reference definition's `.flatMap()` clones
-  its deposit/depthKeys/depthMerge passes per compile-time viewMode/blendMode/
-  blurLayer variant (reference 0ed489ec, the perspective+depth-sort+defocus
-  round). This port's own draw_ops.rs dispatches those as RUNTIME uniforms
-  inside one `billboard()` function (matching pointsRender's own pattern), not
-  per-variant compiled kernels, so the params/passes below keep this port's
-  pre-round 5-pass shape (diffuse/copy/deposit/deposit_alpha/blend) rather than
-  the reference's clone structure -- reconstructed from this repo's own
-  pre-round history (commit 6c118ed) plus this round's additions. aperture/
-  focalDistance are declared but inert: this round's depth-sorted alpha-blend
-  draw order and aperture defocus blur have no equivalent in this port's
-  bounding-box scanline rasterizer (no oversized-quad multi-sample kernel, no
-  merge-sort infrastructure) -- the same architectural-mismatch category as
-  the noisemaker-for-touchdesigner/-ruby/-perl sibling ports for the identical
-  reason. Perspective viewMode and distance-based size/brightness fade (which
-  ARE pure per-agent math, no new rendering infrastructure needed) are ported
-  in draw_ops.rs's compute_clip_center, shared with pointsRender.
+  the polygon geometry, bounds, alpha and host-wired active flags are packed
+  from these params at render time by renderer.remap_uniform_data.
+- render/pointsBillboardRender: the reference definition builds depth-sort and
+  deposit pass clones with JavaScript loops and `.flatMap()`. This definition
+  reproduces those passes; the draw adapter consumes their runtime uniforms.
 """
 
 from __future__ import annotations
@@ -67,6 +52,12 @@ def _remap():
     inputs = {}
     for z in range(_REMAP_ZONES):
         params[f"zone{z}_tex"] = {"type": "surface", "default": "none", "colorModeUniform": f"zone{z}_active"}
+        params[f"zone{z}_count"] = {"type": "int", "default": 0, "min": 0, "max": 64, "uniform": f"zone{z}_count"}
+        params[f"zone{z}_alpha"] = {"type": "float", "default": 1, "min": 0, "max": 1, "uniform": f"zone{z}_alpha"}
+        params[f"zone{z}_bounds"] = {"type": "vec4", "default": [0, 0, 1, 1], "uniform": f"zone{z}_bounds"}
+        for pair in range(32):
+            name = f"zone{z}_v{pair}"
+            params[name] = {"type": "vec4", "default": [0, 0, 0, 0], "uniform": name}
         inputs[f"zone{z}_tex"] = f"zone{z}_tex"
     passes = [{"name": "render", "program": "remap", "inputs": inputs, "outputs": {"fragColor": "outputTex"}}]
     return {
@@ -181,57 +172,127 @@ def _points_billboard_render():
             "ui": {"label": "focal distance", "control": "slider", "category": "view", "enabledBy": "viewMode"},
         },
     }
-    deposit_uniforms = {
-        "density": "density", "depositOpacity": "depositOpacity", "pointSize": "pointSize",
-        "posX": "posX", "posY": "posY", "posZ": "posZ",
-        "rotateX": "rotateX", "rotateY": "rotateY", "rotateZ": "rotateZ",
-        "rotationVar": "rotationVar", "seed": "seed", "shapeMode": "shapeMode",
-        "sizeVariation": "sizeVariation", "viewMode": "viewMode", "viewScale": "viewScale",
-        "fieldOfView": "fieldOfView", "sizeDistance": "sizeDistance",
-        "brightnessDistance": "brightnessDistance",
+    def condition(name, value):
+        return {"uniform": name, "equals": value}
+
+    passes = []
+    for view_mode in (1, 2):
+        passes.append({
+            "name": f"depthKeys_{view_mode}", "program": "depthKeys",
+            "key": "render/pointsBillboardRender:depthKeys",
+            "inputs": {"xyzTex": "global_xyz"}, "outputs": {"fragColor": "depthOrderA"},
+            "uniforms": {**{name: name for name in ("viewMode", "rotateX", "rotateY", "posZ")},
+                         "VIEW_MODE": "viewMode"},
+            "type": "compute", "defines": {"VIEW_MODE": view_mode},
+            "conditions": {
+                "runIf": [condition("blendMode", 1), condition("viewMode", view_mode)],
+                "skipIf": [condition("viewMode", 0)],
+            },
+        })
+    for stage in range(22):
+        source = "depthOrderA" if stage % 2 == 0 else "depthOrderB"
+        target = "depthOrderB" if stage % 2 == 0 else "depthOrderA"
+        passes.append({
+            "name": f"depthMerge{stage}", "program": "depthMerge",
+            "key": "render/pointsBillboardRender:depthMerge",
+            "inputs": {"orderTex": source}, "outputs": {"fragColor": target},
+            "uniforms": {"runLength": 1 << stage}, "type": "compute",
+            "conditions": {
+                "runIf": [condition("blendMode", 1)],
+                "skipIf": [condition("viewMode", 0)],
+            },
+        })
+    passes.extend([
+        {
+            "name": "spriteMeanTiles", "program": "spriteMeanTiles",
+            "key": "render/pointsBillboardRender:spriteMeanTiles",
+            "inputs": {"spriteTex": "tex"}, "outputs": {"fragColor": "spriteMeanTiles"},
+            "uniforms": {name: name for name in ("shapeMode", "aperture", "viewMode")},
+            "type": "compute",
+            "conditions": {"runIf": [condition("shapeMode", 0)],
+                           "skipIf": [condition("aperture", 0), condition("viewMode", 0)]},
+        },
+        {
+            "name": "spriteMean", "program": "spriteMean",
+            "key": "render/pointsBillboardRender:spriteMean",
+            "inputs": {"tilesTex": "spriteMeanTiles"}, "outputs": {"fragColor": "spriteMean"},
+            "uniforms": {name: name for name in ("shapeMode", "aperture", "viewMode")},
+            "type": "compute",
+            "conditions": {"skipIf": [condition("aperture", 0), condition("viewMode", 0)]},
+        },
+        {
+            "name": "clearDefocus", "program": "clearDefocus",
+            "key": "render/pointsBillboardRender:clearDefocus",
+            "inputs": {}, "outputs": {"fragColor": "defocus"},
+            "uniforms": {"clearValue": 0},
+            "conditions": {"runIf": [condition("blendMode", 0)],
+                           "skipIf": [condition("aperture", 0), condition("viewMode", 0)]},
+        },
+    ])
+    deposit_inputs = {
+        "xyzTex": "global_xyz", "rgbaTex": "global_rgba", "orderTex": "depthOrderA",
+        "spriteTex": "tex", "spriteMeanTex": "spriteMean",
     }
-    deposit_inputs = {"rgbaTex": "global_rgba", "spriteTex": "tex", "xyzTex": "global_xyz"}
-    passes = [
+    deposit_uniforms = {name: name for name in (
+        "shapeMode", "blendMode", "depositOpacity", "density", "pointSize",
+        "sizeVariation", "rotationVar", "seed", "viewMode", "rotateX", "rotateY",
+        "rotateZ", "viewScale", "posX", "posY", "posZ", "fieldOfView",
+        "sizeDistance", "brightnessDistance", "aperture", "focalDistance",
+    )}
+    def deposit_pass(name, target, blend_mode, view_mode, blur_layer):
+        conditions = {"runIf": [condition("blendMode", blend_mode), condition("viewMode", view_mode)]}
+        if blur_layer:
+            conditions["skipIf"] = [condition("aperture", 0), condition("viewMode", 0)]
+        return {
+            "name": name, "program": "deposit",
+            "key": "render/pointsBillboardRender:deposit" if name == "deposit_0" else None,
+            "inputs": deposit_inputs, "outputs": {"fragColor": target},
+            "uniforms": {**deposit_uniforms, "blurLayer": blur_layer},
+            "blend": True if blend_mode == 0 else ["ONE", "ONE_MINUS_SRC_ALPHA"],
+            "drawMode": "billboards", "count": "input", "conditions": conditions,
+            "defines": {"VIEW_MODE": view_mode, "BLEND_MODE": blend_mode, "BLUR_LAYER": blur_layer},
+        }
+
+    for view_mode in (1, 2):
+        passes.append(deposit_pass(f"depositDefocus_{view_mode}", "defocus", 0, view_mode, 1))
+    passes.extend([
         {
             "name": "diffuse", "program": "diffuse", "key": "render/pointsBillboardRender:diffuse",
-            "inputs": {"trailTex": "global_billboard_trail"},
+            "inputs": {"trailTex": "global_billboard_trail", "defocusTex": "defocus"},
             "outputs": {"fragColor": "global_billboard_trail"},
-            "uniforms": {"intensity": "intensity"},
+            "uniforms": {name: name for name in ("intensity", "aperture", "viewMode", "blendMode")},
         },
         {
             "name": "copy", "program": "copy", "key": "render/pointsBillboardRender:copy",
             "inputs": {"sourceTex": "global_billboard_trail"},
             "outputs": {"fragColor": "global_billboard_trail"},
         },
-        {
-            "name": "deposit", "program": "deposit", "key": None,
-            "drawMode": "billboards", "count": "input", "blend": True,
-            "conditions": {"runIf": [{"uniform": "blendMode", "equals": 0}]},
-            "inputs": deposit_inputs,
-            "outputs": {"fragColor": "global_billboard_trail"},
-            "uniforms": deposit_uniforms,
-        },
-        {
-            "name": "deposit_alpha", "program": "deposit", "key": None,
-            "drawMode": "billboards", "count": "input", "blend": ["ONE", "ONE_MINUS_SRC_ALPHA"],
-            "conditions": {"runIf": [{"uniform": "blendMode", "equals": 1}]},
-            "inputs": deposit_inputs,
-            "outputs": {"fragColor": "global_billboard_trail"},
-            "uniforms": deposit_uniforms,
-        },
-        {
-            "name": "blend", "program": "blend", "key": "render/pointsBillboardRender:blend",
-            "inputs": {"inputTex": "inputTex", "trailTex": "global_billboard_trail"},
-            "outputs": {"fragColor": "outputTex"},
-            "uniforms": {"blendMode": "blendMode", "inputIntensity": "inputIntensity"},
-        },
-    ]
+    ])
+    for blend_mode in (0, 1):
+        prefix = "deposit_alpha" if blend_mode else "deposit"
+        for view_mode in (0, 1, 2):
+            passes.append(deposit_pass(
+                f"{prefix}_{view_mode}", "global_billboard_trail", blend_mode, view_mode, 0,
+            ))
+    passes.append({
+        "name": "blend", "program": "blend", "key": "render/pointsBillboardRender:blend",
+        "inputs": {"inputTex": "inputTex", "trailTex": "global_billboard_trail"},
+        "outputs": {"fragColor": "outputTex"},
+        "uniforms": {"inputIntensity": "inputIntensity", "blendMode": "blendMode"},
+    })
     return {
         "namespace": "render",
         "func": "pointsBillboardRender",
         "params": params,
         "passes": passes,
-        "textures": {"global_billboard_trail": {"format": "rgba16f", "width": "100%", "height": "100%"}},
+        "textures": {
+            "depthOrderA": {"width": {"param": "stateSize", "default": 256}, "height": {"param": "stateSize", "default": 256}, "format": "rgba32f"},
+            "depthOrderB": {"width": {"param": "stateSize", "default": 256}, "height": {"param": "stateSize", "default": 256}, "format": "rgba32f"},
+            "spriteMeanTiles": {"width": 160, "height": 160, "format": "rgba32f"},
+            "spriteMean": {"width": 5, "height": 5, "format": "rgba32f"},
+            "defocus": {"width": "25%", "height": "25%", "format": "rgba16f"},
+            "global_billboard_trail": {"format": "rgba16f", "width": "100%", "height": "100%"},
+        },
         "externalTexture": None,
     }
 

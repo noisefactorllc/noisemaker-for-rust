@@ -11,7 +11,7 @@ mod validation;
 pub use validation::validate_program_ir;
 
 const EXPECTED_EFFECTS: usize = 210;
-const EXPECTED_PROGRAMS: usize = 296;
+const EXPECTED_PROGRAMS: usize = 302;
 const EXPECTED_EXCLUSIONS: [&str; 0] = [];
 
 #[derive(Debug, Error)]

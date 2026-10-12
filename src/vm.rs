@@ -122,14 +122,27 @@ impl ShaderVm {
         // untruncated int-division lowering for its whole program (the
         // oracle's restoreIntegerDivision exempts it by effect id), so every
         // int/int division keeps the raw f64 quotient.
-        let javascript_untruncated_int_division = program
+        let javascript_ticker_program = program
             .functions
             .iter()
             .any(|function| function.name == "ticker_row_mask");
+        // The numbered-checkerboard factory likewise leaves `temp /= 10`
+        // untruncated. Fractional digit indices read undefined glyph entries,
+        // which the subsequent bitwise expression converts to zero.
+        let javascript_numbered_checkerboard = ["renderNumber", "sampleGlyph", "checkerboard"]
+            .iter()
+            .all(|name| {
+                program
+                    .functions
+                    .iter()
+                    .any(|function| function.name == *name)
+            });
+        let javascript_untruncated_int_division =
+            javascript_ticker_program || javascript_numbered_checkerboard;
         let javascript_lcg_hash_compatibility =
             program.functions.iter().any(is_javascript_lcg_hash_uint);
         let mut runtime = runtime;
-        if javascript_untruncated_int_division {
+        if javascript_ticker_program {
             runtime.set_javascript_arithmetic_uint_shift(true);
         }
         Ok(Self {
@@ -359,7 +372,7 @@ impl ShaderVm {
                             else {
                                 return Err(type_error("simplex corner operand types changed"));
                             };
-                            if uv.len() != 2 || index.len() != 2 {
+                            if uv.len() != index.len() || !matches!(uv.len(), 2 | 3) {
                                 return Err(type_error("simplex corner vector width changed"));
                             }
                             // The CPU factory evaluates uv - i + dot in Number
@@ -817,8 +830,19 @@ impl ShaderVm {
                     right
                 } else {
                     let left = self.read_lvalue(&target)?;
-                    self.runtime
-                        .binary(operator.strip_suffix('=').unwrap(), &left, &right)?
+                    if operator == "/=" && self.javascript_untruncated_int_division {
+                        match (number_lane(&left, 0), number_lane(&right, 0)) {
+                            (Some(a), Some(b))
+                                if matches!(left, Value::Int(_) | Value::Float(_)) =>
+                            {
+                                Value::Float(a / b)
+                            }
+                            _ => self.runtime.binary("/", &left, &right)?,
+                        }
+                    } else {
+                        self.runtime
+                            .binary(operator.strip_suffix('=').unwrap(), &left, &right)?
+                    }
                 };
                 self.write_lvalue(&target, result.clone())?;
                 Ok(result)
@@ -969,6 +993,31 @@ impl ShaderVm {
             Expression::Call {
                 target, arguments, ..
             } => {
+                if self.javascript_simplex_corner_compatibility && target == "snoise__vec3" {
+                    if let [argument] = arguments.as_slice() {
+                        if let Some((point, scale, seed)) =
+                            javascript_noise3d_snoise_input_operands(argument)
+                        {
+                            let (Value::Vec(point), Value::Float(scale), Value::Int(seed)) =
+                                (self.eval(point)?, self.eval(scale)?, self.eval(seed)?)
+                            else {
+                                return Err(type_error("noise3d simplex input operands changed"));
+                            };
+                            if point.len() != 3 {
+                                return Err(type_error("noise3d simplex input width changed"));
+                            }
+                            let input = Value::Vec(
+                                point
+                                    .iter()
+                                    .map(|component| {
+                                        (f64::from(*component) * scale + f64::from(seed)) as f32
+                                    })
+                                    .collect(),
+                            );
+                            return self.invoke(target, &[input], &[None]);
+                        }
+                    }
+                }
                 if self.javascript_crt_hash_compatibility
                     && target == "random_scalar__float"
                     && self.function_indices.get(target).is_some_and(|index| {
@@ -1128,6 +1177,24 @@ impl ShaderVm {
                 if let Err(error) = self.write_lvalue(&target, value) {
                     flow = Err(error);
                     break;
+                }
+            }
+        }
+        if flow.is_ok() && target == "random_from_cell_3d__ivec3_uint" {
+            // The pinned grain factory multiplies the uint32 hash directly as
+            // a JavaScript Number. The IR's explicit float(uint) would round
+            // that hash first, then amplify its error in the time field.
+            if let (Some(Value::UVec(noise)), Some(Value::Float(scale))) = (
+                self.scopes
+                    .last()
+                    .and_then(|scope| scope.get("noise"))
+                    .map(|binding| &binding.value),
+                self.scopes[self.root_frame]
+                    .get("UINT32_TO_FLOAT")
+                    .map(|binding| &binding.value),
+            ) {
+                if let Some(&hash) = noise.first() {
+                    flow = Ok(Flow::Return(Value::Float(f64::from(hash) * scale)));
                 }
             }
         }
@@ -1492,7 +1559,7 @@ fn javascript_simplex_corner_operands(
     declaration: &VariableDefinition,
 ) -> Option<(&Expression, &Expression, &Expression)> {
     if declaration.name != "x0"
-        || declaration.value_type.0 != "vec2"
+        || !matches!(declaration.value_type.0.as_str(), "vec2" | "vec3")
         || declaration.array_size.is_some()
     {
         return None;
@@ -1515,40 +1582,55 @@ fn javascript_simplex_corner_operands(
     else {
         return None;
     };
-    // The canonical kernel clamps the corner dot before the Number-precision
-    // sum: uv - i + min(max(dot(i, C.xx), -1e38), 1e38). Match the clamp so a
-    // changed bound or nesting fails loudly instead of silently disabling the
-    // deferred-Number path.
-    let Expression::Call {
+    // Classic noise clamps this dot to finite bounds before the Number sum;
+    // moodscape's corresponding factory uses the dot directly. Preserve both
+    // source shapes while requiring the exact dot operands below.
+    let dot_call = if let Expression::Call {
         value_type: clamp_type,
         name: clamp_name,
         target: clamp_target,
         arguments: clamp_arguments,
     } = right.as_ref()
-    else {
-        return None;
-    };
-    let [clamped, upper] = clamp_arguments.as_slice() else {
-        return None;
-    };
-    let Expression::Call {
-        value_type: limit_type,
-        name: limit_name,
-        target: limit_target,
-        arguments: limit_arguments,
-    } = clamped
-    else {
-        return None;
-    };
-    let [dot_call, lower] = limit_arguments.as_slice() else {
-        return None;
-    };
-    let Expression::Unary {
-        operator: lower_operator,
-        operand: lower_operand,
-        ..
-    } = lower
-    else {
+    {
+        if clamp_name == "min" && clamp_target == "builtin:min" {
+            let [clamped, upper] = clamp_arguments.as_slice() else {
+                return None;
+            };
+            let Expression::Call {
+                value_type: limit_type,
+                name: limit_name,
+                target: limit_target,
+                arguments: limit_arguments,
+            } = clamped
+            else {
+                return None;
+            };
+            let [dot_call, lower] = limit_arguments.as_slice() else {
+                return None;
+            };
+            let Expression::Unary {
+                operator: lower_operator,
+                operand: lower_operand,
+                ..
+            } = lower
+            else {
+                return None;
+            };
+            if clamp_type.0 != "float"
+                || !is_exact_float_literal(upper, "1e38", 1e38)
+                || limit_type.0 != "float"
+                || limit_name != "max"
+                || limit_target != "builtin:max"
+                || lower_operator != "-"
+                || !is_exact_float_literal(lower_operand, "1e38", 1e38)
+            {
+                return None;
+            }
+            dot_call
+        } else {
+            right.as_ref()
+        }
+    } else {
         return None;
     };
     let Expression::Call {
@@ -1576,29 +1658,76 @@ fn javascript_simplex_corner_operands(
             if value_type.0 == expected_type && name == expected_name
                 && *storage == StorageClass::Local)
     };
-    (value_type.0 == "vec2"
-        && operator == "+"
-        && difference_type.0 == "vec2"
-        && difference_operator == "-"
-        && local(uv, "uv", "vec2")
-        && local(index, "i", "vec2")
-        && clamp_type.0 == "float"
-        && clamp_name == "min"
-        && clamp_target == "builtin:min"
-        && is_exact_float_literal(upper, "1e38", 1e38)
-        && limit_type.0 == "float"
-        && limit_name == "max"
-        && limit_target == "builtin:max"
-        && lower_operator == "-"
-        && is_exact_float_literal(lower_operand, "1e38", 1e38)
-        && dot_type.0 == "float"
-        && name == "dot"
-        && target == "builtin:dot"
-        && local(dot_index, "i", "vec2")
+    let dimension = declaration.value_type.0.as_str();
+    let source_matches = (dimension == "vec2" && local(uv, "uv", "vec2"))
+        || matches!(uv.as_ref(), Expression::Identifier { value_type, name, storage }
+            if dimension == "vec3" && value_type.0 == "vec3" && name == "v"
+                && *storage == StorageClass::Parameter);
+    let corner_matches = (dimension == "vec2"
         && swizzle_type.0 == "vec2"
         && field == "xx"
         && local(object, "C", "vec4"))
-    .then_some((uv, index, right))
+        || (dimension == "vec3"
+            && swizzle_type.0 == "vec3"
+            && field == "xxx"
+            && local(object, "C", "vec2"));
+    (value_type.0 == dimension
+        && operator == "+"
+        && difference_type.0 == dimension
+        && difference_operator == "-"
+        && source_matches
+        && local(index, "i", dimension)
+        && dot_type.0 == "float"
+        && name == "dot"
+        && target == "builtin:dot"
+        && local(dot_index, "i", dimension)
+        && corner_matches)
+        .then_some((uv, index, right))
+}
+
+fn javascript_noise3d_snoise_input_operands(
+    expression: &Expression,
+) -> Option<(&Expression, &Expression, &Expression)> {
+    let Expression::Binary {
+        value_type: sum_type,
+        operator: sum_operator,
+        left,
+        right,
+    } = expression
+    else {
+        return None;
+    };
+    let Expression::Binary {
+        value_type: product_type,
+        operator: product_operator,
+        left: point,
+        right: scale,
+    } = left.as_ref()
+    else {
+        return None;
+    };
+    let Expression::Construct {
+        value_type: cast_type,
+        arguments,
+    } = right.as_ref()
+    else {
+        return None;
+    };
+    let [seed] = arguments.as_slice() else {
+        return None;
+    };
+    (sum_type.0 == "vec3"
+        && sum_operator == "+"
+        && product_type.0 == "vec3"
+        && product_operator == "*"
+        && matches!(point.as_ref(), Expression::Identifier { value_type, name, storage }
+            if value_type.0 == "vec3" && name == "p" && *storage == StorageClass::Parameter)
+        && matches!(scale.as_ref(), Expression::Identifier { value_type, name, storage }
+            if value_type.0 == "float" && name == "scaleN" && *storage == StorageClass::Local)
+        && cast_type.0 == "float"
+        && matches!(seed, Expression::Identifier { value_type, name, storage }
+            if value_type.0 == "int" && name == "seed" && *storage == StorageClass::Uniform))
+    .then_some((point, scale, seed))
 }
 
 fn javascript_crt_hash_operands(expression: &Expression) -> Option<(&Expression, &Expression)> {
@@ -2065,6 +2194,27 @@ mod tests {
     use super::*;
     use crate::catalog::{Type, shader_bundle};
 
+    #[test]
+    fn grain_hash_normalization_keeps_uint32_number_precision() {
+        let program = &shader_bundle().unwrap().programs["filter/grain:grain"].ir;
+        let mut vm = ShaderVm::new(program, Runtime::new()).unwrap();
+        vm.push();
+        vm.define(
+            "UINT32_TO_FLOAT",
+            Value::Float(f64::from(2.328_306_4e-10_f32)),
+            false,
+        )
+        .unwrap();
+        let result = vm
+            .invoke(
+                "random_from_cell_3d__ivec3_uint",
+                &[Value::IVec(vec![55, 63, 0]), Value::Uint(4660)],
+                &[None, None],
+            )
+            .unwrap();
+        assert_eq!(result, Value::Float(0.15156999416649342));
+    }
+
     fn hash_uint_call(program: &ProgramIr, argument: u32) -> Result<Value, VmError> {
         let mut vm = ShaderVm::new(program, Runtime::new())?;
         vm.push();
@@ -2178,6 +2328,101 @@ mod tests {
                 &Value::Vec(vec![0.055_881_5, expected_y])
             );
         }
+    }
+
+    #[test]
+    fn moodscape_simplex_corner_has_the_same_number_precision_boundary() {
+        let program = &shader_bundle().unwrap().programs["classicNoisedeck/moodscape:moodscape"].ir;
+        let function = program
+            .functions
+            .iter()
+            .find(|function| function.name == "simplexValue")
+            .unwrap();
+        let mut matches = 0;
+        visit_declarations(&function.body, &mut |declaration| {
+            if javascript_simplex_corner_operands(declaration).is_some() {
+                matches += 1;
+            }
+        });
+        assert_eq!(matches, 1);
+    }
+
+    #[test]
+    fn curl_simplex3d_corner_has_the_same_number_precision_boundary() {
+        let program = &shader_bundle().unwrap().programs["synth/curl:curl"].ir;
+        let function = program
+            .functions
+            .iter()
+            .find(|function| function.name == "simplex3D")
+            .unwrap();
+        let mut matches = 0;
+        visit_declarations(&function.body, &mut |declaration| {
+            if javascript_simplex_corner_operands(declaration).is_some() {
+                matches += 1;
+            }
+        });
+        assert_eq!(matches, 1);
+    }
+
+    #[test]
+    fn noise3d_simplex_corner_has_the_same_number_precision_boundary() {
+        let program = &shader_bundle().unwrap().programs["classicNoisedeck/noise3d:noise3d"].ir;
+        let function = program
+            .functions
+            .iter()
+            .find(|function| function.name == "snoise")
+            .unwrap();
+        let mut matches = 0;
+        visit_declarations(&function.body, &mut |declaration| {
+            if javascript_simplex_corner_operands(declaration).is_some() {
+                matches += 1;
+            }
+        });
+        assert_eq!(matches, 1);
+    }
+
+    #[test]
+    fn noise3d_simplex_normal_sample_matches_cpu_number_result() {
+        let program = &shader_bundle().unwrap().programs["classicNoisedeck/noise3d:noise3d"].ir;
+        let mut vm = ShaderVm::new(program, Runtime::new()).unwrap();
+        vm.set_javascript_simplex_corner_compatibility(true);
+        vm.push();
+        let result = vm
+            .invoke(
+                "snoise__vec3",
+                &[Value::Vec(vec![
+                    f32::from_bits(0x400b_863d),
+                    f32::from_bits(0xbf0b_953f),
+                    f32::from_bits(0x4046_66c1),
+                ])],
+                &[None],
+            )
+            .unwrap();
+        assert_eq!(result, Value::Float(-0.7904361421242356));
+    }
+
+    #[test]
+    fn noise3d_get_dist_keeps_number_precision_until_simplex_input_store() {
+        let program = &shader_bundle().unwrap().programs["classicNoisedeck/noise3d:noise3d"].ir;
+        let mut vm = ShaderVm::new(program, Runtime::new()).unwrap();
+        vm.set_javascript_simplex_corner_compatibility(true);
+        vm.push();
+        vm.define("seed", Value::Int(1), false).unwrap();
+        vm.define("scale", Value::Float(25.0), false).unwrap();
+        vm.define("NOISE_TYPE", Value::Int(12), false).unwrap();
+        vm.define("ridges", Value::Bool(false), false).unwrap();
+        let result = vm
+            .invoke(
+                "getDist__vec3",
+                &[Value::Vec(vec![
+                    f32::from_bits(0x40c1_33ae),
+                    f32::from_bits(0xc0fc_fd37),
+                    f32::from_bits(0x412b_e8a4),
+                ])],
+                &[None],
+            )
+            .unwrap();
+        assert_eq!(result, Value::Float(0.009771897855103812));
     }
 
     #[test]

@@ -953,23 +953,8 @@ fn remap_uniform_data(
     width: u32,
     height: u32,
 ) -> Value {
-    // Reference 0ed489ec (this round) grew the packed UBO from 267 to 275 std140
-    // slots: RESOLUTION_SLOT is unchanged at 266, and 8 new zoneN_bounds slots
-    // (host-supplied AABB culling, one per zone) were appended at 267..275. Each
-    // defaults to [0,0,1,1] -- the reference's own "never rejects a canvas pixel"
-    // default -- so an un-set bounds box never clips a zone's polygon.
-    //
-    // NOTE: this renderer has no mechanism to pack zone polygon vertex data
-    // (zoneN_vP) into this uniform block at all -- only bgColor/zoneCount/
-    // smoothEdge/zone-active flags/resolution are populated below. That gap
-    // predates this round (the transpiled kernel body has tracked every
-    // upstream algorithm rewrite, including this round's testEdge/walkZone
-    // replacement, but the vertex data it walks has apparently never been
-    // wired here) and is unrelated to this round's diff -- flagged, not fixed,
-    // matching the identical finding independently made in the noisemaker-for-
-    // ruby and noisemaker-for-perl sibling ports this session. What this round
-    // DOES require is sizing this array to 275 so the transpiled kernel's
-    // ZONE_BOUNDS_SLOT (267) reads are in-bounds instead of panicking.
+    // Reference synth/remap packs zone metadata at 2..9, vertex pairs at
+    // 10..265, resolution at 266, and zone bounds at 267..274.
     let mut data = vec![Value::Vec(vec![0.0; 4]); 267];
     data.resize(275, Value::Vec(vec![0.0, 0.0, 1.0, 1.0]));
     let background = match values.get("bgColor") {
@@ -998,7 +983,23 @@ fn remap_uniform_data(
     data[1] = Value::Vec(vec![zone_count, smooth_edge, 0.0, 0.0]);
     for zone in 0..8 {
         let active = inputs.contains_key(&format!("zone{zone}_tex")) as u8 as f32;
-        data[2 + zone] = Value::Vec(vec![0.0, active, 0.0, 1.0]);
+        let count = match values.get(&format!("zone{zone}_count")) {
+            Some(Value::Int(value)) => *value as f32,
+            _ => 0.0,
+        };
+        let alpha = match values.get(&format!("zone{zone}_alpha")) {
+            Some(Value::Float(value)) => *value as f32,
+            _ => 1.0,
+        };
+        data[2 + zone] = Value::Vec(vec![count, active, 0.0, alpha]);
+        for pair in 0..32 {
+            if let Some(Value::Vec(vertices)) = values.get(&format!("zone{zone}_v{pair}")) {
+                data[10 + zone * 32 + pair] = Value::Vec(vertices.clone());
+            }
+        }
+        if let Some(Value::Vec(bounds)) = values.get(&format!("zone{zone}_bounds")) {
+            data[267 + zone] = Value::Vec(bounds.clone());
+        }
     }
     data[266] = Value::Vec(vec![width as f32, height as f32, 0.0, 0.0]);
     Value::Array(data)
@@ -1957,6 +1958,34 @@ mod cache_tests {
         // [0,0,1,1] so an unset bounds box never clips a zone's polygon.
         assert_eq!(data[267], Value::Vec(vec![0.0, 0.0, 1.0, 1.0]));
         assert_eq!(data[274], Value::Vec(vec![0.0, 0.0, 1.0, 1.0]));
+    }
+
+    #[test]
+    fn remap_uniform_adapter_packs_host_active_zone_geometry() {
+        let values = BTreeMap::from([
+            ("zoneCount".into(), Value::Int(8)),
+            ("zone0_count".into(), Value::Int(3)),
+            ("zone0_alpha".into(), Value::Float(0.625)),
+            ("zone0_bounds".into(), Value::Vec(vec![0.1, 0.2, 0.8, 0.9])),
+            ("zone0_v0".into(), Value::Vec(vec![0.1, 0.2, 0.3, 0.4])),
+            ("zone0_v31".into(), Value::Vec(vec![0.5, 0.6, 0.7, 0.8])),
+            ("zone7_count".into(), Value::Int(64)),
+            ("zone7_alpha".into(), Value::Float(0.25)),
+            ("zone7_bounds".into(), Value::Vec(vec![0.2, 0.3, 0.9, 1.0])),
+            ("zone7_v31".into(), Value::Vec(vec![0.9, 0.8, 0.7, 0.6])),
+        ]);
+        let inputs = BTreeMap::from([("zone0_tex".into(), Surface::new(1, 1).unwrap())]);
+        let Value::Array(data) = remap_uniform_data(&values, &inputs, 8, 8) else {
+            panic!("remap data must be an array")
+        };
+
+        assert_eq!(data[2], Value::Vec(vec![3.0, 1.0, 0.0, 0.625]));
+        assert_eq!(data[9], Value::Vec(vec![64.0, 0.0, 0.0, 0.25]));
+        assert_eq!(data[10], Value::Vec(vec![0.1, 0.2, 0.3, 0.4]));
+        assert_eq!(data[41], Value::Vec(vec![0.5, 0.6, 0.7, 0.8]));
+        assert_eq!(data[265], Value::Vec(vec![0.9, 0.8, 0.7, 0.6]));
+        assert_eq!(data[267], Value::Vec(vec![0.1, 0.2, 0.8, 0.9]));
+        assert_eq!(data[274], Value::Vec(vec![0.2, 0.3, 0.9, 1.0]));
     }
 
     #[test]

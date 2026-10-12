@@ -93,8 +93,19 @@ pub(crate) fn execute_semantic_fragment_adapter(
     width: u32,
     height: u32,
 ) -> Result<Option<(String, Surface)>, RenderError> {
-    if !matches!(key, "filter/snow:snow" | "synth/navierStokes:nsSplat") {
+    if !matches!(
+        key,
+        "filter/snow:snow"
+            | "synth/navierStokes:nsSplat"
+            | "render/pointsBillboardRender:depthMerge"
+    ) {
         return Ok(None);
+    }
+    if key == "render/pointsBillboardRender:depthMerge" {
+        let source = semantic_input(pass, resources, "orderTex")?;
+        if (source.width(), source.height()) != (width, height) {
+            return Ok(None);
+        }
     }
     let output_name =
         pass.outputs
@@ -120,9 +131,83 @@ pub(crate) fn execute_semantic_fragment_adapter(
                 .unwrap_or(&black);
             render_navier_splat(uniforms, buffer, input, &mut output)?;
         }
+        "render/pointsBillboardRender:depthMerge" => {
+            let input = semantic_input(pass, resources, "orderTex")?;
+            let run_length = match uniforms.get("runLength") {
+                Some(Value::Int(value)) => *value as usize,
+                _ => return Ok(None),
+            };
+            if run_length == 0 {
+                return Ok(None);
+            }
+            render_billboard_depth_merge(input, run_length, &mut output);
+        }
         _ => unreachable!(),
     }
     Ok(Some((output_name, output)))
+}
+
+// depthMerge.frag's bounded merge-path search. GLSL texel indices start at the
+// bottom row, while Surface stores the top row first.
+fn render_billboard_depth_merge(source: &Surface, run_length: usize, output: &mut Surface) {
+    let width = source.width() as usize;
+    let height = source.height() as usize;
+    let count = width * height;
+    if run_length >= count {
+        output.data_mut().copy_from_slice(source.data());
+        return;
+    }
+    let key_at = |index: usize| -> [f32; 2] {
+        let x = index % width;
+        let y = index / width;
+        let offset = ((height - 1 - y) * width + x) * 4;
+        [source.data()[offset], source.data()[offset + 1]]
+    };
+    let before = |a: [f32; 2], b: [f32; 2]| a[0] < b[0] || (a[0] == b[0] && a[1] <= b[1]);
+    for index in 0..count {
+        let start = index / (2 * run_length) * (2 * run_length);
+        let length_a = run_length.min(count - start);
+        let length_b = run_length.min(count - start - length_a);
+        let diagonal = index - start;
+        let mut low = diagonal.saturating_sub(length_b);
+        let mut high = diagonal.min(length_a);
+        for _ in 0..22 {
+            if low >= high {
+                break;
+            }
+            let mid = (low + high) / 2;
+            let other = diagonal - mid;
+            if mid < length_a
+                && other > 0
+                && before(key_at(start + mid), key_at(start + length_a + other - 1))
+            {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+        let other = diagonal - low;
+        let a = if low < length_a {
+            key_at(start + low)
+        } else {
+            [f32::MAX; 2]
+        };
+        let b = if other < length_b {
+            key_at(start + length_a + other)
+        } else {
+            [f32::MAX; 2]
+        };
+        let selected = if before(a, b) { a } else { b };
+        let x = index % width;
+        let y = index / width;
+        let offset = ((height - 1 - y) * width + x) * 4;
+        output.data_mut()[offset..offset + 4].copy_from_slice(&[
+            selected[0],
+            selected[1],
+            0.0,
+            1.0,
+        ]);
+    }
 }
 
 fn semantic_input<'a>(

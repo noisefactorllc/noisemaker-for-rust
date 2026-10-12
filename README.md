@@ -180,11 +180,27 @@ Use `--only ID`, `--size N`, `--timeout SECONDS`, and `--json PATH` for focused 
 machine-readable runs. `--sweep` extends the run with a bounded non-default
 parameter sweep and stateful multi-frame sequences: every effect's default
 render is joined by at most two one-parameter variants (deterministically
-derived from the catalog metadata) and, for stateful chains (particle, loop,
-reactive, and mesh effects), three frames of the default program at the 0.1/0.4/0.7
-time sequence. Each case is one sorted record (`ID`, `ID#param:NAME`,
-`ID#frame:N`) and the sweep report states expected, executed, byte-exact, and
-failed counts at tolerance 0. JavaScript is an offline test oracle only. It is never a production runtime dependency.
+derived from the catalog metadata) and, for iterated, particle, loop,
+reactive, and mesh effects, three frames of the default program at the 0.1/0.4/0.7
+time sequence. Build the sequence example with the same toolchain, profile, and
+target directory as the Rust CLI, then pass both binary paths explicitly:
+
+```sh
+cargo build --locked --release --bin noisemaker-rs --example parity_sequence
+python3 scripts/parity.py \
+  --rust target/release/noisemaker-rs \
+  --rust-sequence target/release/examples/parity_sequence \
+  --js ../noisemaker-for-cpu/bin/noisemaker-cpu.js \
+  --sweep
+```
+
+Frame cases reuse one renderer per side and feed each frame's floating-point
+output through `imageTex`/`textTex` into the next frame's `media`/`blendMode`
+chain. This measures explicit prior-output feedback; each renderer call recreates
+its internal particle and feedback resources. Each case is one sorted record
+(`ID`, `ID#param:NAME`, `ID#frame:N`) and the sweep report states expected,
+executed, byte-exact, and failed counts at tolerance 0. JavaScript is an
+offline test oracle only. It is never a production runtime dependency.
 
 On every push, CI checks formatting, lints, the 1.85 minimum, the generator, and
 the test suite without the catalog smoke tests. A push that changes `src/**`,

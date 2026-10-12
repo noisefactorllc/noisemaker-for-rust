@@ -278,6 +278,11 @@ def _build(source: Path) -> tuple[dict, dict, dict]:
                     f"shader drift for {key}: expected {hashes[key]}, received {digest}"
                 )
             render_pass = passes[key]
+            program_defines = dict(defines)
+            if key == "render/pointsBillboardRender:depthKeys":
+                # The reference compiles this constant per view mode. The
+                # CPU bundle shares one program and binds the pass's viewMode.
+                program_defines["VIEW_MODE"] = "int"
             programs[key] = {
                 "effectId": effect_id,
                 "program": program_name,
@@ -290,7 +295,7 @@ def _build(source: Path) -> tuple[dict, dict, dict]:
                     # typed emitter resolves the identifiers. Fragment-only
                     # programs have none, so behavior is unchanged.
                     varyings=None,
-                    runtime_defines=defines,
+                    runtime_defines=program_defines,
                 ),
             }
     provenance = dict(metadata.get("provenance", {}))

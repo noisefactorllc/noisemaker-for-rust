@@ -68,7 +68,7 @@ fn embedded_program_inventory_is_complete_and_structural() {
         .flat_map(|effect| effect.passes.iter())
         .filter_map(|pass| pass.key.as_deref())
         .collect::<std::collections::BTreeSet<_>>();
-    assert_eq!(shaders.programs.len(), 296);
+    assert_eq!(shaders.programs.len(), 302);
     assert_eq!(
         pass_keys,
         shaders.programs.keys().map(String::as_str).collect()

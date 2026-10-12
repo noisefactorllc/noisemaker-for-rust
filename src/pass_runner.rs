@@ -122,6 +122,8 @@ pub fn apply_pass_uniform_aliases(
             if let Some(value) = sources.get(parameter) {
                 pass_uniforms.insert(glsl_name.clone(), value.clone());
             }
+        } else if let Some(value) = json_to_value(parameter) {
+            pass_uniforms.insert(glsl_name.clone(), value);
         }
     }
     pass_uniforms
@@ -131,8 +133,18 @@ pub fn apply_pass_uniform_aliases(
 pub fn pass_enabled(conditions: &JsonValue, uniforms: &BTreeMap<String, Value>) -> bool {
     let check = |entry: &JsonValue| {
         let name = entry.get("uniform").and_then(JsonValue::as_str)?;
-        let expected = json_to_value(entry.get("equals")?)?;
-        Some(uniforms.get(name) == Some(&expected))
+        let expected = entry.get("equals")?;
+        let expected = match expected {
+            JsonValue::Bool(value) => Some(f64::from(*value as u8)),
+            JsonValue::Number(value) => value.as_f64(),
+            JsonValue::String(value) => value.parse::<f64>().ok(),
+            _ => None,
+        }?;
+        let actual = match uniforms.get(name)? {
+            Value::Bool(value) => Some(f64::from(*value as u8)),
+            value => numeric_value(value),
+        }?;
+        Some(actual == expected)
     };
     let run = conditions
         .get("runIf")
@@ -338,9 +350,16 @@ pub fn execute_pass(
         vm.set_temporal_aberration_factory_compatibility(
             render_pass.key.as_deref() == Some("filter/temporalAberration:temporalAberration"),
         );
-        vm.set_javascript_simplex_corner_compatibility(
-            render_pass.key.as_deref() == Some("classicNoisedeck/noise:noise"),
-        );
+        vm.set_javascript_simplex_corner_compatibility(matches!(
+            render_pass.key.as_deref(),
+            Some(
+                "classicNoisedeck/noise:noise"
+                    | "classicNoisedeck/moodscape:moodscape"
+                    | "classicNoisedeck/noise3d:noise3d"
+                    | "synth/noise:noise"
+                    | "synth/curl:curl"
+            )
+        ));
         vm.set_javascript_crt_hash_compatibility(
             render_pass.key.as_deref() == Some("filter/crt:crt"),
         );

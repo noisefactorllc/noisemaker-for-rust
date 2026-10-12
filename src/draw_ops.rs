@@ -263,8 +263,6 @@ pub fn execute_draw_pass_with(
         .execution
         .get("viewport")
         .unwrap_or(&serde_json::Value::Null);
-    let (pass_width, pass_height) =
-        texture_dimensions(viewport, uniforms, width, height, resources)?;
     let attachment =
         pass.outputs
             .values()
@@ -273,6 +271,15 @@ pub fn execute_draw_pass_with(
             .ok_or_else(|| RenderError::InvalidGraph {
                 message: format!("draw pass {:?} has no output", pass.name),
             })?;
+    let fallback_dimensions = texture_dimensions(viewport, uniforms, width, height, resources)?;
+    let (pass_width, pass_height) = if pass.execution.contains_key("viewport") {
+        fallback_dimensions
+    } else {
+        resources
+            .get(&attachment)
+            .map(|surface| (surface.width(), surface.height()))
+            .unwrap_or(fallback_dimensions)
+    };
     let mut destination = resources
         .get(&attachment)
         .filter(|surface| surface.width() == pass_width && surface.height() == pass_height)
@@ -685,6 +692,94 @@ fn premultiplied_blend(pass: &RenderPass) -> bool {
             .is_some_and(|value| value.eq_ignore_ascii_case("ONE_MINUS_SRC_ALPHA"))
 }
 
+fn billboard_fragment(
+    shape: i32,
+    sprite: &Surface,
+    u: f64,
+    v: f64,
+    color: [f32; 4],
+    opacity: f64,
+) -> [f32; 4] {
+    let mut source = [0.0; 4];
+    if shape == 0 {
+        let sample = if sprite.filter_mode() == FilterMode::Linear {
+            sample_bilinear(sprite, u as f32, v as f32)
+        } else {
+            sample_nearest(sprite, u as f32, v as f32)
+        };
+        for channel in 0..4 {
+            source[channel] =
+                (f64::from(sample[channel]) * f64::from(color[channel]) * opacity) as f32;
+        }
+    } else {
+        let alpha = billboard_shape_alpha(shape, u, v);
+        for channel in 0..4 {
+            source[channel] = (f64::from(color[channel]) * alpha * opacity) as f32;
+        }
+    }
+    source
+}
+
+fn billboard_blur_weight(u: f64, v: f64, center_u: f64, center_v: f64, expansion: f64) -> f64 {
+    let x = (u - center_u) / expansion;
+    let y = (v - center_v) / expansion;
+    let distance_squared = x * x + y * y;
+    let gaussian = (-distance_squared / 0.0648).exp()
+        * (1.0 - smoothstep_f64(0.45, 0.5, distance_squared.sqrt()));
+    gaussian / (0.19724318 * expansion * expansion)
+}
+
+fn billboard_blurred_fragment(
+    shape: i32,
+    sprite: &Surface,
+    sprite_mean: &Surface,
+    uv: [f64; 2],
+    color: [f32; 4],
+    opacity: f64,
+    blur_radius: f64,
+) -> [f32; 4] {
+    let [u, v] = uv;
+    let expansion = (1.0 + 2.0 * blur_radius).max(2.2516403);
+    let mut blurred = [0.0_f64; 4];
+    if shape == 0 {
+        for y in 0..5 {
+            for x in 0..5 {
+                let sample = texel_fetch_agent(sprite_mean, x, y);
+                let weight =
+                    billboard_blur_weight(u, v, f64::from(x) / 4.0, f64::from(y) / 4.0, expansion);
+                for channel in 0..4 {
+                    blurred[channel] += f64::from(sample[channel]) * weight;
+                }
+            }
+        }
+    } else {
+        let sample = texel_fetch_agent(sprite_mean, 0, 0);
+        let center_v = if shape == 5 { 0.54 } else { 0.5 };
+        let weight = billboard_blur_weight(u, v, 0.5, center_v, expansion);
+        for channel in 0..4 {
+            blurred[channel] = f64::from(sample[channel]) * weight;
+        }
+    }
+    let mut source = [0.0; 4];
+    for channel in 0..4 {
+        source[channel] = (blurred[channel] * f64::from(color[channel]) * opacity) as f32;
+    }
+    if blur_radius >= 0.5 {
+        return source;
+    }
+    let sharp = if (0.0..=1.0).contains(&u) && (0.0..=1.0).contains(&v) {
+        billboard_fragment(shape, sprite, u, v, color, opacity)
+    } else {
+        [0.0; 4]
+    };
+    let blend = smoothstep_f64(0.0, 0.5, blur_radius);
+    for channel in 0..4 {
+        source[channel] =
+            (f64::from(sharp[channel]) * (1.0 - blend) + f64::from(source[channel]) * blend) as f32;
+    }
+    source
+}
+
 fn billboard(
     pass: &RenderPass,
     uniforms: &BTreeMap<String, Value>,
@@ -695,6 +790,24 @@ fn billboard(
     let xyz = input(pass, resources, "xyzTex")?;
     let rgba = input(pass, resources, "rgbaTex")?;
     let sprite = input(pass, resources, "spriteTex")?;
+    let view_mode = integer(uniforms, "viewMode")?;
+    let blend_mode = scalar_or(uniforms, "blendMode", 0.0)? as i32;
+    let blur_layer = scalar_or(uniforms, "blurLayer", 0.0)? as i32;
+    let aperture = f64::from(scalar_or(uniforms, "aperture", 0.0)?);
+    let focal_distance = f64::from(scalar_or(uniforms, "focalDistance", 80.0)?);
+    if blur_layer == 1 && (view_mode == 0 || aperture <= 0.0 || blend_mode != 0) {
+        return Ok(0);
+    }
+    let order = if blend_mode == 1 && view_mode != 0 {
+        Some(input(pass, resources, "orderTex")?)
+    } else {
+        None
+    };
+    let sprite_mean = if view_mode != 0 && aperture > 0.0 {
+        Some(input(pass, resources, "spriteMeanTex")?)
+    } else {
+        None
+    };
     let threshold = f64::from(scalar(uniforms, "density")?) / 100.0;
     let shape = integer(uniforms, "shapeMode")?;
     let opacity = f64::from(scalar(uniforms, "depositOpacity")?) / 100.0;
@@ -705,8 +818,13 @@ fn billboard(
     let premultiplied = premultiplied_blend(pass);
     let (destination_width, destination_height) = (destination.width(), destination.height());
     let mut pixels = 0;
-    for_each_agent(xyz, |vertex, sx, sy| {
-        if (vertex as f64 * GOLDEN_RATIO_CONJUGATE).fract() > threshold {
+    for_each_agent(xyz, |vertex, order_sx, order_sy| {
+        let particle_id = order.map_or(vertex, |texture| {
+            texel_fetch_agent(texture, order_sx, order_sy)[1] as usize
+        });
+        let sx = (particle_id % xyz.width() as usize) as i32;
+        let sy = (particle_id / xyz.width() as usize) as i32;
+        if (particle_id as f64 * GOLDEN_RATIO_CONJUGATE).fract() > threshold {
             return Ok(());
         }
         let position = texel_fetch_agent(xyz, sx, sy);
@@ -718,7 +836,7 @@ fn billboard(
             [
                 center_x,
                 center_y,
-                _camera_depth,
+                camera_depth,
                 camera_distance,
                 projected_scale,
             ],
@@ -742,22 +860,63 @@ fn billboard(
             size_fade = 1.0 - smoothstep_f64(0.0, size_distance, f64::from(camera_distance));
         }
         let brightness_distance = f64::from(scalar_or(uniforms, "brightnessDistance", 0.0)?);
+        let mut brightness_fade = 1.0;
         if brightness_distance > 0.0 {
-            let brightness_fade =
+            brightness_fade =
                 1.0 - smoothstep_f64(0.0, brightness_distance, f64::from(camera_distance));
-            for channel in 0..4 {
-                color[channel] = (f64::from(color[channel]) * brightness_fade) as f32;
-            }
         }
-        let size = point_size
-            * f64::from(projected_scale)
-            * size_fade
-            * (1.0 - size_variation * (billboard_hash(vertex as f32, seed) - 0.5));
-        if size <= 0.0 {
+        let size_multiplier =
+            1.0 - size_variation * (billboard_hash(particle_id as f32, seed) - 0.5);
+        let base_size = point_size * size_multiplier * f64::from(projected_scale);
+        let blur_pixels = if view_mode == 0 {
+            0.0
+        } else {
+            (aperture * (f64::from(camera_depth) - focal_distance).abs()
+                / f64::from(camera_depth).abs().max(0.1))
+            .min(32.0)
+        };
+        let blur_radius = blur_pixels / base_size.max(0.001);
+        let support_radius = if blur_pixels > 0.0 {
+            blur_radius.max(0.62582015)
+        } else {
+            0.0
+        };
+        let support_pixels = if blur_pixels > 0.0 {
+            blur_pixels.max(base_size * 0.62582015)
+        } else {
+            0.0
+        };
+        let low_weight = if blend_mode == 0 {
+            smoothstep_f64(4.0, 8.0, blur_pixels * size_fade)
+                * smoothstep_f64(0.5, 1.0, blur_radius)
+        } else {
+            0.0
+        };
+        let layer_weight = if blur_layer == 1 {
+            low_weight
+        } else {
+            1.0 - low_weight
+        };
+        let blur_padding = if blur_pixels > 0.0 {
+            if shape == 0 {
+                0.5
+            } else if shape == 5 {
+                0.04
+            } else {
+                0.0
+            }
+        } else {
+            0.0
+        };
+        let size = (base_size * (1.0 + 2.0 * blur_padding) + 2.0 * support_pixels) * size_fade;
+        if size <= 0.0 || brightness_fade <= 0.0 || layer_weight <= 0.0 {
             return Ok(());
         }
+        for channel in 0..4 {
+            color[channel] = (f64::from(color[channel]) * brightness_fade * layer_weight) as f32;
+        }
         let rotation =
-            rotation_variation * billboard_hash(vertex as f32 + 1234.5, seed) * TAU_APPROX;
+            rotation_variation * billboard_hash(particle_id as f32 + 1234.5, seed) * TAU_APPROX;
         let (cosine, sine) = (rotation.cos(), rotation.sin());
         let half_size = size * 0.5;
         let size_clip_x = half_size * (2.0 / f64::from(destination_width));
@@ -800,26 +959,21 @@ fn billboard(
                 if !(-1.0..=1.0).contains(&offset_x) || !(-1.0..=1.0).contains(&offset_y) {
                     continue;
                 }
-                let (u, v) = (offset_x * 0.5 + 0.5, offset_y * 0.5 + 0.5);
-                let mut source = [0.0_f32; 4];
-                if shape == 0 {
-                    let sample = if sprite.filter_mode() == FilterMode::Linear {
-                        sample_bilinear(sprite, u as f32, v as f32)
-                    } else {
-                        sample_nearest(sprite, u as f32, v as f32)
-                    };
-                    for channel in 0..4 {
-                        source[channel] = (f64::from(sample[channel])
-                            * f64::from(color[channel])
-                            * opacity) as f32;
-                    }
+                let uv_scale = 0.5 + blur_padding + support_radius;
+                let (u, v) = (offset_x * uv_scale + 0.5, offset_y * uv_scale + 0.5);
+                let source = if view_mode == 0 || blur_radius <= 0.0 {
+                    billboard_fragment(shape, sprite, u, v, color, opacity)
                 } else {
-                    let alpha = billboard_shape_alpha(shape, u, v);
-                    for channel in 0..3 {
-                        source[channel] = (f64::from(color[channel]) * alpha * opacity) as f32;
-                    }
-                    source[3] = (alpha * f64::from(color[3]) * opacity) as f32;
-                }
+                    billboard_blurred_fragment(
+                        shape,
+                        sprite,
+                        sprite_mean.expect("blurred billboard requires sprite mean"),
+                        [u, v],
+                        color,
+                        opacity,
+                        blur_radius,
+                    )
+                };
                 let destination_offset =
                     ((storage_row * i64::from(destination_width) + column) * 4) as usize;
                 if premultiplied {

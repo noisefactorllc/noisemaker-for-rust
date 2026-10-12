@@ -27,6 +27,21 @@ fn named_pass(effect: &str, name: &str) -> &'static RenderPass {
         .unwrap()
 }
 
+fn billboard_pass(name: &str) -> RenderPass {
+    let pass = named_pass("render/pointsBillboardRender", name);
+    let mut inputs = pass.inputs.clone();
+    inputs.insert("orderTex".into(), "depthOrderA".into());
+    inputs.insert("spriteMeanTex".into(), "spriteMean".into());
+    RenderPass {
+        name: pass.name.clone(),
+        program: pass.program.clone(),
+        key: pass.key.clone(),
+        inputs,
+        outputs: pass.outputs.clone(),
+        execution: pass.execution.clone(),
+    }
+}
+
 #[test]
 fn draw_registry_and_point_origin_rules_are_exact() {
     assert_eq!(
@@ -299,7 +314,7 @@ fn billboard_hash_shapes_sprite_rotation_and_both_blends_are_exact() {
     assert_eq!(
         execute_draw_pass(
             "render/pointsBillboardRender:deposit",
-            named_pass("render/pointsBillboardRender", "deposit"),
+            named_pass("render/pointsBillboardRender", "deposit_0"),
             &base_uniforms,
             &mut additive,
             3,
@@ -321,7 +336,7 @@ fn billboard_hash_shapes_sprite_rotation_and_both_blends_are_exact() {
     );
     execute_draw_pass(
         "render/pointsBillboardRender:deposit",
-        named_pass("render/pointsBillboardRender", "deposit_alpha"),
+        named_pass("render/pointsBillboardRender", "deposit_alpha_0"),
         &base_uniforms,
         &mut over,
         3,
@@ -340,7 +355,7 @@ fn billboard_hash_shapes_sprite_rotation_and_both_blends_are_exact() {
     let mut sprite = resources();
     execute_draw_pass(
         "render/pointsBillboardRender:deposit",
-        named_pass("render/pointsBillboardRender", "deposit"),
+        named_pass("render/pointsBillboardRender", "deposit_0"),
         &sprite_uniforms,
         &mut sprite,
         3,
@@ -351,6 +366,138 @@ fn billboard_hash_shapes_sprite_rotation_and_both_blends_are_exact() {
     assert_eq!(
         &sprite["global_billboard_trail"].data()[16..20],
         &[0.1, 0.1, 0.6, 0.4]
+    );
+}
+
+#[test]
+fn billboard_alpha_uses_order_texture_for_overlapping_nonflat_particles() {
+    let uniforms = BTreeMap::from([
+        ("density".into(), Value::Float(100.0)),
+        ("shapeMode".into(), Value::Int(3)),
+        ("depositOpacity".into(), Value::Float(100.0)),
+        ("seed".into(), Value::Int(42)),
+        ("sizeVariation".into(), Value::Float(0.0)),
+        ("rotationVar".into(), Value::Float(0.0)),
+        ("pointSize".into(), Value::Float(3.0)),
+        ("viewMode".into(), Value::Int(1)),
+        ("blendMode".into(), Value::Int(1)),
+        ("rotateX".into(), Value::Float(0.0)),
+        ("rotateY".into(), Value::Float(0.0)),
+        ("rotateZ".into(), Value::Float(0.0)),
+        ("posX".into(), Value::Float(0.0)),
+        ("posY".into(), Value::Float(0.0)),
+        ("viewScale".into(), Value::Float(1.0)),
+    ]);
+    let mut resources = BTreeMap::from([
+        (
+            "global_xyz".into(),
+            state(2, 1, &[[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 2.0, 1.0]]),
+        ),
+        (
+            "global_rgba".into(),
+            state(2, 1, &[[1.0, 0.0, 0.0, 0.5], [0.0, 0.0, 1.0, 0.5]]),
+        ),
+        (
+            "depthOrderA".into(),
+            state(2, 1, &[[0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]]),
+        ),
+        ("tex".into(), state(1, 1, &[[1.0, 1.0, 1.0, 1.0]])),
+    ]);
+    let formats = BTreeMap::from([("global_billboard_trail".into(), TextureFormat::Rgba32f)]);
+    execute_draw_pass(
+        "render/pointsBillboardRender:deposit",
+        &billboard_pass("deposit_alpha_1"),
+        &uniforms,
+        &mut resources,
+        5,
+        5,
+        &formats,
+    )
+    .unwrap();
+    assert_eq!(
+        &resources["global_billboard_trail"].data()[48..52],
+        &[1.0, 0.0, 0.5, 0.75]
+    );
+
+    resources.remove("global_billboard_trail");
+    let mut perspective = uniforms;
+    perspective.insert("viewMode".into(), Value::Int(2));
+    perspective.insert("posZ".into(), Value::Float(69.0));
+    perspective.insert("fieldOfView".into(), Value::Float(60.0));
+    execute_draw_pass(
+        "render/pointsBillboardRender:deposit",
+        &billboard_pass("deposit_alpha_2"),
+        &perspective,
+        &mut resources,
+        5,
+        5,
+        &formats,
+    )
+    .unwrap();
+    assert_eq!(
+        &resources["global_billboard_trail"].data()[48..52],
+        &[1.0, 0.0, 0.5, 0.75]
+    );
+}
+
+#[test]
+fn billboard_additive_defocus_layer_uses_sprite_mean_and_blur_weight() {
+    let uniforms = BTreeMap::from([
+        ("density".into(), Value::Float(100.0)),
+        ("shapeMode".into(), Value::Int(3)),
+        ("depositOpacity".into(), Value::Float(100.0)),
+        ("seed".into(), Value::Int(42)),
+        ("sizeVariation".into(), Value::Float(0.0)),
+        ("rotationVar".into(), Value::Float(0.0)),
+        ("pointSize".into(), Value::Float(2.0)),
+        ("viewMode".into(), Value::Int(1)),
+        ("blendMode".into(), Value::Int(0)),
+        ("blurLayer".into(), Value::Int(1)),
+        ("aperture".into(), Value::Float(20.0)),
+        ("focalDistance".into(), Value::Float(40.0)),
+        ("rotateX".into(), Value::Float(0.0)),
+        ("rotateY".into(), Value::Float(0.0)),
+        ("rotateZ".into(), Value::Float(0.0)),
+        ("posX".into(), Value::Float(0.0)),
+        ("posY".into(), Value::Float(0.0)),
+        ("viewScale".into(), Value::Float(1.0)),
+    ]);
+    let mut resources = BTreeMap::from([
+        ("global_xyz".into(), state(1, 1, &[[0.0, 0.0, 1.0, 1.0]])),
+        ("global_rgba".into(), state(1, 1, &[[1.0, 0.0, 0.0, 1.0]])),
+        ("tex".into(), state(1, 1, &[[1.0, 1.0, 1.0, 1.0]])),
+        ("spriteMean".into(), state(1, 1, &[[1.0, 1.0, 1.0, 1.0]])),
+    ]);
+    let formats = BTreeMap::from([("defocus".into(), TextureFormat::Rgba32f)]);
+    execute_draw_pass(
+        "render/pointsBillboardRender:deposit",
+        &billboard_pass("depositDefocus_1"),
+        &uniforms,
+        &mut resources,
+        5,
+        5,
+        &formats,
+    )
+    .unwrap();
+    let blur_pixels = 20.0_f64 * 39.0 / 79.0;
+    let expansion = 1.0 + blur_pixels;
+    let expected = (1.0 / (0.19724318 * expansion * expansion)) as f32;
+    assert!((resources["defocus"].data()[48] - expected).abs() < 1e-6);
+
+    resources.insert("defocus".into(), Surface::new(2, 2).unwrap());
+    execute_draw_pass(
+        "render/pointsBillboardRender:deposit",
+        &billboard_pass("depositDefocus_1"),
+        &uniforms,
+        &mut resources,
+        8,
+        8,
+        &formats,
+    )
+    .unwrap();
+    assert_eq!(
+        (resources["defocus"].width(), resources["defocus"].height()),
+        (2, 2)
     );
 }
 

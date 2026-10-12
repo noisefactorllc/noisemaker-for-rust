@@ -22680,7 +22680,958 @@
       },
       "passes": [
         {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              },
+              {
+                "equals": 1,
+                "uniform": "viewMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "defines": {
+            "VIEW_MODE": 1
+          },
           "inputs": {
+            "xyzTex": "global_xyz"
+          },
+          "key": "render/pointsBillboardRender:depthKeys",
+          "name": "depthKeys_1",
+          "outputs": {
+            "fragColor": "depthOrderA"
+          },
+          "program": "depthKeys",
+          "type": "compute",
+          "uniforms": {
+            "VIEW_MODE": "viewMode",
+            "posZ": "posZ",
+            "rotateX": "rotateX",
+            "rotateY": "rotateY",
+            "viewMode": "viewMode"
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              },
+              {
+                "equals": 2,
+                "uniform": "viewMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "defines": {
+            "VIEW_MODE": 2
+          },
+          "inputs": {
+            "xyzTex": "global_xyz"
+          },
+          "key": "render/pointsBillboardRender:depthKeys",
+          "name": "depthKeys_2",
+          "outputs": {
+            "fragColor": "depthOrderA"
+          },
+          "program": "depthKeys",
+          "type": "compute",
+          "uniforms": {
+            "VIEW_MODE": "viewMode",
+            "posZ": "posZ",
+            "rotateX": "rotateX",
+            "rotateY": "rotateY",
+            "viewMode": "viewMode"
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderA"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge0",
+          "outputs": {
+            "fragColor": "depthOrderB"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 1
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderB"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge1",
+          "outputs": {
+            "fragColor": "depthOrderA"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 2
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderA"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge2",
+          "outputs": {
+            "fragColor": "depthOrderB"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 4
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderB"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge3",
+          "outputs": {
+            "fragColor": "depthOrderA"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 8
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderA"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge4",
+          "outputs": {
+            "fragColor": "depthOrderB"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 16
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderB"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge5",
+          "outputs": {
+            "fragColor": "depthOrderA"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 32
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderA"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge6",
+          "outputs": {
+            "fragColor": "depthOrderB"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 64
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderB"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge7",
+          "outputs": {
+            "fragColor": "depthOrderA"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 128
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderA"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge8",
+          "outputs": {
+            "fragColor": "depthOrderB"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 256
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderB"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge9",
+          "outputs": {
+            "fragColor": "depthOrderA"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 512
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderA"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge10",
+          "outputs": {
+            "fragColor": "depthOrderB"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 1024
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderB"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge11",
+          "outputs": {
+            "fragColor": "depthOrderA"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 2048
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderA"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge12",
+          "outputs": {
+            "fragColor": "depthOrderB"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 4096
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderB"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge13",
+          "outputs": {
+            "fragColor": "depthOrderA"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 8192
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderA"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge14",
+          "outputs": {
+            "fragColor": "depthOrderB"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 16384
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderB"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge15",
+          "outputs": {
+            "fragColor": "depthOrderA"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 32768
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderA"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge16",
+          "outputs": {
+            "fragColor": "depthOrderB"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 65536
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderB"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge17",
+          "outputs": {
+            "fragColor": "depthOrderA"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 131072
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderA"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge18",
+          "outputs": {
+            "fragColor": "depthOrderB"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 262144
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderB"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge19",
+          "outputs": {
+            "fragColor": "depthOrderA"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 524288
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderA"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge20",
+          "outputs": {
+            "fragColor": "depthOrderB"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 1048576
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "orderTex": "depthOrderB"
+          },
+          "key": "render/pointsBillboardRender:depthMerge",
+          "name": "depthMerge21",
+          "outputs": {
+            "fragColor": "depthOrderA"
+          },
+          "program": "depthMerge",
+          "type": "compute",
+          "uniforms": {
+            "runLength": 2097152
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 0,
+                "uniform": "shapeMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "aperture"
+              },
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "spriteTex": "tex"
+          },
+          "key": "render/pointsBillboardRender:spriteMeanTiles",
+          "name": "spriteMeanTiles",
+          "outputs": {
+            "fragColor": "spriteMeanTiles"
+          },
+          "program": "spriteMeanTiles",
+          "type": "compute",
+          "uniforms": {
+            "aperture": "aperture",
+            "shapeMode": "shapeMode",
+            "viewMode": "viewMode"
+          }
+        },
+        {
+          "conditions": {
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "aperture"
+              },
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {
+            "tilesTex": "spriteMeanTiles"
+          },
+          "key": "render/pointsBillboardRender:spriteMean",
+          "name": "spriteMean",
+          "outputs": {
+            "fragColor": "spriteMean"
+          },
+          "program": "spriteMean",
+          "type": "compute",
+          "uniforms": {
+            "aperture": "aperture",
+            "shapeMode": "shapeMode",
+            "viewMode": "viewMode"
+          }
+        },
+        {
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 0,
+                "uniform": "blendMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "aperture"
+              },
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "inputs": {},
+          "key": "render/pointsBillboardRender:clearDefocus",
+          "name": "clearDefocus",
+          "outputs": {
+            "fragColor": "defocus"
+          },
+          "program": "clearDefocus",
+          "uniforms": {
+            "clearValue": 0
+          }
+        },
+        {
+          "blend": true,
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 0,
+                "uniform": "blendMode"
+              },
+              {
+                "equals": 1,
+                "uniform": "viewMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "aperture"
+              },
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "count": "input",
+          "defines": {
+            "BLEND_MODE": 0,
+            "BLUR_LAYER": 1,
+            "VIEW_MODE": 1
+          },
+          "drawMode": "billboards",
+          "inputs": {
+            "orderTex": "depthOrderA",
+            "rgbaTex": "global_rgba",
+            "spriteMeanTex": "spriteMean",
+            "spriteTex": "tex",
+            "xyzTex": "global_xyz"
+          },
+          "key": null,
+          "name": "depositDefocus_1",
+          "outputs": {
+            "fragColor": "defocus"
+          },
+          "program": "deposit",
+          "uniforms": {
+            "aperture": "aperture",
+            "blendMode": "blendMode",
+            "blurLayer": 1,
+            "brightnessDistance": "brightnessDistance",
+            "density": "density",
+            "depositOpacity": "depositOpacity",
+            "fieldOfView": "fieldOfView",
+            "focalDistance": "focalDistance",
+            "pointSize": "pointSize",
+            "posX": "posX",
+            "posY": "posY",
+            "posZ": "posZ",
+            "rotateX": "rotateX",
+            "rotateY": "rotateY",
+            "rotateZ": "rotateZ",
+            "rotationVar": "rotationVar",
+            "seed": "seed",
+            "shapeMode": "shapeMode",
+            "sizeDistance": "sizeDistance",
+            "sizeVariation": "sizeVariation",
+            "viewMode": "viewMode",
+            "viewScale": "viewScale"
+          }
+        },
+        {
+          "blend": true,
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 0,
+                "uniform": "blendMode"
+              },
+              {
+                "equals": 2,
+                "uniform": "viewMode"
+              }
+            ],
+            "skipIf": [
+              {
+                "equals": 0,
+                "uniform": "aperture"
+              },
+              {
+                "equals": 0,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "count": "input",
+          "defines": {
+            "BLEND_MODE": 0,
+            "BLUR_LAYER": 1,
+            "VIEW_MODE": 2
+          },
+          "drawMode": "billboards",
+          "inputs": {
+            "orderTex": "depthOrderA",
+            "rgbaTex": "global_rgba",
+            "spriteMeanTex": "spriteMean",
+            "spriteTex": "tex",
+            "xyzTex": "global_xyz"
+          },
+          "key": null,
+          "name": "depositDefocus_2",
+          "outputs": {
+            "fragColor": "defocus"
+          },
+          "program": "deposit",
+          "uniforms": {
+            "aperture": "aperture",
+            "blendMode": "blendMode",
+            "blurLayer": 1,
+            "brightnessDistance": "brightnessDistance",
+            "density": "density",
+            "depositOpacity": "depositOpacity",
+            "fieldOfView": "fieldOfView",
+            "focalDistance": "focalDistance",
+            "pointSize": "pointSize",
+            "posX": "posX",
+            "posY": "posY",
+            "posZ": "posZ",
+            "rotateX": "rotateX",
+            "rotateY": "rotateY",
+            "rotateZ": "rotateZ",
+            "rotationVar": "rotationVar",
+            "seed": "seed",
+            "shapeMode": "shapeMode",
+            "sizeDistance": "sizeDistance",
+            "sizeVariation": "sizeVariation",
+            "viewMode": "viewMode",
+            "viewScale": "viewScale"
+          }
+        },
+        {
+          "inputs": {
+            "defocusTex": "defocus",
             "trailTex": "global_billboard_trail"
           },
           "key": "render/pointsBillboardRender:diffuse",
@@ -22690,7 +23641,10 @@
           },
           "program": "diffuse",
           "uniforms": {
-            "intensity": "intensity"
+            "aperture": "aperture",
+            "blendMode": "blendMode",
+            "intensity": "intensity",
+            "viewMode": "viewMode"
           }
         },
         {
@@ -22711,27 +23665,160 @@
               {
                 "equals": 0,
                 "uniform": "blendMode"
+              },
+              {
+                "equals": 0,
+                "uniform": "viewMode"
               }
             ]
           },
           "count": "input",
+          "defines": {
+            "BLEND_MODE": 0,
+            "BLUR_LAYER": 0,
+            "VIEW_MODE": 0
+          },
           "drawMode": "billboards",
           "inputs": {
+            "orderTex": "depthOrderA",
             "rgbaTex": "global_rgba",
+            "spriteMeanTex": "spriteMean",
             "spriteTex": "tex",
             "xyzTex": "global_xyz"
           },
-          "key": null,
-          "name": "deposit",
+          "key": "render/pointsBillboardRender:deposit",
+          "name": "deposit_0",
           "outputs": {
             "fragColor": "global_billboard_trail"
           },
           "program": "deposit",
           "uniforms": {
+            "aperture": "aperture",
+            "blendMode": "blendMode",
+            "blurLayer": 0,
             "brightnessDistance": "brightnessDistance",
             "density": "density",
             "depositOpacity": "depositOpacity",
             "fieldOfView": "fieldOfView",
+            "focalDistance": "focalDistance",
+            "pointSize": "pointSize",
+            "posX": "posX",
+            "posY": "posY",
+            "posZ": "posZ",
+            "rotateX": "rotateX",
+            "rotateY": "rotateY",
+            "rotateZ": "rotateZ",
+            "rotationVar": "rotationVar",
+            "seed": "seed",
+            "shapeMode": "shapeMode",
+            "sizeDistance": "sizeDistance",
+            "sizeVariation": "sizeVariation",
+            "viewMode": "viewMode",
+            "viewScale": "viewScale"
+          }
+        },
+        {
+          "blend": true,
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 0,
+                "uniform": "blendMode"
+              },
+              {
+                "equals": 1,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "count": "input",
+          "defines": {
+            "BLEND_MODE": 0,
+            "BLUR_LAYER": 0,
+            "VIEW_MODE": 1
+          },
+          "drawMode": "billboards",
+          "inputs": {
+            "orderTex": "depthOrderA",
+            "rgbaTex": "global_rgba",
+            "spriteMeanTex": "spriteMean",
+            "spriteTex": "tex",
+            "xyzTex": "global_xyz"
+          },
+          "key": null,
+          "name": "deposit_1",
+          "outputs": {
+            "fragColor": "global_billboard_trail"
+          },
+          "program": "deposit",
+          "uniforms": {
+            "aperture": "aperture",
+            "blendMode": "blendMode",
+            "blurLayer": 0,
+            "brightnessDistance": "brightnessDistance",
+            "density": "density",
+            "depositOpacity": "depositOpacity",
+            "fieldOfView": "fieldOfView",
+            "focalDistance": "focalDistance",
+            "pointSize": "pointSize",
+            "posX": "posX",
+            "posY": "posY",
+            "posZ": "posZ",
+            "rotateX": "rotateX",
+            "rotateY": "rotateY",
+            "rotateZ": "rotateZ",
+            "rotationVar": "rotationVar",
+            "seed": "seed",
+            "shapeMode": "shapeMode",
+            "sizeDistance": "sizeDistance",
+            "sizeVariation": "sizeVariation",
+            "viewMode": "viewMode",
+            "viewScale": "viewScale"
+          }
+        },
+        {
+          "blend": true,
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 0,
+                "uniform": "blendMode"
+              },
+              {
+                "equals": 2,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "count": "input",
+          "defines": {
+            "BLEND_MODE": 0,
+            "BLUR_LAYER": 0,
+            "VIEW_MODE": 2
+          },
+          "drawMode": "billboards",
+          "inputs": {
+            "orderTex": "depthOrderA",
+            "rgbaTex": "global_rgba",
+            "spriteMeanTex": "spriteMean",
+            "spriteTex": "tex",
+            "xyzTex": "global_xyz"
+          },
+          "key": null,
+          "name": "deposit_2",
+          "outputs": {
+            "fragColor": "global_billboard_trail"
+          },
+          "program": "deposit",
+          "uniforms": {
+            "aperture": "aperture",
+            "blendMode": "blendMode",
+            "blurLayer": 0,
+            "brightnessDistance": "brightnessDistance",
+            "density": "density",
+            "depositOpacity": "depositOpacity",
+            "fieldOfView": "fieldOfView",
+            "focalDistance": "focalDistance",
             "pointSize": "pointSize",
             "posX": "posX",
             "posY": "posY",
@@ -22758,27 +23845,166 @@
               {
                 "equals": 1,
                 "uniform": "blendMode"
+              },
+              {
+                "equals": 0,
+                "uniform": "viewMode"
               }
             ]
           },
           "count": "input",
+          "defines": {
+            "BLEND_MODE": 1,
+            "BLUR_LAYER": 0,
+            "VIEW_MODE": 0
+          },
           "drawMode": "billboards",
           "inputs": {
+            "orderTex": "depthOrderA",
             "rgbaTex": "global_rgba",
+            "spriteMeanTex": "spriteMean",
             "spriteTex": "tex",
             "xyzTex": "global_xyz"
           },
           "key": null,
-          "name": "deposit_alpha",
+          "name": "deposit_alpha_0",
           "outputs": {
             "fragColor": "global_billboard_trail"
           },
           "program": "deposit",
           "uniforms": {
+            "aperture": "aperture",
+            "blendMode": "blendMode",
+            "blurLayer": 0,
             "brightnessDistance": "brightnessDistance",
             "density": "density",
             "depositOpacity": "depositOpacity",
             "fieldOfView": "fieldOfView",
+            "focalDistance": "focalDistance",
+            "pointSize": "pointSize",
+            "posX": "posX",
+            "posY": "posY",
+            "posZ": "posZ",
+            "rotateX": "rotateX",
+            "rotateY": "rotateY",
+            "rotateZ": "rotateZ",
+            "rotationVar": "rotationVar",
+            "seed": "seed",
+            "shapeMode": "shapeMode",
+            "sizeDistance": "sizeDistance",
+            "sizeVariation": "sizeVariation",
+            "viewMode": "viewMode",
+            "viewScale": "viewScale"
+          }
+        },
+        {
+          "blend": [
+            "ONE",
+            "ONE_MINUS_SRC_ALPHA"
+          ],
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              },
+              {
+                "equals": 1,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "count": "input",
+          "defines": {
+            "BLEND_MODE": 1,
+            "BLUR_LAYER": 0,
+            "VIEW_MODE": 1
+          },
+          "drawMode": "billboards",
+          "inputs": {
+            "orderTex": "depthOrderA",
+            "rgbaTex": "global_rgba",
+            "spriteMeanTex": "spriteMean",
+            "spriteTex": "tex",
+            "xyzTex": "global_xyz"
+          },
+          "key": null,
+          "name": "deposit_alpha_1",
+          "outputs": {
+            "fragColor": "global_billboard_trail"
+          },
+          "program": "deposit",
+          "uniforms": {
+            "aperture": "aperture",
+            "blendMode": "blendMode",
+            "blurLayer": 0,
+            "brightnessDistance": "brightnessDistance",
+            "density": "density",
+            "depositOpacity": "depositOpacity",
+            "fieldOfView": "fieldOfView",
+            "focalDistance": "focalDistance",
+            "pointSize": "pointSize",
+            "posX": "posX",
+            "posY": "posY",
+            "posZ": "posZ",
+            "rotateX": "rotateX",
+            "rotateY": "rotateY",
+            "rotateZ": "rotateZ",
+            "rotationVar": "rotationVar",
+            "seed": "seed",
+            "shapeMode": "shapeMode",
+            "sizeDistance": "sizeDistance",
+            "sizeVariation": "sizeVariation",
+            "viewMode": "viewMode",
+            "viewScale": "viewScale"
+          }
+        },
+        {
+          "blend": [
+            "ONE",
+            "ONE_MINUS_SRC_ALPHA"
+          ],
+          "conditions": {
+            "runIf": [
+              {
+                "equals": 1,
+                "uniform": "blendMode"
+              },
+              {
+                "equals": 2,
+                "uniform": "viewMode"
+              }
+            ]
+          },
+          "count": "input",
+          "defines": {
+            "BLEND_MODE": 1,
+            "BLUR_LAYER": 0,
+            "VIEW_MODE": 2
+          },
+          "drawMode": "billboards",
+          "inputs": {
+            "orderTex": "depthOrderA",
+            "rgbaTex": "global_rgba",
+            "spriteMeanTex": "spriteMean",
+            "spriteTex": "tex",
+            "xyzTex": "global_xyz"
+          },
+          "key": null,
+          "name": "deposit_alpha_2",
+          "outputs": {
+            "fragColor": "global_billboard_trail"
+          },
+          "program": "deposit",
+          "uniforms": {
+            "aperture": "aperture",
+            "blendMode": "blendMode",
+            "blurLayer": 0,
+            "brightnessDistance": "brightnessDistance",
+            "density": "density",
+            "depositOpacity": "depositOpacity",
+            "fieldOfView": "fieldOfView",
+            "focalDistance": "focalDistance",
             "pointSize": "pointSize",
             "posX": "posX",
             "posY": "posY",
@@ -22813,10 +24039,47 @@
         }
       ],
       "textures": {
+        "defocus": {
+          "format": "rgba16f",
+          "height": "25%",
+          "width": "25%"
+        },
+        "depthOrderA": {
+          "format": "rgba32f",
+          "height": {
+            "default": 256,
+            "param": "stateSize"
+          },
+          "width": {
+            "default": 256,
+            "param": "stateSize"
+          }
+        },
+        "depthOrderB": {
+          "format": "rgba32f",
+          "height": {
+            "default": 256,
+            "param": "stateSize"
+          },
+          "width": {
+            "default": 256,
+            "param": "stateSize"
+          }
+        },
         "global_billboard_trail": {
           "format": "rgba16f",
           "height": "100%",
           "width": "100%"
+        },
+        "spriteMean": {
+          "format": "rgba32f",
+          "height": 5,
+          "width": 5
+        },
+        "spriteMeanTiles": {
+          "format": "rgba32f",
+          "height": 160,
+          "width": 160
         }
       }
     },
@@ -28622,13 +29885,293 @@
         "bgAlpha",
         "smoothEdge",
         "zone0_tex",
+        "zone0_count",
+        "zone0_alpha",
+        "zone0_bounds",
+        "zone0_v0",
+        "zone0_v1",
+        "zone0_v2",
+        "zone0_v3",
+        "zone0_v4",
+        "zone0_v5",
+        "zone0_v6",
+        "zone0_v7",
+        "zone0_v8",
+        "zone0_v9",
+        "zone0_v10",
+        "zone0_v11",
+        "zone0_v12",
+        "zone0_v13",
+        "zone0_v14",
+        "zone0_v15",
+        "zone0_v16",
+        "zone0_v17",
+        "zone0_v18",
+        "zone0_v19",
+        "zone0_v20",
+        "zone0_v21",
+        "zone0_v22",
+        "zone0_v23",
+        "zone0_v24",
+        "zone0_v25",
+        "zone0_v26",
+        "zone0_v27",
+        "zone0_v28",
+        "zone0_v29",
+        "zone0_v30",
+        "zone0_v31",
         "zone1_tex",
+        "zone1_count",
+        "zone1_alpha",
+        "zone1_bounds",
+        "zone1_v0",
+        "zone1_v1",
+        "zone1_v2",
+        "zone1_v3",
+        "zone1_v4",
+        "zone1_v5",
+        "zone1_v6",
+        "zone1_v7",
+        "zone1_v8",
+        "zone1_v9",
+        "zone1_v10",
+        "zone1_v11",
+        "zone1_v12",
+        "zone1_v13",
+        "zone1_v14",
+        "zone1_v15",
+        "zone1_v16",
+        "zone1_v17",
+        "zone1_v18",
+        "zone1_v19",
+        "zone1_v20",
+        "zone1_v21",
+        "zone1_v22",
+        "zone1_v23",
+        "zone1_v24",
+        "zone1_v25",
+        "zone1_v26",
+        "zone1_v27",
+        "zone1_v28",
+        "zone1_v29",
+        "zone1_v30",
+        "zone1_v31",
         "zone2_tex",
+        "zone2_count",
+        "zone2_alpha",
+        "zone2_bounds",
+        "zone2_v0",
+        "zone2_v1",
+        "zone2_v2",
+        "zone2_v3",
+        "zone2_v4",
+        "zone2_v5",
+        "zone2_v6",
+        "zone2_v7",
+        "zone2_v8",
+        "zone2_v9",
+        "zone2_v10",
+        "zone2_v11",
+        "zone2_v12",
+        "zone2_v13",
+        "zone2_v14",
+        "zone2_v15",
+        "zone2_v16",
+        "zone2_v17",
+        "zone2_v18",
+        "zone2_v19",
+        "zone2_v20",
+        "zone2_v21",
+        "zone2_v22",
+        "zone2_v23",
+        "zone2_v24",
+        "zone2_v25",
+        "zone2_v26",
+        "zone2_v27",
+        "zone2_v28",
+        "zone2_v29",
+        "zone2_v30",
+        "zone2_v31",
         "zone3_tex",
+        "zone3_count",
+        "zone3_alpha",
+        "zone3_bounds",
+        "zone3_v0",
+        "zone3_v1",
+        "zone3_v2",
+        "zone3_v3",
+        "zone3_v4",
+        "zone3_v5",
+        "zone3_v6",
+        "zone3_v7",
+        "zone3_v8",
+        "zone3_v9",
+        "zone3_v10",
+        "zone3_v11",
+        "zone3_v12",
+        "zone3_v13",
+        "zone3_v14",
+        "zone3_v15",
+        "zone3_v16",
+        "zone3_v17",
+        "zone3_v18",
+        "zone3_v19",
+        "zone3_v20",
+        "zone3_v21",
+        "zone3_v22",
+        "zone3_v23",
+        "zone3_v24",
+        "zone3_v25",
+        "zone3_v26",
+        "zone3_v27",
+        "zone3_v28",
+        "zone3_v29",
+        "zone3_v30",
+        "zone3_v31",
         "zone4_tex",
+        "zone4_count",
+        "zone4_alpha",
+        "zone4_bounds",
+        "zone4_v0",
+        "zone4_v1",
+        "zone4_v2",
+        "zone4_v3",
+        "zone4_v4",
+        "zone4_v5",
+        "zone4_v6",
+        "zone4_v7",
+        "zone4_v8",
+        "zone4_v9",
+        "zone4_v10",
+        "zone4_v11",
+        "zone4_v12",
+        "zone4_v13",
+        "zone4_v14",
+        "zone4_v15",
+        "zone4_v16",
+        "zone4_v17",
+        "zone4_v18",
+        "zone4_v19",
+        "zone4_v20",
+        "zone4_v21",
+        "zone4_v22",
+        "zone4_v23",
+        "zone4_v24",
+        "zone4_v25",
+        "zone4_v26",
+        "zone4_v27",
+        "zone4_v28",
+        "zone4_v29",
+        "zone4_v30",
+        "zone4_v31",
         "zone5_tex",
+        "zone5_count",
+        "zone5_alpha",
+        "zone5_bounds",
+        "zone5_v0",
+        "zone5_v1",
+        "zone5_v2",
+        "zone5_v3",
+        "zone5_v4",
+        "zone5_v5",
+        "zone5_v6",
+        "zone5_v7",
+        "zone5_v8",
+        "zone5_v9",
+        "zone5_v10",
+        "zone5_v11",
+        "zone5_v12",
+        "zone5_v13",
+        "zone5_v14",
+        "zone5_v15",
+        "zone5_v16",
+        "zone5_v17",
+        "zone5_v18",
+        "zone5_v19",
+        "zone5_v20",
+        "zone5_v21",
+        "zone5_v22",
+        "zone5_v23",
+        "zone5_v24",
+        "zone5_v25",
+        "zone5_v26",
+        "zone5_v27",
+        "zone5_v28",
+        "zone5_v29",
+        "zone5_v30",
+        "zone5_v31",
         "zone6_tex",
-        "zone7_tex"
+        "zone6_count",
+        "zone6_alpha",
+        "zone6_bounds",
+        "zone6_v0",
+        "zone6_v1",
+        "zone6_v2",
+        "zone6_v3",
+        "zone6_v4",
+        "zone6_v5",
+        "zone6_v6",
+        "zone6_v7",
+        "zone6_v8",
+        "zone6_v9",
+        "zone6_v10",
+        "zone6_v11",
+        "zone6_v12",
+        "zone6_v13",
+        "zone6_v14",
+        "zone6_v15",
+        "zone6_v16",
+        "zone6_v17",
+        "zone6_v18",
+        "zone6_v19",
+        "zone6_v20",
+        "zone6_v21",
+        "zone6_v22",
+        "zone6_v23",
+        "zone6_v24",
+        "zone6_v25",
+        "zone6_v26",
+        "zone6_v27",
+        "zone6_v28",
+        "zone6_v29",
+        "zone6_v30",
+        "zone6_v31",
+        "zone7_tex",
+        "zone7_count",
+        "zone7_alpha",
+        "zone7_bounds",
+        "zone7_v0",
+        "zone7_v1",
+        "zone7_v2",
+        "zone7_v3",
+        "zone7_v4",
+        "zone7_v5",
+        "zone7_v6",
+        "zone7_v7",
+        "zone7_v8",
+        "zone7_v9",
+        "zone7_v10",
+        "zone7_v11",
+        "zone7_v12",
+        "zone7_v13",
+        "zone7_v14",
+        "zone7_v15",
+        "zone7_v16",
+        "zone7_v17",
+        "zone7_v18",
+        "zone7_v19",
+        "zone7_v20",
+        "zone7_v21",
+        "zone7_v22",
+        "zone7_v23",
+        "zone7_v24",
+        "zone7_v25",
+        "zone7_v26",
+        "zone7_v27",
+        "zone7_v28",
+        "zone7_v29",
+        "zone7_v30",
+        "zone7_v31"
       ],
       "params": {
         "bgAlpha": {
@@ -28650,45 +30193,2797 @@
           "type": "float",
           "uniform": "smoothEdge"
         },
+        "zone0_alpha": {
+          "default": 1,
+          "max": 1,
+          "min": 0,
+          "type": "float",
+          "uniform": "zone0_alpha"
+        },
+        "zone0_bounds": {
+          "default": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "type": "vec4",
+          "uniform": "zone0_bounds"
+        },
+        "zone0_count": {
+          "default": 0,
+          "max": 64,
+          "min": 0,
+          "type": "int",
+          "uniform": "zone0_count"
+        },
         "zone0_tex": {
           "colorModeUniform": "zone0_active",
           "default": "none",
           "type": "surface"
+        },
+        "zone0_v0": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v0"
+        },
+        "zone0_v1": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v1"
+        },
+        "zone0_v10": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v10"
+        },
+        "zone0_v11": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v11"
+        },
+        "zone0_v12": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v12"
+        },
+        "zone0_v13": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v13"
+        },
+        "zone0_v14": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v14"
+        },
+        "zone0_v15": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v15"
+        },
+        "zone0_v16": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v16"
+        },
+        "zone0_v17": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v17"
+        },
+        "zone0_v18": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v18"
+        },
+        "zone0_v19": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v19"
+        },
+        "zone0_v2": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v2"
+        },
+        "zone0_v20": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v20"
+        },
+        "zone0_v21": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v21"
+        },
+        "zone0_v22": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v22"
+        },
+        "zone0_v23": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v23"
+        },
+        "zone0_v24": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v24"
+        },
+        "zone0_v25": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v25"
+        },
+        "zone0_v26": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v26"
+        },
+        "zone0_v27": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v27"
+        },
+        "zone0_v28": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v28"
+        },
+        "zone0_v29": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v29"
+        },
+        "zone0_v3": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v3"
+        },
+        "zone0_v30": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v30"
+        },
+        "zone0_v31": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v31"
+        },
+        "zone0_v4": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v4"
+        },
+        "zone0_v5": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v5"
+        },
+        "zone0_v6": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v6"
+        },
+        "zone0_v7": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v7"
+        },
+        "zone0_v8": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v8"
+        },
+        "zone0_v9": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone0_v9"
+        },
+        "zone1_alpha": {
+          "default": 1,
+          "max": 1,
+          "min": 0,
+          "type": "float",
+          "uniform": "zone1_alpha"
+        },
+        "zone1_bounds": {
+          "default": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "type": "vec4",
+          "uniform": "zone1_bounds"
+        },
+        "zone1_count": {
+          "default": 0,
+          "max": 64,
+          "min": 0,
+          "type": "int",
+          "uniform": "zone1_count"
         },
         "zone1_tex": {
           "colorModeUniform": "zone1_active",
           "default": "none",
           "type": "surface"
         },
+        "zone1_v0": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v0"
+        },
+        "zone1_v1": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v1"
+        },
+        "zone1_v10": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v10"
+        },
+        "zone1_v11": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v11"
+        },
+        "zone1_v12": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v12"
+        },
+        "zone1_v13": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v13"
+        },
+        "zone1_v14": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v14"
+        },
+        "zone1_v15": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v15"
+        },
+        "zone1_v16": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v16"
+        },
+        "zone1_v17": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v17"
+        },
+        "zone1_v18": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v18"
+        },
+        "zone1_v19": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v19"
+        },
+        "zone1_v2": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v2"
+        },
+        "zone1_v20": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v20"
+        },
+        "zone1_v21": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v21"
+        },
+        "zone1_v22": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v22"
+        },
+        "zone1_v23": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v23"
+        },
+        "zone1_v24": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v24"
+        },
+        "zone1_v25": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v25"
+        },
+        "zone1_v26": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v26"
+        },
+        "zone1_v27": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v27"
+        },
+        "zone1_v28": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v28"
+        },
+        "zone1_v29": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v29"
+        },
+        "zone1_v3": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v3"
+        },
+        "zone1_v30": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v30"
+        },
+        "zone1_v31": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v31"
+        },
+        "zone1_v4": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v4"
+        },
+        "zone1_v5": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v5"
+        },
+        "zone1_v6": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v6"
+        },
+        "zone1_v7": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v7"
+        },
+        "zone1_v8": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v8"
+        },
+        "zone1_v9": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone1_v9"
+        },
+        "zone2_alpha": {
+          "default": 1,
+          "max": 1,
+          "min": 0,
+          "type": "float",
+          "uniform": "zone2_alpha"
+        },
+        "zone2_bounds": {
+          "default": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "type": "vec4",
+          "uniform": "zone2_bounds"
+        },
+        "zone2_count": {
+          "default": 0,
+          "max": 64,
+          "min": 0,
+          "type": "int",
+          "uniform": "zone2_count"
+        },
         "zone2_tex": {
           "colorModeUniform": "zone2_active",
           "default": "none",
           "type": "surface"
+        },
+        "zone2_v0": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v0"
+        },
+        "zone2_v1": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v1"
+        },
+        "zone2_v10": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v10"
+        },
+        "zone2_v11": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v11"
+        },
+        "zone2_v12": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v12"
+        },
+        "zone2_v13": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v13"
+        },
+        "zone2_v14": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v14"
+        },
+        "zone2_v15": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v15"
+        },
+        "zone2_v16": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v16"
+        },
+        "zone2_v17": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v17"
+        },
+        "zone2_v18": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v18"
+        },
+        "zone2_v19": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v19"
+        },
+        "zone2_v2": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v2"
+        },
+        "zone2_v20": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v20"
+        },
+        "zone2_v21": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v21"
+        },
+        "zone2_v22": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v22"
+        },
+        "zone2_v23": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v23"
+        },
+        "zone2_v24": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v24"
+        },
+        "zone2_v25": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v25"
+        },
+        "zone2_v26": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v26"
+        },
+        "zone2_v27": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v27"
+        },
+        "zone2_v28": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v28"
+        },
+        "zone2_v29": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v29"
+        },
+        "zone2_v3": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v3"
+        },
+        "zone2_v30": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v30"
+        },
+        "zone2_v31": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v31"
+        },
+        "zone2_v4": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v4"
+        },
+        "zone2_v5": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v5"
+        },
+        "zone2_v6": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v6"
+        },
+        "zone2_v7": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v7"
+        },
+        "zone2_v8": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v8"
+        },
+        "zone2_v9": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone2_v9"
+        },
+        "zone3_alpha": {
+          "default": 1,
+          "max": 1,
+          "min": 0,
+          "type": "float",
+          "uniform": "zone3_alpha"
+        },
+        "zone3_bounds": {
+          "default": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "type": "vec4",
+          "uniform": "zone3_bounds"
+        },
+        "zone3_count": {
+          "default": 0,
+          "max": 64,
+          "min": 0,
+          "type": "int",
+          "uniform": "zone3_count"
         },
         "zone3_tex": {
           "colorModeUniform": "zone3_active",
           "default": "none",
           "type": "surface"
         },
+        "zone3_v0": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v0"
+        },
+        "zone3_v1": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v1"
+        },
+        "zone3_v10": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v10"
+        },
+        "zone3_v11": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v11"
+        },
+        "zone3_v12": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v12"
+        },
+        "zone3_v13": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v13"
+        },
+        "zone3_v14": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v14"
+        },
+        "zone3_v15": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v15"
+        },
+        "zone3_v16": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v16"
+        },
+        "zone3_v17": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v17"
+        },
+        "zone3_v18": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v18"
+        },
+        "zone3_v19": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v19"
+        },
+        "zone3_v2": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v2"
+        },
+        "zone3_v20": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v20"
+        },
+        "zone3_v21": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v21"
+        },
+        "zone3_v22": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v22"
+        },
+        "zone3_v23": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v23"
+        },
+        "zone3_v24": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v24"
+        },
+        "zone3_v25": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v25"
+        },
+        "zone3_v26": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v26"
+        },
+        "zone3_v27": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v27"
+        },
+        "zone3_v28": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v28"
+        },
+        "zone3_v29": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v29"
+        },
+        "zone3_v3": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v3"
+        },
+        "zone3_v30": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v30"
+        },
+        "zone3_v31": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v31"
+        },
+        "zone3_v4": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v4"
+        },
+        "zone3_v5": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v5"
+        },
+        "zone3_v6": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v6"
+        },
+        "zone3_v7": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v7"
+        },
+        "zone3_v8": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v8"
+        },
+        "zone3_v9": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone3_v9"
+        },
+        "zone4_alpha": {
+          "default": 1,
+          "max": 1,
+          "min": 0,
+          "type": "float",
+          "uniform": "zone4_alpha"
+        },
+        "zone4_bounds": {
+          "default": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "type": "vec4",
+          "uniform": "zone4_bounds"
+        },
+        "zone4_count": {
+          "default": 0,
+          "max": 64,
+          "min": 0,
+          "type": "int",
+          "uniform": "zone4_count"
+        },
         "zone4_tex": {
           "colorModeUniform": "zone4_active",
           "default": "none",
           "type": "surface"
+        },
+        "zone4_v0": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v0"
+        },
+        "zone4_v1": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v1"
+        },
+        "zone4_v10": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v10"
+        },
+        "zone4_v11": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v11"
+        },
+        "zone4_v12": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v12"
+        },
+        "zone4_v13": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v13"
+        },
+        "zone4_v14": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v14"
+        },
+        "zone4_v15": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v15"
+        },
+        "zone4_v16": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v16"
+        },
+        "zone4_v17": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v17"
+        },
+        "zone4_v18": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v18"
+        },
+        "zone4_v19": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v19"
+        },
+        "zone4_v2": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v2"
+        },
+        "zone4_v20": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v20"
+        },
+        "zone4_v21": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v21"
+        },
+        "zone4_v22": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v22"
+        },
+        "zone4_v23": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v23"
+        },
+        "zone4_v24": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v24"
+        },
+        "zone4_v25": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v25"
+        },
+        "zone4_v26": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v26"
+        },
+        "zone4_v27": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v27"
+        },
+        "zone4_v28": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v28"
+        },
+        "zone4_v29": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v29"
+        },
+        "zone4_v3": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v3"
+        },
+        "zone4_v30": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v30"
+        },
+        "zone4_v31": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v31"
+        },
+        "zone4_v4": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v4"
+        },
+        "zone4_v5": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v5"
+        },
+        "zone4_v6": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v6"
+        },
+        "zone4_v7": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v7"
+        },
+        "zone4_v8": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v8"
+        },
+        "zone4_v9": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone4_v9"
+        },
+        "zone5_alpha": {
+          "default": 1,
+          "max": 1,
+          "min": 0,
+          "type": "float",
+          "uniform": "zone5_alpha"
+        },
+        "zone5_bounds": {
+          "default": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "type": "vec4",
+          "uniform": "zone5_bounds"
+        },
+        "zone5_count": {
+          "default": 0,
+          "max": 64,
+          "min": 0,
+          "type": "int",
+          "uniform": "zone5_count"
         },
         "zone5_tex": {
           "colorModeUniform": "zone5_active",
           "default": "none",
           "type": "surface"
         },
+        "zone5_v0": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v0"
+        },
+        "zone5_v1": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v1"
+        },
+        "zone5_v10": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v10"
+        },
+        "zone5_v11": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v11"
+        },
+        "zone5_v12": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v12"
+        },
+        "zone5_v13": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v13"
+        },
+        "zone5_v14": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v14"
+        },
+        "zone5_v15": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v15"
+        },
+        "zone5_v16": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v16"
+        },
+        "zone5_v17": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v17"
+        },
+        "zone5_v18": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v18"
+        },
+        "zone5_v19": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v19"
+        },
+        "zone5_v2": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v2"
+        },
+        "zone5_v20": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v20"
+        },
+        "zone5_v21": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v21"
+        },
+        "zone5_v22": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v22"
+        },
+        "zone5_v23": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v23"
+        },
+        "zone5_v24": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v24"
+        },
+        "zone5_v25": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v25"
+        },
+        "zone5_v26": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v26"
+        },
+        "zone5_v27": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v27"
+        },
+        "zone5_v28": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v28"
+        },
+        "zone5_v29": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v29"
+        },
+        "zone5_v3": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v3"
+        },
+        "zone5_v30": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v30"
+        },
+        "zone5_v31": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v31"
+        },
+        "zone5_v4": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v4"
+        },
+        "zone5_v5": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v5"
+        },
+        "zone5_v6": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v6"
+        },
+        "zone5_v7": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v7"
+        },
+        "zone5_v8": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v8"
+        },
+        "zone5_v9": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone5_v9"
+        },
+        "zone6_alpha": {
+          "default": 1,
+          "max": 1,
+          "min": 0,
+          "type": "float",
+          "uniform": "zone6_alpha"
+        },
+        "zone6_bounds": {
+          "default": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "type": "vec4",
+          "uniform": "zone6_bounds"
+        },
+        "zone6_count": {
+          "default": 0,
+          "max": 64,
+          "min": 0,
+          "type": "int",
+          "uniform": "zone6_count"
+        },
         "zone6_tex": {
           "colorModeUniform": "zone6_active",
           "default": "none",
           "type": "surface"
         },
+        "zone6_v0": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v0"
+        },
+        "zone6_v1": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v1"
+        },
+        "zone6_v10": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v10"
+        },
+        "zone6_v11": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v11"
+        },
+        "zone6_v12": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v12"
+        },
+        "zone6_v13": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v13"
+        },
+        "zone6_v14": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v14"
+        },
+        "zone6_v15": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v15"
+        },
+        "zone6_v16": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v16"
+        },
+        "zone6_v17": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v17"
+        },
+        "zone6_v18": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v18"
+        },
+        "zone6_v19": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v19"
+        },
+        "zone6_v2": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v2"
+        },
+        "zone6_v20": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v20"
+        },
+        "zone6_v21": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v21"
+        },
+        "zone6_v22": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v22"
+        },
+        "zone6_v23": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v23"
+        },
+        "zone6_v24": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v24"
+        },
+        "zone6_v25": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v25"
+        },
+        "zone6_v26": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v26"
+        },
+        "zone6_v27": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v27"
+        },
+        "zone6_v28": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v28"
+        },
+        "zone6_v29": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v29"
+        },
+        "zone6_v3": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v3"
+        },
+        "zone6_v30": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v30"
+        },
+        "zone6_v31": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v31"
+        },
+        "zone6_v4": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v4"
+        },
+        "zone6_v5": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v5"
+        },
+        "zone6_v6": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v6"
+        },
+        "zone6_v7": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v7"
+        },
+        "zone6_v8": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v8"
+        },
+        "zone6_v9": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone6_v9"
+        },
+        "zone7_alpha": {
+          "default": 1,
+          "max": 1,
+          "min": 0,
+          "type": "float",
+          "uniform": "zone7_alpha"
+        },
+        "zone7_bounds": {
+          "default": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "type": "vec4",
+          "uniform": "zone7_bounds"
+        },
+        "zone7_count": {
+          "default": 0,
+          "max": 64,
+          "min": 0,
+          "type": "int",
+          "uniform": "zone7_count"
+        },
         "zone7_tex": {
           "colorModeUniform": "zone7_active",
           "default": "none",
           "type": "surface"
+        },
+        "zone7_v0": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v0"
+        },
+        "zone7_v1": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v1"
+        },
+        "zone7_v10": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v10"
+        },
+        "zone7_v11": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v11"
+        },
+        "zone7_v12": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v12"
+        },
+        "zone7_v13": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v13"
+        },
+        "zone7_v14": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v14"
+        },
+        "zone7_v15": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v15"
+        },
+        "zone7_v16": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v16"
+        },
+        "zone7_v17": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v17"
+        },
+        "zone7_v18": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v18"
+        },
+        "zone7_v19": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v19"
+        },
+        "zone7_v2": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v2"
+        },
+        "zone7_v20": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v20"
+        },
+        "zone7_v21": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v21"
+        },
+        "zone7_v22": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v22"
+        },
+        "zone7_v23": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v23"
+        },
+        "zone7_v24": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v24"
+        },
+        "zone7_v25": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v25"
+        },
+        "zone7_v26": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v26"
+        },
+        "zone7_v27": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v27"
+        },
+        "zone7_v28": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v28"
+        },
+        "zone7_v29": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v29"
+        },
+        "zone7_v3": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v3"
+        },
+        "zone7_v30": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v30"
+        },
+        "zone7_v31": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v31"
+        },
+        "zone7_v4": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v4"
+        },
+        "zone7_v5": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v5"
+        },
+        "zone7_v6": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v6"
+        },
+        "zone7_v7": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v7"
+        },
+        "zone7_v8": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v8"
+        },
+        "zone7_v9": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "type": "vec4",
+          "uniform": "zone7_v9"
         },
         "zoneCount": {
           "default": 0,

@@ -213,6 +213,26 @@ fn conditions_repeats_and_resource_dimensions_are_deterministic() {
 }
 
 #[test]
+fn pass_conditions_compare_numeric_float_and_integer_uniforms_like_cpu() {
+    let uniforms = BTreeMap::from([
+        ("aperture".into(), Value::Float(0.0)),
+        ("enabled".into(), Value::Bool(true)),
+    ]);
+    assert!(!pass_enabled(
+        &json!({"skipIf": [{"uniform": "aperture", "equals": 0}]}),
+        &uniforms
+    ));
+    assert!(pass_enabled(
+        &json!({"runIf": [{"uniform": "enabled", "equals": 1}]}),
+        &uniforms
+    ));
+    assert!(!pass_enabled(
+        &json!({"runIf": [{"uniform": "aperture", "equals": 1}]}),
+        &uniforms
+    ));
+}
+
+#[test]
 fn reserved_canonical_uniforms_survive_aliases_through_pass_execution() {
     let program = output_program(
         &["fragColor"],
@@ -245,6 +265,89 @@ fn reserved_canonical_uniforms_survive_aliases_through_pass_execution() {
     )
     .unwrap();
     assert_eq!(resources["out"].data(), &[0.25; 4]);
+}
+
+#[test]
+fn pass_uniform_aliases_bind_literal_merge_lengths_and_draw_layers() {
+    let canonical = canonical_uniforms(1, 1, 0.0, 3, 0, 0.0, &BTreeMap::new());
+    let sources = BTreeMap::from([("viewMode".into(), Value::Int(1))]);
+    let aliases = BTreeMap::from([
+        ("runLength".into(), json!(4)),
+        ("blurLayer".into(), json!(1)),
+        ("clearValue".into(), json!(0.5)),
+        ("VIEW_MODE".into(), json!("viewMode")),
+    ]);
+    let bound = apply_pass_uniform_aliases(&canonical, &sources, &aliases);
+    assert_eq!(bound.get("runLength"), Some(&Value::Int(4)));
+    assert_eq!(bound.get("blurLayer"), Some(&Value::Int(1)));
+    assert_eq!(bound.get("clearValue"), Some(&Value::Float(0.5)));
+    assert_eq!(bound.get("VIEW_MODE"), Some(&Value::Int(1)));
+}
+
+#[test]
+fn billboard_depth_merge_adapter_matches_shader_on_ties_and_partial_runs() {
+    let effect = &effect_catalog().unwrap().effects["render/pointsBillboardRender"];
+    let pass = effect
+        .passes
+        .iter()
+        .find(|pass| pass.name == "depthMerge0")
+        .unwrap();
+    let ir = &shader_bundle().unwrap().programs[pass.key.as_ref().unwrap()].ir;
+    let shader_pass = RenderPass {
+        name: pass.name.clone(),
+        program: pass.program.clone(),
+        key: None,
+        inputs: pass.inputs.clone(),
+        outputs: pass.outputs.clone(),
+        execution: pass.execution.clone(),
+    };
+    // Storage is top-down; GLSL's linear particle indices start in the bottom row.
+    let keys = [
+        [1.0, 4.0, 0.0, 1.0],
+        [2.0, 5.0, 0.0, 1.0],
+        [3.0, 6.0, 0.0, 1.0],
+        [4.0, 7.0, 0.0, 1.0],
+        [-3.0, 0.0, 0.0, 1.0],
+        [-1.0, 1.0, 0.0, 1.0],
+        [-3.0, 2.0, 0.0, 1.0],
+        [0.0, 3.0, 0.0, 1.0],
+    ];
+    let source = Surface::from_f32(4, 2, keys.into_iter().flatten().collect()).unwrap();
+    for run_length in [1, 2, 4, 8, 16] {
+        let uniforms = BTreeMap::from([("runLength".into(), Value::Int(run_length))]);
+        let base = BTreeMap::from([("depthOrderA".into(), source.clone())]);
+        let mut adapted = base.clone();
+        let mut interpreted = base;
+        execute_pass(
+            ir,
+            pass,
+            &uniforms,
+            &mut adapted,
+            4,
+            2,
+            &BTreeMap::new(),
+            None,
+            false,
+        )
+        .unwrap();
+        execute_pass(
+            ir,
+            &shader_pass,
+            &uniforms,
+            &mut interpreted,
+            4,
+            2,
+            &BTreeMap::new(),
+            None,
+            false,
+        )
+        .unwrap();
+        assert_eq!(
+            adapted["depthOrderB"].data(),
+            interpreted["depthOrderB"].data(),
+            "runLength={run_length}"
+        );
+    }
 }
 
 #[test]
