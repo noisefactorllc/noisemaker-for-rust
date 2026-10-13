@@ -278,6 +278,170 @@ fn flow3d_flattens_z_limits_prefix_and_adds_opaque_alpha() {
     );
 }
 
+/// Writes one agent texel through the shader-space row convention the deposit
+/// adapters read with (`storageRow = height - 1 - shaderY`), mirroring the
+/// upstream scatter-adapter fixtures.
+fn poke_agent(surface: &mut Surface, sx: usize, sy: usize, rgba: [f32; 4]) {
+    let storage_row = surface.height() as usize - 1 - sy;
+    let offset = (storage_row * surface.width() as usize + sx) * 4;
+    surface.data_mut()[offset..offset + 4].copy_from_slice(&rgba);
+}
+
+fn pixel_at(surface: &Surface, storage_row: usize, col: usize) -> [f32; 4] {
+    let offset = (storage_row * surface.width() as usize + col) * 4;
+    let data = surface.data();
+    [
+        data[offset],
+        data[offset + 1],
+        data[offset + 2],
+        data[offset + 3],
+    ]
+}
+
+fn flow3d_deposit_pixels(
+    volume_size: i32,
+    density: f64,
+    state1: Surface,
+    state2: Surface,
+    destination: Surface,
+) -> (usize, Surface) {
+    let mut resources = BTreeMap::from([
+        ("global_flow3d_state1".into(), state1),
+        ("global_flow3d_state2".into(), state2),
+        ("global_flow3d_trail".into(), destination),
+    ]);
+    let formats = BTreeMap::from([("global_flow3d_trail".into(), TextureFormat::Rgba32f)]);
+    let uniforms = BTreeMap::from([
+        ("density".into(), Value::Float(density)),
+        ("volumeSize".into(), Value::Int(volume_size)),
+    ]);
+    let agent_width = resources["global_flow3d_state1"].width();
+    let pixels = execute_draw_pass(
+        "filter3d/flow3d:deposit",
+        draw_pass("filter3d/flow3d", "deposit"),
+        &uniforms,
+        &mut resources,
+        agent_width,
+        1,
+        &formats,
+    )
+    .unwrap();
+    let trail = resources.remove("global_flow3d_trail").unwrap();
+    (pixels, trail)
+}
+
+fn agents(width: u32, pokes: &[(usize, [f32; 4])]) -> Surface {
+    let mut surface = Surface::new(width, 1).unwrap();
+    for &(sx, rgba) in pokes {
+        poke_agent(&mut surface, sx, 0, rgba);
+    }
+    surface
+}
+
+#[test]
+fn flow3d_deposit_maps_a_3d_agent_position_into_the_flattened_volume_atlas() {
+    // Shader row 0 is deliberately off-atlas; shader row 1 is the asserted agent.
+    let mut off_atlas = Surface::new(1, 2).unwrap();
+    poke_agent(&mut off_atlas, 0, 0, [99.0, 99.0, 99.0, 1.0]);
+    poke_agent(&mut off_atlas, 0, 1, [1.25, 2.25, 2.9, 0.0]);
+    let mut state2 = Surface::new(1, 2).unwrap();
+    poke_agent(&mut state2, 0, 0, [1.0, 1.0, 1.0, 1.0]);
+    poke_agent(&mut state2, 0, 1, [0.25, 0.5, 0.75, 0.1]);
+
+    let (pixels, trail) =
+        flow3d_deposit_pixels(4, 100.0, off_atlas, state2, Surface::new(4, 16).unwrap());
+    assert_eq!(pixels, 1);
+    // atlasX=1.25 -> col 1; atlasY=2.25+floor(2.9)*4=10.25 -> GL row 10
+    // -> storage row 16-1-10=5. state1.w is intentionally ignored upstream.
+    assert_eq!(pixel_at(&trail, 5, 1), [0.25, 0.5, 0.75, 1.0]);
+    assert_eq!(pixel_at(&trail, 10, 1), [0.0, 0.0, 0.0, 0.0]);
+}
+
+#[test]
+fn flow3d_deposit_places_integer_atlas_boundaries_in_the_lower_gl_pixel() {
+    let state1 = agents(
+        2,
+        &[
+            (0, [20.0, 1.959_960_9, 5.7421875, 0.0]),
+            (1, [20.71875, 17.0, 29.671875, 0.0]),
+        ],
+    );
+    let state2 = agents(2, &[(0, [0.5, 0.0, 0.0, 1.0]), (1, [0.25, 0.0, 0.0, 1.0])]);
+
+    let (_, trail) =
+        flow3d_deposit_pixels(32, 100.0, state1, state2, Surface::new(32, 1024).unwrap());
+    assert_eq!(pixel_at(&trail, 862, 19), [0.5, 0.0, 0.0, 1.0]);
+    assert_eq!(pixel_at(&trail, 862, 20), [0.0, 0.0, 0.0, 0.0]);
+    assert_eq!(pixel_at(&trail, 79, 20), [0.25, 0.0, 0.0, 1.0]);
+    assert_eq!(pixel_at(&trail, 78, 20), [0.0, 0.0, 0.0, 0.0]);
+}
+
+#[test]
+fn flow3d_deposit_rounds_the_atlas_addition_as_glsl_float_before_raster_placement() {
+    let state1 = agents(1, &[(0, [1.25, 0.000_122_070_31, 63.0, 0.0])]);
+    let state2 = agents(1, &[(0, [0.5, 0.0, 0.0, 1.0])]);
+
+    let (_, trail) =
+        flow3d_deposit_pixels(64, 100.0, state1, state2, Surface::new(64, 4096).unwrap());
+    assert_eq!(pixel_at(&trail, 64, 1), [0.5, 0.0, 0.0, 1.0]);
+    assert_eq!(pixel_at(&trail, 63, 1), [0.0, 0.0, 0.0, 0.0]);
+}
+
+#[test]
+fn flow3d_deposit_culls_points_inside_the_m4_viewport_subpixel_edge() {
+    for (volume_size, position) in [
+        (32i32, [0.000_321_388_24_f32, 22.546875, 13.6015625, 0.0]),
+        (32, [1.0 / 512.0, 22.546875, 13.6015625, 0.0]),
+        (64, [1.25, 0.000_061_035_156, 0.0, 0.0]),
+        (64, [1.25, 1.0 / 512.0, 0.0, 0.0]),
+    ] {
+        let state1 = agents(1, &[(0, position)]);
+        let state2 = agents(1, &[(0, [0.5, 0.0, 0.0, 1.0])]);
+        let (pixels, trail) = flow3d_deposit_pixels(
+            volume_size,
+            100.0,
+            state1,
+            state2,
+            Surface::new(volume_size as u32, (volume_size * volume_size) as u32).unwrap(),
+        );
+        assert_eq!(pixels, 0);
+        assert!(trail.data().iter().all(|value| *value == 0.0));
+    }
+}
+
+#[test]
+fn flow3d_deposit_snaps_near_integer_atlas_positions_to_the_m4_subpixel_grid() {
+    let state1 = agents(
+        2,
+        &[
+            (0, [1.000_976_6, 0.25, 1.1, 0.0]),
+            (1, [2.25, 1.000_976_6, 1.1, 0.0]),
+        ],
+    );
+    let state2 = agents(2, &[(0, [0.5, 0.0, 0.0, 1.0]), (1, [0.25, 0.0, 0.0, 1.0])]);
+
+    let (_, trail) =
+        flow3d_deposit_pixels(32, 100.0, state1, state2, Surface::new(32, 1024).unwrap());
+    assert_eq!(pixel_at(&trail, 991, 0), [0.5, 0.0, 0.0, 1.0]);
+    assert_eq!(pixel_at(&trail, 991, 1), [0.0, 0.0, 0.0, 0.0]);
+    assert_eq!(pixel_at(&trail, 991, 2), [0.25, 0.0, 0.0, 1.0]);
+    assert_eq!(pixel_at(&trail, 990, 2), [0.0, 0.0, 0.0, 0.0]);
+}
+
+#[test]
+fn flow3d_deposit_additively_accumulates_colliding_agent_colors_with_opaque_alpha() {
+    let state1 = agents(
+        2,
+        &[(0, [2.25, 1.25, 1.1, 1.0]), (1, [2.25, 1.25, 1.9, 1.0])],
+    );
+    let state2 = agents(2, &[(0, [1.0, 0.25, 0.0, 0.0]), (1, [0.0, 0.5, 1.0, 0.0])]);
+
+    let (pixels, trail) =
+        flow3d_deposit_pixels(4, 100.0, state1, state2, Surface::new(4, 16).unwrap());
+    assert_eq!(pixels, 2);
+    assert_eq!(pixel_at(&trail, 10, 2), [1.0, 0.75, 1.0, 2.0]);
+}
+
 #[test]
 fn billboard_hash_shapes_sprite_rotation_and_both_blends_are_exact() {
     assert!((billboard_hash(0.0, 42.0) - 0.07695067745562426).abs() < 1e-15);

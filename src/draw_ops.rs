@@ -512,16 +512,30 @@ fn flow3d(
         let position = texel_fetch_agent(state1, sx, sy);
         let color = texel_fetch_agent(state2, sx, sy);
         let atlas_x = position[0];
-        let atlas_y = position[1] + position[2].floor() * volume_size as f32;
-        let Some(offset) = scatter_point_pixel(
-            atlas_x / volume_size as f32 * 2.0 - 1.0,
-            atlas_y / atlas_height as f32 * 2.0 - 1.0,
-            1.0,
-            destination.width(),
-            destination.height(),
-        ) else {
+        let atlas_y = (f64::from(position[1])
+            + f64::from(position[2].floor()) * f64::from(volume_size)) as f32;
+        // The M4/Metal point rasterizer snaps window positions to 1/256 pixel
+        // and assigns an integer boundary to the lower GL pixel. A center within
+        // half a subpixel step at the left or bottom edge produces no fragment.
+        if atlas_x <= 1.0 / 512.0 || atlas_y <= 1.0 / 512.0 {
             continue;
-        };
+        }
+        let gl_col = ((f64::from(atlas_x) * 256.0).round() / 256.0).ceil() - 1.0;
+        let gl_row = ((f64::from(atlas_y) * 256.0).round() / 256.0).ceil() - 1.0;
+        if !gl_col.is_finite() || !gl_row.is_finite() {
+            continue;
+        }
+        let gl_col = gl_col as i64;
+        let gl_row = gl_row as i64;
+        if gl_col < 0
+            || gl_row < 0
+            || gl_col >= i64::from(volume_size)
+            || gl_row >= i64::from(atlas_height)
+        {
+            continue;
+        }
+        let offset =
+            ((i64::from(atlas_height) - 1 - gl_row) * i64::from(volume_size) + gl_col) as usize * 4;
         let data = destination.data_mut();
         for channel in 0..3 {
             data[offset + channel] += color[channel];

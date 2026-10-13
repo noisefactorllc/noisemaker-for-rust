@@ -516,7 +516,7 @@ fn direct_parameter_api_accepts_decimal_schema_endpoints_at_f32_precision() {
 }
 
 #[test]
-fn numbered_test_pattern_preserves_cpu_fractional_digit_extraction() {
+fn numbered_test_pattern_truncates_the_digit_division_like_the_cpu_oracle() {
     let output = render_effect(
         "synth/testPattern",
         &BTreeMap::new(),
@@ -529,11 +529,12 @@ fn numbered_test_pattern_preserves_cpu_fractional_digit_extraction() {
     )
     .unwrap();
     let pixels = output.to_rgba8();
-    // The CPU factory leaves `temp /= 10` as a Number division. For cells
-    // 11..15 the tens digit is fractional, and its glyph lookup is undefined
-    // (zero bits), while cell 10 still draws its integral tens digit.
+    // The CPU compiler rewrites the digit accumulator's `temp /= 10` into
+    // `temp = Math.trunc(temp / 10)`, so every tens digit stays integral and
+    // each cell's glyph lookup succeeds. Cells 11..15 now draw their real
+    // glyphs instead of the undefined-lookup zero bits.
     for y in 53..59 {
-        for (x, expected) in [(6, 255), (22, 0), (38, 255), (54, 0)] {
+        for (x, expected) in [(6, 0), (22, 255), (38, 0), (54, 255)] {
             let index = (y * 64 + x) * 4;
             assert_eq!(
                 &pixels[index..index + 4],
@@ -543,6 +544,6 @@ fn numbered_test_pattern_preserves_cpu_fractional_digit_extraction() {
     }
     for y in 37..43 {
         let index = (y * 64 + 54) * 4;
-        assert_eq!(&pixels[index..index + 4], &[255, 255, 255, 255]);
+        assert_eq!(&pixels[index..index + 4], &[0, 0, 0, 255]);
     }
 }

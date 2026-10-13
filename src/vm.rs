@@ -81,6 +81,7 @@ pub struct ShaderVm {
     javascript_sine_hash_random_functions: BTreeSet<String>,
     javascript_atlas_z_program: bool,
     javascript_untruncated_int_division: bool,
+    javascript_testpattern_digit_truncation: bool,
     scopes: Vec<BTreeMap<String, Binding>>,
     root_frame: usize,
     statement_count: u64,
@@ -139,6 +140,14 @@ impl ShaderVm {
             });
         let javascript_untruncated_int_division =
             javascript_ticker_program || javascript_numbered_checkerboard;
+        // Upstream's integer-division restore rewrites exactly one statement in
+        // the numbered-checkerboard factory: the digit accumulator's in-place
+        // `temp /= 10` becomes `temp = Math.trunc(temp / 10)`, keyed on the
+        // factory's `int temp = number;` source text. Every other division in
+        // the program keeps the untruncated lowering above. Detect the same
+        // statement pair in the IR so the rewrite stays source-anchored.
+        let javascript_testpattern_digit_truncation =
+            program_has_testpattern_digit_division(program);
         let javascript_lcg_hash_compatibility =
             program.functions.iter().any(is_javascript_lcg_hash_uint);
         let mut runtime = runtime;
@@ -158,6 +167,7 @@ impl ShaderVm {
             javascript_sine_hash_random_functions,
             javascript_atlas_z_program,
             javascript_untruncated_int_division,
+            javascript_testpattern_digit_truncation,
             scopes: Vec::new(),
             root_frame: 0,
             statement_count: 0,
@@ -826,8 +836,30 @@ impl ShaderVm {
                 }
                 let target = self.lvalue(lvalue)?;
                 let right = self.eval(value)?;
+                // The testPattern digit accumulator's in-place `/=` is the one
+                // statement upstream's restore replaces with Math.trunc in the
+                // otherwise untruncated numbered-checkerboard factory.
+                let testpattern_digit_division = self.javascript_testpattern_digit_truncation
+                    && operator == "/="
+                    && matches!(
+                        lvalue.as_ref(),
+                        Expression::Identifier { name, .. } if name == "temp"
+                    )
+                    && matches!(
+                        value.as_ref(),
+                        Expression::Literal {
+                            value: serde_json::Value::Number(constant),
+                            ..
+                        } if constant.as_i64() == Some(10)
+                    );
                 let result = if operator == "=" {
                     right
+                } else if testpattern_digit_division {
+                    let left = self.read_lvalue(&target)?;
+                    match (number_lane(&left, 0), number_lane(&right, 0)) {
+                        (Some(a), Some(b)) => Value::Float((a / b).trunc()),
+                        _ => self.runtime.binary("/", &left, &right)?,
+                    }
                 } else {
                     let left = self.read_lvalue(&target)?;
                     if operator == "/=" && self.javascript_untruncated_int_division {
@@ -1258,6 +1290,108 @@ impl ShaderVm {
             });
         }
         write_path(&mut binding.value, &lvalue.path, value)
+    }
+}
+
+/// Mirrors the CPU compiler's `synth/testPattern` integer-division restore: it
+/// requires the shader source to declare `int temp = number;` and to contain
+/// the in-place `temp /= 10;` digit step, then truncates exactly that
+/// statement in the emitted factory. Detect the same pair in the IR so the
+/// rewrite stays source-anchored instead of keyed on an effect id.
+fn program_has_testpattern_digit_division(program: &ProgramIr) -> bool {
+    let mut has_declaration = false;
+    let mut has_division = false;
+    for function in &program.functions {
+        scan_testpattern_digit_division(&function.body, &mut has_declaration, &mut has_division);
+    }
+    has_declaration && has_division
+}
+
+fn testpattern_digit_division_statement(expression: &Expression) -> bool {
+    matches!(
+        expression,
+        Expression::Assignment { operator, lvalue, value, .. }
+            if operator == "/="
+                && matches!(lvalue.as_ref(), Expression::Identifier { name, .. } if name == "temp")
+                && matches!(
+                    value.as_ref(),
+                    Expression::Literal {
+                        value: serde_json::Value::Number(constant),
+                        ..
+                    } if constant.as_i64() == Some(10)
+                )
+    )
+}
+
+fn scan_testpattern_digit_division(
+    statements: &[Statement],
+    has_declaration: &mut bool,
+    has_division: &mut bool,
+) {
+    for statement in statements {
+        match statement {
+            Statement::Declaration { declarations } => {
+                for declaration in declarations {
+                    if declaration.name == "temp"
+                        && declaration.value_type.0 == "int"
+                        && matches!(
+                            declaration.initializer.as_ref(),
+                            Some(Expression::Identifier { name, .. }) if name == "number"
+                        )
+                    {
+                        *has_declaration = true;
+                    }
+                }
+            }
+            Statement::Expression { expression } => {
+                if testpattern_digit_division_statement(expression) {
+                    *has_division = true;
+                }
+            }
+            Statement::Block { body } => {
+                scan_testpattern_digit_division(body, has_declaration, has_division);
+            }
+            Statement::If {
+                then, otherwise, ..
+            } => {
+                scan_testpattern_digit_division(
+                    std::slice::from_ref(then),
+                    has_declaration,
+                    has_division,
+                );
+                if let Some(otherwise) = otherwise {
+                    scan_testpattern_digit_division(
+                        std::slice::from_ref(otherwise),
+                        has_declaration,
+                        has_division,
+                    );
+                }
+            }
+            Statement::For {
+                initializer, body, ..
+            } => {
+                if let Some(initializer) = initializer {
+                    scan_testpattern_digit_division(
+                        std::slice::from_ref(initializer),
+                        has_declaration,
+                        has_division,
+                    );
+                }
+                scan_testpattern_digit_division(
+                    std::slice::from_ref(body),
+                    has_declaration,
+                    has_division,
+                );
+            }
+            Statement::While { body, .. } | Statement::DoWhile { body, .. } => {
+                scan_testpattern_digit_division(
+                    std::slice::from_ref(body),
+                    has_declaration,
+                    has_division,
+                );
+            }
+            _ => {}
+        }
     }
 }
 
@@ -2193,6 +2327,15 @@ fn number_lane(value: &Value, lane: usize) -> Option<f64> {
 mod tests {
     use super::*;
     use crate::catalog::{Type, shader_bundle};
+
+    #[test]
+    fn testpattern_digit_division_fingerprint_matches_only_the_checkerboard_program() {
+        let bundle = shader_bundle().unwrap();
+        let checkerboard = &bundle.programs["synth/testPattern:testPattern"].ir;
+        assert!(program_has_testpattern_digit_division(checkerboard));
+        let other = &bundle.programs["filter/grain:grain"].ir;
+        assert!(!program_has_testpattern_digit_division(other));
+    }
 
     #[test]
     fn grain_hash_normalization_keeps_uint32_number_precision() {
