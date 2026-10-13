@@ -120,7 +120,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: noisefactorllc/noisemaker-for-cpu
-          ref: a99ab34e57308a23a5cce5af005128db2dc0545d
+          ref: 0788a6014a41e15d086d5446b4ced786184eb292
           path: oracle
           persist-credentials: false
 
@@ -167,7 +167,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: noisefactorllc/noisemaker-for-cpu
-          ref: a99ab34e57308a23a5cce5af005128db2dc0545d
+          ref: 0788a6014a41e15d086d5446b4ced786184eb292
           path: oracle
           persist-credentials: false
 
