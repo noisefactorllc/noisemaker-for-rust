@@ -366,6 +366,9 @@ pub fn execute_pass(
         vm.set_javascript_pattern_smoothstep_compatibility(
             render_pass.key.as_deref() == Some("synth/pattern:pattern"),
         );
+        vm.set_javascript_testpattern_digit_truncation(
+            render_pass.key.as_deref() == Some("synth/testPattern:testPattern"),
+        );
         let mut outputs = ShaderOutputs::new();
         for storage_y in 0..pass_height {
             let shader_y = pass_height - storage_y;

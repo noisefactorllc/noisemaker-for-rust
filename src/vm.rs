@@ -127,9 +127,12 @@ impl ShaderVm {
             .functions
             .iter()
             .any(|function| function.name == "ticker_row_mask");
-        // The numbered-checkerboard factory likewise leaves `temp /= 10`
-        // untruncated. Fractional digit indices read undefined glyph entries,
-        // which the subsequent bitwise expression converts to zero.
+        // The numbered-checkerboard factory likewise leaves every int division
+        // untruncated, except the one statement the pass runner truncates for
+        // synth/testPattern (the digit accumulator's `temp /= 10`, see the
+        // testPattern digit truncation flag). Fractional digit indices read
+        // undefined glyph entries, which the subsequent bitwise expression
+        // converts to zero.
         let javascript_numbered_checkerboard = ["renderNumber", "sampleGlyph", "checkerboard"]
             .iter()
             .all(|name| {
@@ -140,14 +143,6 @@ impl ShaderVm {
             });
         let javascript_untruncated_int_division =
             javascript_ticker_program || javascript_numbered_checkerboard;
-        // Upstream's integer-division restore rewrites exactly one statement in
-        // the numbered-checkerboard factory: the digit accumulator's in-place
-        // `temp /= 10` becomes `temp = Math.trunc(temp / 10)`, keyed on the
-        // factory's `int temp = number;` source text. Every other division in
-        // the program keeps the untruncated lowering above. Detect the same
-        // statement pair in the IR so the rewrite stays source-anchored.
-        let javascript_testpattern_digit_truncation =
-            program_has_testpattern_digit_division(program);
         let javascript_lcg_hash_compatibility =
             program.functions.iter().any(is_javascript_lcg_hash_uint);
         let mut runtime = runtime;
@@ -167,7 +162,7 @@ impl ShaderVm {
             javascript_sine_hash_random_functions,
             javascript_atlas_z_program,
             javascript_untruncated_int_division,
-            javascript_testpattern_digit_truncation,
+            javascript_testpattern_digit_truncation: false,
             scopes: Vec::new(),
             root_frame: 0,
             statement_count: 0,
@@ -196,6 +191,16 @@ impl ShaderVm {
 
     pub(crate) fn set_javascript_pattern_smoothstep_compatibility(&mut self, enabled: bool) {
         self.javascript_pattern_smoothstep_compatibility = enabled;
+    }
+
+    /// Upstream's integer-division restore rewrites exactly one statement in
+    /// the numbered-checkerboard factory: the digit accumulator's in-place
+    /// `temp /= 10` becomes `temp = Math.trunc(temp / 10)`, keyed on the
+    /// `synth/testPattern` effect id and the factory's `int temp = number;`
+    /// source text. The pass runner enables this only for that pass key; the
+    /// evaluation-time statement check below mirrors the source anchoring.
+    pub(crate) fn set_javascript_testpattern_digit_truncation(&mut self, enabled: bool) {
+        self.javascript_testpattern_digit_truncation = enabled;
     }
 
     pub fn run_pixel(
@@ -1293,108 +1298,6 @@ impl ShaderVm {
     }
 }
 
-/// Mirrors the CPU compiler's `synth/testPattern` integer-division restore: it
-/// requires the shader source to declare `int temp = number;` and to contain
-/// the in-place `temp /= 10;` digit step, then truncates exactly that
-/// statement in the emitted factory. Detect the same pair in the IR so the
-/// rewrite stays source-anchored instead of keyed on an effect id.
-fn program_has_testpattern_digit_division(program: &ProgramIr) -> bool {
-    let mut has_declaration = false;
-    let mut has_division = false;
-    for function in &program.functions {
-        scan_testpattern_digit_division(&function.body, &mut has_declaration, &mut has_division);
-    }
-    has_declaration && has_division
-}
-
-fn testpattern_digit_division_statement(expression: &Expression) -> bool {
-    matches!(
-        expression,
-        Expression::Assignment { operator, lvalue, value, .. }
-            if operator == "/="
-                && matches!(lvalue.as_ref(), Expression::Identifier { name, .. } if name == "temp")
-                && matches!(
-                    value.as_ref(),
-                    Expression::Literal {
-                        value: serde_json::Value::Number(constant),
-                        ..
-                    } if constant.as_i64() == Some(10)
-                )
-    )
-}
-
-fn scan_testpattern_digit_division(
-    statements: &[Statement],
-    has_declaration: &mut bool,
-    has_division: &mut bool,
-) {
-    for statement in statements {
-        match statement {
-            Statement::Declaration { declarations } => {
-                for declaration in declarations {
-                    if declaration.name == "temp"
-                        && declaration.value_type.0 == "int"
-                        && matches!(
-                            declaration.initializer.as_ref(),
-                            Some(Expression::Identifier { name, .. }) if name == "number"
-                        )
-                    {
-                        *has_declaration = true;
-                    }
-                }
-            }
-            Statement::Expression { expression } => {
-                if testpattern_digit_division_statement(expression) {
-                    *has_division = true;
-                }
-            }
-            Statement::Block { body } => {
-                scan_testpattern_digit_division(body, has_declaration, has_division);
-            }
-            Statement::If {
-                then, otherwise, ..
-            } => {
-                scan_testpattern_digit_division(
-                    std::slice::from_ref(then),
-                    has_declaration,
-                    has_division,
-                );
-                if let Some(otherwise) = otherwise {
-                    scan_testpattern_digit_division(
-                        std::slice::from_ref(otherwise),
-                        has_declaration,
-                        has_division,
-                    );
-                }
-            }
-            Statement::For {
-                initializer, body, ..
-            } => {
-                if let Some(initializer) = initializer {
-                    scan_testpattern_digit_division(
-                        std::slice::from_ref(initializer),
-                        has_declaration,
-                        has_division,
-                    );
-                }
-                scan_testpattern_digit_division(
-                    std::slice::from_ref(body),
-                    has_declaration,
-                    has_division,
-                );
-            }
-            Statement::While { body, .. } | Statement::DoWhile { body, .. } => {
-                scan_testpattern_digit_division(
-                    std::slice::from_ref(body),
-                    has_declaration,
-                    has_division,
-                );
-            }
-            _ => {}
-        }
-    }
-}
-
 fn is_javascript_atlas_program(program: &ProgramIr) -> bool {
     let has_atlas_declaration = program.functions.iter().any(|function| {
         function.name == "main"
@@ -2329,12 +2232,13 @@ mod tests {
     use crate::catalog::{Type, shader_bundle};
 
     #[test]
-    fn testpattern_digit_division_fingerprint_matches_only_the_checkerboard_program() {
-        let bundle = shader_bundle().unwrap();
-        let checkerboard = &bundle.programs["synth/testPattern:testPattern"].ir;
-        assert!(program_has_testpattern_digit_division(checkerboard));
-        let other = &bundle.programs["filter/grain:grain"].ir;
-        assert!(!program_has_testpattern_digit_division(other));
+    fn testpattern_digit_division_truncates_only_for_the_enabled_flag() {
+        let program = &shader_bundle().unwrap().programs["synth/testPattern:testPattern"].ir;
+        let disabled = ShaderVm::new(program, Runtime::new()).unwrap();
+        assert!(!disabled.javascript_testpattern_digit_truncation);
+        let mut enabled = ShaderVm::new(program, Runtime::new()).unwrap();
+        enabled.set_javascript_testpattern_digit_truncation(true);
+        assert!(enabled.javascript_testpattern_digit_truncation);
     }
 
     #[test]
