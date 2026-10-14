@@ -199,12 +199,6 @@ pub enum RenderError {
         destinations: Vec<(String, u32, u32)>,
         detail: String,
     },
-    #[error("effect {effect_id:?} produced non-finite output {value} at channel {channel}")]
-    NonFiniteOutput {
-        effect_id: String,
-        channel: usize,
-        value: f32,
-    },
     #[error("invalid render graph: {message}")]
     InvalidGraph { message: String },
     #[error(transparent)]
@@ -790,24 +784,12 @@ fn execute_effect_bundle_with_state(
             output: "outputTex".into(),
         });
     }
-    for output in [image.as_ref(), volume.as_ref(), geometry.as_ref()]
-        .into_iter()
-        .flatten()
-    {
-        if let Some((index, value)) = output
-            .data()
-            .iter()
-            .copied()
-            .enumerate()
-            .find(|(_, value)| !value.is_finite())
-        {
-            return Err(RenderError::NonFiniteOutput {
-                effect_id: effect_id.into(),
-                channel: index,
-                value,
-            });
-        }
-    }
+    // The oracle's float surfaces may carry non-finite pixels (the canonical
+    // zero-sum convolution kernels divide by a zero kernel weight). The CPU
+    // renderer keeps those floats and maps them to 0 only at RGBA8 encode
+    // (Surface byteFromFloat), so mirror that contract instead of rejecting
+    // the surface: any downstream pass consumes the same NaN floats the
+    // oracle's next pass would see.
     *persistent = resources;
     Ok(ChainBundle {
         image,
