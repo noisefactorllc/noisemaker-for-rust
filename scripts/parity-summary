@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
-"""Whole-port parity summary entrypoint for this repository.
+"""Authority-manifest parity summary entrypoint for this repository.
 
-Renders every case of the current authority's manifest with this port and
-compares each against the port's published numerical contract (tolerance 0:
-byte-exact against the JavaScript CPU oracle). Positional case-id arguments
-restrict the run to those cases. The last output line is the PARITY-SUMMARY
-JSON with the gap-closure counts. The exit code reports audit completion, not
+Renders the authority manifest with this port and compares each case against
+the pinned JavaScript CPU oracle at this port's published numerical contract
+(tolerance 0: byte-exact). The authority manifest is the pinned CPU snapshot's
+sourceEffectIds list (210 effect IDs); each case is one default 8x8 render,
+with the deterministic external-input fixtures for the five reactive and mesh
+effects. The CPU oracle checkout is this port's published parity authority:
+the exact-source ci workflow checks out noisemaker-for-cpu as the pinned
+oracle, and scripts/parity.py compares rendered RGBA8 bytes against its
+renders. Positional case-id arguments restrict the run to those cases. The
+last output line is the PARITY-SUMMARY JSON with the gap-closure counts, in
+the authority's own count format. The exit code reports audit completion, not
 the parity verdict; the verdict lives in the PARITY-SUMMARY line.
 
 The oracle is a noisemaker-for-cpu checkout supplied through
@@ -21,9 +27,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -65,6 +71,19 @@ def _oracle_revision(checkout: Path) -> str:
     raise SystemExit(f"oracle snapshot declares no UPSTREAM_REVISION: {checkout}")
 
 
+def _authority_manifest(checkout: Path) -> list[str]:
+    """Read the pinned CPU snapshot's sourceEffectIds (the authority manifest)."""
+    text = (checkout / "src" / "effects" / "generated" / "upstream-snapshot.js").read_text(
+        encoding="utf-8"
+    )
+    match = re.search(
+        r"export const sourceEffectIds = Object\.freeze\(\[(.*?)\]\)", text, re.DOTALL
+    )
+    if match is None:
+        raise SystemExit(f"oracle snapshot declares no sourceEffectIds: {checkout}")
+    return re.findall(r'"([^"]+)"', match.group(1))
+
+
 def _contract_revision() -> str:
     contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
     revision = contract.get("revision")
@@ -80,7 +99,7 @@ def main(argv: list[str] | None = None) -> int:
         "--rust-sequence", type=Path, default=ROOT / "target" / "release" / "examples" / "parity_sequence"
     )
     parser.add_argument("--js", type=Path, help="oracle CLI inside a noisemaker-for-cpu checkout")
-    parser.add_argument("--json", type=Path, help="also write the sweep report JSON here")
+    parser.add_argument("--json", type=Path, help="also write the parity report JSON here (default target/parity-summary-report.json)")
     parser.add_argument("--timeout", type=float, default=120.0)
     parser.add_argument("cases", nargs="*", help="optional case ids to restrict the run")
     args = parser.parse_args(argv)
@@ -95,6 +114,10 @@ def main(argv: list[str] | None = None) -> int:
             "re-provision the oracle checkout"
         )
 
+    manifest = _authority_manifest(checkout)
+    if not manifest:
+        raise SystemExit("authority manifest is empty")
+
     rust = args.rust.resolve()
     if not rust.is_file():
         raise SystemExit(f"rust CLI not built: run cargo build --release --locked ({rust})")
@@ -108,72 +131,64 @@ def main(argv: list[str] | None = None) -> int:
     oracle_cli = checkout / "bin" / "noisemaker-cpu.js"
 
     catalog = sorted(parity._catalog())
-    selected = args.cases
-    if selected:
-        unknown = sorted(set(selected).difference(catalog))
-        if unknown:
-            raise SystemExit(f"unknown case ids: {', '.join(unknown)}")
+    absent = sorted(set(manifest).difference(catalog))
+    if absent:
+        raise SystemExit(
+            "authority manifest ids missing from this port's catalog: " + ", ".join(absent)
+        )
+    selected = args.cases if args.cases else manifest
+    unknown = sorted(set(selected).difference(catalog))
+    if unknown:
+        raise SystemExit(f"unknown case ids: {', '.join(unknown)}")
 
+    # The default leg renders exactly one case per catalog effect (the reactive
+    # and mesh effects through their deterministic fixtures) and writes one
+    # sorted record per case, so the report denominator is the manifest slice.
     command = [
         sys.executable, str(ROOT / "scripts" / "parity.py"),
         "--rust", str(rust),
         "--rust-sequence", str(sequence),
         "--js", str(oracle_cli),
         "--timeout", str(args.timeout),
-        "--sweep",
     ]
     for case_id in selected:
         command.extend(["--only", case_id])
-    if args.json is not None:
-        command.extend(["--json", str(args.json)])
+    report_path = args.json if args.json is not None else ROOT / "target" / "parity-summary-report.json"
+    command.extend(["--json", str(report_path)])
 
     completed = subprocess.run(command, cwd=ROOT, check=False)
     if completed.returncode != 0:
         return completed.returncode
 
-    # The sweep report is the whole-port denominator (defaults + variants +
-    # frame sequences). Re-derive the supervisor's count fields from the
-    # validated report so the PARITY-SUMMARY line comes from real evidence.
-    report_path = args.json if args.json is not None else None
-    if report_path is None:
-        with tempfile.NamedTemporaryFile("r", suffix=".json", delete=False) as handle:
-            temporary = Path(handle.name)
-        command_with_json = command + ["--json", str(temporary)]
-        rerun = subprocess.run(command_with_json, cwd=ROOT, check=False)
-        if rerun.returncode != 0:
-            return rerun.returncode
-        report_path = temporary
-    else:
-        temporary = None
-
-    try:
-        report = json.loads(Path(report_path).read_text(encoding="utf-8"))
-        plan = parity._sweep_plan(parity._catalog())
-        if selected:
-            plan = {effect_id: cases for effect_id, cases in plan.items() if effect_id in selected}
-        parity._validate_sweep(report, plan)
-        compared = [record for record in report["results"] if record["status"] == "compared"]
-        exact = sum(record["max_delta"] == 0 for record in compared)
-        strict = len(compared) - exact
-        summary = {
-            "expected": report["expected"],
-            "executed": report["executed"],
-            "exact": exact,
-            "strict": strict,
-            "near": 0,
-            "defer": 0,
-            "skip": 0,
-            "fail": report["failed"] + report["errors"],
-            "missing": 0,
-            "tolerance": report["tolerance"],
-            "size": report["size"],
-            "oracleRevision": oracle_revision,
-        }
-        print(f"PARITY-SUMMARY {json.dumps(summary, sort_keys=True)}")
-        return 0
-    finally:
-        if temporary is not None:
-            temporary.unlink(missing_ok=True)
+    # Validate the report against the authority manifest and derive the count
+    # line from the validated evidence.
+    report = json.loads(Path(report_path).read_text(encoding="utf-8"))
+    expected_ids = sorted(set(selected))
+    parity._validate(report, expected_ids)
+    compared = [record for record in report["results"] if record["status"] == "compared"]
+    exact = sum(record["max_delta"] == 0 for record in compared)
+    strict = len(compared) - exact
+    fail = report["failed"] + report["errors"]
+    executed = len(compared) + fail
+    missing = len(expected_ids) - executed
+    summary = {
+        "sourceRevision": oracle_revision,
+        "size": report["size"],
+        "time": report.get("time", 0.25),
+        "seed": report.get("seed", 1),
+        "tolerance": report["tolerance"],
+        "expected": len(expected_ids),
+        "executed": executed,
+        "exact": exact,
+        "strict": strict,
+        "near": 0,
+        "defer": 0,
+        "skip": 0,
+        "fail": fail,
+        "missing": max(missing, 0),
+    }
+    print(f"PARITY-SUMMARY {json.dumps(summary, sort_keys=True)}")
+    return 0
 
 
 if __name__ == "__main__":

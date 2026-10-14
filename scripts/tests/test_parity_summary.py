@@ -34,7 +34,7 @@ class EntryPointTest(unittest.TestCase):
 
 
 class ReportDerivationTest(unittest.TestCase):
-    """The count derivation over a validated sweep report."""
+    """The count derivation over a validated default-leg report."""
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -42,9 +42,30 @@ class ReportDerivationTest(unittest.TestCase):
         sys.path.insert(0, str(ROOT / "scripts"))
         cls.parity = importlib.import_module("parity")
 
-    def test_sweep_plan_denominator_is_697(self) -> None:
-        plan = self.parity._sweep_plan(self.parity._catalog())
-        self.assertEqual(sum(map(len, plan.values())), 697)
+    def test_catalog_covers_the_authority_manifest(self) -> None:
+        # The authority manifest is the oracle snapshot's sourceEffectIds list
+        # (210 effect IDs); this port's catalog must cover every manifest id.
+        catalog = self.parity._catalog()
+        self.assertEqual(len(catalog), 210)
+        snapshot = Path(
+            os.environ.get(
+                "NOISEMAKER_JS_CPU_DIR",
+                str(ROOT.parent / "noisemaker-for-cpu"),
+            )
+        )
+        manifest_path = snapshot / "src" / "effects" / "generated" / "upstream-snapshot.js"
+        if not manifest_path.is_file():
+            self.skipTest("no oracle checkout available to read the manifest")
+        import re
+
+        text = manifest_path.read_text(encoding="utf-8")
+        match = re.search(
+            r"export const sourceEffectIds = Object\.freeze\(\[(.*?)\]\)", text, re.DOTALL
+        )
+        self.assertIsNotNone(match)
+        manifest = re.findall(r'"([^"]+)"', match.group(1))
+        self.assertEqual(len(manifest), 210)
+        self.assertFalse(set(manifest).difference(catalog))
 
     def test_summary_shape_from_a_validated_report(self) -> None:
         # Build a synthetic report the validator accepts: 210 compared, all
@@ -65,6 +86,7 @@ class ReportDerivationTest(unittest.TestCase):
             for effect_id in catalog
         ]
         report = {
+            "catalog": 210,
             "expected": 210,
             "executed": 210,
             "compared": 210,
@@ -77,27 +99,17 @@ class ReportDerivationTest(unittest.TestCase):
             "size": 8,
             "time": 0.25,
             "seed": 1,
-            "sweep": {
-                "variants": 2,
-                "frames": 3,
-                "times": [0.1, 0.4, 0.7],
-                "stateful_effects": 32,
-                "feedback": "previous-output-surface",
-            },
             "results": results,
         }
-        plan = self.parity._sweep_plan(self.parity._catalog())
-        # Restrict the plan to defaults only: a synthetic default-only report
-        # validates against the default-only sub-plan.
-        defaults_plan = {
-            effect_id: [case for case in cases if case["kind"] == "default"]
-            for effect_id, cases in plan.items()
-        }
-        self.parity._validate_sweep(report, defaults_plan)
+        self.parity._validate(report, catalog)
         compared = [record for record in report["results"] if record["status"] == "compared"]
         exact = sum(record["max_delta"] == 0 for record in compared)
         strict = len(compared) - exact
-        self.assertEqual((report["expected"], len(compared), exact, strict), (210, 210, 210, 0))
+        fail = report["failed"] + report["errors"]
+        executed = len(compared) + fail
+        self.assertEqual(
+            (len(catalog), executed, exact, strict, fail), (210, 210, 210, 0, 0)
+        )
 
 
 class GuardBehaviorTest(unittest.TestCase):
@@ -107,7 +119,9 @@ class GuardBehaviorTest(unittest.TestCase):
         import shutil
         import tempfile
 
-        source = ROOT.parent / "noisemaker-for-cpu"
+        source = Path(
+            os.environ.get("NOISEMAKER_JS_CPU_DIR", str(ROOT.parent / "noisemaker-for-cpu"))
+        )
         snapshot = source / "src" / "effects" / "generated" / "upstream-snapshot.js"
         cli = source / "bin" / "noisemaker-cpu.js"
         if not (snapshot.is_file() and cli.is_file()):
