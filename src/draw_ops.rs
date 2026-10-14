@@ -289,7 +289,13 @@ pub fn execute_draw_pass_with(
         "filter/wormhole:deposit" => wormhole(pass, uniforms, resources, &mut destination)?,
         "filter3d/flow3d:deposit" => flow3d(pass, uniforms, resources, &mut destination)?,
         "points/dla:depositGrid" => dla(pass, uniforms, resources, &mut destination)?,
-        "points/lenia:deposit" => lenia(pass, uniforms, resources, &mut destination)?,
+        "points/lenia:deposit" => lenia(
+            pass,
+            uniforms,
+            resources,
+            &mut destination,
+            formats.get(&attachment).copied().unwrap_or_default(),
+        )?,
         "points/physarum:deposit" => physarum(pass, uniforms, resources, &mut destination)?,
         "render/meshRender:render" => {
             mesh_render_triangles(uniforms, external_inputs, &mut destination)?
@@ -363,9 +369,12 @@ fn lenia(
     uniforms: &BTreeMap<String, Value>,
     resources: &BTreeMap<String, Surface>,
     destination: &mut Surface,
+    format: TextureFormat,
 ) -> Result<usize, RenderError> {
     let xyz = input(pass, resources, "xyzTex")?;
     let amount = scalar(uniforms, "depositAmount")?;
+    // Additive blending writes back to the half-float attachment after every point.
+    let half_float_blend = format == TextureFormat::Rgba16f;
     let mut pixels = 0;
     for_each_agent(xyz, |_, sx, sy| {
         let position = texel_fetch_agent(xyz, sx, sy);
@@ -382,8 +391,16 @@ fn lenia(
             return Ok(());
         };
         let data = destination.data_mut();
-        data[offset] += amount;
-        data[offset + 3] += 1.0;
+        data[offset] = if half_float_blend {
+            truncate_to_binary16(data[offset] + amount)
+        } else {
+            data[offset] + amount
+        };
+        data[offset + 3] = if half_float_blend {
+            truncate_to_binary16(data[offset + 3] + 1.0)
+        } else {
+            data[offset + 3] + 1.0
+        };
         pixels += 1;
         Ok(())
     })?;
@@ -437,7 +454,11 @@ fn points_render(
     let threshold = f64::from(scalar(uniforms, "density")?) / 100.0;
     let mut pixels = 0;
     for_each_agent(xyz, |vertex, sx, sy| {
-        let random = (vertex as f64 * GOLDEN_RATIO_CONJUGATE).fract();
+        // `Math.fround(v * Math.fround(GOLDEN_RATIO_CONJUGATE))`: the cull evaluates in
+        // highp-float (binary32) precision upstream, so round the scaled index to f32
+        // before the f64 fractional part.
+        let random =
+            f64::from((vertex as f64 * f64::from(GOLDEN_RATIO_CONJUGATE as f32)) as f32).fract();
         if random > threshold {
             return Ok(());
         }

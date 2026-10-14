@@ -228,6 +228,86 @@ fn lenia_physarum_and_points_render_match_constant_scaled_and_view_rules() {
 }
 
 #[test]
+fn lenia_deposit_rounds_each_additive_blend_into_an_rgba16f_target() {
+    let mut xyz_data = vec![0.0; 64 * 64 * 4];
+    for texel in xyz_data.chunks_exact_mut(4) {
+        texel[0] = 0.5;
+        texel[1] = 0.5;
+        texel[3] = 1.0;
+    }
+    let mut resources = BTreeMap::from([(
+        "global_xyz".into(),
+        Surface::from_f32(64, 64, xyz_data).unwrap(),
+    )]);
+    let pixels = execute_draw_pass(
+        "points/lenia:deposit",
+        draw_pass("points/lenia", "deposit"),
+        &BTreeMap::from([("depositAmount".into(), Value::Float(3.6))]),
+        &mut resources,
+        4,
+        4,
+        &BTreeMap::from([("global_lenia_density".into(), TextureFormat::Rgba16f)]),
+    )
+    .unwrap();
+    assert_eq!(pixels, 4096);
+    assert_eq!(
+        &resources["global_lenia_density"].data()[24..28],
+        &[4096.0, 0.0, 0.0, 2048.0]
+    );
+}
+
+#[test]
+fn points_render_density_cull_rounds_the_scaled_vertex_index_to_f32() {
+    let count = 256 * 256;
+    let mut xyz_data = vec![0.0; count * 4];
+    let mut rgba_data = vec![0.0; count * 4];
+    for texel in xyz_data.chunks_exact_mut(4) {
+        texel[0] = 0.5;
+        texel[1] = 0.5;
+        texel[3] = 1.0;
+    }
+    for texel in rgba_data.chunks_exact_mut(4) {
+        texel[0] = 1.0;
+        texel[3] = 1.0;
+    }
+    let mut resources = BTreeMap::from([
+        (
+            "global_xyz".into(),
+            Surface::from_f32(256, 256, xyz_data).unwrap(),
+        ),
+        (
+            "global_rgba".into(),
+            Surface::from_f32(256, 256, rgba_data).unwrap(),
+        ),
+    ]);
+    let uniforms = BTreeMap::from([
+        ("density".into(), Value::Float(0.1)),
+        ("viewMode".into(), Value::Int(0)),
+        ("rotateX".into(), Value::Float(0.0)),
+        ("rotateY".into(), Value::Float(0.0)),
+        ("rotateZ".into(), Value::Float(0.0)),
+        ("posX".into(), Value::Float(0.0)),
+        ("posY".into(), Value::Float(0.0)),
+        ("viewScale".into(), Value::Float(1.0)),
+    ]);
+    let pixels = execute_draw_pass(
+        "render/pointsRender:deposit",
+        draw_pass("render/pointsRender", "deposit"),
+        &uniforms,
+        &mut resources,
+        8,
+        8,
+        &BTreeMap::from([("global_points_trail".into(), TextureFormat::Rgba32f)]),
+    )
+    .unwrap();
+    assert_eq!(pixels, 142);
+    assert_eq!(
+        &resources["global_points_trail"].data()[112..116],
+        &[142.0, 0.0, 0.0, 142.0]
+    );
+}
+
+#[test]
 fn flow3d_flattens_z_limits_prefix_and_adds_opaque_alpha() {
     let mut resources = BTreeMap::from([
         (
