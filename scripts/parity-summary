@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+"""Whole-port parity summary entrypoint for this repository.
+
+Renders every case of the current authority's manifest with this port and
+compares each against the port's published numerical contract (tolerance 0:
+byte-exact against the JavaScript CPU oracle). Positional case-id arguments
+restrict the run to those cases. The last output line is the PARITY-SUMMARY
+JSON with the gap-closure counts. The exit code reports audit completion, not
+the parity verdict; the verdict lives in the PARITY-SUMMARY line.
+
+The oracle is a noisemaker-for-cpu checkout supplied through
+NOISEMAKER_JS_CPU_DIR (or ../noisemaker-for-cpu next to this checkout, the
+layout the cross-port tests and the exact-source ci workflow use). The
+checkout's oracle snapshot revision must match this repository's published
+parameter-contract revision; a mismatch fails loudly instead of comparing
+against the wrong source.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import parity  # noqa: E402  (path set above)
+
+CONTRACT_PATH = ROOT / "scripts" / "upstream-param-contract.json"
+
+
+def _oracle_checkout(args: argparse.Namespace) -> Path:
+    """Resolve the oracle checkout and verify its revision against the contract."""
+    candidates = []
+    if args.js is not None:
+        candidates.append(args.js.resolve().parents[1])
+    configured = os.environ.get("NOISEMAKER_JS_CPU_DIR")
+    if configured:
+        candidates.append(Path(configured).resolve())
+    candidates.append(ROOT.parent / "noisemaker-for-cpu")
+    for candidate in candidates:
+        snapshot = candidate / "src" / "effects" / "generated" / "upstream-snapshot.js"
+        cli = candidate / "bin" / "noisemaker-cpu.js"
+        if snapshot.is_file() and cli.is_file():
+            return candidate
+    raise SystemExit(
+        "no noisemaker-for-cpu oracle checkout found; set NOISEMAKER_JS_CPU_DIR "
+        "or pass --js <checkout>/bin/noisemaker-cpu.js"
+    )
+
+
+def _oracle_revision(checkout: Path) -> str:
+    """Read UPSTREAM_REVISION from the checkout's generated snapshot."""
+    text = (checkout / "src" / "effects" / "generated" / "upstream-snapshot.js").read_text(
+        encoding="utf-8"
+    )
+    for line in text.splitlines():
+        if line.startswith("export const UPSTREAM_REVISION"):
+            return line.split('"')[1]
+    raise SystemExit(f"oracle snapshot declares no UPSTREAM_REVISION: {checkout}")
+
+
+def _contract_revision() -> str:
+    contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+    revision = contract.get("revision")
+    if not isinstance(revision, str) or not revision:
+        raise SystemExit(f"parameter contract has no revision: {CONTRACT_PATH}")
+    return revision
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--rust", type=Path, default=ROOT / "target" / "release" / "noisemaker-rs")
+    parser.add_argument(
+        "--rust-sequence", type=Path, default=ROOT / "target" / "release" / "examples" / "parity_sequence"
+    )
+    parser.add_argument("--js", type=Path, help="oracle CLI inside a noisemaker-for-cpu checkout")
+    parser.add_argument("--json", type=Path, help="also write the sweep report JSON here")
+    parser.add_argument("--timeout", type=float, default=120.0)
+    parser.add_argument("cases", nargs="*", help="optional case ids to restrict the run")
+    args = parser.parse_args(argv)
+
+    checkout = _oracle_checkout(args)
+    oracle_revision = _oracle_revision(checkout)
+    contract_revision = _contract_revision()
+    if oracle_revision != contract_revision:
+        raise SystemExit(
+            f"oracle snapshot revision {oracle_revision} does not match the "
+            f"published parameter-contract revision {contract_revision}; re-pin or "
+            "re-provision the oracle checkout"
+        )
+
+    rust = args.rust.resolve()
+    if not rust.is_file():
+        raise SystemExit(f"rust CLI not built: run cargo build --release --locked ({rust})")
+    sequence = args.rust_sequence.resolve()
+    needs_sequence = any(parity._is_stateful(effect_id, parity._catalog()[effect_id]) for effect_id in parity._catalog())
+    if needs_sequence and not sequence.is_file():
+        raise SystemExit(
+            f"parity_sequence example not built: run "
+            f"cargo build --release --locked --example parity_sequence ({sequence})"
+        )
+    oracle_cli = checkout / "bin" / "noisemaker-cpu.js"
+
+    catalog = sorted(parity._catalog())
+    selected = args.cases
+    if selected:
+        unknown = sorted(set(selected).difference(catalog))
+        if unknown:
+            raise SystemExit(f"unknown case ids: {', '.join(unknown)}")
+
+    command = [
+        sys.executable, str(ROOT / "scripts" / "parity.py"),
+        "--rust", str(rust),
+        "--rust-sequence", str(sequence),
+        "--js", str(oracle_cli),
+        "--timeout", str(args.timeout),
+        "--sweep",
+    ]
+    for case_id in selected:
+        command.extend(["--only", case_id])
+    if args.json is not None:
+        command.extend(["--json", str(args.json)])
+
+    completed = subprocess.run(command, cwd=ROOT, check=False)
+    if completed.returncode != 0:
+        return completed.returncode
+
+    # The sweep report is the whole-port denominator (defaults + variants +
+    # frame sequences). Re-derive the supervisor's count fields from the
+    # validated report so the PARITY-SUMMARY line comes from real evidence.
+    report_path = args.json if args.json is not None else None
+    if report_path is None:
+        with tempfile.NamedTemporaryFile("r", suffix=".json", delete=False) as handle:
+            temporary = Path(handle.name)
+        command_with_json = command + ["--json", str(temporary)]
+        rerun = subprocess.run(command_with_json, cwd=ROOT, check=False)
+        if rerun.returncode != 0:
+            return rerun.returncode
+        report_path = temporary
+    else:
+        temporary = None
+
+    try:
+        report = json.loads(Path(report_path).read_text(encoding="utf-8"))
+        plan = parity._sweep_plan(parity._catalog())
+        if selected:
+            plan = {effect_id: cases for effect_id, cases in plan.items() if effect_id in selected}
+        parity._validate_sweep(report, plan)
+        compared = [record for record in report["results"] if record["status"] == "compared"]
+        exact = sum(record["max_delta"] == 0 for record in compared)
+        strict = len(compared) - exact
+        summary = {
+            "expected": report["expected"],
+            "executed": report["executed"],
+            "exact": exact,
+            "strict": strict,
+            "near": 0,
+            "defer": 0,
+            "skip": 0,
+            "fail": report["failed"] + report["errors"],
+            "missing": 0,
+            "tolerance": report["tolerance"],
+            "size": report["size"],
+            "oracleRevision": oracle_revision,
+        }
+        print(f"PARITY-SUMMARY {json.dumps(summary, sort_keys=True)}")
+        return 0
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
