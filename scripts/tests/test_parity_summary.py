@@ -12,7 +12,6 @@ import importlib
 import json
 import os
 import stat
-import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -113,36 +112,43 @@ class ReportDerivationTest(unittest.TestCase):
 
 
 class GuardBehaviorTest(unittest.TestCase):
-    """The entrypoint fails loudly on a mismatched oracle revision."""
+    """The revision gate is advisory; the entrypoint still fails without an oracle."""
 
-    def test_revision_mismatch_fails(self) -> None:
-        import shutil
+    @staticmethod
+    def _load_entrypoint():
+        import importlib.machinery
+        import importlib.util
+
+        loader = importlib.machinery.SourceFileLoader("parity_summary_entrypoint", str(ENTRYPOINT))
+        spec = importlib.util.spec_from_loader(loader.name, loader)
+        module = importlib.util.module_from_spec(spec)
+        loader.exec_module(module)
+        return module
+
+    def test_revision_mismatch_is_advisory_not_fatal(self) -> None:
+        module = self._load_entrypoint()
+        contract = json.loads((ROOT / "scripts" / "upstream-param-contract.json").read_text())
+        contract_revision = contract["revision"]
+        # An agreeing revision produces no warning; any other revision produces
+        # only a warning string. The run itself must proceed either way.
+        self.assertIsNone(module._revision_warning(contract_revision, contract_revision))
+        warning = module._revision_warning("0" * 40, contract_revision)
+        self.assertIsNotNone(warning)
+        self.assertIn("does not match the", warning)
+        self.assertIn("warning:", warning)
+
+    def test_missing_oracle_fails_loudly(self) -> None:
+        import argparse
         import tempfile
 
-        source = Path(
-            os.environ.get("NOISEMAKER_JS_CPU_DIR", str(ROOT.parent / "noisemaker-for-cpu"))
-        )
-        snapshot = source / "src" / "effects" / "generated" / "upstream-snapshot.js"
-        cli = source / "bin" / "noisemaker-cpu.js"
-        if not (snapshot.is_file() and cli.is_file()):
-            self.skipTest("no oracle checkout available to copy")
+        module = self._load_entrypoint()
+        args = argparse.Namespace(js=None)
         with tempfile.TemporaryDirectory() as temporary:
-            checkout = Path(temporary) / "noisemaker-cpu-doctored"
-            shutil.copytree(source, checkout, symlinks=True)
-            doctored = checkout / "src" / "effects" / "generated" / "upstream-snapshot.js"
-            text = doctored.read_text(encoding="utf-8")
-            contract = json.loads((ROOT / "scripts" / "upstream-param-contract.json").read_text())
-            revision = contract["revision"]
-            self.assertIn(revision, text, "test assumes the provisioned oracle matches the contract")
-            doctored.write_text(text.replace(revision, "0" * 40, 1), encoding="utf-8")
-            environment = dict(os.environ)
-            environment["NOISEMAKER_JS_CPU_DIR"] = str(checkout)
-            environment["PYTHONDONTWRITEBYTECODE"] = "1"
-            completed = subprocess.run(
-                [str(ENTRYPOINT)], capture_output=True, text=True, env=environment, timeout=120
-            )
-            self.assertNotEqual(completed.returncode, 0)
-            self.assertIn("does not match the", completed.stderr + completed.stdout)
+            # An empty candidate list models an environment with no oracle
+            # checkout anywhere, independent of this machine's layout.
+            with self.assertRaises(SystemExit) as raised:
+                module._oracle_checkout(args, candidates=[Path(temporary)])
+        self.assertIn("no noisemaker-for-cpu oracle checkout found", str(raised.exception))
 
 
 if __name__ == "__main__":

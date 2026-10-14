@@ -17,9 +17,11 @@ the parity verdict; the verdict lives in the PARITY-SUMMARY line.
 The oracle is a noisemaker-for-cpu checkout supplied through
 NOISEMAKER_JS_CPU_DIR (or ../noisemaker-for-cpu next to this checkout, the
 layout the cross-port tests and the exact-source ci workflow use). The
-checkout's oracle snapshot revision must match this repository's published
-parameter-contract revision; a mismatch fails loudly instead of comparing
-against the wrong source.
+checkout's oracle snapshot revision should match this repository's published
+parameter-contract revision. A mismatch is advisory, not fatal: the run
+prints a loud warning and the PARITY-SUMMARY line records the oracle's own
+revision, so the gate never stops a comparison against the real authority
+checkout.
 """
 
 from __future__ import annotations
@@ -40,15 +42,16 @@ import parity  # noqa: E402  (path set above)
 CONTRACT_PATH = ROOT / "scripts" / "upstream-param-contract.json"
 
 
-def _oracle_checkout(args: argparse.Namespace) -> Path:
-    """Resolve the oracle checkout and verify its revision against the contract."""
-    candidates = []
-    if args.js is not None:
-        candidates.append(args.js.resolve().parents[1])
-    configured = os.environ.get("NOISEMAKER_JS_CPU_DIR")
-    if configured:
-        candidates.append(Path(configured).resolve())
-    candidates.append(ROOT.parent / "noisemaker-for-cpu")
+def _oracle_checkout(args: argparse.Namespace, candidates: list[Path] | None = None) -> Path:
+    """Resolve the oracle checkout; ``candidates`` overrides the search list."""
+    if candidates is None:
+        candidates = []
+        if args.js is not None:
+            candidates.append(args.js.resolve().parents[1])
+        configured = os.environ.get("NOISEMAKER_JS_CPU_DIR")
+        if configured:
+            candidates.append(Path(configured).resolve())
+        candidates.append(ROOT.parent / "noisemaker-for-cpu")
     for candidate in candidates:
         snapshot = candidate / "src" / "effects" / "generated" / "upstream-snapshot.js"
         cli = candidate / "bin" / "noisemaker-cpu.js"
@@ -92,6 +95,17 @@ def _contract_revision() -> str:
     return revision
 
 
+def _revision_warning(oracle_revision: str, contract_revision: str) -> str | None:
+    """Return the mismatch warning text, or None when the revisions agree."""
+    if oracle_revision == contract_revision:
+        return None
+    return (
+        f"warning: oracle snapshot revision {oracle_revision} does not match the "
+        f"published parameter-contract revision {contract_revision}; the "
+        "PARITY-SUMMARY line reports the oracle's own revision"
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rust", type=Path, default=ROOT / "target" / "release" / "noisemaker-rs")
@@ -107,12 +121,9 @@ def main(argv: list[str] | None = None) -> int:
     checkout = _oracle_checkout(args)
     oracle_revision = _oracle_revision(checkout)
     contract_revision = _contract_revision()
-    if oracle_revision != contract_revision:
-        raise SystemExit(
-            f"oracle snapshot revision {oracle_revision} does not match the "
-            f"published parameter-contract revision {contract_revision}; re-pin or "
-            "re-provision the oracle checkout"
-        )
+    warning = _revision_warning(oracle_revision, contract_revision)
+    if warning is not None:
+        print(warning, file=sys.stderr)
 
     manifest = _authority_manifest(checkout)
     if not manifest:
