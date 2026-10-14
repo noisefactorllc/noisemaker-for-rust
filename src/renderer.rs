@@ -320,8 +320,11 @@ impl CpuRenderer {
                 .map(|step| match step {
                     RenderStep::Read { .. } => IterationStep::Read,
                     RenderStep::Write { .. } => IterationStep::Write,
-                    RenderStep::Effect { effect_id, .. } => IterationStep::Effect {
+                    RenderStep::Effect {
+                        effect_id, params, ..
+                    } => IterationStep::Effect {
                         effect_id: effect_id.clone(),
+                        params: params.clone(),
                     },
                 })
                 .collect::<Vec<_>>();
@@ -1001,10 +1004,36 @@ fn execute_iteration_group(
 ) -> Result<IterationExecution, RenderError> {
     let catalog = effect_catalog()?;
     let Some(RenderStep::Effect {
+        effect_id: first_id,
+        params: first_params,
+        ..
+    }) = steps.first()
+    else {
+        return Err(RenderError::InvalidGraph {
+            message: "iterated group must begin with an effect".into(),
+        });
+    };
+    // The CPU renderer picks the group's iteration-count owner as the first step
+    // whose definition is iterated: a joined group (animated noise3d feeding
+    // flow3d) is owned by its later iterated step, not by steps[0].
+    let owner_index = steps
+        .iter()
+        .position(|step| {
+            matches!(
+                step,
+                RenderStep::Effect { effect_id, .. }
+                    if catalog
+                        .effects
+                        .get(effect_id)
+                        .is_some_and(|definition| definition.iterated)
+            )
+        })
+        .unwrap_or(0);
+    let Some(RenderStep::Effect {
         effect_id: owner_id,
         params: owner_params,
         ..
-    }) = steps.first()
+    }) = steps.get(owner_index)
     else {
         return Err(RenderError::InvalidGraph {
             message: "iterated group must begin with an effect".into(),
@@ -1028,8 +1057,8 @@ fn execute_iteration_group(
     if count <= 0 {
         return Ok(IterationExecution {
             bundle: zero_iteration_bundle(
-                &catalog.effects[owner_id],
-                owner_params,
+                &catalog.effects[first_id],
+                first_params,
                 group_input,
                 options,
             )?,
@@ -1039,7 +1068,13 @@ fn execute_iteration_group(
     let count = u32::try_from(count).map_err(|_| RenderError::InvalidParameter {
         message: "iterationCount cannot be represented as u32".into(),
     })?;
-    let owner_state_size = owner_params.get("stateSize").cloned();
+    // Only multi-step groups inherit the lead step's stateSize (the CPU
+    // renderer's groupOwnerStateSize returns undefined for single-step groups).
+    let owner_state_size = if steps.len() > 1 {
+        first_params.get("stateSize").cloned()
+    } else {
+        None
+    };
     let mut states = vec![BTreeMap::<String, Surface>::new(); steps.len()];
     let mut shared = BTreeMap::<String, Surface>::new();
     let mut declared_particle_textures = BTreeMap::new();

@@ -1,12 +1,24 @@
 use noisemaker_cpu::{
-    CpuRenderer, ITERATION_DELTA_TIME, IterationStep, RenderOptions, compute_iteration_groups,
-    is_particle_state_name, iteration_schedule, wrap01,
+    CpuRenderer, ITERATION_DELTA_TIME, IterationStep, ParamValue, RenderOptions,
+    compute_iteration_groups, is_particle_state_name, iteration_schedule, wrap01,
 };
 use sha2::{Digest, Sha256};
+use std::collections::BTreeMap;
 
 fn effect(id: &str) -> IterationStep {
     IterationStep::Effect {
         effect_id: id.into(),
+        params: BTreeMap::new(),
+    }
+}
+
+fn effect_with(id: &str, params: &[(&str, i32)]) -> IterationStep {
+    IterationStep::Effect {
+        effect_id: id.into(),
+        params: params
+            .iter()
+            .map(|(name, value)| (name.to_string(), ParamValue::Int(*value)))
+            .collect(),
     }
 }
 
@@ -57,6 +69,37 @@ fn read_write_and_second_particle_owner_split_groups() {
             .map(|group| (group.iterated, group.steps.len()))
             .collect::<Vec<_>>(),
         [(true, 2), (false, 1), (false, 1), (true, 2)]
+    );
+}
+
+#[test]
+fn flow3d_reevaluates_animated_noise3d_per_tick_while_preserving_static_and_zero_iteration_chains()
+{
+    let flow = effect_with("filter3d/flow3d", &[("iterationCount", 2)]);
+    let animated = effect_with("synth3d/noise3d", &[("speed", 1)]);
+    let static_noise = effect_with("synth3d/noise3d", &[("speed", 0)]);
+    let zero_flow = effect_with("filter3d/flow3d", &[("iterationCount", 0)]);
+    let groups = |steps: &[IterationStep]| {
+        compute_iteration_groups(steps)
+            .unwrap()
+            .into_iter()
+            .map(|group| (group.iterated, group.steps.len()))
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(groups(&[animated.clone(), flow.clone()]), [(true, 2)]);
+    assert_eq!(
+        groups(&[static_noise.clone(), flow.clone()]),
+        [(false, 1), (true, 1)]
+    );
+    assert_eq!(
+        groups(&[animated.clone(), zero_flow]),
+        [(false, 1), (true, 1)]
+    );
+    // The join survives boundary-free neighbors exactly like the CPU planner:
+    // a second flow3d after a merged pair stays its own group.
+    assert_eq!(
+        groups(&[animated.clone(), flow.clone(), flow.clone()]),
+        [(true, 2), (true, 1)]
     );
 }
 

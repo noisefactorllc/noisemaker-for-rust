@@ -1,16 +1,21 @@
 use crate::catalog::effect_catalog;
+use crate::param::ParamValue;
+use std::collections::BTreeMap;
 use thiserror::Error;
 
 pub const ITERATION_DELTA_TIME: f32 = 1.0_f32 / 600.0_f32;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum IterationStep {
     Read,
     Write,
-    Effect { effect_id: String },
+    Effect {
+        effect_id: String,
+        params: BTreeMap<String, ParamValue>,
+    },
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct IterationGroup {
     pub steps: Vec<IterationStep>,
     pub iterated: bool,
@@ -82,7 +87,7 @@ pub fn compute_iteration_groups(
                     "Loop iteration group cannot cross a read/write boundary",
                 ));
             }
-            let IterationStep::Effect { effect_id } = step else {
+            let IterationStep::Effect { effect_id, .. } = step else {
                 unreachable!()
             };
             let definition = catalog
@@ -115,7 +120,7 @@ pub fn compute_iteration_groups(
             continue;
         }
 
-        let IterationStep::Effect { effect_id } = step else {
+        let IterationStep::Effect { effect_id, params } = step else {
             unreachable!()
         };
         let definition = catalog
@@ -151,6 +156,40 @@ pub fn compute_iteration_groups(
             });
         } else if references_particle && particle.is_some() {
             particle.as_mut().unwrap().steps.push(step.clone());
+        } else if particle.is_none() {
+            // The authority re-runs animated noise3d before every flow3d tick.
+            let merge_with_previous = groups
+                .last()
+                .and_then(|previous| {
+                    let IterationStep::Effect {
+                        effect_id: previous_id,
+                        params: previous_params,
+                    } = previous.steps.first()?
+                    else {
+                        return None;
+                    };
+                    if previous.steps.len() != 1 {
+                        return None;
+                    }
+                    Some(
+                        effect_id == "filter3d/flow3d"
+                            && previous_id == "synth3d/noise3d"
+                            && !matches!(previous_params.get("speed"), Some(ParamValue::Int(0)))
+                            && matches!(params.get("iterationCount"), Some(ParamValue::Int(count)) if *count > 0),
+                    )
+                })
+                .unwrap_or(false);
+            if merge_with_previous {
+                let previous = groups.last_mut().unwrap();
+                previous.steps.push(step.clone());
+                previous.iterated = true;
+            } else {
+                groups.push(IterationGroup {
+                    steps: vec![step.clone()],
+                    iterated: definition.iterated,
+                    is_loop: false,
+                });
+            }
         } else {
             close_particle(&mut groups, &mut particle);
             groups.push(IterationGroup {
