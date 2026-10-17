@@ -574,6 +574,54 @@ fn rotate(x: f64, y: f64, rotation: f64, aspect: f64) -> (f64, f64) {
     (cs * px + sn * py + 0.5 * aspect, -sn * px + cs * py + 0.5)
 }
 
+// Keep exact f64 products between the CPU authority's explicit float32 rounds.
+fn fractal_f32(value: f64) -> f64 {
+    f64::from(value as f32)
+}
+
+fn fractal_map(value: f64, in_min: f64, in_max: f64, out_min: f64, out_max: f64) -> f64 {
+    fractal_f32(
+        out_min
+            + fractal_f32(out_max - out_min)
+                * ((value - in_min) * fractal_f32(1.0 / fractal_f32(in_max - in_min))),
+    )
+}
+
+fn fractal_rotate(x: f64, y: f64, rotation: f64, aspect: f64) -> (f64, f64) {
+    let angle = fractal_f32(fractal_map(rotation, 0.0, 360.0, 0.0, 2.0) * 3.1415929794311523);
+    let px = fractal_f32(x - fractal_f32(0.5 * aspect));
+    let py = fractal_f32(y - 0.5);
+    let cs = fractal_f32(angle.cos());
+    let sn = fractal_f32(angle.sin());
+    (
+        fractal_f32(sn * py + fractal_f32(cs * px)),
+        fractal_f32(cs * py + fractal_f32(-sn * px)),
+    )
+}
+
+fn fractal_hsv(h: f64, s: f64, v: f64) -> [f32; 3] {
+    let h = fractal_f32(fract(h));
+    let c = fractal_f32(v * s);
+    let base = fractal_f32(h * 6.0);
+    let modulo = fractal_f32(base - fractal_f32(2.0 * fractal_f32(base / 2.0).floor()));
+    let x = fractal_f32(c * fractal_f32(1.0 - (modulo - 1.0).abs()));
+    let m = fractal_f32(v - c);
+    let color = if h < 1.0 / 6.0 {
+        [c, x, 0.0]
+    } else if h < 2.0 / 6.0 {
+        [x, c, 0.0]
+    } else if h < 3.0 / 6.0 {
+        [0.0, c, x]
+    } else if h < 4.0 / 6.0 {
+        [0.0, x, c]
+    } else if h < 5.0 / 6.0 {
+        [x, 0.0, c]
+    } else {
+        [c, 0.0, x]
+    };
+    color.map(|channel| (channel + m) as f32)
+}
+
 fn render_fractal(
     uniforms: &BTreeMap<String, Value>,
     output: &mut Surface,
@@ -581,7 +629,7 @@ fn render_fractal(
     const TAU: f64 = 6.28318530718;
     let full = vector(uniforms, "fullResolution")?;
     let tile = vector(uniforms, "tileOffset")?;
-    let aspect = f64::from(full[0] / full[1]);
+    let aspect = f64::from(full[0]) / f64::from(full[1]);
     let effect_type = integer(uniforms, "type")?;
     let iterations = integer(uniforms, "iterations")?;
     let time = f64::from(scalar(uniforms, "time")?);
@@ -606,21 +654,33 @@ fn render_fractal(
             let (mut x, mut y) = (global_x / f64::from(full[1]), global_y / f64::from(full[1]));
             let mut distance;
             if effect_type == 0 {
-                let zoom = map(zoom, 0.0, 100.0, 2.0, 0.5);
-                let speedy = map(speed_value, 0.0, 100.0, 0.0, 1.0);
-                let speed = mix(speedy * 0.05, speedy * 0.125, speedy);
-                let cx = (time * TAU).sin() * speed + map(offset_x, -100.0, 100.0, -0.5, 0.5);
-                let cy = (time * TAU).cos() * speed + map(offset_y, -100.0, 100.0, -1.0, 1.0);
-                (x, y) = rotate(x, y, rotation, aspect);
-                x = (x - 0.5 * aspect) * zoom + map(center_x, -100.0, 100.0, 1.0, -1.0);
-                y = (y - 0.5) * zoom + map(center_y, -100.0, 100.0, 1.0, -1.0);
+                x = fractal_f32(x);
+                y = fractal_f32(y);
+                let aspect = fractal_f32(aspect);
+                let time = fractal_f32(time);
+                let zoom = fractal_map(zoom, 0.0, 100.0, 2.0, 0.5);
+                let speedy = fractal_map(speed_value, 0.0, 100.0, 0.0, 1.0);
+                let speed = fractal_f32(
+                    fractal_f32(fractal_f32(speedy * 0.05) * fractal_f32(1.0 - speedy))
+                        + fractal_f32(fractal_f32(speedy * 0.125) * speedy),
+                );
+                let phase = fractal_f32(time * fractal_f32(TAU));
+                let cx = fractal_f32(
+                    phase.sin() * speed + fractal_map(offset_x, -100.0, 100.0, -0.5, 0.5),
+                );
+                let cy = fractal_f32(
+                    phase.cos() * speed + fractal_map(offset_y, -100.0, 100.0, -1.0, 1.0),
+                );
+                (x, y) = fractal_rotate(x, y, fractal_f32(rotation), aspect);
+                x = fractal_f32(x * zoom + fractal_map(center_x, -100.0, 100.0, 1.0, -1.0));
+                y = fractal_f32(y * zoom + fractal_map(center_y, -100.0, 100.0, 1.0, -1.0));
                 let count = iterations * 2;
                 let mut iteration = 0;
                 for index in 0..count {
                     iteration = index;
-                    let next_x = x * x - y * y + cx;
-                    let next_y = y * x + x * y + cy;
-                    if next_x * next_x + next_y * next_y > 4.0 {
+                    let next_x = fractal_f32(fractal_f32(x * x + cx) - y * y);
+                    let next_y = fractal_f32(y * x + x * y + cy);
+                    if fractal_f32(next_x * next_x + next_y * next_y) > 4.0 {
                         break;
                     }
                     x = next_x;
@@ -629,9 +689,9 @@ fn render_fractal(
                 if count - iteration < scalar(uniforms, "cutoff")? as i32 {
                     distance = 1.0;
                 } else if mode == 0 {
-                    distance = f64::from(iteration) / f64::from(count);
+                    distance = fractal_f32(f64::from(iteration) / f64::from(count));
                 } else {
-                    distance = x.hypot(y);
+                    distance = fractal_f32(fractal_f32(x * x + y * y).sqrt());
                 }
             } else if effect_type == 1 {
                 (x, y) = rotate(x, y, rotation + 90.0, aspect);
@@ -704,23 +764,31 @@ fn render_fractal(
                 continue;
             }
             if integer(uniforms, "cyclePalette")? == -1 {
-                distance -= time;
+                distance = fractal_f32(distance - time);
             } else if integer(uniforms, "cyclePalette")? == 1 {
-                distance += time;
+                distance = fractal_f32(distance + time);
             }
-            distance = fract(
-                distance * f64::from(integer(uniforms, "repeatPalette")?)
-                    + f64::from(scalar(uniforms, "rotatePalette")?) * 0.01,
-            );
+            distance = fractal_f32(fract(fractal_f32(
+                distance * f64::from(scalar(uniforms, "repeatPalette")?)
+                    + fractal_f32(
+                        f64::from(scalar(uniforms, "rotatePalette")?) * fractal_f32(0.01),
+                    ),
+            )));
             let levels = integer(uniforms, "levels")?;
             if levels > 0 {
-                distance = (distance * f64::from(levels + 1)).floor() / f64::from(levels + 1);
+                let levels = fractal_f32(f64::from(levels) + 1.0);
+                distance = fractal_f32(fractal_f32(distance * levels).floor() / levels);
             }
             let color = match integer(uniforms, "colorMode")? {
                 0 => [fract(distance) as f32; 3],
                 4 => cosine_palette(distance, uniforms, palette_entry)?,
-                6 => hsv_to_rgb(
-                    (distance * f64::from(scalar(uniforms, "hueRange")?) * 0.01) as f32,
+                6 => fractal_hsv(
+                    fractal_f32(
+                        distance
+                            * fractal_f32(
+                                f64::from(scalar(uniforms, "hueRange")?) * fractal_f32(0.01),
+                            ),
+                    ),
                     1.0,
                     1.0,
                 ),
@@ -760,13 +828,23 @@ fn cosine_palette(
         )
     };
     let mut color = std::array::from_fn(|channel| {
-        (f64::from(offset[channel])
-            + f64::from(amp[channel])
-                * (6.28318 * (f64::from(freq[channel]) * t + f64::from(phase[channel]))).cos())
-            as f32
+        if mode == 2 {
+            (f64::from(offset[channel])
+                + f64::from(amp[channel])
+                    * (6.28318 * (f64::from(freq[channel]) * t + f64::from(phase[channel]))).cos())
+                as f32
+        } else {
+            let inner = fractal_f32(f64::from(freq[channel]) * t + f64::from(phase[channel]));
+            let cosine = fractal_f32(fractal_f32(inner * fractal_f32(6.28318)).cos());
+            (f64::from(amp[channel]) * cosine + f64::from(offset[channel])) as f32
+        }
     });
     if mode == 1 {
-        color = hsv_to_rgb(color[0], color[1], color[2]);
+        color = fractal_hsv(
+            f64::from(color[0]),
+            f64::from(color[1]),
+            f64::from(color[2]),
+        );
     } else if mode == 2 {
         color = fractal_oklab_to_rgb(color);
     }
@@ -795,13 +873,20 @@ fn hsv_to_rgb(hue: f32, saturation: f32, value: f32) -> [f32; 3] {
 }
 
 fn fractal_oklab_to_rgb(color: [f32; 3]) -> [f32; 3] {
-    let l_value = color[0];
-    let a = color[1] * -0.509 + 0.276;
-    let b = color[2] * -0.509 + 0.198;
+    let l_value = f64::from(color[0]);
+    let a = f64::from(color[1]) * -0.509 + 0.276;
+    let b = f64::from(color[2]) * -0.509 + 0.198;
     let l1 = l_value + 0.3963377774 * a + 0.2158037573 * b;
     let m1 = l_value - 0.1055613458 * a - 0.0638541728 * b;
     let s1 = l_value - 0.0894841775 * a - 1.291485548 * b;
-    let (l, m, s) = (l1.powi(3), m1.powi(3), s1.powi(3));
+    let (l, m, s) = (l1 * l1 * l1, m1 * m1 * m1, s1 * s1 * s1);
+    let linear_to_srgb = |value: f64| -> f32 {
+        (if value <= 0.0031308 {
+            value * 12.92
+        } else {
+            1.055 * value.powf(1.0 / 2.4) - 0.055
+        }) as f32
+    };
     [
         linear_to_srgb(4.0767245293 * l - 3.3072168827 * m + 0.2307590544 * s),
         linear_to_srgb(-1.2681437731 * l + 2.6093323231 * m - 0.341134429 * s),
