@@ -3,7 +3,7 @@
 The full run needs a built binary and an oracle checkout, so the harness-level
 behavior is exercised with the real parity module and doctored reports instead
 of a whole-port render; the entrypoint itself is exercised end-to-end by the
-supervisor's gate against a provisioned oracle.
+automated review's gate against a provisioned oracle.
 """
 
 from __future__ import annotations
