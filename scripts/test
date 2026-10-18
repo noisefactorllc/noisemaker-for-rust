@@ -14,10 +14,15 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 if ! command -v cargo >/dev/null 2>&1; then
   # Relocated rustup/cargo homes (exec-capable, persistent) when the default
-  # PATH carries no toolchain.
-  export RUSTUP_HOME="${RUSTUP_HOME:-/state/cache/rustup}"
-  export CARGO_HOME="${CARGO_HOME:-/state/cache/cargo}"
-  export PATH="$CARGO_HOME/bin:$PATH"
+  # PATH carries no toolchain: the configured homes, else the shared
+  # NOISEMAKER_RUST_CACHE.
+  if [ -n "${NOISEMAKER_RUST_CACHE:-}" ]; then
+    export RUSTUP_HOME="${RUSTUP_HOME:-$NOISEMAKER_RUST_CACHE/rustup}"
+    export CARGO_HOME="${CARGO_HOME:-$NOISEMAKER_RUST_CACHE/cargo}"
+  fi
+  if [ -n "${CARGO_HOME:-}" ]; then
+    export PATH="$CARGO_HOME/bin:$PATH"
+  fi
 fi
 # A writable probe: the home must exist (or be creatable) and accept writes.
 writable_home() {
@@ -31,19 +36,20 @@ exec_capable_home() {
 if command -v cargo >/dev/null 2>&1; then
   # Some hosts ship read-only toolchain homes: /opt/rust/cargo cannot take
   # the crates.io index/cache writes, /opt/rust/rustup cannot install the
-  # 1.85.0 MSRV toolchain, and a shared /state/cache can be read-only too.
+  # 1.85.0 MSRV toolchain, and a shared NOISEMAKER_RUST_CACHE can be read-only
+  # too.
   # Probe the first usable home (the checkout itself is writable and
   # exec-capable) and relocate there; rust-toolchain.toml's components make
   # an auto-installed stable toolchain complete.
   if ! writable_home "${CARGO_HOME:-${HOME:-/root}/.cargo}" \
     || ! exec_capable_home "${RUSTUP_HOME:-${HOME:-/root}/.rustup}"; then
-    for candidate in /state/cache/cargo .cargo-home "${TMPDIR:-/tmp}/noisemaker-cargo"; do
+    for candidate in ${NOISEMAKER_RUST_CACHE:+"$NOISEMAKER_RUST_CACHE/cargo"} .cargo-home "${TMPDIR:-/tmp}/noisemaker-cargo"; do
       if writable_home "$candidate"; then
         export CARGO_HOME="$candidate"
         break
       fi
     done
-    for candidate in /state/cache/rustup .rustup-home "${TMPDIR:-/tmp}/noisemaker-rustup"; do
+    for candidate in ${NOISEMAKER_RUST_CACHE:+"$NOISEMAKER_RUST_CACHE/rustup"} .rustup-home "${TMPDIR:-/tmp}/noisemaker-rustup"; do
       if exec_capable_home "$candidate"; then
         export RUSTUP_HOME="$candidate"
         break
