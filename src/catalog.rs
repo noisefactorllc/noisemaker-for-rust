@@ -120,6 +120,8 @@ pub struct ShaderProgram {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProgramIr {
+    #[serde(default)]
+    pub cpu_murmur_functions: Option<Vec<String>>,
     pub outputs: Vec<String>,
     pub varyings: Vec<String>,
     /// Declared varying types (draw-mode vertex/fragment pairs declare vec3

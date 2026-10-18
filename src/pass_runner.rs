@@ -292,7 +292,6 @@ pub fn execute_pass(
         }
     }
     let mut runtime = Runtime::new();
-    runtime.set_reduced_turn_sine(render_pass.key.as_deref() == Some("filter/crt:crt"));
     let black = Surface::new(1, 1)?;
     let mut context = PixelContext {
         uniforms: uniforms.clone(),
@@ -360,14 +359,8 @@ pub fn execute_pass(
                     | "synth/curl:curl"
             )
         ));
-        vm.set_javascript_crt_hash_compatibility(
-            render_pass.key.as_deref() == Some("filter/crt:crt"),
-        );
         vm.set_javascript_pattern_smoothstep_compatibility(
             render_pass.key.as_deref() == Some("synth/pattern:pattern"),
-        );
-        vm.set_javascript_testpattern_digit_truncation(
-            render_pass.key.as_deref() == Some("synth/testPattern:testPattern"),
         );
         let mut outputs = ShaderOutputs::new();
         for storage_y in 0..pass_height {

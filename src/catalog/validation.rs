@@ -95,6 +95,25 @@ impl<'a> Validator<'a> {
     fn validate(mut self) -> Result<(), String> {
         self.collect_structs()?;
         self.collect_functions()?;
+        if let Some(names) = &self.ir.cpu_murmur_functions {
+            let mut seen = BTreeSet::new();
+            for name in names {
+                let target = format!("{name}__uint");
+                let function = self
+                    .functions
+                    .get(target.as_str())
+                    .ok_or_else(|| format!("CPU hash function {name:?} is not declared"))?;
+                if !seen.insert(name)
+                    || function.name != *name
+                    || function.return_type.0 != "uint"
+                    || function.parameters.len() != 1
+                    || function.parameters[0].value_type.0 != "uint"
+                    || function.parameters[0].qualifier != ParameterQualifier::In
+                {
+                    return Err(format!("invalid CPU hash function {name:?}"));
+                }
+            }
+        }
         self.collect_root_symbols()?;
         self.validate_structs()?;
 
@@ -486,9 +505,25 @@ impl<'a> Validator<'a> {
                 value,
                 ..
             } => {
+                if matches!(operator.as_str(), "metal/=" | "trunc/=")
+                    && self.ir.cpu_murmur_functions.is_none()
+                {
+                    return Err("CPU division requires source metadata".into());
+                }
                 if !matches!(
                     operator.as_str(),
-                    "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" | "<<=" | ">>="
+                    "=" | "+="
+                        | "-="
+                        | "*="
+                        | "/="
+                        | "%="
+                        | "&="
+                        | "|="
+                        | "^="
+                        | "<<="
+                        | ">>="
+                        | "metal/="
+                        | "trunc/="
                 ) {
                     return Err(format!("invalid assignment operator {operator:?}"));
                 }
@@ -503,7 +538,13 @@ impl<'a> Validator<'a> {
                     let matrix_multiply = operator == "*="
                         && (matrix_shape(&target_type).is_some()
                             || matrix_shape(&value_type).is_some());
-                    if !matrix_multiply && common_type(&target_type, &value_type).is_none() {
+                    let metal_matrix_divide = operator == "metal/="
+                        && target_type == "mat2"
+                        && matches!(value_type.as_str(), "float" | "int" | "uint");
+                    if !matrix_multiply
+                        && !metal_matrix_divide
+                        && common_type(&target_type, &value_type).is_none()
+                    {
                         return Err(format!(
                             "compound assignment types {target_type} and {value_type} are incompatible"
                         ));
@@ -618,6 +659,9 @@ impl<'a> Validator<'a> {
     ) -> Result<String, String> {
         let left_type = self.validate_expression(left)?;
         let right_type = self.validate_expression(right)?;
+        if matches!(operator, "metal/" | "trunc/") && self.ir.cpu_murmur_functions.is_none() {
+            return Err("CPU division requires source metadata".into());
+        }
         match operator {
             "&&" | "||" => {
                 self.require_bool(&left_type, "logical operand")?;
@@ -638,9 +682,17 @@ impl<'a> Validator<'a> {
                     format!("bitwise operands {left_type} and {right_type} are incompatible")
                 })
             }
-            "+" | "-" | "*" | "/" | "%" => {
+            "+" | "-" | "*" | "/" | "%" | "metal/" | "trunc/" => {
                 self.require_numeric(&left_type, "arithmetic operand")?;
                 self.require_numeric(&right_type, "arithmetic operand")?;
+                if operator == "metal/"
+                    && ((left_type == "mat2"
+                        && matches!(right_type.as_str(), "float" | "int" | "uint"))
+                        || (right_type == "mat2"
+                            && matches!(left_type.as_str(), "float" | "int" | "uint")))
+                {
+                    return Ok("mat2".into());
+                }
                 if operator == "*" {
                     if let Some((_columns, rows)) = matrix_shape(&left_type) {
                         return if matrix_shape(&right_type).is_some() {

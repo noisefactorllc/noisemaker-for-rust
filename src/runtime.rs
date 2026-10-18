@@ -1,7 +1,9 @@
 use std::collections::BTreeMap;
 
+use crate::metal_division::metal_divide;
+use crate::sampler::sample_nearest_texel;
 use crate::value::type_error;
-use crate::{FilterMode, Surface, Value, VmError, sample_bilinear, sample_nearest};
+use crate::{FilterMode, Surface, Value, VmError, sample_bilinear};
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum DerivativeMode {
@@ -22,7 +24,6 @@ pub struct DerivativeDiff {
 #[derive(Clone, Debug, Default)]
 pub struct Runtime {
     textures: Vec<Surface>,
-    reduced_turn_sine: bool,
     // The exempt program's hand-written JS factory shifts its uint-valued
     // Numbers with `>>` (ToUint32 -> int32 arithmetic shift); transpiled
     // kernels shift uints with `>>>` (logical).
@@ -47,10 +48,6 @@ impl Runtime {
         let index = self.textures.len();
         self.textures.push(surface);
         Value::Sampler(index)
-    }
-
-    pub(crate) fn set_reduced_turn_sine(&mut self, enabled: bool) {
-        self.reduced_turn_sine = enabled;
     }
 
     pub fn set_derivative_mode(&mut self, mode: DerivativeMode) {
@@ -299,6 +296,50 @@ impl Runtime {
     }
 
     pub fn binary(&self, operator: &str, left: &Value, right: &Value) -> Result<Value, VmError> {
+        if operator == "metal/" {
+            let lanes = |value: &Value| match value {
+                Value::Mat {
+                    dimension: 2,
+                    columns,
+                } => Ok(columns.iter().map(|v| f64::from(*v)).collect()),
+                _ => numeric_lanes(value),
+            };
+            let a = lanes(left)?;
+            let b = lanes(right)?;
+            let width = a.len().max(b.len());
+            if a.is_empty()
+                || b.is_empty()
+                || (a.len() != width && a.len() != 1)
+                || (b.len() != width && b.len() != 1)
+            {
+                return Err(type_error("vector width mismatch"));
+            }
+            if matches!(left, Value::Float(_) | Value::Int(_) | Value::Uint(_))
+                && matches!(right, Value::Float(_) | Value::Int(_) | Value::Uint(_))
+            {
+                return Ok(Value::Float(metal_divide(a[0], b[0])));
+            }
+            let output = (0..width)
+                .map(|i| {
+                    metal_divide(
+                        a[if a.len() == 1 { 0 } else { i }],
+                        b[if b.len() == 1 { 0 } else { i }],
+                    ) as f32
+                })
+                .collect();
+            return Ok(
+                if matches!(left, Value::Mat { dimension: 2, .. })
+                    || matches!(right, Value::Mat { dimension: 2, .. })
+                {
+                    Value::Mat {
+                        dimension: 2,
+                        columns: output,
+                    }
+                } else {
+                    Value::Vec(output)
+                },
+            );
+        }
         if matches!(
             operator,
             "==" | "!=" | "<" | ">" | "<=" | ">=" | "&&" | "||"
@@ -426,9 +467,6 @@ impl Runtime {
         if let Some(result) = integer_component_builtin(name, arguments) {
             return result;
         }
-        if name == "sin" && self.reduced_turn_sine {
-            return reduced_turn_sine(&arguments[0]);
-        }
         match name {
             "texture" => self.texture(&arguments[0], &arguments[1]),
             "textureLod" => self.texture(&arguments[0], &arguments[1]),
@@ -495,7 +533,7 @@ impl Runtime {
         let c = if surface.filter_mode() == FilterMode::Linear {
             sample_bilinear(surface, p[0], p[1])
         } else {
-            sample_nearest(surface, p[0], p[1])
+            sample_nearest_texel(surface, f64::from(p[0]), f64::from(p[1]))
         };
         Ok(Value::Vec(c.to_vec()))
     }
@@ -546,25 +584,6 @@ impl Runtime {
             }
         }
     }
-}
-
-fn reduced_turn_sine(value: &Value) -> Result<Value, VmError> {
-    const TAU: f32 = std::f32::consts::TAU;
-    const INV_TAU: f32 = 1.0 / std::f32::consts::TAU;
-    let input = float_lanes(value)?;
-    let output = input
-        .iter()
-        .map(|value| {
-            let turns = *value * INV_TAU;
-            let phase = turns - turns.floor();
-            (f64::from(phase) * f64::from(TAU)).sin() as f32
-        })
-        .collect::<Vec<_>>();
-    Ok(if matches!(value, Value::Float(_)) {
-        Value::Float(f64::from(output[0]))
-    } else {
-        Value::Vec(output)
-    })
 }
 
 fn unary_argument<'a>(name: &str, args: &'a [Value]) -> Result<&'a Value, VmError> {

@@ -152,7 +152,7 @@ fn canonical_hash_uint_call_matches_javascript_cpu_semantics() {
             "arguments":[literal("uint",value)]
         })
     };
-    let ir = program(
+    let mut ir = program(
         vec![
             canonical_hash,
             user_hash,
@@ -173,6 +173,7 @@ fn canonical_hash_uint_call_matches_javascript_cpu_semantics() {
         vec![],
         vec![],
     );
+    ir.cpu_murmur_functions = Some(vec!["hash_uint".into()]);
     let mut vm = ShaderVm::new(&ir, Runtime::new()).unwrap();
     let mut outputs = ShaderOutputs::new();
     vm.run_pixel(&PixelContext::default(), &mut outputs)
@@ -615,4 +616,221 @@ fn vm_wires_texture_and_derivative_builtins_through_runtime() {
     let mut outputs = BTreeMap::new();
     vm.run_pixel(&context, &mut outputs).unwrap();
     assert_eq!(outputs["fragColor"], Value::Vec(vec![0.25, 0.5, 0.75, 1.0]));
+}
+
+#[test]
+fn cpu_integer_division_operators_preserve_number_storage_and_explicit_casts() {
+    let make_ir = |operator: &str, cpu: bool| {
+        let mut source = json!({
+            "outputs":["fragColor"],"varyings":[],"structs":[],"uniforms":[],
+            "globals":[{"name":"fragColor","type":"vec4","initializer":null,"arraySize":null}],
+            "functions":[main_function(vec![
+                json!({"kind":"declaration","declarations":[{"name":"x","type":"int","arraySize":null,
+                    "initializer":binary("int",operator,literal("int",1),literal("int",41))}]}),
+                expr(assign("vec4","=",id("vec4","fragColor","global"),
+                    json!({"kind":"construct","type":"vec4","arguments":[id("int","x","local"), {"kind":"construct","type":"int","arguments":[id("int","x","local")]}, literal("float",0.0),literal("float",0.0)]})))
+            ])]
+        });
+        if cpu {
+            source["cpuMurmurFunctions"] = json!([]);
+        }
+        serde_json::from_value::<ProgramIr>(source).unwrap()
+    };
+    for (operator, cpu, expected) in [
+        ("/", true, 1.0_f32 / 41.0),
+        ("trunc/", true, 0.0),
+        ("/", false, 0.0),
+    ] {
+        let mut vm = ShaderVm::new(&make_ir(operator, cpu), Runtime::new()).unwrap();
+        let mut outputs = ShaderOutputs::new();
+        vm.run_pixel(&PixelContext::default(), &mut outputs)
+            .unwrap();
+        assert_eq!(
+            outputs["fragColor"],
+            Value::Vec(vec![expected, expected.trunc(), 0.0, 0.0]),
+            "{operator} CPU={cpu}"
+        );
+    }
+}
+
+#[test]
+fn cpu_murmur_metadata_routes_any_name_and_preserves_unsigned_remainder() {
+    for (name, routed, expected) in [("hash_mix", true, 7.0), ("hash_uint", false, 9.0)] {
+        let source = json!({
+            "cpuMurmurFunctions":if routed { vec![name] } else { vec![] },
+            "outputs":["fragColor"],"varyings":[],"structs":[],"uniforms":[],
+            "globals":[{"name":"fragColor","type":"vec4","initializer":null,"arraySize":null}],
+            "functions":[
+                {"name":name,"mangledName":format!("{name}__uint"),"returnType":"uint",
+                    "parameters":[{"name":"v","type":"uint","qualifier":"in"}],
+                    "body":[{"kind":"return","value":literal("uint",99)}]},
+                main_function(vec![expr(assign("vec4","=",id("vec4","fragColor","global"),
+                    json!({"kind":"construct","type":"vec4","arguments":[binary("uint","%",
+                        json!({"kind":"call","type":"uint","name":name,"target":format!("{name}__uint"),
+                            "arguments":[literal("uint",0xfedcba98_u32)]}),literal("uint",10))]})))])
+            ]
+        });
+        let ir = serde_json::from_value::<ProgramIr>(source).unwrap();
+        let mut vm = ShaderVm::new(&ir, Runtime::new()).unwrap();
+        let mut outputs = ShaderOutputs::new();
+        vm.run_pixel(&PixelContext::default(), &mut outputs)
+            .unwrap();
+        assert_eq!(outputs["fragColor"], Value::Vec(vec![expected; 4]));
+    }
+}
+
+#[test]
+fn cpu_compound_division_uses_the_emitted_scalar_and_vector_boundaries() {
+    let mut ir = program(
+        vec![main_function(vec![
+            json!({"kind":"declaration","declarations":[
+                {"name":"raw","type":"int","initializer":literal("int",1),"arraySize":null},
+                {"name":"truncated","type":"int","initializer":literal("int",1),"arraySize":null},
+                {"name":"vector","type":"vec2","initializer":{"kind":"construct","type":"vec2","arguments":[literal("float",1.0)]},"arraySize":null}
+            ]}),
+            expr(assign(
+                "int",
+                "/=",
+                id("int", "raw", "local"),
+                literal("int", 41),
+            )),
+            expr(assign(
+                "int",
+                "trunc/=",
+                id("int", "truncated", "local"),
+                literal("int", 41),
+            )),
+            expr(assign(
+                "vec2",
+                "metal/=",
+                id("vec2", "vector", "local"),
+                literal("float", 41.0),
+            )),
+            expr(assign(
+                "vec4",
+                "=",
+                id("vec4", "fragColor", "global"),
+                json!({"kind":"construct","type":"vec4","arguments":[id("int","raw","local"),id("int","truncated","local"),id("vec2","vector","local")]}),
+            )),
+        ])],
+        &["fragColor"],
+        vec![json!({"name":"fragColor","type":"vec4","initializer":null,"arraySize":null})],
+        vec![],
+        vec![],
+    );
+    ir.cpu_murmur_functions = Some(vec![]);
+    let mut vm = ShaderVm::new(&ir, Runtime::new()).unwrap();
+    let mut outputs = ShaderOutputs::new();
+    vm.run_pixel(&PixelContext::default(), &mut outputs)
+        .unwrap();
+    let Value::Vec(lanes) = &outputs["fragColor"] else {
+        panic!("vec4 output required");
+    };
+    assert_eq!(
+        lanes
+            .iter()
+            .map(|value| value.to_bits())
+            .collect::<Vec<_>>(),
+        vec![1019727372, 0, 1019727373, 1019727373]
+    );
+}
+
+#[test]
+fn cpu_mat2_runtime_division_preserves_matrix_type_and_component_bits() {
+    for shape in ["matrix/scalar", "scalar/matrix", "compound"] {
+        let matrix =
+            |value| json!({"kind":"construct","type":"mat2","arguments":[literal("float",value)]});
+        let initializer = match shape {
+            "matrix/scalar" => binary("mat2", "metal/", matrix(1.0), literal("float", 41.0)),
+            "scalar/matrix" => binary("mat2", "metal/", literal("float", 1.0), matrix(41.0)),
+            _ => matrix(1.0),
+        };
+        let mut body = vec![
+            json!({"kind":"declaration","declarations":[{"name":"m","type":"mat2","arraySize":null,"initializer":initializer}]}),
+        ];
+        if shape == "compound" {
+            body.push(expr(assign(
+                "mat2",
+                "metal/=",
+                id("mat2", "m", "local"),
+                literal("float", 41.0),
+            )));
+        }
+        body.push(expr(assign("vec4", "=", id("vec4", "fragColor", "global"),
+        json!({"kind":"construct","type":"vec4","arguments":[
+            {"kind":"index","type":"vec2","object":id("mat2","m","local"),"index":literal("int",0)},
+            {"kind":"index","type":"vec2","object":id("mat2","m","local"),"index":literal("int",1)}
+        ]}))));
+        let mut ir = program(
+            vec![main_function(body)],
+            &["fragColor"],
+            vec![json!({"name":"fragColor","type":"vec4","initializer":null,"arraySize":null})],
+            vec![],
+            vec![],
+        );
+        ir.cpu_murmur_functions = Some(vec![]);
+        let mut vm = ShaderVm::new(&ir, Runtime::new()).unwrap();
+        let mut outputs = ShaderOutputs::new();
+        vm.run_pixel(&PixelContext::default(), &mut outputs)
+            .unwrap();
+        let Value::Vec(lanes) = &outputs["fragColor"] else {
+            panic!("vec4 output required")
+        };
+        assert_eq!(
+            lanes.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+            if shape == "scalar/matrix" {
+                vec![
+                    1019727373,
+                    f32::INFINITY.to_bits(),
+                    f32::INFINITY.to_bits(),
+                    1019727373,
+                ]
+            } else {
+                vec![1019727373, 0, 0, 1019727373]
+            },
+            "{shape}"
+        );
+    }
+}
+
+#[test]
+fn cpu_integer_component_builtins_accept_number_division_operands() {
+    for ty in ["int", "uint"] {
+        for name in ["min", "max", "clamp"] {
+            for cpu in [false, true] {
+                let quotient = binary(ty, "/", literal(ty, 7), literal(ty, 4));
+                let arguments = match name {
+                    "max" => vec![literal(ty, 1), quotient],
+                    "min" => vec![literal(ty, 2), quotient],
+                    _ => vec![literal(ty, 2), literal(ty, 0), quotient],
+                };
+                let mut ir = program(
+                    vec![main_function(vec![expr(assign(
+                        "vec4",
+                        "=",
+                        id("vec4", "fragColor", "global"),
+                        json!({"kind":"construct","type":"vec4","arguments":[
+                            {"kind":"call","type":ty,"name":name,"target":format!("builtin:{name}"),"arguments":arguments}
+                        ]}),
+                    ))])],
+                    &["fragColor"],
+                    vec![
+                        json!({"name":"fragColor","type":"vec4","initializer":null,"arraySize":null}),
+                    ],
+                    vec![],
+                    vec![],
+                );
+                ir.cpu_murmur_functions = cpu.then(Vec::new);
+                let mut vm = ShaderVm::new(&ir, Runtime::new()).unwrap();
+                let mut outputs = ShaderOutputs::new();
+                vm.run_pixel(&PixelContext::default(), &mut outputs)
+                    .unwrap();
+                assert_eq!(
+                    outputs["fragColor"],
+                    Value::Vec(vec![if cpu { 1.75 } else { 1.0 }; 4]),
+                    "{ty} {name} CPU={cpu}"
+                );
+            }
+        }
+    }
 }

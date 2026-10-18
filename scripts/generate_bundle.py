@@ -282,6 +282,7 @@ def _build(source: Path) -> tuple[dict, dict, dict]:
                     # programs have none, so behavior is unchanged.
                     varyings=None,
                     runtime_defines=program_defines,
+                    effect_id=effect_id,
                 ),
             }
     provenance = dict(metadata.get("provenance", {}))

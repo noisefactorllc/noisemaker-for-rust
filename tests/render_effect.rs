@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 
+use sha2::{Digest, Sha256};
+
 use noisemaker_cpu::{ParamValue, RenderError, RenderOptions, Surface, render_effect};
 
 fn options() -> RenderOptions {
@@ -257,7 +259,7 @@ fn classic_palette_defaults_match_javascript_cpu_oracle_pixels() {
 }
 
 #[test]
-fn crt_reduced_turn_sine_matches_javascript_cpu_oracle_rgba8_pixel() {
+fn crt_native_adapter_matches_javascript_cpu_oracle_rgba8_pixel() {
     let input = flat([
         0x55 as f32 / 255.0,
         0x88 as f32 / 255.0,
@@ -272,7 +274,9 @@ fn crt_reduced_turn_sine_matches_javascript_cpu_oracle_rgba8_pixel() {
     )
     .unwrap();
     let offset = ((3 * 8) * 4) as usize;
-    assert_eq!(&crt.to_rgba8()[offset..offset + 4], &[96, 151, 224, 255]);
+    // CPU 4aeb3e1e crtFactory at fragCoord [0.5,4.5], alpha 0.5, speed 1;
+    // raw [0.3803921937942505,0.5960784554481506,0.8843137621879578,1], then rgba16f.
+    assert_eq!(&crt.to_rgba8()[offset..offset + 4], &[97, 152, 225, 255]);
 }
 
 #[test]
@@ -292,11 +296,18 @@ fn snow_f32_semantic_adapter_matches_javascript_cpu_oracle_pixels() {
         &options(),
     )
     .unwrap();
+    // CPU 4aeb3e1e028b2dc412401f7b7f17c014c603bf14 snowFactory, identical
+    // 8x8 Float32 input/options, default alpha 0.5/density 75/pause false, then rgba16f.
+    let rgba8 = snow.to_rgba8();
     assert_eq!(
-        &snow.to_rgba8()[..16],
+        &rgba8[..16],
         &[
-            83, 116, 159, 255, 50, 76, 110, 255, 65, 96, 137, 255, 44, 69, 104, 255
+            82, 114, 158, 255, 51, 77, 111, 255, 65, 95, 136, 255, 44, 69, 104, 255
         ]
+    );
+    assert_eq!(
+        format!("{:x}", Sha256::digest(&rgba8)),
+        "1945c3cec2d4b35d46259a2660f33fdcc5fe78683e197e089166f80fbae49b9f"
     );
 }
 

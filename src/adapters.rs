@@ -7,17 +7,19 @@
 use std::collections::BTreeMap;
 
 use crate::catalog::{Expression, RenderPass, shader_bundle};
-use crate::{RenderError, Surface, Value, sample_nearest};
+use crate::{RenderError, Surface, Value};
 
-pub const FRAGMENT_ADAPTER_KEYS: [&str; 4] = [
+pub const FRAGMENT_ADAPTER_KEYS: [&str; 6] = [
     "classicNoisedeck/fractal:fractal",
+    "filter/crt:crt",
     "filter/historicPalette:historicPalette",
+    "filter/median:median",
     "filter/palette:palette",
     "synth/julia:julia",
 ];
 
 #[must_use]
-pub const fn fragment_adapter_keys() -> [&'static str; 4] {
+pub const fn fragment_adapter_keys() -> [&'static str; 6] {
     FRAGMENT_ADAPTER_KEYS
 }
 
@@ -80,6 +82,16 @@ pub(crate) fn execute_fragment_adapter(
             render_palette(uniforms, resources, &mut output, true)?
         }
         "synth/julia:julia" => render_julia(uniforms, &mut output)?,
+        "filter/crt:crt" => render_crt(
+            uniforms,
+            semantic_input(pass, resources, "inputTex")?,
+            &mut output,
+        )?,
+        "filter/median:median" => render_median(
+            uniforms,
+            semantic_input(pass, resources, "inputTex")?,
+            &mut output,
+        )?,
         _ => unreachable!(),
     }
     Ok(Some((output_name, output)))
@@ -286,22 +298,19 @@ fn snow_hash(x: f32, y: f32, z: f32) -> f32 {
     let sx = ffract(fmul(x, scale));
     let sy = ffract(fmul(y, scale));
     let sz = ffract(fmul(z, scale));
-    let left = f32_from_js(
-        f64::from(sx) * f64::from(fadd(sy, offset)) + f64::from(fmul(sy, fadd(sz, offset))),
+    let dot = sz.mul_add(
+        fadd(sx, offset),
+        sy.mul_add(fadd(sz, offset), fmul(sx, fadd(sy, offset))),
     );
-    let dot = f32_from_js(f64::from(left) + f64::from(sz) * f64::from(fadd(sx, offset)));
-    let shifted_xy = f32_from_js(f64::from(sx) + f64::from(sy) + 2.0 * f64::from(dot));
-    ffract(f32_from_js(
-        f64::from(shifted_xy) * f64::from(fadd(sz, dot)),
-    ))
-    .clamp(0.0, 1.0)
+    let shifted_xy = f32_from_js(f64::from(fadd(sx, sy)) + 2.0 * f64::from(dot));
+    ffract(fmul(shifted_xy, fadd(sz, dot))).clamp(0.0, 1.0)
 }
 
 fn navier_hash11(x: f64) -> f32 {
     const SCALE: f32 = 43_758.546_875;
-    let sine = (x * f64::from(12.989_800_453_186_035_f32)).sin() as f32;
-    let product = f64::from(sine) * f64::from(SCALE);
-    (product - product.floor()) as f32
+    let scaled = fmul(x as f32, 12.989_800_453_186_035_f32);
+    let sine = f64::from(scaled).sin() as f32;
+    ffract(fmul(sine, SCALE))
 }
 
 /// The CPU oracle folds a GLSL `dot` into a fused-multiply-add chain with one
@@ -316,14 +325,14 @@ fn navier_dot(a: [f32; 2], b: [f32; 2]) -> f32 {
     sum
 }
 
-fn navier_hash22(mut p: [f32; 2]) -> [f32; 2] {
+fn navier_hash22(p: [f32; 2]) -> [f32; 2] {
     const SCALE: f32 = 43_758.546_875;
-    p[0] = navier_dot(
+    let first = navier_dot(
         [p[0], p[1]],
         [127.099_998_474_121_1_f32, 311.700_012_207_031_25_f32],
     );
-    p[1] = navier_dot([p[0], p[1]], [269.5_f32, 183.300_003_051_757_8_f32]);
-    p.map(|value| {
+    let second = navier_dot(p, [269.5_f32, 183.300_003_051_757_8_f32]);
+    [first, second].map(|value| {
         let sine = f64::from(value).sin() as f32;
         let product = (f64::from(sine) * f64::from(SCALE)) as f32;
         (f64::from(product) - f64::from(product).floor()) as f32
@@ -354,10 +363,14 @@ fn render_navier_splat(
         let shader_y = output.height() - 1 - storage_y;
         for x in 0..output.width() {
             let uv = [
-                (f64::from(x as f32 + 0.5) / texture_width) as f32,
-                (f64::from(shader_y as f32 + 0.5) / texture_height) as f32,
+                crate::metal_division::metal_divide(f64::from(x as f32 + 0.5), texture_width)
+                    as f32,
+                crate::metal_division::metal_divide(
+                    f64::from(shader_y as f32 + 0.5),
+                    texture_height,
+                ) as f32,
             ];
-            let previous = sample_nearest(buffer, uv[0], uv[1]);
+            let previous = navier_texture(buffer, uv);
             let mut result = [0.0_f32; 4];
 
             if reset_state || previous[3] == 0.0 {
@@ -392,8 +405,11 @@ fn render_navier_splat(
                         + f64::from(radius_squared)) as f32;
                     radius_squared = (f64::from(delta[1]) * f64::from(delta[1])
                         + f64::from(radius_squared)) as f32;
-                    let falloff =
-                        (-f64::from(radius_squared) / ((2.0 * radius) * radius)).exp() as f32;
+                    let falloff = crate::metal_division::metal_divide(
+                        -f64::from(radius_squared),
+                        (2.0 * radius) * radius,
+                    )
+                    .exp() as f32;
                     let tangent = [-delta[1], delta[0]];
                     velocity[0] = (f64::from(velocity[0])
                         + ((f64::from(tangent[0]) * sign) * f64::from(falloff)) * 12.0)
@@ -419,14 +435,15 @@ fn render_navier_splat(
                 let dye_amount = f64::from(input_dye.clamp(0.0, 100.0) as f32)
                     * f64::from(0.009_999_999_776_482_582_f32);
                 if force > 0.0 || dye_amount > 0.0 {
-                    let texel = [(1.0 / texture_width) as f32, (1.0 / texture_height) as f32];
-                    let center_luminance = navier_luminance(sample_nearest(input, uv[0], uv[1]));
+                    let texel = [
+                        crate::metal_division::metal_divide(1.0, texture_width) as f32,
+                        crate::metal_division::metal_divide(1.0, texture_height) as f32,
+                    ];
+                    let center_luminance = navier_luminance(navier_texture(input, uv));
                     let right_uv = [(f64::from(uv[0]) + f64::from(texel[0])) as f32, uv[1]];
                     let upper_uv = [uv[0], (f64::from(uv[1]) + f64::from(texel[1])) as f32];
-                    let right_luminance =
-                        navier_luminance(sample_nearest(input, right_uv[0], right_uv[1]));
-                    let upper_luminance =
-                        navier_luminance(sample_nearest(input, upper_uv[0], upper_uv[1]));
+                    let right_luminance = navier_luminance(navier_texture(input, right_uv));
+                    let upper_luminance = navier_luminance(navier_texture(input, upper_uv));
                     let gradient = [
                         (right_luminance - center_luminance) as f32,
                         (upper_luminance - center_luminance) as f32,
@@ -456,11 +473,7 @@ fn snow_noise(x: f32, y: f32, time: f32, speed: f32, seed: [f32; 3]) -> f32 {
     const TIME_SEED_OFFSETS: [f32; 3] = [97.0, 57.0, 131.0];
     let angle = fmul(time, std::f32::consts::TAU);
     let cosine = snow_cosine(angle);
-    let z_base = if cosine.abs() < f32_from_js(0.000_000_1) {
-        0.0
-    } else {
-        fmul(cosine, speed)
-    };
+    let z_base = fmul(cosine, speed);
     let base = snow_hash(fadd(x, seed[0]), fadd(y, seed[1]), fadd(z_base, seed[2]));
     if speed == 0.0 || time == 0.0 {
         return base;
@@ -481,18 +494,21 @@ fn render_snow(
 ) -> Result<(), RenderError> {
     const STATIC_SEED: [f32; 3] = [37.0, 17.0, 53.0];
     const LIMITER_SEED: [f32; 3] = [113.0, 71.0, 193.0];
-    let alpha = scalar(uniforms, "alpha")?.clamp(0.0, 1.0);
+    let alpha = scalar_number(uniforms, "alpha")?.clamp(0.0, 1.0);
     let time = if boolean(uniforms, "pause")? {
         0.0
     } else {
         scalar(uniforms, "time")?
     };
-    let density = fmul(scalar(uniforms, "density")?, f32_from_js(0.01)).max(f32_from_js(0.0001));
+    let density = crt_max(
+        f32_from_js(scalar_number(uniforms, "density")? * f64::from(0.01_f32)),
+        0.0001_f32,
+    );
     let exponent = fdiv(fsub(1.0, density), density);
     for storage_y in 0..output.height() {
         let shader_y = output.height() - 1 - storage_y;
         for x in 0..output.width() {
-            let source_offset = ((storage_y * input.width() + x) * 4) as usize;
+            let source_offset = adapter_texel_offset(input, f64::from(x), f64::from(shader_y));
             let output_offset = ((storage_y * output.width() + x) * 4) as usize;
             if alpha == 0.0 {
                 output.data_mut()[output_offset..output_offset + 4]
@@ -506,7 +522,7 @@ fn render_snow(
             let power = f32_from_js(
                 f64::from(limiter_value.min(f32_from_js(0.99))).powf(f64::from(exponent)),
             );
-            let limiter_mask = fmul(power, alpha);
+            let limiter_mask = f32_from_js(f64::from(power) * alpha);
             let inverse_mask = fsub(1.0, limiter_mask);
             for channel in 0..3 {
                 output.data_mut()[output_offset + channel] = f32_from_js(
@@ -960,7 +976,7 @@ fn render_palette(
                 (x as f32 + 0.5) / input.width() as f32,
                 (shader_y as f32 + 0.5) / input.height() as f32,
             ];
-            let source = sample_nearest(input, uv[0], uv[1]);
+            let source = navier_texture(input, uv);
             let lum = source[0] * 0.299 + source[1] * 0.587 + source[2] * 0.114;
             let color = if historic {
                 historic_color(&table[index.clamp(0, 20) as usize], lum, uniforms)?
@@ -1392,4 +1408,636 @@ fn render_julia(
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+#[path = "adapters_sync_tests.rs"]
+mod cpu_adapter_sync;
+
+fn navier_texture(surface: &Surface, uv: [f32; 2]) -> [f32; 4] {
+    if surface.filter_mode() == crate::FilterMode::Linear {
+        crate::sample_bilinear(surface, uv[0], uv[1])
+    } else {
+        crate::sampler::sample_nearest_texel(surface, f64::from(uv[0]), f64::from(uv[1]))
+    }
+}
+
+// GLSL texelFetch and snow's direct fetch coerce through JavaScript ToInt32.
+fn adapter_int32(value: f64) -> i32 {
+    if !value.is_finite() || value == 0.0 {
+        return 0;
+    }
+    value.trunc().rem_euclid(4_294_967_296.0) as u32 as i32
+}
+fn adapter_texel_offset(surface: &Surface, x: f64, y: f64) -> usize {
+    let x = adapter_int32(x).clamp(0, surface.width() as i32 - 1) as u32;
+    let y = adapter_int32(y).clamp(0, surface.height() as i32 - 1) as u32;
+    (((surface.height() - 1 - y) * surface.width() + x) * 4) as usize
+}
+fn adapter_fetch(surface: &Surface, x: f32, y: f32) -> [f32; 4] {
+    let offset = adapter_texel_offset(surface, f64::from(x), f64::from(y));
+    surface.data()[offset..offset + 4].try_into().unwrap()
+}
+
+fn median_half(value: f32) -> u32 {
+    if value.is_nan() {
+        return 0x7e00;
+    }
+    let bits = value.to_bits();
+    let sign = (bits >> 16) & 0x8000;
+    let mut exponent = ((bits >> 23) & 0xff) as i32 - 127 + 15;
+    let mut fraction = bits & 0x7fffff;
+    if exponent <= 0 {
+        if exponent < -10 {
+            return sign;
+        }
+        fraction = (fraction | 0x800000) >> (1 - exponent);
+        return sign | ((fraction + 0x1000) >> 13);
+    }
+    if exponent >= 31 {
+        return sign | 0x7c00;
+    }
+    fraction += 0x1000;
+    if fraction & 0x800000 != 0 {
+        fraction = 0;
+        exponent += 1;
+        if exponent >= 31 {
+            return sign | 0x7c00;
+        }
+    }
+    sign | ((exponent as u32) << 10) | (fraction >> 13)
+}
+fn median_unhalf(value: u32) -> f32 {
+    let sign = if value & 0x8000 != 0 { -1.0_f64 } else { 1.0 };
+    let exponent = (value >> 10) & 0x1f;
+    let fraction = value & 0x3ff;
+    if exponent == 0 {
+        return (sign * 2.0_f64.powi(-14) * f64::from(fraction) / 1024.0) as f32;
+    }
+    if exponent == 31 {
+        return if fraction != 0 {
+            f32::NAN
+        } else {
+            (sign * f64::INFINITY) as f32
+        };
+    }
+    (sign * 2.0_f64.powi(exponent as i32 - 15) * (1.0 + f64::from(fraction) / 1024.0)) as f32
+}
+fn render_median(
+    uniforms: &BTreeMap<String, Value>,
+    input: &Surface,
+    output: &mut Surface,
+) -> Result<(), RenderError> {
+    let radius = adapter_int32(f64::from(scalar(uniforms, "RADIUS")?));
+    let threshold = scalar_number(uniforms, "threshold")?;
+    let mut records = Vec::with_capacity(49);
+    for row in 0..output.height() {
+        for x in 0..output.width() {
+            let y = output.height() - 1 - row;
+            let original = adapter_fetch(input, x as f32, y as f32);
+            records.clear();
+            for dy in -radius..=radius {
+                for dx in -radius..=radius {
+                    let pixel = adapter_fetch(input, x as f32 + dx as f32, y as f32 + dy as f32);
+                    let luminance = fadd(
+                        fadd(
+                            f32_from_js(f64::from(pixel[0]) * 0.2126),
+                            f32_from_js(f64::from(pixel[1]) * 0.7152),
+                        ),
+                        f32_from_js(f64::from(pixel[2]) * 0.0722),
+                    );
+                    records.push((
+                        luminance.to_bits(),
+                        (median_half(pixel[0]) << 16) | median_half(pixel[1]),
+                        median_half(pixel[2]),
+                    ));
+                }
+            }
+            records.sort_unstable();
+            let (_, packed, blue) = records[(records.len() - 1) >> 1];
+            let median = [
+                median_unhalf(packed >> 16),
+                median_unhalf(packed & 0xffff),
+                median_unhalf(blue),
+            ];
+            let difference = (0..3)
+                .map(|i| (f64::from(original[i]) - f64::from(median[i])).abs())
+                .fold(0.0_f64, |a, b| {
+                    if a.is_nan() || b.is_nan() {
+                        f64::NAN
+                    } else {
+                        a.max(b)
+                    }
+                });
+            let replace = threshold <= 0.0 || difference >= threshold / 100.0;
+            let offset = ((row * output.width() + x) * 4) as usize;
+            output.data_mut()[offset..offset + 3].copy_from_slice(if replace {
+                &median
+            } else {
+                &original[..3]
+            });
+            output.data_mut()[offset + 3] = original[3];
+        }
+    }
+    Ok(())
+}
+
+// This adapter follows CPU crt.js's separate M2 reciprocal and sine model.
+fn crt_div(a: f32, b: f32) -> f32 {
+    fmul(a, (1.0 / f64::from(b)) as f32)
+}
+fn crt_min(a: f32, b: f32) -> f32 {
+    if a.is_nan() || b.is_nan() {
+        f32::NAN
+    } else if a == 0.0 && b == 0.0 {
+        f32::from_bits((a.to_bits() | b.to_bits()) & 0x80000000)
+    } else {
+        a.min(b)
+    }
+}
+fn crt_max(a: f32, b: f32) -> f32 {
+    if a.is_nan() || b.is_nan() {
+        f32::NAN
+    } else if a == 0.0 && b == 0.0 {
+        f32::from_bits(a.to_bits() & b.to_bits() & 0x80000000)
+    } else {
+        a.max(b)
+    }
+}
+fn crt_clamp(v: f32, low: f32, high: f32) -> f32 {
+    crt_min(crt_max(v, low), high)
+}
+fn crt_clamp01(v: f32) -> f32 {
+    crt_clamp(v, 0.0, 1.0)
+}
+fn crt_sqrt(v: f32) -> f32 {
+    f64::from(v).sqrt() as f32
+}
+fn crt_mix(a: f32, b: f32, t: f32) -> f32 {
+    t.mul_add(fsub(b, a), a)
+}
+fn crt_length(x: f32, y: f32) -> f32 {
+    crt_sqrt(y.mul_add(y, fmul(x, x)))
+}
+fn crt_dot(a: [f32; 3], b: [f32; 3]) -> f32 {
+    a[2].mul_add(b[2], a[1].mul_add(b[1], fmul(a[0], b[0])))
+}
+fn crt_quadrant(r: f32) -> f32 {
+    let r = f64::from(r);
+    let n = r.floor();
+    let f = r - n;
+    let y = if (n as i32) & 1 != 0 { 1.0 - f } else { f };
+    if y == 0.0 {
+        return if n >= 2.0 { -0.0 } else { 0.0 };
+    }
+    let z = 2.0 * y * y - 1.0;
+    let quotient = (y * std::f64::consts::PI / 2.0).sin() / y;
+    let p = (quotient
+        - 2.0_f64.powi(-23) * (0.783734 + 0.010102 * z + 0.052674 * (2.0 * z * z - 1.0)))
+        as f32;
+    let value = (y * f64::from(p)) as f32;
+    if n >= 2.0 { -value } else { value }
+}
+fn crt_sin_turns(turns: f32) -> f32 {
+    crt_quadrant((4.0 * (f64::from(turns) - f64::from(turns).floor())) as f32)
+}
+fn crt_sin(x: f32) -> f32 {
+    crt_sin_turns(fmul(x, (1.0 / (2.0 * std::f64::consts::PI)) as f32))
+}
+fn crt_cos_turns(turns: f32) -> f32 {
+    crt_sin_turns(fadd(turns, 0.25))
+}
+fn crt_periodic(time: f32, value: f32) -> f32 {
+    crt_sin_turns(fsub(time, value)).mul_add(0.5, 0.5)
+}
+fn crt_mod289(x: f32) -> f32 {
+    fsub(x, fmul(fmul(x, (1.0 / 289.0) as f32).floor(), 289.0))
+}
+fn crt_permute(x: f32) -> f32 {
+    crt_mod289(fmul(x.mul_add(34.0, 1.0), x))
+}
+fn crt_simplex(v: [f32; 3]) -> f32 {
+    let cx = (1.0 / 6.0) as f32;
+    let cy = (1.0 / 3.0) as f32;
+    let dv = crt_dot(v, [cy; 3]);
+    let i = v.map(|x| fadd(x, dv).floor());
+    let di = crt_dot(i, [cx; 3]);
+    let x0 = std::array::from_fn::<_, 3, _>(|k| fadd(fsub(v[k], i[k]), di));
+    let s: [f32; 3] = [
+        if x0[0] < x0[1] { 0.0 } else { 1.0 },
+        if x0[1] < x0[2] { 0.0 } else { 1.0 },
+        if x0[2] < x0[0] { 0.0 } else { 1.0 },
+    ];
+    let l = [1.0 - s[2], 1.0 - s[0], 1.0 - s[1]];
+    let i1 = std::array::from_fn::<_, 3, _>(|k| s[k].min(l[k]));
+    let i2 = std::array::from_fn::<_, 3, _>(|k| s[k].max(l[k]));
+    let corners = [
+        x0,
+        std::array::from_fn(|k| fadd(fsub(x0[k], i1[k]), cx)),
+        std::array::from_fn(|k| fadd(fsub(x0[k], i2[k]), cy)),
+        x0.map(|x| fsub(x, 0.5)),
+    ];
+    let i = i.map(crt_mod289);
+    let offsets = [[0.0; 3], i1, i2, [1.0; 3]];
+    let mut p = [0.0; 4];
+    for k in 0..4 {
+        let pz = crt_permute(fadd(i[2], offsets[k][2]));
+        let py = crt_permute(fadd(fadd(pz, i[1]), offsets[k][1]));
+        p[k] = crt_permute(fadd(fadd(py, i[0]), offsets[k][0]));
+    }
+    let n = (1.0 / 7.0) as f32;
+    let nsx = fmul(n, 2.0);
+    let nsy = fsub(fmul(n, 0.5), 1.0);
+    let mut gradients = [[0.0; 3]; 4];
+    for k in 0..4 {
+        let j = fsub(p[k], fmul(49.0, fmul(fmul(p[k], n), n).floor()));
+        let xi = fmul(j, n).floor();
+        let yi = fsub(j, fmul(7.0, xi)).floor();
+        let x = xi.mul_add(nsx, nsy);
+        let y = yi.mul_add(nsx, nsy);
+        let h = fsub(fsub(1.0, x.abs()), y.abs());
+        let sh = if h > 0.0 { 0.0 } else { -1.0 };
+        gradients[k] = [
+            fadd(fmul(x.floor(), 2.0), 1.0).mul_add(sh, x),
+            fadd(fmul(y.floor(), 2.0), 1.0).mul_add(sh, y),
+            h,
+        ];
+    }
+    let mut sum = 0.0;
+    for k in 0..4 {
+        let g = gradients[k];
+        let norm = (-0.85373472095314_f32).mul_add(crt_dot(g, g), 1.79284291400159_f32);
+        let c = corners[k];
+        let m = crt_max(fsub(0.6, crt_dot(c, c)), 0.0);
+        let msq = fmul(m, m);
+        let term = crt_dot(g.map(|x| fmul(x, norm)), c);
+        sum = if k == 0 {
+            fmul(fmul(msq, msq), term)
+        } else {
+            fmul(msq, msq).mul_add(term, sum)
+        };
+    }
+    fmul(42.0, sum)
+}
+fn crt_wrap(value: f32, limit: f32) -> f32 {
+    if limit <= 0.0 {
+        return 0.0;
+    }
+    let mut result = (-crt_div(value, limit).floor()).mul_add(limit, value);
+    if result < 0.0 {
+        result = fadd(result, limit);
+    }
+    result
+}
+fn crt_noise_hash(c: [f32; 3], seed: f32) -> f32 {
+    ffract(fmul(
+        crt_sin(seed.mul_add(0.001, crt_dot(c, [12.9898, 78.233, 37.719]))),
+        43758.5453,
+    ))
+}
+fn crt_fade(v: f32) -> f32 {
+    fmul(fmul(v, v), (-2.0_f32).mul_add(v, 3.0))
+}
+fn crt_value_noise(v: [f32; 3], seed: f32) -> f32 {
+    let c = v.map(f32::floor);
+    let t = std::array::from_fn::<_, 3, _>(|k| crt_fade(fsub(v[k], c[k])));
+    let h = |x, y, z| crt_noise_hash([c[0] + x, c[1] + y, c[2] + z], seed);
+    let lerp = |a, b, t| fsub(b, a).mul_add(t, a);
+    let x00 = lerp(h(0.0, 0.0, 0.0), h(1.0, 0.0, 0.0), t[0]);
+    let x10 = lerp(h(0.0, 1.0, 0.0), h(1.0, 1.0, 0.0), t[0]);
+    let x01 = lerp(h(0.0, 0.0, 1.0), h(1.0, 0.0, 1.0), t[0]);
+    let x11 = lerp(h(0.0, 1.0, 1.0), h(1.0, 1.0, 1.0), t[0]);
+    lerp(lerp(x00, x10, t[1]), lerp(x01, x11, t[1]), t[2])
+}
+fn crt_wrap_unit(v: f32) -> f32 {
+    let mut w = fsub(v, v.floor());
+    if w < 0.0 {
+        w = fadd(w, 1.0);
+    }
+    w
+}
+fn crt_rgb_hsv(c: [f32; 3]) -> [f32; 3] {
+    let max = crt_max(crt_max(c[0], c[1]), c[2]);
+    let min = crt_min(crt_min(c[0], c[1]), c[2]);
+    let delta = fsub(max, min);
+    let mut hue = 0.0;
+    if delta > 0.0 {
+        hue = if max == c[0] {
+            let s = crt_div(fsub(c[1], c[2]), delta);
+            if s < 0.0 { fadd(s, 6.0) } else { s }
+        } else if max == c[1] {
+            fadd(crt_div(fsub(c[2], c[0]), delta), 2.0)
+        } else {
+            fadd(crt_div(fsub(c[0], c[1]), delta), 4.0)
+        };
+        hue = crt_wrap_unit(crt_div(hue, 6.0));
+    }
+    [hue, if max != 0.0 { crt_div(delta, max) } else { 0.0 }, max]
+}
+fn crt_hsv_rgb(h: f32, s: f32, v: f32) -> [f32; 3] {
+    let dh = fmul(h, 6.0);
+    let one = fsub(1.0, s);
+    [
+        crt_clamp01(fmul(
+            s.mul_add(crt_clamp01(fsub(fsub(dh, 3.0).abs(), 1.0)), one),
+            v,
+        )),
+        crt_clamp01(fmul(
+            s.mul_add(crt_clamp01(fadd(-fsub(dh, 2.0).abs(), 2.0)), one),
+            v,
+        )),
+        crt_clamp01(fmul(
+            s.mul_add(crt_clamp01(fadd(-fsub(dh, 4.0).abs(), 2.0)), one),
+            v,
+        )),
+    ]
+}
+fn crt_hue(c: [f32; 3], amount: f32) -> [f32; 3] {
+    let hsv = crt_rgb_hsv(c);
+    crt_hsv_rgb(
+        crt_wrap_unit(fadd(hsv[0], amount)),
+        crt_clamp01(hsv[1]),
+        crt_clamp01(hsv[2]),
+    )
+}
+fn crt_saturation(c: [f32; 3], amount: f32) -> [f32; 3] {
+    let hsv = crt_rgb_hsv(c);
+    crt_hsv_rgb(
+        hsv[0],
+        crt_clamp01(fmul(hsv[1], amount)),
+        crt_clamp01(hsv[2]),
+    )
+}
+
+struct CrtState {
+    width: f32,
+    height: f32,
+    freq: [f32; 2],
+    time: f32,
+    speed: f64,
+    base: [f32; 3],
+    time_seed: [f32; 3],
+    z: f32,
+    aspect: f32,
+    max_radius: f32,
+    scan: [f32; 2],
+}
+impl CrtState {
+    fn noise(&self, u: f32, v: f32) -> f32 {
+        let base = crt_simplex([
+            fadd(u, self.base[0]),
+            fadd(v, self.base[1]),
+            fadd(self.z, self.base[2]),
+        ]);
+        let mut value = crt_clamp01(base.mul_add(0.5, 0.5));
+        if self.speed != 0.0 && self.time != 0.0 {
+            let n = crt_simplex([
+                fadd(u, self.time_seed[0]),
+                fadd(v, self.time_seed[1]),
+                self.time_seed[2],
+            ]);
+            let t = crt_clamp01(n.mul_add(0.5, 0.5));
+            value = crt_clamp01(crt_periodic(
+                f32_from_js(f64::from(crt_periodic(self.time, t)) * self.speed),
+                value,
+            ));
+        }
+        crt_clamp01(value)
+    }
+    fn lens(&self, x: f32, y: f32) -> [f32; 2] {
+        let x = crt_wrap(x, self.width);
+        let y = crt_wrap(y, self.height);
+        let noise = self.noise(
+            fmul(crt_div(x, self.width), self.freq[1]),
+            fmul(crt_div(y, self.height), self.freq[0]),
+        );
+        let dx = fsub(crt_div(fadd(x, 0.5), self.width), 0.5).abs();
+        let dy = fsub(crt_div(fadd(y, 0.5), self.height), 0.5).abs();
+        let mut mask = 0.0;
+        if self.max_radius > 0.0 {
+            let normalized = crt_clamp01(crt_div(
+                crt_length(fmul(dx, self.aspect), dy),
+                self.max_radius,
+            ));
+            let masked = crt_sqrt(normalized);
+            let square = fmul(masked, masked);
+            mask = fmul(fmul(square, square), masked);
+        }
+        let distortion = fmul(noise.mul_add(2.0, -1.0), mask);
+        [
+            fmul(fmul(crt_cos_turns(distortion), 0.0625), self.width),
+            fmul(fmul(crt_sin_turns(distortion), 0.0625), self.height),
+        ]
+    }
+    fn scan(&self, x: f32, y: f32) -> f32 {
+        let x = crt_clamp(crt_wrap(x, self.width), 0.0, fsub(self.width, 1.0));
+        let y = crt_clamp(crt_wrap(y, self.height), 0.0, fsub(self.height, 1.0));
+        let y0 = y.floor();
+        let y1 = crt_min(fadd(y0, 1.0), fsub(self.height, 1.0));
+        let tx = crt_clamp01(fsub(x, x.floor()));
+        let ty = crt_clamp01(fsub(y, y0));
+        let row = |r: f32| {
+            self.scan[if crt_div(r, 2.5).floor().trunc() % 2.0 == 0.0 {
+                0
+            } else {
+                1
+            }]
+        };
+        let a = row(y0);
+        let b = row(y1);
+        crt_mix(crt_mix(a, a, tx), crt_mix(b, b, tx), ty)
+    }
+}
+fn crt_blend_cosine(a: f32, b: f32, value: f32) -> f32 {
+    let c = crt_sin_turns(crt_clamp01(value).mul_add(0.5, 0.25));
+    let weight = fmul(fsub(1.0, c), 0.5);
+    b.mul_add(weight, fmul(a, 0.5_f32.mul_add(c, 0.5)))
+}
+fn crt_blend_scan(v: f32, scan: f32) -> f32 {
+    crt_mix(v, fmul(fadd(v, scan), scan), 0.5)
+}
+fn render_crt(
+    uniforms: &BTreeMap<String, Value>,
+    input: &Surface,
+    output: &mut Surface,
+) -> Result<(), RenderError> {
+    let resolution = vector(uniforms, "resolution")?;
+    let full = vector(uniforms, "fullResolution")?;
+    let full = if full[0] > 0.0 { full } else { resolution };
+    let tile = vector(uniforms, "tileOffset")?;
+    let render_scale = scalar_number(uniforms, "renderScale")?;
+    let rs = if render_scale.is_nan() {
+        f64::NAN
+    } else {
+        render_scale.max(1.0)
+    };
+    let alpha = scalar_number(uniforms, "alpha")?.clamp(0.0, 1.0);
+    let seed = scalar(uniforms, "seed")?;
+    let time = scalar(uniforms, "time")?;
+    let speed = scalar_number(uniforms, "speed")?;
+    let width = crt_max(fmul(full[0], (1.0 / rs) as f32), 1.0);
+    let height = crt_max(fmul(full[1], (1.0 / rs) as f32), 1.0);
+    let freq = if fsub(width, height).abs() < 1e-5_f32 {
+        [2.0, 2.0]
+    } else if height < width {
+        [2.0, crt_max(crt_div(fmul(2.0, width), height).floor(), 1.0)]
+    } else {
+        [crt_max(crt_div(fmul(2.0, height), width).floor(), 1.0), 2.0]
+    };
+    let s = fmul(seed, 73.0);
+    let base = [fadd(17.0, s), s.mul_add(1.1, 29.0), s.mul_add(0.7, 47.0)];
+    let time_seed = [
+        fadd(base[0], 54.0),
+        fadd(base[1], 82.0),
+        fadd(base[2], 124.0),
+    ];
+    let aspect = crt_div(width, height);
+    let scaled_time = fmul(f32_from_js(f64::from(time) * speed), 0.1);
+    let noise_seed = seed.mul_add(31.0, 19.37);
+    let state = CrtState {
+        width,
+        height,
+        freq,
+        time,
+        speed,
+        base,
+        time_seed,
+        z: f32_from_js(f64::from(crt_cos_turns(time)) * speed),
+        aspect,
+        max_radius: crt_length(fmul(aspect, 0.5), 0.5),
+        scan: [
+            crt_value_noise([0.0, 0.0, scaled_time], noise_seed),
+            crt_value_noise([1.0, 0.0, scaled_time], noise_seed),
+        ],
+    };
+    let hash = |offset: f32| {
+        let inv = (1.0 / (2.0 * std::f64::consts::PI)) as f32;
+        ffract(fmul(
+            crt_sin_turns(seed.mul_add(
+                (73.0 * f64::from(inv)) as f32,
+                fmul(fadd(17.0, offset), inv),
+            )),
+            43758.5453123,
+        ))
+    };
+    let displacement = fmul(fmul(hash(0.37).mul_add(0.00625, 0.0125), width), hash(0.73));
+    let hue = hash(1.91).mul_add(0.25, -0.125);
+    let vignette = fmul(hash(3.17), 0.175);
+    for row in 0..output.height() {
+        let gy = (output.height() - 1 - row) as f32;
+        for gx in 0..output.width() {
+            let original = adapter_fetch(input, gx as f32, gy);
+            let offset = ((row * output.width() + gx) * 4) as usize;
+            if alpha == 0.0 {
+                output.data_mut()[offset..offset + 4].copy_from_slice(&original);
+                continue;
+            }
+            let x = fmul(fadd(gx as f32, tile[0]), (1.0 / rs) as f32);
+            let y = fmul(fadd(gy, tile[1]), (1.0 / rs) as f32);
+            let lens = state.lens(x, y);
+            let scan = state.scan(fadd(x, lens[0]), fadd(y, lens[1]));
+            let green = [original[0], original[1], original[2]]
+                .map(|v| crt_clamp01(crt_blend_scan(v, scan)));
+            let dx = crt_div(fsub(x, fmul(width, 0.5)), width);
+            let dy = crt_div(fsub(y, fmul(height, 0.5)), height);
+            let singularity = crt_length(dx, dy);
+            let mask = fmul(fmul(singularity, singularity), singularity);
+            let gradient = crt_clamp01(crt_div(x, fsub(width, 1.0)));
+            let red_x = crt_blend_cosine(
+                x,
+                crt_mix(
+                    crt_min(fadd(x, displacement), fsub(width, 1.0)),
+                    x,
+                    gradient,
+                ),
+                mask,
+            );
+            let red = adapter_fetch(
+                input,
+                fsub(f32_from_js(f64::from(red_x) * render_scale), tile[0]).trunc(),
+                gy,
+            );
+            let lens = state.lens(red_x, y);
+            let red_scan = state.scan(fadd(red_x, lens[0]), fadd(y, lens[1]));
+            let blue_x = crt_blend_cosine(
+                x,
+                crt_mix(x, crt_max(fsub(x, displacement), 0.0), gradient),
+                mask,
+            );
+            let blue = adapter_fetch(
+                input,
+                fsub(f32_from_js(f64::from(blue_x) * render_scale), tile[0]).trunc(),
+                gy,
+            );
+            let lens = state.lens(blue_x, y);
+            let blue_scan = state.scan(fadd(blue_x, lens[0]), fadd(y, lens[1]));
+            let red = crt_hue(
+                [red[0], red[1], red[2]].map(|v| crt_blend_scan(v, red_scan)),
+                hue,
+            );
+            let green = crt_hue(green, hue);
+            let blue = crt_hue(
+                [blue[0], blue[1], blue[2]].map(|v| crt_blend_scan(v, blue_scan)),
+                hue,
+            );
+            let mut color = crt_saturation(crt_hue([red[0], green[1], blue[2]], -hue), 1.125);
+            for c in &mut color {
+                *c = crt_mix(*c, crt_mix(*c, 0.0, singularity), crt_clamp01(vignette));
+            }
+            let mean = fmul(fadd(fadd(color[0], color[1]), color[2]), (1.0 / 3.0) as f32);
+            for c in 0..3 {
+                let normalized = crt_clamp01(fsub(color[c], mean).mul_add(1.25, mean));
+                let quantized = crt_div(crt_clamp01(normalized).mul_add(255.0, 0.5).floor(), 255.0);
+                output.data_mut()[offset + c] = crt_fma_number(
+                    alpha,
+                    f64::from(fsub(quantized, original[c])),
+                    f64::from(original[c]),
+                );
+            }
+            output.data_mut()[offset + 3] = original[3];
+        }
+    }
+    Ok(())
+}
+
+fn scalar_number(uniforms: &BTreeMap<String, Value>, name: &str) -> Result<f64, RenderError> {
+    match uniforms.get(name) {
+        Some(Value::Float(value)) => Ok(*value),
+        Some(Value::Int(value)) => Ok(f64::from(*value)),
+        Some(Value::Uint(value)) => Ok(f64::from(*value)),
+        value => Err(RenderError::InvalidGraph {
+            message: format!("adapter uniform {name:?} is not scalar: {value:?}"),
+        }),
+    }
+}
+// Uniform scalar Numbers can have f64 precision. Match the CPU helper's TwoSum
+// for those inputs; all internal float32 chains use native f32::mul_add above.
+fn crt_fma_number(a: f64, b: f64, c: f64) -> f32 {
+    let product = a * b;
+    let sum = product + c;
+    let back = sum - product;
+    let error = (product - (sum - back)) + (c - back);
+    let rounded = sum as f32;
+    if error == 0.0 || f64::from(rounded) == sum {
+        return rounded;
+    }
+    let toward = if sum > f64::from(rounded) { 1_i32 } else { -1 };
+    let neighbor = if rounded == 0.0 {
+        toward as f32 * f32::from_bits(1)
+    } else {
+        let step = if (rounded > 0.0) == (toward > 0) {
+            1_i32
+        } else {
+            -1
+        };
+        f32::from_bits(rounded.to_bits().wrapping_add(step as u32))
+    };
+    if (f64::from(rounded) + f64::from(neighbor)) / 2.0 != sum {
+        return rounded;
+    }
+    if error > 0.0 {
+        crt_max(rounded, neighbor)
+    } else {
+        crt_min(rounded, neighbor)
+    }
 }

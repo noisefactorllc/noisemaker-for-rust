@@ -373,6 +373,8 @@ fn navier_splat_initial_attachment_matches_javascript_cpu_oracle() {
         false,
     )
     .unwrap();
+    // CPU 4aeb3e1e028b2dc412401f7b7f17c014c603bf14 nsSplat with identical
+    // default uniforms, zero 8x8 buffer and zero 1x1 input, then rgba16f truncation.
     let pixels = &resources["global_ns_velocity"].data()[..16];
     assert_eq!(
         pixels
@@ -380,21 +382,21 @@ fn navier_splat_initial_attachment_matches_javascript_cpu_oracle() {
             .map(|value| value.to_bits())
             .collect::<Vec<_>>(),
         [
-            0x3f18_0000,
-            0x3e80_8000,
-            0x3e81_4000,
+            0xbe69_a000,
+            0xbec4_2000,
+            0x3e0d_c000,
             0x3f80_0000,
-            0x3f43_0000,
-            0xbeaa_6000,
-            0x3eb6_c000,
+            0xbf39_2000,
+            0xbf0f_0000,
+            0x3ee0_e000,
             0x3f80_0000,
-            0x3ef7_2000,
-            0xbf96_8000,
-            0x3edf_2000,
+            0xbf78_e000,
+            0x3d9e_a000,
+            0x3f19_a000,
             0x3f80_0000,
-            0x3e81_8000,
-            0xbfec_0000,
-            0x3f76_4000,
+            0xbf0e_0000,
+            0x3dc1_c000,
+            0x3ee9_0000,
             0x3f80_0000,
         ]
     );

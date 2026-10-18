@@ -75,13 +75,10 @@ pub struct ShaderVm {
     function_indices: BTreeMap<String, usize>,
     temporal_aberration_factory_compatibility: bool,
     javascript_simplex_corner_compatibility: bool,
-    javascript_crt_hash_compatibility: bool,
     javascript_lcg_hash_compatibility: bool,
     javascript_pattern_smoothstep_compatibility: bool,
     javascript_sine_hash_random_functions: BTreeSet<String>,
-    javascript_atlas_z_program: bool,
-    javascript_untruncated_int_division: bool,
-    javascript_testpattern_digit_truncation: bool,
+    cpu_number_semantics: bool,
     scopes: Vec<BTreeMap<String, Binding>>,
     root_frame: usize,
     statement_count: u64,
@@ -118,31 +115,11 @@ impl ShaderVm {
             .filter(|function| is_javascript_sine_hash_random(function))
             .map(|function| function.mangled_name.clone())
             .collect();
-        let javascript_atlas_z_program = is_javascript_atlas_program(program);
-        // filter/spookyTicker's pinned authority capture matches the
-        // untruncated int-division lowering for its whole program (the
-        // oracle's restoreIntegerDivision exempts it by effect id), so every
-        // int/int division keeps the raw f64 quotient.
         let javascript_ticker_program = program
             .functions
             .iter()
             .any(|function| function.name == "ticker_row_mask");
-        // The numbered-checkerboard factory likewise leaves every int division
-        // untruncated, except the one statement the pass runner truncates for
-        // synth/testPattern (the digit accumulator's `temp /= 10`, see the
-        // testPattern digit truncation flag). Fractional digit indices read
-        // undefined glyph entries, which the subsequent bitwise expression
-        // converts to zero.
-        let javascript_numbered_checkerboard = ["renderNumber", "sampleGlyph", "checkerboard"]
-            .iter()
-            .all(|name| {
-                program
-                    .functions
-                    .iter()
-                    .any(|function| function.name == *name)
-            });
-        let javascript_untruncated_int_division =
-            javascript_ticker_program || javascript_numbered_checkerboard;
+        let cpu_number_semantics = program.cpu_murmur_functions.is_some();
         let javascript_lcg_hash_compatibility =
             program.functions.iter().any(is_javascript_lcg_hash_uint);
         let mut runtime = runtime;
@@ -156,13 +133,10 @@ impl ShaderVm {
             function_indices,
             temporal_aberration_factory_compatibility: false,
             javascript_simplex_corner_compatibility: false,
-            javascript_crt_hash_compatibility: false,
             javascript_lcg_hash_compatibility,
             javascript_pattern_smoothstep_compatibility: false,
             javascript_sine_hash_random_functions,
-            javascript_atlas_z_program,
-            javascript_untruncated_int_division,
-            javascript_testpattern_digit_truncation: false,
+            cpu_number_semantics,
             scopes: Vec::new(),
             root_frame: 0,
             statement_count: 0,
@@ -185,22 +159,8 @@ impl ShaderVm {
         self.javascript_simplex_corner_compatibility = enabled;
     }
 
-    pub(crate) fn set_javascript_crt_hash_compatibility(&mut self, enabled: bool) {
-        self.javascript_crt_hash_compatibility = enabled;
-    }
-
     pub(crate) fn set_javascript_pattern_smoothstep_compatibility(&mut self, enabled: bool) {
         self.javascript_pattern_smoothstep_compatibility = enabled;
-    }
-
-    /// Upstream's integer-division restore rewrites exactly one statement in
-    /// the numbered-checkerboard factory: the digit accumulator's in-place
-    /// `temp /= 10` becomes `temp = Math.trunc(temp / 10)`, keyed on the
-    /// `synth/testPattern` effect id and the factory's `int temp = number;`
-    /// source text. The pass runner enables this only for that pass key; the
-    /// evaluation-time statement check below mirrors the source anchoring.
-    pub(crate) fn set_javascript_testpattern_digit_truncation(&mut self, enabled: bool) {
-        self.javascript_testpattern_digit_truncation = enabled;
     }
 
     pub fn run_pixel(
@@ -400,34 +360,6 @@ impl ShaderVm {
                                     })
                                     .collect(),
                             )
-                        } else if let Some(emission) = self
-                            .javascript_atlas_z_program
-                            .then(|| javascript_atlas_z_emission(declaration))
-                            .flatten()
-                        {
-                            let Expression::Binary { left, right, .. } = initializer else {
-                                unreachable!("atlas z fingerprint requires a binary initializer");
-                            };
-                            let left = self.eval(left)?;
-                            let right = self.eval(right)?;
-                            let (Value::Int(left), Value::Int(right)) = (left, right) else {
-                                return Err(type_error(
-                                    "atlas z compatibility requires integer operands",
-                                ));
-                            };
-                            // The canonical JS CPU compiler emits an untyped `var` here.
-                            // Both the component-indexed dividend and shape3d's
-                            // plain-identifier dividend now use Math.trunc in the
-                            // pinned CPU compiler. Emulate both shapes exactly,
-                            // and keep the fingerprint loud: a type_error here means the
-                            // operand typing drifted away from the shapes the CPU
-                            // compiler's lowering keys on.
-                            match emission {
-                                JavascriptAtlasZEmission::TruncatedComponentIndexed
-                                | JavascriptAtlasZEmission::TruncatedIdentifier => {
-                                    Value::Int(left / right)
-                                }
-                            }
                         } else {
                             self.eval(initializer)?
                         }
@@ -536,22 +468,7 @@ impl ShaderVm {
                 Ok(Flow::Next)
             }
             Statement::Return { value } => Ok(Flow::Return(if let Some(value) = value {
-                let hash = self
-                    .javascript_crt_hash_compatibility
-                    .then(|| javascript_crt_hash_operands(value))
-                    .flatten();
-                if let Some((sine, scale)) = hash {
-                    let (Value::Float(sine), Value::Float(scale)) =
-                        (self.eval(sine)?, self.eval(scale)?)
-                    else {
-                        return Err(type_error("CRT hash operand types changed"));
-                    };
-                    // fract consumes the Number product before float32 storage.
-                    let product = sine * scale;
-                    Value::Float(f64::from((product - product.floor()) as f32))
-                } else {
-                    self.eval(value)?
-                }
+                self.eval(value)?
             } else {
                 Value::Void
             })),
@@ -653,11 +570,10 @@ impl ShaderVm {
             Expression::Index { object, index, .. } => {
                 let value = self.eval(object)?;
                 let index = self.eval(index)?;
-                // The exempt program's JS factory reads arrays with raw
-                // Numbers: `GLYPHS[digit * 8 + gy]` picks up f64 drift and
-                // out-of-range lookups yield `undefined`, which coerces to 0
-                // in the following arithmetic.
-                if self.javascript_untruncated_int_division
+                // CPU array lookups with fractional Number indices yield
+                // undefined, which the subsequent glyph bitwise operation
+                // coerces to zero.
+                if self.cpu_number_semantics
                     && matches!(value, Value::Array(_))
                     && (index.as_index().is_err())
                 {
@@ -750,14 +666,20 @@ impl ShaderVm {
                 right,
                 ..
             } => {
-                if value_type.0 == "int"
-                    && operator == "/"
-                    && self.javascript_untruncated_int_division
+                if operator == "trunc/"
+                    || (self.cpu_number_semantics
+                        && operator == "/"
+                        && matches!(value_type.0.as_str(), "int" | "uint" | "float"))
                 {
                     let a = self.eval(left)?;
                     let b = self.eval(right)?;
                     if let (Some(a), Some(b)) = (number_lane(&a, 0), number_lane(&b, 0)) {
-                        return Ok(Value::Float(a / b));
+                        let quotient = a / b;
+                        return Ok(Value::Float(if operator == "trunc/" {
+                            quotient.trunc()
+                        } else {
+                            quotient
+                        }));
                     }
                 }
                 // The oracle's transpiler lowers vec-typed + - * trees into a
@@ -841,40 +763,26 @@ impl ShaderVm {
                 }
                 let target = self.lvalue(lvalue)?;
                 let right = self.eval(value)?;
-                // The testPattern digit accumulator's in-place `/=` is the one
-                // statement upstream's restore replaces with Math.trunc in the
-                // otherwise untruncated numbered-checkerboard factory.
-                let testpattern_digit_division = self.javascript_testpattern_digit_truncation
-                    && operator == "/="
-                    && matches!(
-                        lvalue.as_ref(),
-                        Expression::Identifier { name, .. } if name == "temp"
-                    )
-                    && matches!(
-                        value.as_ref(),
-                        Expression::Literal {
-                            value: serde_json::Value::Number(constant),
-                            ..
-                        } if constant.as_i64() == Some(10)
-                    );
                 let result = if operator == "=" {
                     right
-                } else if testpattern_digit_division {
-                    let left = self.read_lvalue(&target)?;
-                    match (number_lane(&left, 0), number_lane(&right, 0)) {
-                        (Some(a), Some(b)) => Value::Float((a / b).trunc()),
-                        _ => self.runtime.binary("/", &left, &right)?,
-                    }
                 } else {
                     let left = self.read_lvalue(&target)?;
-                    if operator == "/=" && self.javascript_untruncated_int_division {
+                    if operator == "trunc/="
+                        || (operator == "/="
+                            && self.cpu_number_semantics
+                            && matches!(left, Value::Int(_) | Value::Uint(_) | Value::Float(_)))
+                    {
                         match (number_lane(&left, 0), number_lane(&right, 0)) {
-                            (Some(a), Some(b))
-                                if matches!(left, Value::Int(_) | Value::Float(_)) =>
-                            {
-                                Value::Float(a / b)
+                            (Some(a), Some(b)) => Value::Float(if operator == "trunc/=" {
+                                (a / b).trunc()
+                            } else {
+                                a / b
+                            }),
+                            _ => {
+                                return Err(type_error(
+                                    "scalar CPU division requires numeric operands",
+                                ));
                             }
-                            _ => self.runtime.binary("/", &left, &right)?,
                         }
                     } else {
                         self.runtime
@@ -1025,6 +933,22 @@ impl ShaderVm {
                     .iter()
                     .map(|arg| self.eval(arg))
                     .collect::<Result<Vec<_>, _>>()?;
+                if self.cpu_number_semantics
+                    && matches!(
+                        target.as_str(),
+                        "builtin:min" | "builtin:max" | "builtin:clamp"
+                    )
+                    && values.iter().any(|value| matches!(value, Value::Float(_)))
+                    && values.iter().all(|value| {
+                        matches!(value, Value::Int(_) | Value::Uint(_) | Value::Float(_))
+                    })
+                {
+                    let numbers = values
+                        .iter()
+                        .map(|value| Value::Float(number_lane(value, 0).unwrap()))
+                        .collect::<Vec<_>>();
+                    return self.runtime.call_builtin(&target[8..], &numbers);
+                }
                 self.runtime.call_builtin(&target[8..], &values)
             }
             Expression::Call {
@@ -1055,17 +979,6 @@ impl ShaderVm {
                         }
                     }
                 }
-                if self.javascript_crt_hash_compatibility
-                    && target == "random_scalar__float"
-                    && self.function_indices.get(target).is_some_and(|index| {
-                        is_javascript_crt_random_scalar(&self.program.functions[*index])
-                    })
-                {
-                    if let Some(argument) = javascript_crt_seed_argument(arguments) {
-                        let seed = self.eval_number_expression(argument)?;
-                        return Ok(Value::Float(f64::from(javascript_crt_random_scalar(seed))));
-                    }
-                }
                 let values = arguments
                     .iter()
                     .map(|argument| self.eval(argument))
@@ -1093,11 +1006,10 @@ impl ShaderVm {
         if self.structs.contains_key(value_type) && matches!(value, Value::Struct(_)) {
             return Ok(value.clone());
         }
-        // The exempt program's JS factory has no integer coercions: int-typed
-        // locals carry the exact f64 Number end to end, so a float value
-        // assigned an int static type must not be truncated on the way through.
-        if self.javascript_untruncated_int_division
-            && value_type == "int"
+        // CPU scalar declarations and parameters hold Number values. Only
+        // explicit casts and marked truncating divisions coerce these values.
+        if self.cpu_number_semantics
+            && matches!(value_type, "int" | "uint")
             && matches!(value, Value::Float(_))
         {
             return Ok(value.clone());
@@ -1140,21 +1052,27 @@ impl ShaderVm {
                 javascript_sine_hash_random(value[0], value[1]),
             ))));
         }
-        if target == "hash_uint__uint" {
-            let [Value::Uint(value)] = values else {
+        let murmur = self
+            .program
+            .cpu_murmur_functions
+            .as_ref()
+            .is_some_and(|names| names.iter().any(|name| target == format!("{name}__uint")));
+        if murmur || (target == "hash_uint__uint" && self.javascript_lcg_hash_compatibility) {
+            let [value] = values else {
                 return Err(VmError::Arity {
                     name: target.into(),
                     expected: "one uint".into(),
                     actual: values.len(),
                 });
             };
-            return Ok(Flow::Return(Value::Uint(
-                if self.javascript_lcg_hash_compatibility {
-                    canonical_hash_uint_lcg(*value)
-                } else {
-                    canonical_hash_uint(*value)
-                },
-            )));
+            let Value::Uint(value) = self.runtime.convert("uint", value)? else {
+                return Err(type_error("uint hash requires a scalar numeric operand"));
+            };
+            return Ok(Flow::Return(Value::Uint(if murmur {
+                canonical_hash_uint(value)
+            } else {
+                canonical_hash_uint_lcg(value)
+            })));
         }
         if self.call_depth >= CALL_DEPTH_LIMIT {
             return Err(VmError::CallDepthLimit {
@@ -1295,149 +1213,6 @@ impl ShaderVm {
             });
         }
         write_path(&mut binding.value, &lvalue.path, value)
-    }
-}
-
-fn is_javascript_atlas_program(program: &ProgramIr) -> bool {
-    let has_atlas_declaration = program.functions.iter().any(|function| {
-        function.name == "main"
-            && function.mangled_name == "main__void"
-            && function.return_type.0 == "void"
-            && function.parameters.is_empty()
-            && function.body.iter().any(|statement| {
-                matches!(
-                    statement,
-                    Statement::Declaration { declarations }
-                        if declarations
-                            .iter()
-                            .any(is_javascript_atlas_z_declaration)
-                )
-            })
-    });
-    if !has_atlas_declaration {
-        return false;
-    }
-
-    let reaction_diffusion_signature = program.outputs == ["fragColor"]
-        && program.functions.iter().any(|function| {
-            let [voxel, volume_size] = function.parameters.as_slice() else {
-                return false;
-            };
-            function.name == "laplacian3D"
-                && function.mangled_name == "laplacian3D__ivec3_int"
-                && function.return_type.0 == "vec2"
-                && voxel.name == "voxel"
-                && voxel.value_type.0 == "ivec3"
-                && voxel.qualifier == ParameterQualifier::In
-                && volume_size.name == "volSize"
-                && volume_size.value_type.0 == "int"
-                && volume_size.qualifier == ParameterQualifier::In
-        });
-    let shape_signature = program.outputs == ["fragColor", "geoOut"]
-        && program.functions.iter().any(|function| {
-            let [point, loop_factor_1, loop_factor_2] = function.parameters.as_slice() else {
-                return false;
-            };
-            function.name == "computeValue"
-                && function.mangled_name == "computeValue__vec3_float_float"
-                && function.return_type.0 == "float"
-                && point.name == "p"
-                && point.value_type.0 == "vec3"
-                && point.qualifier == ParameterQualifier::In
-                && loop_factor_1.name == "lf1"
-                && loop_factor_1.value_type.0 == "float"
-                && loop_factor_1.qualifier == ParameterQualifier::In
-                && loop_factor_2.name == "lf2"
-                && loop_factor_2.value_type.0 == "float"
-                && loop_factor_2.qualifier == ParameterQualifier::In
-        });
-    reaction_diffusion_signature || shape_signature
-}
-
-fn is_javascript_atlas_z_declaration(declaration: &VariableDefinition) -> bool {
-    javascript_atlas_z_emission(declaration).is_some()
-}
-
-/// Which atlas-z declaration shape the canonical JS CPU compiler emits.
-/// Both shapes are truncated by its current integer-division lowering.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum JavascriptAtlasZEmission {
-    TruncatedComponentIndexed,
-    TruncatedIdentifier,
-}
-
-fn javascript_atlas_z_emission(
-    declaration: &VariableDefinition,
-) -> Option<JavascriptAtlasZEmission> {
-    if declaration.name != "z"
-        || declaration.value_type.0 != "int"
-        || declaration.array_size.is_some()
-    {
-        return None;
-    }
-    let Some(Expression::Binary {
-        value_type,
-        operator,
-        left,
-        right,
-    }) = declaration.initializer.as_ref()
-    else {
-        return None;
-    };
-    if value_type.0 != "int" || operator != "/" {
-        return None;
-    }
-    let Expression::Identifier {
-        value_type: denominator_type,
-        name: denominator_name,
-        storage: denominator_storage,
-    } = right.as_ref()
-    else {
-        return None;
-    };
-    if denominator_type.0 != "int"
-        || denominator_name != "volSize"
-        || *denominator_storage != StorageClass::Local
-    {
-        return None;
-    }
-    match left.as_ref() {
-        Expression::Member {
-            value_type,
-            object,
-            field,
-        } => {
-            let Expression::Identifier {
-                value_type: object_type,
-                name,
-                storage,
-            } = object.as_ref()
-            else {
-                return None;
-            };
-            if value_type.0 == "int"
-                && field == "y"
-                && object_type.0 == "ivec2"
-                && name == "pixelCoord"
-                && *storage == StorageClass::Local
-            {
-                Some(JavascriptAtlasZEmission::TruncatedComponentIndexed)
-            } else {
-                None
-            }
-        }
-        Expression::Identifier {
-            value_type,
-            name,
-            storage,
-        } => {
-            if value_type.0 == "int" && name == "yAtlas" && *storage == StorageClass::Local {
-                Some(JavascriptAtlasZEmission::TruncatedIdentifier)
-            } else {
-                None
-            }
-        }
-        _ => None,
     }
 }
 
@@ -1767,105 +1542,6 @@ fn javascript_noise3d_snoise_input_operands(
     .then_some((point, scale, seed))
 }
 
-fn javascript_crt_hash_operands(expression: &Expression) -> Option<(&Expression, &Expression)> {
-    javascript_fract_sine_product(
-        expression,
-        "dot_value",
-        StorageClass::Local,
-        "43758.5453",
-        43_758.545_3,
-    )
-}
-
-fn javascript_fract_sine_product<'a>(
-    expression: &'a Expression,
-    input_name: &str,
-    input_storage: StorageClass,
-    scale_source: &str,
-    scale_value: f64,
-) -> Option<(&'a Expression, &'a Expression)> {
-    let Expression::Call {
-        value_type,
-        name,
-        target,
-        arguments,
-    } = expression
-    else {
-        return None;
-    };
-    let [
-        Expression::Binary {
-            value_type: product_type,
-            operator,
-            left,
-            right,
-        },
-    ] = arguments.as_slice()
-    else {
-        return None;
-    };
-    let Expression::Call {
-        value_type: sine_type,
-        name: sine_name,
-        target: sine_target,
-        arguments: sine_arguments,
-    } = left.as_ref()
-    else {
-        return None;
-    };
-    let [
-        Expression::Identifier {
-            value_type: dot_type,
-            name: dot_name,
-            storage,
-        },
-    ] = sine_arguments.as_slice()
-    else {
-        return None;
-    };
-    (value_type.0 == "float"
-        && name == "fract"
-        && target == "builtin:fract"
-        && product_type.0 == "float"
-        && operator == "*"
-        && sine_type.0 == "float"
-        && sine_name == "sin"
-        && sine_target == "builtin:sin"
-        && dot_type.0 == "float"
-        && dot_name == input_name
-        && *storage == input_storage
-        && is_exact_float_literal(right, scale_source, scale_value))
-    .then_some((left, right))
-}
-
-fn is_javascript_crt_random_scalar(function: &Function) -> bool {
-    let [parameter] = function.parameters.as_slice() else {
-        return false;
-    };
-    let [
-        Statement::Return {
-            value: Some(expression),
-        },
-    ] = function.body.as_slice()
-    else {
-        return false;
-    };
-    function.name == "random_scalar"
-        && function.mangled_name == "random_scalar__float"
-        && function.return_type.0 == "float"
-        && parameter.name == "seed"
-        && parameter.value_type.0 == "float"
-        && parameter.qualifier == ParameterQualifier::In
-        && javascript_fract_sine_product(
-            expression,
-            "seed",
-            StorageClass::Parameter,
-            "43758.5453123",
-            43_758.545_312_3,
-        )
-        .is_some()
-}
-
 fn is_scalar_identifier(
     expression: &Expression,
     expected_name: &str,
@@ -1873,45 +1549,6 @@ fn is_scalar_identifier(
 ) -> bool {
     matches!(expression, Expression::Identifier { value_type, name, storage }
         if value_type.0 == "float" && name == expected_name && *storage == expected_storage)
-}
-
-fn javascript_crt_seed_argument(arguments: &[Expression]) -> Option<&Expression> {
-    let [
-        argument @ Expression::Binary {
-            value_type,
-            operator,
-            left,
-            right,
-        },
-    ] = arguments
-    else {
-        return None;
-    };
-    (value_type.0 == "float"
-        && operator == "+"
-        && is_scalar_identifier(left, "seed_base", StorageClass::Local)
-        && [
-            ("0.37", 0.37),
-            ("0.73", 0.73),
-            ("1.91", 1.91),
-            ("3.17", 3.17),
-        ]
-        .iter()
-        .any(|(source, value)| is_exact_float_literal(right, source, *value)))
-    .then_some(argument)
-}
-
-fn javascript_crt_random_scalar(seed: f64) -> f32 {
-    const TAU: f32 = std::f64::consts::TAU as f32;
-    const INV_TAU: f32 = (1.0 / std::f64::consts::TAU) as f32;
-    const SCALE: f32 = f32::from_bits(0x472a_ee8c);
-    // Keep the Number argument through the canonical CRT sine adapter's
-    // first float32 store. The sine result is float32; its product is Number.
-    let turns = (seed * f64::from(INV_TAU)) as f32;
-    let phase = f64::from(turns) - f64::from(turns).floor();
-    let sine = (phase * f64::from(TAU)).sin() as f32;
-    let product = f64::from(sine) * f64::from(SCALE);
-    (product - product.floor()) as f32
 }
 
 fn javascript_stripe_edge<'a>(
@@ -1990,7 +1627,7 @@ fn is_exact_float_literal(expression: &Expression, source: &str, value: f64) -> 
             source: Some(literal_source),
         } if value_type.0 == "float"
             && literal_source == source
-            && literal_value.as_f64() == Some(value)
+            && literal_value.as_f64().is_some_and(|literal| literal as f32 == value as f32)
     )
 }
 
@@ -2232,16 +1869,6 @@ mod tests {
     use crate::catalog::{Type, shader_bundle};
 
     #[test]
-    fn testpattern_digit_division_truncates_only_for_the_enabled_flag() {
-        let program = &shader_bundle().unwrap().programs["synth/testPattern:testPattern"].ir;
-        let disabled = ShaderVm::new(program, Runtime::new()).unwrap();
-        assert!(!disabled.javascript_testpattern_digit_truncation);
-        let mut enabled = ShaderVm::new(program, Runtime::new()).unwrap();
-        enabled.set_javascript_testpattern_digit_truncation(true);
-        assert!(enabled.javascript_testpattern_digit_truncation);
-    }
-
-    #[test]
     fn grain_hash_normalization_keeps_uint32_number_precision() {
         let program = &shader_bundle().unwrap().programs["filter/grain:grain"].ir;
         let mut vm = ShaderVm::new(program, Runtime::new()).unwrap();
@@ -2473,100 +2100,6 @@ mod tests {
     }
 
     #[test]
-    fn canonical_crt_hash_defers_the_product_until_after_fract() {
-        let program = &shader_bundle().unwrap().programs["filter/crt:crt"].ir;
-        let function = program
-            .functions
-            .iter()
-            .find(|f| f.name == "hash3")
-            .unwrap();
-        let statement = function.body.last().unwrap();
-        let Statement::Return {
-            value: Some(expression),
-        } = statement
-        else {
-            panic!("hash3 return shape changed");
-        };
-        assert!(javascript_crt_hash_operands(expression).is_some());
-        for (enabled, expected) in [
-            (false, 0.186_235_383_152_961_73),
-            (true, 0.186_235_383_152_961_73),
-        ] {
-            let mut runtime = Runtime::new();
-            runtime.set_reduced_turn_sine(true);
-            let mut vm = ShaderVm::new(program, runtime).unwrap();
-            vm.set_javascript_crt_hash_compatibility(enabled);
-            vm.push();
-            vm.define("dot_value", Value::Float(0.050_370_004), true)
-                .unwrap();
-            let Flow::Return(value) = vm.execute(statement).unwrap() else {
-                panic!("hash3 did not return");
-            };
-            assert_eq!(value, Value::Float(expected));
-        }
-    }
-
-    #[test]
-    fn canonical_crt_seed_precision_rejects_changed_calls_and_function_bodies() {
-        let program = &shader_bundle().unwrap().programs["filter/crt:crt"].ir;
-        let mut call = None;
-        for function in &program.functions {
-            visit_declarations(&function.body, &mut |declaration| {
-                if declaration.name == "simplex_value" {
-                    call = declaration.initializer.clone();
-                }
-            });
-        }
-        let call = call.expect("canonical CRT simplex_value initializer");
-        let evaluate = |program: &ProgramIr, expression: &Expression, enabled| {
-            let mut runtime = Runtime::new();
-            runtime.set_reduced_turn_sine(true);
-            let mut vm = ShaderVm::new(program, runtime).unwrap();
-            vm.set_javascript_crt_hash_compatibility(enabled);
-            vm.push();
-            vm.define("seed_base", Value::Float(90.0), true).unwrap();
-            vm.eval(expression).unwrap()
-        };
-        assert_ne!(
-            evaluate(program, &call, false),
-            evaluate(program, &call, true)
-        );
-
-        let mut changed_call = call.clone();
-        let Expression::Call { arguments, .. } = &mut changed_call else {
-            panic!("CRT seed initializer is no longer a call");
-        };
-        let Expression::Binary { right, .. } = &mut arguments[0] else {
-            panic!("CRT seed argument is no longer an addition");
-        };
-        **right = Expression::Literal {
-            value_type: Type("float".into()),
-            value: serde_json::json!(0.74),
-            source: Some("0.74".into()),
-        };
-        assert!(javascript_crt_seed_argument(arguments).is_none());
-        assert_eq!(
-            evaluate(program, &changed_call, true),
-            evaluate(program, &changed_call, false)
-        );
-
-        let mut changed_program = program.clone();
-        let function = changed_program
-            .functions
-            .iter_mut()
-            .find(|function| function.mangled_name == "random_scalar__float")
-            .unwrap();
-        function.body = vec![Statement::Return {
-            value: Some(Expression::Literal {
-                value_type: Type("float".into()),
-                value: serde_json::json!(0.375),
-                source: Some("0.375".into()),
-            }),
-        }];
-        assert_eq!(evaluate(&changed_program, &call, true), Value::Float(0.375));
-    }
-
-    #[test]
     fn canonical_pattern_precision_rejects_changed_smoothstep_arguments() {
         let program = &shader_bundle().unwrap().programs["synth/pattern:pattern"].ir;
         let function = program
@@ -2676,7 +2209,10 @@ mod tests {
         let mut found = Vec::new();
         for function in &program.functions {
             visit_declarations(&function.body, &mut |declaration| {
-                if is_javascript_atlas_z_declaration(declaration) {
+                if declaration.name == "z"
+                    && matches!(declaration.initializer,
+                    Some(Expression::Binary { ref operator, .. }) if operator == "trunc/")
+                {
                     found.push(declaration.clone());
                 }
             });
@@ -2691,7 +2227,10 @@ mod tests {
             serde_json::Value::Object(fields) => {
                 usize::from(
                     fields.get("kind").and_then(serde_json::Value::as_str) == Some("binary")
-                        && fields.get("operator").and_then(serde_json::Value::as_str) == Some("/")
+                        && matches!(
+                            fields.get("operator").and_then(serde_json::Value::as_str),
+                            Some("/" | "trunc/")
+                        )
                         && fields.get("type").and_then(serde_json::Value::as_str) == Some("int"),
                 ) + fields
                     .values()
@@ -2703,21 +2242,31 @@ mod tests {
     }
 
     #[test]
-    fn javascript_atlas_z_fingerprint_matches_exactly_two_bundle_programs() {
-        let matches = shader_bundle()
-            .unwrap()
-            .programs
-            .iter()
-            .filter(|(_, program)| is_javascript_atlas_program(&program.ir))
-            .map(|(key, _)| key.as_str())
-            .collect::<Vec<_>>();
-        assert_eq!(
-            matches,
-            [
-                "synth3d/reactionDiffusion3d:simulate",
-                "synth3d/shape3d:precompute"
-            ]
-        );
+    fn generated_atlas_z_declarations_mark_component_and_scalar_division() {
+        for (key, component) in [
+            ("synth3d/reactionDiffusion3d:simulate", true),
+            ("synth3d/shape3d:precompute", false),
+        ] {
+            let declaration = atlas_declaration(key);
+            let Some(Expression::Binary {
+                operator,
+                left,
+                right,
+                ..
+            }) = declaration.initializer
+            else {
+                panic!("atlas z requires a binary initializer");
+            };
+            assert_eq!(operator, "trunc/");
+            assert!(matches!(*right, Expression::Identifier { ref name, .. } if name == "volSize"));
+            if component {
+                assert!(matches!(*left, Expression::Member { ref field, .. } if field == "y"));
+            } else {
+                assert!(
+                    matches!(*left, Expression::Identifier { ref name, .. } if name == "yAtlas")
+                );
+            }
+        }
     }
 
     #[test]
@@ -2736,61 +2285,6 @@ mod tests {
     }
 
     #[test]
-    fn javascript_atlas_z_fingerprint_rejects_near_misses() {
-        let declaration = atlas_declaration("synth3d/reactionDiffusion3d:simulate");
-        assert!(is_javascript_atlas_z_declaration(&declaration));
-
-        let mut wrong_declaration = declaration.clone();
-        wrong_declaration.name = "slice".into();
-        assert!(!is_javascript_atlas_z_declaration(&wrong_declaration));
-
-        let mut wrong_denominator = declaration.clone();
-        let Some(Expression::Binary { right, .. }) = &mut wrong_denominator.initializer else {
-            panic!("expected binary initializer");
-        };
-        let Expression::Identifier { name, .. } = right.as_mut() else {
-            panic!("expected identifier denominator");
-        };
-        *name = "width".into();
-        assert!(!is_javascript_atlas_z_declaration(&wrong_denominator));
-
-        let mut wrong_numerator = declaration;
-        let Some(Expression::Binary { left, .. }) = &mut wrong_numerator.initializer else {
-            panic!("expected binary initializer");
-        };
-        let Expression::Member { field, .. } = left.as_mut() else {
-            panic!("expected member numerator");
-        };
-        *field = "x".into();
-        assert!(!is_javascript_atlas_z_declaration(&wrong_numerator));
-
-        let mut wrong_program =
-            shader_bundle().unwrap().programs["synth3d/reactionDiffusion3d:simulate"]
-                .ir
-                .clone();
-        wrong_program
-            .functions
-            .iter_mut()
-            .find(|function| function.mangled_name == "laplacian3D__ivec3_int")
-            .unwrap()
-            .return_type = Type("vec3".into());
-        assert!(!is_javascript_atlas_program(&wrong_program));
-
-        let already_exact = &shader_bundle().unwrap().programs["synth3d/noise3d:precompute"].ir;
-        assert!(!is_javascript_atlas_program(already_exact));
-
-        // The two matched programs carry different division expression shapes.
-        assert_eq!(
-            javascript_atlas_z_emission(&atlas_declaration("synth3d/reactionDiffusion3d:simulate")),
-            Some(JavascriptAtlasZEmission::TruncatedComponentIndexed)
-        );
-        assert_eq!(
-            javascript_atlas_z_emission(&atlas_declaration("synth3d/shape3d:precompute")),
-            Some(JavascriptAtlasZEmission::TruncatedIdentifier)
-        );
-    }
-
-    #[test]
     fn atlas_z_initializer_truncates_like_the_cpu_emitted_math_trunc() {
         let ir = &shader_bundle().unwrap().programs["synth3d/reactionDiffusion3d:simulate"].ir;
         let mut vm = ShaderVm::new(ir, Runtime::new()).unwrap();
@@ -2803,7 +2297,7 @@ mod tests {
             declarations: vec![declaration],
         })
         .unwrap();
-        assert_eq!(vm.scopes.last().unwrap()["z"].value, Value::Int(1));
+        assert_eq!(vm.scopes.last().unwrap()["z"].value, Value::Float(1.0));
 
         vm.write_root("volSize", Value::Int(7)).unwrap();
         let unrelated = Expression::Binary {
@@ -2820,7 +2314,7 @@ mod tests {
                 source: Some("2".into()),
             }),
         };
-        assert_eq!(vm.eval(&unrelated).unwrap(), Value::Int(3));
+        assert_eq!(vm.eval(&unrelated).unwrap(), Value::Float(3.5));
     }
 
     fn random_functions() -> Vec<(&'static str, Function)> {

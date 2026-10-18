@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import copy
 import re
+import struct
 
 from .parser import parse
 from .preprocess import normalize
@@ -62,15 +63,27 @@ def _mangled(name: str, parameter_types: list[str]) -> str:
 
 
 class Scope:
-    def __init__(self, parent: "Scope | None" = None):
+    def __init__(self, parent: "Scope | None" = None, owner: str | None = None):
         self.parent = parent
+        self.owner = owner or (parent.owner if parent else "global")
         self.values: dict[str, tuple[str, str]] = {}
+        self.bindings: dict[str, dict] = {}
 
-    def child(self) -> "Scope":
-        return Scope(self)
+    def child(self, owner: str | None = None) -> "Scope":
+        return Scope(self, owner)
 
-    def define(self, name: str, type_name: str, storage: str) -> None:
+    def define(self, name: str, type_name: str, storage: str, initializer=None, constant=False) -> None:
         self.values[name] = (type_name, storage)
+        self.bindings[name] = {"type": type_name, "storage": storage, "initializer": initializer,
+                               "constant": constant, "scope": self}
+
+    def binding(self, name: str) -> dict | None:
+        scope = self
+        while scope is not None:
+            if name in scope.bindings:
+                return scope.bindings[name]
+            scope = scope.parent
+        return None
 
     def resolve(self, name: str) -> tuple[str, str] | None:
         scope = self
@@ -91,7 +104,7 @@ class TypedIrEmitter:
         "gl_PointSize": "float",
     }
 
-    def __init__(self, program: dict, outputs: list[str], varyings: list[str]):
+    def __init__(self, program: dict, outputs: list[str], varyings: list[str], *, original_source="", runtime_defines=None, effect_id=None):
         self.program = program
         self.outputs = list(outputs)
         self.varyings = list(varyings)
@@ -102,6 +115,15 @@ class TypedIrEmitter:
         self.function_nodes: list[tuple[dict, dict]] = []
         self.globals: list[dict] = []
         self.uniforms: list[dict] = []
+        self.runtime_defines = set(runtime_defines or {})
+        self.original_source = original_source
+        self.effect_id = effect_id
+        self.integer_names = set()
+        for pattern in (r"\buniform\s+int\s+([A-Za-z_$]\w*)", r"\bint\s+([A-Za-z_$]\w*)\s*(?:=|;)",
+                        r"\bivec[234]\s+([A-Za-z_$]\w*)", r"\bint\s+([A-Za-z_$]\w*)\s*(?:,|\))"):
+            self.integer_names.update(re.findall(pattern, original_source))
+        if effect_id == "synth/testPattern" and ("int temp = number;" not in original_source or "temp /= 10;" not in original_source):
+            raise ValueError("testPattern digit division source changed")
 
     def emit(self) -> dict:
         self._collect()
@@ -109,6 +131,7 @@ class TypedIrEmitter:
         if not any(function["name"] == "main" for function in functions):
             raise SyntaxError("shader has no main()")
         return {
+            "cpuMurmurFunctions": self._murmur_functions(),
             "outputs": self.outputs,
             "varyings": self.varyings,
             **({"varyingTypes": dict(self.varying_types)} if self.varying_types else {}),
@@ -171,7 +194,9 @@ class TypedIrEmitter:
             initializer = (
                 self._expression(declarator["init"], self.root) if declarator.get("init") is not None else None
             )
-            self.root.define(declarator["name"], type_name, storage)
+            if initializer is not None:
+                self._restore_decl_division(declarator["name"], declarator["init"], initializer, self.root)
+            self.root.define(declarator["name"], type_name, storage, declarator.get("init"), "const" in declaration.get("quals", []))
             value = {"name": declarator["name"], "type": type_name}
             if storage == "uniform":
                 self.uniforms.append(value)
@@ -181,7 +206,7 @@ class TypedIrEmitter:
                 self.globals.append(value)
 
     def _function(self, node: dict, signature: dict) -> dict:
-        scope = self.root.child()
+        scope = self.root.child(node["name"])
         parameters = []
         for index, (parameter, type_name) in enumerate(
             zip(node["params"], signature["parameterTypes"], strict=True)
@@ -217,8 +242,10 @@ class TypedIrEmitter:
                 initializer = (
                     self._expression(declarator["init"], scope) if declarator.get("init") is not None else None
                 )
+                if initializer is not None:
+                    self._restore_decl_division(declarator["name"], declarator["init"], initializer, scope)
                 array_size = self._array_expression(declarator.get("array"), scope)
-                scope.define(declarator["name"], type_name, "local")
+                scope.define(declarator["name"], type_name, "local", declarator.get("init"), "const" in statement.get("quals", []))
                 declarations.append({
                     "name": declarator["name"], "type": type_name,
                     "initializer": initializer, "arraySize": array_size,
@@ -334,6 +361,7 @@ class TypedIrEmitter:
             type_name, value = "int", int(raw, 16)
         elif "." in raw or "e" in low or low.endswith("f"):
             type_name, value = "float", float(raw.rstrip("fF"))
+            value = struct.unpack("f", struct.pack("f", value))[0]
         else:
             type_name, value = "int", int(raw)
         return {"kind": "literal", "type": type_name, "value": value, "source": raw}
@@ -401,15 +429,27 @@ class TypedIrEmitter:
             type_name = right["type"] if left["type"].startswith("mat") else left["type"]
         else:
             type_name = self._common_type(left["type"], right["type"])
-        return {"kind": "binary", "type": type_name, "operator": node["op"], "left": left, "right": right}
+        operator = "metal/" if node["op"] == "/" and self._metal_division(node["l"], node["r"], left, right, scope) else node["op"]
+        if operator == "metal/" and "mat2" in {left["type"], right["type"]}:
+            type_name = "mat2"
+        return {"kind": "binary", "type": type_name, "operator": operator, "left": left, "right": right}
 
     def _expr_assign(self, node: dict, scope: Scope) -> dict:
         target = self._expression(node["target"], scope)
         if target["kind"] not in {"identifier", "member", "index"}:
             raise SyntaxError(f"typed IR: invalid assignment target {target['kind']!r}")
         value = self._expression(node["value"], scope)
+        operator = node["op"]
+        right = node["value"]
+        if operator == "/=" and _width(target["type"]) > 1:
+            splat = (right.get("k") == "construct" and right.get("type") in VECTORS
+                     and len(right["args"]) == 1 and _width(self._cpu_type(right["args"][0], scope)) == 1)
+            if (_width(value["type"]) == 1 or splat) and self._metal_division(node["target"], right, target, value, scope):
+                operator = "metal/="
+        if self.effect_id == "synth/testPattern" and operator == "/=" and node["target"].get("name") == "temp" and self._cpu_text(right, scope) == "10":
+            operator = "trunc/="
         return {
-            "kind": "assignment", "type": target["type"], "operator": node["op"],
+            "kind": "assignment", "type": target["type"], "operator": operator,
             "lvalue": target, "value": value,
         }
 
@@ -503,17 +543,193 @@ class TypedIrEmitter:
     def _array_expression(self, array: object, scope: Scope) -> dict | None:
         return None if array is None or array is True else self._expression(array, scope)
 
+    def _murmur_functions(self) -> list[str]:
+        source = re.sub(r"/\*.*?\*/|//[^\n]*", "", self.original_source, flags=re.S)
+        names = []
+        for name, argument, body in re.findall(r"\buint\s+([A-Za-z_]\w*)\s*\(\s*uint\s+([A-Za-z_]\w*)\s*\)\s*\{([^{}]*)\}", source):
+            statements = [re.sub(r"\s+", "", part) for part in body.split(";") if part.strip()]
+            if not statements or statements.pop() != "return" + argument:
+                continue
+            steps = []
+            for statement in statements:
+                shift = re.fullmatch(rf"{argument}(?:\^=|={argument}\^)\(?{argument}>>(\d+)u\)?", statement)
+                multiply = re.fullmatch(rf"{argument}(?:\*=|={argument}\*)(0x[0-9A-Fa-f]+)u", statement)
+                steps.append("^>>" + shift[1] if shift else "*" + multiply[1].lower() if multiply else None)
+            if steps == ["^>>16", "*0x7feb352d", "^>>15", "*0x846ca68b", "^>>16"]:
+                names.append(name)
+        return sorted(set(names))
+
+    def _cpu_type(self, node: dict, scope: Scope) -> str:
+        kind = node["k"]
+        if kind == "id":
+            return (scope.resolve(node["name"]) or ("float", ""))[0]
+        if kind == "num":
+            raw = node["value"].lower()
+            return "uint" if raw.endswith("u") else "int" if raw.startswith("0x") or re.fullmatch(r"\d+", raw) else "float"
+        if kind == "construct":
+            target = node["type"]
+            if len(node["args"]) == 1:
+                argument = node["args"][0]
+                inner = self._cpu_type(argument, scope)
+                if target == "float" and self._stripped_float_cast(node):
+                    return inner
+                if target in VECTORS and _width(target) == _width(inner) and _width(inner) > 1:
+                    return inner
+            return target
+        if kind in {"member", "index"}:
+            obj = self._cpu_type(node["obj"], scope)
+            if obj in self.structs:
+                return obj
+            width = len(node["field"]) if kind == "member" else 1
+            return _type_for(_base(obj), width)
+        if kind in {"unary", "post"}:
+            return self._cpu_type(node["x"], scope)
+        if kind == "binary":
+            return self._common_type(self._cpu_type(node["l"], scope), self._cpu_type(node["r"], scope))
+        if kind == "cond":
+            return self._common_type(self._cpu_type(node["a"], scope), self._cpu_type(node["b"], scope))
+        if kind == "call":
+            if node["name"] in self.functions:
+                return self.functions[node["name"]][0]["returnType"]
+            return self._builtin_return(node["name"], [self._cpu_type(arg, scope) for arg in node["args"]])
+        return "float"
+
+    @staticmethod
+    def _stripped_float_cast(node: dict) -> bool:
+        return (node.get("k") == "construct" and node.get("type") == "float" and len(node["args"]) == 1
+                and (node["args"][0].get("k") == "id" or
+                     (node["args"][0].get("k") == "member" and len(node["args"][0]["field"]) == 1)))
+
+    def _cpu_text(self, node: dict, scope: Scope) -> str:
+        kind = node["k"]
+        if kind == "id":
+            text = node["name"]
+        elif kind == "num":
+            raw = node["value"]
+            text = str(int(raw.rstrip("uU"), 16)) if raw.lower().startswith("0x") else raw.rstrip("uUfF")
+        elif kind == "member":
+            obj = self._cpu_text(node["obj"], scope)
+            field = node["field"]
+            if self._cpu_type(node["obj"], scope) in self.structs:
+                text = obj + "." + field
+            elif len(field) == 1:
+                text = f"{obj}[{'xyzwrgbastpq'.index(field) % 4}]"
+            else:
+                text = f"swizzle({obj}, {field})"
+        elif kind == "index":
+            text = f"{self._cpu_text(node['obj'], scope)}[{self._cpu_text(node['idx'], scope)}]"
+        elif kind == "construct":
+            args = [self._cpu_text(arg, scope) for arg in node["args"]]
+            if node["type"] == "mat2":
+                args = [str(int(float(text))) if arg.get("k") == "num" and float(text).is_integer() else text
+                        for arg, text in zip(node["args"], args)]
+            if self._stripped_float_cast(node):
+                text = f"({args[0]})"
+            elif node["type"] in {"int", "uint"} and len(args) == 1:
+                text = str(int(float(args[0]))) if node["args"][0].get("k") == "num" else args[0] + "|0"
+            elif node["type"] in VECTORS and len(args) == 1 and _width(self._cpu_type(node["args"][0], scope)) == _width(node["type"]):
+                text = args[0]
+            else:
+                text = node["type"] + "(" + ", ".join(args) + ")"
+        elif kind == "binary":
+            left, right = self._cpu_text(node["l"], scope), self._cpu_text(node["r"], scope)
+            if node["l"].get("k") == "binary" and node["op"] in {"+", "-"} and node["l"]["op"] in {"+", "-"}:
+                left = left[1:-1]
+            text = f"({left} {node['op']} {right})"
+        elif kind in {"unary", "post"}:
+            text = node["op"] + self._cpu_text(node["x"], scope)
+        elif kind == "call":
+            text = node["name"] + "(" + ", ".join(self._cpu_text(arg, scope) for arg in node["args"]) + ")"
+        elif kind == "cond":
+            text = " ? ".join(self._cpu_text(node[key], scope) for key in ("c", "a", "b"))
+        else:
+            text = ""
+        return "(" * node.get("groups", 0) + text + ")" * node.get("groups", 0)
+
+    def _operand_kind(self, node: dict, scope: Scope) -> str | None:
+        text = self._cpu_text(node, scope).strip()
+        if re.fullmatch(r"[-+]?\d+", text):
+            return "int"
+        if re.fullmatch(r"[-+]?(?:\d*\.?\d+|\d+\.?\d*)(?:[eE][-+]?\d+)?", text) or re.fullmatch(r"\(\s*[A-Za-z_]\w*(?:\[\d+\])?\s*\)", text):
+            return "float"
+        bare = re.fullmatch(r"([A-Za-z_]\w*)(?:\[\d+\])?", text)
+        entry = scope.binding(bare[1]) if bare else None
+        if entry is None and re.search(r"(?<![\w.])(?:\d+\.\d*|\.\d+)(?:[eE][-+]?\d+)?(?![\w.])", text) and not re.search(r"\|0|cpu_[iu]vec|trunc", text):
+            return "float"
+        type_name = entry["type"] if entry else self._cpu_type(node, scope)
+        return "int" if _base(type_name) in {"int", "uint"} else "float" if type_name in {"float", "vec2", "vec3", "vec4"} else None
+
+    def _divisor_kind(self, node: dict, scope: Scope, names=None) -> str:
+        names = {} if names is None else names
+        result = "constant"
+        for name in re.findall(r"[A-Za-z_][\w$]*", self._cpu_text(node, scope)):
+            if name == "gl_FragCoord":
+                result = "runtime"
+                continue
+            if name in self.runtime_defines:
+                continue
+            entry = scope.binding(name)
+            if entry is None or entry["constant"]:
+                continue
+            if entry["storage"] == "uniform":
+                result = "runtime"
+                continue
+            if entry["scope"].owner not in {"main", "global"} or entry["initializer"] is None:
+                return "unknown"
+            if name not in names:
+                names[name] = "unknown"
+                names[name] = self._divisor_kind(entry["initializer"], entry["scope"], names)
+            if names[name] == "unknown":
+                return "unknown"
+            if names[name] == "runtime":
+                result = "runtime"
+        return result
+
+    def _metal_division(self, left, right, typed_left, typed_right, scope) -> bool:
+        widths = [_width(typed_left["type"]), _width(typed_right["type"])]
+        width = max(widths)
+        if width > 4 or any(value not in {1, width} for value in widths) or any(node["type"].startswith("mat") and node["type"] != "mat2" for node in (typed_left, typed_right)):
+            return False
+        return "float" in (self._operand_kind(left, scope), self._operand_kind(right, scope)) and self._divisor_kind(right, scope) == "runtime"
+
+    def _restore_decl_division(self, name, source, value, scope):
+        def ordinary_division(ast, expression):
+            return ast.get("k") == "binary" and ast.get("op") == "/" and expression.get("operator") == "/"
+
+        if ordinary_division(source, value):
+            left, right = self._cpu_text(source["l"], scope), self._cpu_text(source["r"], scope)
+            if right in self.integer_names and (re.fullmatch(r"[A-Za-z_$]\w*\[\d+\]", left) or left in self.integer_names and left != right):
+                value["operator"] = "trunc/"
+        elif source.get("k") == "cond" and name in self.integer_names:
+            arms = [(source[key], value[field]) for key, field in (("a", "whenTrue"), ("b", "whenFalse"))]
+            if all(ordinary_division(ast, expression) and self._cpu_text(ast["r"], scope) in self.integer_names
+                   and re.fullmatch(r"[A-Za-z_$]\w*|\([^()]*\)", self._cpu_text(ast["l"], scope))
+                   and (self._cpu_text(ast["l"], scope).startswith("(") or self._cpu_text(ast["l"], scope) in self.integer_names)
+                   for ast, expression in arms):
+                for _, expression in arms:
+                    expression["operator"] = "trunc/"
+        if self.effect_id == "render/pointsBillboardRender" and "int start = (index / (2 * runLength)) * (2 * runLength);" in self.original_source:
+            if "int mid = (low + high) / 2;" not in self.original_source:
+                raise ValueError("Billboard depth merge midpoint source changed")
+            text = self._cpu_text(source, scope)
+            if name == "start" and text == "((index / (2 * runLength)) * (2 * runLength))":
+                value["left"]["operator"] = "trunc/"
+            elif name == "mid" and text == "((low + high) / 2)":
+                value["operator"] = "trunc/"
+
 
 def emit_typed_ir(
     source: str,
     outputs: list[str] | None = None,
     varyings: list[str] | None = None,
     runtime_defines: dict[str, str] | None = None,
+    effect_id: str | None = None,
 ) -> dict:
     """Normalize, parse, and fully resolve one GLSL program."""
-    normalized = normalize(source, runtime_defines or {})
+    normalized = normalize(source, runtime_defines or {}, effect_id=effect_id)
     actual_outputs = list(outputs) if outputs is not None else normalized["outputs"]
     actual_varyings = list(varyings) if varyings is not None else normalized["varyings"]
     program = parse(normalized["source"])
     program["varyingTypes"] = normalized.get("varyingTypes", {})
-    return TypedIrEmitter(copy.deepcopy(program), actual_outputs, actual_varyings).emit()
+    return TypedIrEmitter(copy.deepcopy(program), actual_outputs, actual_varyings,
+                          original_source=source, runtime_defines=runtime_defines, effect_id=effect_id).emit()

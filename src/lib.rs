@@ -9,6 +9,7 @@ mod error;
 pub mod external_input;
 mod generated;
 pub mod iteration;
+mod metal_division;
 mod overlay;
 mod param;
 pub mod pass_runner;

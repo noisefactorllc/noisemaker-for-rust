@@ -209,7 +209,7 @@ fn exact_smoke_inventory_and_registry_coverage_are_locked() {
             .count(),
         25
     );
-    assert_eq!(fragment_adapter_keys().len(), 4);
+    assert_eq!(fragment_adapter_keys().len(), 6);
     assert_eq!(draw_op_keys().len(), 8);
     let shaders = &shader_bundle().unwrap().programs;
     let adapters = fragment_adapter_keys().into_iter().collect::<BTreeSet<_>>();

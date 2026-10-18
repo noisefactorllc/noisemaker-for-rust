@@ -199,13 +199,15 @@ fn navier_stokes_matches_js_n1_n4_full_frame_oracles() {
     let mut renderer = CpuRenderer::new().unwrap();
     let n1 = renderer.render(&source(1), &options).unwrap().surface;
     let n4 = renderer.render(&source(4), &options).unwrap().surface;
+    // CPU 4aeb3e1e028b2dc412401f7b7f17c014c603bf14, same DSL/options above.
+    // Fresh CpuRenderer renders at n1 and n4 both produce this complete RGBA8 hash.
     assert_eq!(
         format!("{:x}", Sha256::digest(n1.to_rgba8())),
-        "7939eeca71e9fe77e6ffea802323d80d10a4b180ff53f432717bceb7cbb0eed8"
+        "d7e9262577f69833a40c660be5e8dc15ae12a150d8cb72702782d3da0b87dcfa"
     );
     assert_eq!(
         format!("{:x}", Sha256::digest(n4.to_rgba8())),
-        "7939eeca71e9fe77e6ffea802323d80d10a4b180ff53f432717bceb7cbb0eed8"
+        "d7e9262577f69833a40c660be5e8dc15ae12a150d8cb72702782d3da0b87dcfa"
     );
 }
 

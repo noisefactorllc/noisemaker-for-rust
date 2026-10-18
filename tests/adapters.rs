@@ -14,12 +14,14 @@ fn options() -> RenderOptions {
 }
 
 #[test]
-fn fragment_registry_is_exactly_the_four_replacement_keys() {
+fn fragment_registry_is_exactly_the_six_replacement_keys() {
     assert_eq!(
         fragment_adapter_keys(),
         [
             "classicNoisedeck/fractal:fractal",
+            "filter/crt:crt",
             "filter/historicPalette:historicPalette",
+            "filter/median:median",
             "filter/palette:palette",
             "synth/julia:julia",
         ]

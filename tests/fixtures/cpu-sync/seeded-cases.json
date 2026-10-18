@@ -1,0 +1,77 @@
+{
+  "oracleRevision": "4aeb3e1e028b2dc412401f7b7f17c014c603bf14",
+  "cases": [
+    {
+      "name": "perlin3d-41x23-t0.25-s13",
+      "program": "search synth\n\nperlin(seed: 13, dimensions: 3)\n  .write(o0)\n\nrender(o0)\n",
+      "width": 41,
+      "height": 23,
+      "time": 0.25,
+      "seed": 13,
+      "rgbaSha256": "14b1618abd0b0c1b501f20d5b8b56760962942d103ce65037c02a2d19359701c"
+    },
+    {
+      "name": "synth3d__noise3d__s7",
+      "program": "search synth3d, filter3d, render\n\nnoise3d(seed: 7, volumeSize: x16)\n  .render3d()\n  .write(o0)\n\nrender(o0)\n",
+      "width": 41,
+      "height": 23,
+      "time": 0.75,
+      "seed": 7,
+      "rgbaSha256": "2dc99f8f5634a347d88780ee4dce4f7065c9d670effd19fec16e4daa39c3c3ff"
+    },
+    {
+      "name": "synth3d__cell3d__s7",
+      "program": "search synth3d, filter3d, render\n\ncell3d(seed: 7, volumeSize: x16)\n  .render3d()\n  .write(o0)\n\nrender(o0)\n",
+      "width": 41,
+      "height": 23,
+      "time": 0.75,
+      "seed": 7,
+      "rgbaSha256": "facab10214bd4a4f904e90e84bd82e645603743bd2d936a13e6720f9bb3b8f44"
+    },
+    {
+      "name": "reaction-seeding",
+      "program": "search synth3d,render; reactionDiffusion3d(seed:13,volumeSize:x16,iterationCount:1).render3d().write(o0)",
+      "width": 17,
+      "height": 11,
+      "time": 0.75,
+      "seed": 13,
+      "rgbaSha256": "291e5cc228f68ba5855f330dff1af2d9f89cc4ac24e8b80eb73c50b03ad03f6e"
+    },
+    {
+      "name": "cellular-seeding",
+      "program": "search synth3d,render; cellularAutomata3d(seed:7,volumeSize:x16,iterationCount:1).render3d().write(o0)",
+      "width": 17,
+      "height": 11,
+      "time": 0.75,
+      "seed": 7,
+      "rgbaSha256": "95699924e7ea1b3a8f983c428f468c00fae1c35dfba8dab5d5ac4c20d5232a25"
+    },
+    {
+      "name": "scatter",
+      "program": "search synth,filter; perlin(seed:7).scatter(seed:7).write(o0)",
+      "width": 41,
+      "height": 23,
+      "time": 0.75,
+      "seed": 7,
+      "rgbaSha256": "f1c14c1ba3d9d61c11845a4f6b3a603aa2770655c7ff5452cd9ae46e145414a2"
+    },
+    {
+      "name": "extrude",
+      "program": "search synth,filter; perlin(seed:7).extrude().write(o0)",
+      "width": 41,
+      "height": 23,
+      "time": 0.75,
+      "seed": 7,
+      "rgbaSha256": "926778dedb9e9ce25d9dcfdb088c29194155fbd29c0988b36b6c65a29a883b87"
+    },
+    {
+      "name": "spookyTicker",
+      "program": "search synth,filter; perlin(seed:7).spookyTicker().write(o0)",
+      "width": 41,
+      "height": 23,
+      "time": 0.75,
+      "seed": 7,
+      "rgbaSha256": "60fd00043a7f89ddc441751b14bd0f5a91ba56beeb084df766064d7c1e3abb24"
+    }
+  ]
+}

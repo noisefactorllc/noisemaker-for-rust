@@ -33,8 +33,62 @@ def _strip_comments(source: str) -> str:
     return source
 
 
-def normalize(source: str, runtime_defines: dict | None = None) -> dict:
+def _adapt_canonical_source(source: str, effect_id: str | None) -> str:
+    def replace_once(before, after):
+        nonlocal source
+        if before not in source:
+            raise ValueError(f"{effect_id}: canonical source changed: {before.splitlines()[0]}")
+        source = source.replace(before, after, 1)
+
+    if effect_id == "synth3d/noise3d":
+        replace_once("float hash4(vec4 p) {\n    vec4 ps = p + float(seed) * 0.1;",
+                     "float hash4(vec4 p, vec4 k) {\n"
+                     "    float cpuSeedOffset = float(seed * 0.1);\n"
+                     "    vec4 cpuLatticeOffset = k + cpuSeedOffset;\n"
+                     "    vec4 ps = p + cpuLatticeOffset;")
+        replace_once("vec4 grad4(vec4 p) {\n    float h1 = hash4(p);\n    float h2 = hash4(p + 127.1);\n    float h3 = hash4(p + 269.5);\n    float h4 = hash4(p + 419.2);",
+                     "vec4 grad4(vec4 p, vec4 k) {\n    float h1 = hash4(p, k);\n    float h2 = hash4(p, k + 127.1);\n    float h3 = hash4(p, k + 269.5);\n    float h4 = hash4(p, k + 419.2);")
+        source, count = re.subn(r"grad4\(vec4\(i\.xyz, (iw[01])\) \+ (vec4\([01],[01],[01],0\))\)", r"grad4(vec4(i.xyz, \1), \2)", source)
+        if count != 16:
+            raise ValueError(f"{effect_id}: expected 16 lattice corners, found {count}")
+    elif effect_id == "synth3d/cell3d":
+        replace_once("vec3 hash3(vec3 p) {\n    p = p + float(seed) * 0.1;",
+                     "vec3 hash3(vec3 base, vec3 neighbor) {\n"
+                     "    float cpuSeedOffset = float(seed * 0.1);\n"
+                     "    vec3 cpuCellPos = base + neighbor;\n"
+                     "    vec3 p = vec3(base.x + float(neighbor.x + cpuSeedOffset), cpuCellPos.y + cpuSeedOffset, cpuCellPos.z + cpuSeedOffset);")
+        replace_once("vec3 randomOffset = hash3(cellPos);", "vec3 randomOffset = hash3(i, neighbor);")
+    elif effect_id == "synth/perlin":
+        replace_once("float hash3(vec3 p) {\n    // Add seed to input to vary the noise pattern\n    p = p + float(seed) * 0.1;",
+                     "float hash3(vec3 p, vec3 k) {\n"
+                     "    float cpuSeedOffset = float(seed * 0.1);\n"
+                     "    vec2 cpuLatticeOffset = k.xy + cpuSeedOffset;\n"
+                     "    p = vec3(p.x + cpuLatticeOffset.x, p.y + cpuLatticeOffset.y, float(p.z + cpuSeedOffset) + k.z);")
+        replace_once("vec3 grad3(vec3 p) {\n    // Generate 3 independent random values\n    float h1 = hash3(p);\n    float h2 = hash3(p + 127.1);\n    float h3 = hash3(p + 269.5);",
+                     "vec3 grad3(vec3 p, vec3 k) {\n    float h1 = hash3(p, k);\n    float h2 = hash3(p, k + 127.1);\n    float h3 = hash3(p, k + 269.5);")
+        source, count = re.subn(r"grad3\(vec3\(i\.xy, (iz[01])\) \+ (vec3\([01],[01],0\))\)", r"grad3(vec3(i.xy, \1), \2)", source)
+        if count != 8:
+            raise ValueError(f"{effect_id}: expected 8 lattice corners, found {count}")
+    elif effect_id in {"synth3d/reactionDiffusion3d", "synth3d/cellularAutomata3d"}:
+        replace_once("float hash3(vec3 p) {\n    p = p + float(seed) * 0.1;\n    p = fract(p * vec3(0.1031, 0.1030, 0.0973));\n    p += dot(p, p.yxz + 33.33);\n    return fract((p.x + p.y) * p.z);\n}",
+                     "float hash3(vec3 p) {\n    p = p + float(seed * 0.1);\n    p = fract(p * vec3(0.1031, 0.1030, 0.0973));\n    float cpuHashDot = dot(p, p.yxz + 33.33);\n    return fract(float(float(float(p.x + p.y) + float(cpuHashDot + cpuHashDot)) * float(p.z + cpuHashDot)));\n}")
+
+    source = re.sub(r"\bmod\(\s*([A-Za-z_]\w*(?:\.[xyzw]{1,4})?)\s*\+\s*1\.0\s*,\s*2\.0\s*\)\s*-\s*1\.0\b", r"(\1 - 2.0 * floor((\1 + 1.0) * 0.5))", source)
+    source = source.replace("return fract((p3.x + p3.y) * p3.z);", "return fract(float(float(p3.x + p3.y) * p3.z));")
+    source = source.replace("return fract((p3.xx + p3.yz) * p3.zy);", "return fract(vec2(float(float(p3.x + p3.y) * p3.z), float(float(p3.x + p3.z) * p3.y)));")
+    if effect_id == "filter/extrude":
+        replace_once("float s = 1.0 + h * (depth / 100.0) * 0.4;", "float s = float(1.0 + h * (depth / 100.0) * 0.4);")
+        replace_once("bool topHit = all(lessThanEqual(abs(P - faceCenter), faceHalf));", "bool topHit = all(lessThanEqual(abs((P - imgCenter) - (cellC - imgCenter) * s), faceHalf));")
+    if effect_id == "filter/scatter" and "vec2 rnd = hash22(" in source:
+        replace_once("hash22(hashCoord + float(seed) * 101.7)", "hash22(hashCoord + float(seed * 101.7))")
+    if effect_id == "synth/navierStokes" and "float hash11(float x) {" in source:
+        replace_once("return fract(sin(x * 12.9898) * 43758.5453);", "return fract(float(float(sin(float(float(x) * 12.9898))) * 43758.5453));")
+    return source
+
+
+def normalize(source: str, runtime_defines: dict | None = None, *, effect_id: str | None = None) -> dict:
     runtime_defines = runtime_defines or {}
+    source = _adapt_canonical_source(source, effect_id)
     body = _preprocess(_strip_comments(source), runtime_defines)
 
     out_lines = []

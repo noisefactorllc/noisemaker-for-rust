@@ -413,6 +413,8 @@ class Parser:
             self.next()
             e = self.expr()
             self.expect(")")
+            if e.get("k") in {"id", "member", "index"} or (e.get("k") == "construct" and e.get("type") == "float"):
+                e["groups"] = e.get("groups", 0) + 1
             return e
         if t.kind == "num":
             self.next()
