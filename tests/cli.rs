@@ -693,3 +693,74 @@ fn effects_ends_quietly_when_the_reader_closes_the_pipe() {
         );
     }
 }
+
+#[test]
+fn unsupported_realtime_input_warns_and_uses_defaults() {
+    let root = temp_dir("unsupported-input");
+    for call in [
+        "midi(channel: 1, min: 0.8)",
+        "audio(band: audioBand.low, min: 0.8)",
+    ] {
+        for binding in [false, true] {
+            let prefix = if binding {
+                format!("let input = {call}; ")
+            } else {
+                String::new()
+            };
+            let value = if binding { "input" } else { call };
+            let source = root.join("case.dsl");
+            fs::write(
+                &source,
+                format!(
+                    "search synth; {prefix}noise(seed: 1, scaleX: {value}).write(o0); render(o0)"
+                ),
+            )
+            .unwrap();
+            let ignored_path = root.join("ignored.png");
+            let result = cli()
+                .arg("run")
+                .arg(&source)
+                .args([
+                    "--width", "8", "--height", "8", "--time", "0.25", "--seed", "1", "--output",
+                ])
+                .arg(&ignored_path)
+                .output()
+                .unwrap();
+            assert!(
+                result.status.success(),
+                "{}",
+                String::from_utf8_lossy(&result.stderr)
+            );
+            assert!(
+                String::from_utf8_lossy(&result.stderr)
+                    .contains("is unsupported in CPU ports; real-time input is unavailable")
+            );
+            fs::write(
+                &source,
+                "search synth; noise(seed: 1).write(o0); render(o0)",
+            )
+            .unwrap();
+            let baseline_path = root.join("baseline.png");
+            let baseline = cli()
+                .arg("run")
+                .arg(&source)
+                .args([
+                    "--width", "8", "--height", "8", "--time", "0.25", "--seed", "1", "--output",
+                ])
+                .arg(&baseline_path)
+                .output()
+                .unwrap();
+            assert!(
+                baseline.status.success(),
+                "{}",
+                String::from_utf8_lossy(&baseline.stderr)
+            );
+            assert!(baseline.stderr.is_empty());
+            assert_eq!(
+                fs::read(&ignored_path).unwrap(),
+                fs::read(&baseline_path).unwrap()
+            );
+        }
+    }
+    fs::remove_dir_all(root).unwrap();
+}

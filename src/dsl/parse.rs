@@ -211,7 +211,9 @@ impl Parser {
                 let is_named =
                     self.peek(0).kind == TokenKind::Identifier && self.peek(1).lexeme == ":";
                 let next_mode = if is_named { "named" } else { "positional" };
-                if mode.as_deref().is_some_and(|mode| mode != next_mode) {
+                if mode.as_deref().is_some_and(|mode| mode != next_mode)
+                    && !matches!(name.lexeme.as_str(), "midi" | "audio")
+                {
                     return Err(DslError::new(
                         "Cannot mix positional and named arguments",
                         &self.peek(0).location(),
@@ -331,6 +333,10 @@ impl Parser {
         if token.kind == TokenKind::Identifier {
             self.current += 1;
             let name = token.lexeme.clone();
+            if matches!(name.as_str(), "midi" | "audio") && self.check("(") {
+                self.current -= 1;
+                return Ok(DslValue::Call(Box::new(self.parse_call()?)));
+            }
             if name == "read" && self.take_if(&["("]) {
                 if self.peek(0).kind == TokenKind::Identifier && self.peek(1).lexeme == ":" {
                     let argument_name = self.identifier("Expected identifier")?;

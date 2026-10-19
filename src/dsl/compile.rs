@@ -48,6 +48,7 @@ pub struct RenderPlan {
 
 #[derive(Clone, Debug, PartialEq)]
 enum Evaluated {
+    UnsupportedInput,
     Number(f64),
     String(String),
     Bool(bool),
@@ -92,12 +93,14 @@ pub fn compile_dsl(source: &str, source_name: &str) -> Result<RenderPlan, DslErr
             ));
         }
         let value = match &binding.value {
-            DslValue::Call(call) => Binding::Partial(Partial {
-                name: call.name.clone(),
-                args: resolve_args(&call.args, &bindings)?,
-                arg_mode: call.arg_mode.clone(),
-                loc: call.loc.clone(),
-            }),
+            DslValue::Call(call) if !matches!(call.name.as_str(), "midi" | "audio") => {
+                Binding::Partial(Partial {
+                    name: call.name.clone(),
+                    args: resolve_args(&call.args, &bindings)?,
+                    arg_mode: call.arg_mode.clone(),
+                    loc: call.loc.clone(),
+                })
+            }
             value => Binding::Value(evaluate_value(value, &bindings)?),
         };
         bindings.insert(binding.name.clone(), value);
@@ -437,6 +440,13 @@ fn evaluate_value(
                 _ => left / right,
             }))
         }
+        DslValue::Call(call) if matches!(call.name.as_str(), "midi" | "audio") => {
+            eprintln!(
+                "Warning: {}() is unsupported in CPU ports; real-time input is unavailable. Ignoring this unsupported input value.",
+                call.name
+            );
+            Ok(Evaluated::UnsupportedInput)
+        }
         DslValue::Call(call) => Err(DslError::new(
             "Effect call cannot be used as a value",
             &call.loc,
@@ -546,6 +556,9 @@ fn normalize_arguments(
                 loc,
             ));
         };
+        if matches!(argument.value, Evaluated::UnsupportedInput) {
+            continue;
+        }
         apply_parameter(
             &name,
             &definition.params[&name],
