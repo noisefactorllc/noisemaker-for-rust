@@ -619,6 +619,7 @@ fn midi_and_audio_values_compile_to_automation_descriptors_that_resolve_to_min()
         ("audio(audioBand.mid, 0.35, 0.8)", 35.65),
         // let variables that hold an automation value.
         ("bass", 25.75),
+        ("rate", 50.5),
         // Nested automation in both directions.
         (
             "osc(type: oscKind.sine, min: 0.25, max: 0.75, speed: audio(band: audioBand.low, min: 0, max: 1))",
@@ -648,6 +649,7 @@ fn midi_and_audio_values_compile_to_automation_descriptors_that_resolve_to_min()
     ] {
         let lets = match value {
             "bass" => "let bass = audio(band: audioBand.low, min: 0.25, max: 0.75)\n",
+            "rate" => "let rate = osc(type: oscKind.sine, min: 0.25, max: 0.75)\n",
             _ => "",
         };
         let plan = compile_dsl(

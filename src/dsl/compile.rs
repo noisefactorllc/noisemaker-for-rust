@@ -162,7 +162,7 @@ pub fn compile_dsl(source: &str, source_name: &str) -> Result<RenderPlan, DslErr
             ));
         }
         let value = match &binding.value {
-            DslValue::Call(call) if !matches!(call.name.as_str(), "midi" | "audio") => {
+            DslValue::Call(call) if !matches!(call.name.as_str(), "osc" | "midi" | "audio") => {
                 Binding::Partial(Partial {
                     call: (**call).clone(),
                 })
