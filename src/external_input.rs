@@ -668,3 +668,14 @@ pub fn mesh_fixture() -> MeshData {
     packed.tex_height = MESH_TEX_HEIGHT;
     packed
 }
+
+/// The mesh a program samples before any OBJ upload. Upstream creates each
+/// mesh surface as zero-filled 256x256 rgba32f textures (pipeline.js
+/// createSurfaces), so every vertex has w = 0 and no triangle is drawn.
+#[must_use]
+pub fn empty_mesh_data() -> MeshData {
+    let mut packed = pack_mesh_data_for_textures(&[], &[], &[], MESH_TEX_WIDTH, MESH_TEX_HEIGHT);
+    packed.tex_width = MESH_TEX_WIDTH;
+    packed.tex_height = MESH_TEX_HEIGHT;
+    packed
+}

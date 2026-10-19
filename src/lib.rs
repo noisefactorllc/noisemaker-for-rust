@@ -1,6 +1,7 @@
 //! Standalone CPU implementation of the Noisemaker rendering engine.
 
 mod adapters;
+pub mod automation;
 pub mod catalog;
 pub mod cli;
 pub mod draw_ops;
@@ -23,15 +24,19 @@ mod value;
 mod vm;
 
 pub use adapters::{fragment_adapter_keys, historic_palette_dimensions, palette_dimensions};
+pub use automation::{
+    AutomationField, AutomationSpec, AutomationValue, automation_param_spec,
+    resolve_automation_uniform,
+};
 pub use draw_ops::{draw_op_keys, execute_draw_pass, scatter_point_pixel};
 pub use dsl::{
-    DslError, DslValue, RenderPlan, RenderStep, SurfaceBinding, Token, TokenKind, compile_dsl,
-    parse_dsl, tokenize_dsl,
+    DslCall, DslChain, DslChainElement, DslError, DslProgram, DslValue, RenderPlan, RenderStep,
+    SurfaceBinding, Token, TokenKind, compile_dsl, parse_dsl, tokenize_dsl,
 };
 pub use error::{PngError, SurfaceError, VmError};
 pub use external_input::{
-    AudioState, ExternalInputs, MeshData, MidiState, audio_fixture, external_inputs_for_case,
-    mesh_fixture, midi_fixture, pack_mesh_data_for_textures, parse_obj,
+    AudioState, ExternalInputs, MeshData, MidiState, audio_fixture, empty_mesh_data,
+    external_inputs_for_case, mesh_fixture, midi_fixture, pack_mesh_data_for_textures, parse_obj,
 };
 pub use iteration::{
     ITERATION_DELTA_TIME, IterationError, IterationFrame, IterationGroup, IterationStep,

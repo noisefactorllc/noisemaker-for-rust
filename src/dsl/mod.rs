@@ -12,9 +12,12 @@ pub struct Location {
     pub index: usize,
 }
 
-pub use compile::{CompiledChain, RenderPlan, RenderStep, SurfaceBinding, compile_dsl};
+pub use compile::{
+    CompiledChain, InlineChain, RenderPlan, RenderStep, SurfaceBinding, compile_dsl,
+};
 pub use error::DslError;
 pub use parse::{
-    DslArgument, DslBinding, DslCall, DslChain, DslProgram, DslValue, SurfaceRef, parse_dsl,
+    DslArgument, DslBinding, DslCall, DslChain, DslChainElement, DslProgram, DslSubchain, DslValue,
+    SurfaceRef, parse_dsl,
 };
 pub use tokenize::{Token, TokenKind, tokenize_dsl};

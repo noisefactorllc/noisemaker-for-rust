@@ -9,6 +9,10 @@ pub const ITERATION_DELTA_TIME: f32 = 1.0_f32 / 600.0_f32;
 pub enum IterationStep {
     Read,
     Write,
+    // Built-in volume I/O breaks groups like read/write, as upstream treats
+    // every surface-IO step as its own iteration group.
+    Read3d,
+    Write3d,
     Effect {
         effect_id: String,
         params: BTreeMap<String, ParamValue>,
@@ -82,7 +86,13 @@ pub fn compute_iteration_groups(
 
     for step in steps {
         if let Some(open_loop) = loop_steps.as_mut() {
-            if matches!(step, IterationStep::Read | IterationStep::Write) {
+            if matches!(
+                step,
+                IterationStep::Read
+                    | IterationStep::Write
+                    | IterationStep::Read3d
+                    | IterationStep::Write3d
+            ) {
                 return Err(IterationError::InvalidGroup(
                     "Loop iteration group cannot cross a read/write boundary",
                 ));
@@ -110,7 +120,13 @@ pub fn compute_iteration_groups(
             continue;
         }
 
-        if matches!(step, IterationStep::Read | IterationStep::Write) {
+        if matches!(
+            step,
+            IterationStep::Read
+                | IterationStep::Write
+                | IterationStep::Read3d
+                | IterationStep::Write3d
+        ) {
             close_particle(&mut groups, &mut particle);
             groups.push(IterationGroup {
                 steps: vec![step.clone()],

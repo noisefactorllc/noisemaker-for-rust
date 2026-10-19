@@ -5,13 +5,14 @@ use thiserror::Error;
 
 use crate::catalog::{CatalogError, EffectDefinition, Expression, effect_catalog, shader_bundle};
 use crate::dsl::{DslError, RenderPlan, RenderStep, SurfaceBinding, compile_dsl};
-use crate::external_input::{ExternalInputs, flip_rgba_rows};
+use crate::external_input::{ExternalInputs, MeshData, empty_mesh_data, flip_rgba_rows};
 use crate::iteration::{
     IterationStep, compute_iteration_groups, is_particle_state_name, iteration_schedule,
 };
 use crate::pass_runner::{
     RESERVED_FEEDBACK_RESOURCE, apply_pass_uniform_aliases, canonical_uniforms, execute_pass,
-    normalize_parameters, pass_enabled, repeat_count, texture_dimensions,
+    normalize_parameters, pass_enabled, repeat_count, resolve_effect_automation,
+    texture_dimensions,
 };
 use crate::{FilterMode, ParamValue, Surface, SurfaceError, TextureFormat, Value, VmError};
 
@@ -306,129 +307,13 @@ impl CpuRenderer {
         mut observe_particle_group: impl FnMut(&BTreeMap<String, Surface>),
     ) -> Result<RenderResult, RenderError> {
         let mut surfaces = BTreeMap::<String, Surface>::new();
-        // Retain shared states across the plan so earlier particle owner
-        // allocations remain live, preventing allocator address reuse across chains.
-        let mut _retained_shared = Vec::new();
-
-        for chain in plan.chains {
-            // Current image/volume/geometry state is deliberately local to a
-            // chain. Only an explicit write/read crosses a chain boundary.
-            let mut bundle = ChainBundle::default();
-            let grouping_steps = chain
-                .steps
-                .iter()
-                .map(|step| match step {
-                    RenderStep::Read { .. } => IterationStep::Read,
-                    RenderStep::Write { .. } => IterationStep::Write,
-                    RenderStep::Effect {
-                        effect_id, params, ..
-                    } => IterationStep::Effect {
-                        effect_id: effect_id.clone(),
-                        params: params.clone(),
-                    },
-                })
-                .collect::<Vec<_>>();
-            let groups = compute_iteration_groups(&grouping_steps).map_err(|error| {
-                RenderError::InvalidGraph {
-                    message: error.to_string(),
-                }
-            })?;
-            let mut step_offset = 0;
-            for group in groups {
-                let step_count = group.steps.len();
-                let steps = &chain.steps[step_offset..step_offset + step_count];
-                step_offset += step_count;
-                if group.iterated {
-                    let execution = execute_iteration_group(
-                        steps,
-                        &bundle,
-                        &surfaces,
-                        options,
-                        &mut self.cpu_texture_cache,
-                    )?;
-                    if execution
-                        .shared
-                        .keys()
-                        .any(|name| is_particle_state_name(name))
-                    {
-                        observe_particle_group(&execution.shared);
-                    }
-                    bundle = execution.bundle;
-                    _retained_shared.push(execution.shared);
-                    continue;
-                }
-                for step in steps {
-                    match step {
-                        RenderStep::Read { surface, .. } => {
-                            bundle.image = Some(surfaces.get(surface).cloned().ok_or(
-                                RenderError::UnwrittenSurface {
-                                    surface: surface.clone(),
-                                },
-                            )?);
-                        }
-                        RenderStep::Effect {
-                            effect_id,
-                            params,
-                            surface_params,
-                            explicit_params,
-                            ..
-                        } => {
-                            let mut params = params.clone();
-                            // An omitted effect seed inherits the render seed. The
-                            // compiler still materializes other defaults so the
-                            // execution layer receives fully normalized values.
-                            if !explicit_params.iter().any(|name| name == "seed") {
-                                params.remove("seed");
-                            }
-
-                            let mut inputs = BTreeMap::<String, Surface>::new();
-                            if let Some(image) = &bundle.image {
-                                inputs.insert("inputTex".into(), image.clone());
-                            }
-                            for (parameter, binding) in surface_params {
-                                let input = match binding {
-                                    SurfaceBinding::Current => {
-                                        bundle.image.clone().ok_or_else(|| {
-                                            RenderError::MissingSurfaceInput {
-                                                effect_id: effect_id.clone(),
-                                                parameter: parameter.clone(),
-                                                surface: "inputTex".into(),
-                                            }
-                                        })?
-                                    }
-                                    SurfaceBinding::Surface(surface) => surfaces
-                                        .get(surface)
-                                        .cloned()
-                                        .ok_or_else(|| RenderError::MissingSurfaceInput {
-                                            effect_id: effect_id.clone(),
-                                            parameter: parameter.clone(),
-                                            surface: surface.clone(),
-                                        })?,
-                                };
-                                inputs.insert(parameter.clone(), input);
-                            }
-                            bundle = execute_effect_bundle_with_cache(
-                                effect_id,
-                                &params,
-                                &inputs,
-                                &bundle,
-                                options,
-                                &mut self.cpu_texture_cache,
-                            )?;
-                        }
-                        RenderStep::Write { surface, .. } => {
-                            let image = bundle.image.clone().ok_or_else(|| {
-                                RenderError::InvalidGraph {
-                                    message: format!(
-                                        "write({surface}) reached execution without a current image"
-                                    ),
-                                }
-                            })?;
-                            surfaces.insert(surface.clone(), image);
-                        }
-                    }
-                }
-            }
+        for chain in &plan.chains {
+            self.execute_steps(
+                &chain.steps,
+                &mut surfaces,
+                options,
+                &mut observe_particle_group,
+            )?;
         }
 
         let surface =
@@ -441,6 +326,246 @@ impl CpuRenderer {
             surface,
             elapsed: started.elapsed(),
         })
+    }
+
+    // Runs one compiled chain and returns its final bundle. A step's
+    // `inline_chains` (chain arguments such as `tex: solid(color: #f00)`) run
+    // before the group that holds the step, and each writes the hidden surface
+    // that the step's argument names. Upstream compiles those chains into steps
+    // directly ahead of the consuming effect; they read nothing that the group
+    // itself writes.
+    fn execute_steps(
+        &mut self,
+        steps: &[RenderStep],
+        surfaces: &mut BTreeMap<String, Surface>,
+        options: &RenderOptions,
+        observe_particle_group: &mut dyn FnMut(&BTreeMap<String, Surface>),
+    ) -> Result<ChainBundle, RenderError> {
+        // Current image/volume/geometry state is deliberately local to a
+        // chain. Only an explicit write/read crosses a chain boundary.
+        let mut bundle = ChainBundle::default();
+        // Retain shared states across the plan so earlier particle owner
+        // allocations remain live, preventing allocator address reuse across chains.
+        let mut retained_shared = Vec::new();
+        let grouping_steps = steps
+            .iter()
+            .map(|step| match step {
+                RenderStep::Read { .. } => IterationStep::Read,
+                RenderStep::Write { .. } => IterationStep::Write,
+                RenderStep::Read3d { .. } => IterationStep::Read3d,
+                RenderStep::Write3d { .. } => IterationStep::Write3d,
+                RenderStep::Effect {
+                    effect_id, params, ..
+                } => IterationStep::Effect {
+                    effect_id: effect_id.clone(),
+                    params: params.clone(),
+                },
+            })
+            .collect::<Vec<_>>();
+        let groups = compute_iteration_groups(&grouping_steps).map_err(|error| {
+            RenderError::InvalidGraph {
+                message: error.to_string(),
+            }
+        })?;
+        let mut step_offset = 0;
+        for group in groups {
+            let step_count = group.steps.len();
+            let group_steps = &steps[step_offset..step_offset + step_count];
+            step_offset += step_count;
+            let only = if group_steps.len() == 1 {
+                Some(&group_steps[0])
+            } else {
+                None
+            };
+            if let Some(step) = only {
+                if matches!(
+                    step,
+                    RenderStep::Read { .. }
+                        | RenderStep::Write { .. }
+                        | RenderStep::Read3d { .. }
+                        | RenderStep::Write3d { .. }
+                ) {
+                    bundle = run_surface_io_step(step, bundle, surfaces)?;
+                    continue;
+                }
+            }
+            for step in group_steps {
+                if let RenderStep::Effect { inline_chains, .. } = step {
+                    for inline in inline_chains {
+                        let value = self.execute_steps(
+                            &inline.chain.steps,
+                            surfaces,
+                            options,
+                            observe_particle_group,
+                        )?;
+                        let image = value.image.ok_or_else(|| RenderError::InvalidGraph {
+                            message: format!(
+                                "inline chain for {} reached execution without a current image",
+                                inline.surface
+                            ),
+                        })?;
+                        surfaces.insert(inline.surface.clone(), image);
+                    }
+                }
+            }
+            if group.iterated {
+                let execution = execute_iteration_group(
+                    group_steps,
+                    &bundle,
+                    surfaces,
+                    options,
+                    &mut self.cpu_texture_cache,
+                )?;
+                if execution
+                    .shared
+                    .keys()
+                    .any(|name| is_particle_state_name(name))
+                {
+                    observe_particle_group(&execution.shared);
+                }
+                bundle = execution.bundle;
+                retained_shared.push(execution.shared);
+                continue;
+            }
+            for step in group_steps {
+                match step {
+                    RenderStep::Read { .. } | RenderStep::Write { .. } => {
+                        return Err(RenderError::InvalidGraph {
+                            message: "surface IO reached execution outside its own group".into(),
+                        });
+                    }
+                    RenderStep::Read3d { .. } | RenderStep::Write3d { .. } => {
+                        return Err(RenderError::InvalidGraph {
+                            message: "surface IO reached execution outside its own group".into(),
+                        });
+                    }
+                    RenderStep::Effect {
+                        effect_id,
+                        params,
+                        surface_params,
+                        explicit_params,
+                        ..
+                    } => {
+                        let mut params = params.clone();
+                        // An omitted effect seed inherits the render seed. The
+                        // compiler still materializes other defaults so the
+                        // execution layer receives fully normalized values.
+                        if !explicit_params.iter().any(|name| name == "seed") {
+                            params.remove("seed");
+                        }
+
+                        let mut inputs = BTreeMap::<String, Surface>::new();
+                        if let Some(image) = &bundle.image {
+                            inputs.insert("inputTex".into(), image.clone());
+                        }
+                        for (parameter, binding) in surface_params {
+                            let input = match binding {
+                                SurfaceBinding::Current => {
+                                    bundle.image.clone().ok_or_else(|| {
+                                        RenderError::MissingSurfaceInput {
+                                            effect_id: effect_id.clone(),
+                                            parameter: parameter.clone(),
+                                            surface: "inputTex".into(),
+                                        }
+                                    })?
+                                }
+                                SurfaceBinding::Surface(surface) => surfaces
+                                    .get(surface)
+                                    .cloned()
+                                    .ok_or_else(|| RenderError::MissingSurfaceInput {
+                                        effect_id: effect_id.clone(),
+                                        parameter: parameter.clone(),
+                                        surface: surface.clone(),
+                                    })?,
+                            };
+                            inputs.insert(parameter.clone(), input);
+                        }
+                        bundle = execute_effect_bundle_with_cache(
+                            effect_id,
+                            &params,
+                            &inputs,
+                            &bundle,
+                            options,
+                            &mut self.cpu_texture_cache,
+                        )?;
+                    }
+                }
+            }
+        }
+        Ok(bundle)
+    }
+}
+
+// The built-in surface I/O steps. read3d starts a chain bundle from a stored
+// volume and geometry; write3d stores the current bundle's volume and geometry
+// under its two names (`none` stores nothing) and passes the bundle through, as
+// upstream's `_write3d` blits and passes through.
+fn run_surface_io_step(
+    step: &RenderStep,
+    bundle: ChainBundle,
+    surfaces: &mut BTreeMap<String, Surface>,
+) -> Result<ChainBundle, RenderError> {
+    match step {
+        RenderStep::Read { surface, .. } => {
+            let image = surfaces
+                .get(surface)
+                .cloned()
+                .ok_or(RenderError::UnwrittenSurface {
+                    surface: surface.clone(),
+                })?;
+            Ok(ChainBundle {
+                image: Some(image),
+                volume: None,
+                geometry: None,
+                volume_size: None,
+            })
+        }
+        RenderStep::Write { surface, .. } => {
+            let image = bundle
+                .image
+                .clone()
+                .ok_or_else(|| RenderError::InvalidGraph {
+                    message: format!("write({surface}) reached execution without a current image"),
+                })?;
+            surfaces.insert(surface.clone(), image);
+            Ok(bundle)
+        }
+        RenderStep::Write3d {
+            volume, geometry, ..
+        } => {
+            if volume != "none" {
+                if let Some(volume_surface) = &bundle.volume {
+                    surfaces.insert(volume.clone(), volume_surface.clone());
+                }
+            }
+            if geometry != "none" {
+                if let Some(geometry_surface) = &bundle.geometry {
+                    surfaces.insert(geometry.clone(), geometry_surface.clone());
+                }
+            }
+            Ok(bundle)
+        }
+        RenderStep::Read3d {
+            volume, geometry, ..
+        } => {
+            let volume_surface =
+                surfaces
+                    .get(volume)
+                    .cloned()
+                    .ok_or(RenderError::UnwrittenSurface {
+                        surface: volume.clone(),
+                    })?;
+            let volume_size = volume_surface.width();
+            Ok(ChainBundle {
+                image: None,
+                volume: Some(volume_surface),
+                geometry: surfaces.get(geometry).cloned(),
+                volume_size: Some(volume_size),
+            })
+        }
+        RenderStep::Effect { .. } => Err(RenderError::InvalidGraph {
+            message: "effect step reached the surface IO runner".into(),
+        }),
     }
 }
 
@@ -510,7 +635,8 @@ fn execute_effect_bundle_with_state(
         .ok_or_else(|| RenderError::UnknownEffect {
             effect_id: effect_id.into(),
         })?;
-    let mut normalized = normalize_parameters(effect, params, options.seed)?;
+    let params = resolve_effect_automation(effect, params, options.time);
+    let mut normalized = normalize_parameters(effect, &params, options.seed)?;
     inherit_volume_size(effect_id, effect, &mut normalized, input_bundle)?;
     if effect_id == "synth/remap" {
         normalized.uniforms.insert(
@@ -894,12 +1020,14 @@ fn bind_external_input_resources(
     if mesh_names.is_empty() {
         return Ok(());
     }
-    let Some(mesh_data) = &external_inputs.mesh_data else {
-        return Err(RenderError::InvalidGraph {
-            message: format!(
-                "{effect_id} requires external mesh data (RenderOptions.external_inputs.mesh_data)"
-            ),
-        });
+    // With no mesh_data, bind the zero mesh upstream samples before an upload.
+    let mesh_data: &MeshData = if let Some(mesh_data) = &external_inputs.mesh_data {
+        mesh_data
+    } else {
+        // The zero mesh is constant; a lazily shared instance avoids rebuilding
+        // the 256x256 buffers on every pass.
+        static EMPTY: std::sync::OnceLock<MeshData> = std::sync::OnceLock::new();
+        EMPTY.get_or_init(empty_mesh_data)
     };
     let tex_width = if mesh_data.tex_width == 0 {
         MESH_TEX_WIDTH
@@ -1070,8 +1198,17 @@ fn execute_iteration_group(
     })?;
     // Only multi-step groups inherit the lead step's stateSize (the CPU
     // renderer's groupOwnerStateSize returns undefined for single-step groups).
+    // A particle group's owner is its pointsEmit step, which an animated input
+    // generator may precede.
     let owner_state_size = if steps.len() > 1 {
-        first_params.get("stateSize").cloned()
+        match steps.iter().find(|step| {
+            matches!(step, RenderStep::Effect { effect_id, .. }
+                if catalog.effects[effect_id].textures.contains_key("global_xyz"))
+        }) {
+            Some(RenderStep::Effect { params, .. }) => params.get("stateSize").cloned(),
+            Some(_) => None,
+            None => first_params.get("stateSize").cloned(),
+        }
     } else {
         None
     };
@@ -1125,6 +1262,12 @@ fn execute_iteration_group(
             if !explicit_params.iter().any(|name| name == "seed") {
                 params.remove("seed");
             }
+            // Automation-driven params (`osc(...)`) re-resolve against each
+            // iteration's own normalized time: the iteration loop rewinds time
+            // to emulate the upstream frames the persistent-texture feedback
+            // accumulated, so an automation param must read the same
+            // per-iteration time the kernels receive.
+            let params = resolve_effect_automation(definition, &params, frame.time);
             let normalized = normalize_parameters(definition, &params, options.seed)?;
             ensure_group_particle_resources(
                 definition,
@@ -1454,7 +1597,8 @@ fn zero_iteration_bundle(
         return Ok(input.clone());
     }
     if effect.domain == "volume-generator" {
-        let normalized = normalize_parameters(effect, params, options.seed)?;
+        let params = resolve_effect_automation(effect, params, options.time);
+        let normalized = normalize_parameters(effect, &params, options.seed)?;
         let resources = BTreeMap::new();
         let output = effect
             .output_tex3d

@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use serde_json::Value as JsonValue;
 
 use crate::adapters::apply_classic_palette_uniforms;
+use crate::automation::{AutomationValue, automation_param_spec, resolve_automation_uniform};
 use crate::catalog::{EffectDefinition, ParameterSpec};
 use crate::{RenderError, Value};
 
@@ -14,6 +15,11 @@ pub enum ParamValue {
     Float(f32),
     String(String),
     Vector(Vec<f32>),
+    // An `osc(...)`/`midi(...)`/`audio(...)` automation value (numeric params
+    // only, matching upstream's uniformSpecs contract). Kept as-is at compile
+    // time and resolved to a concrete number per render before normalization,
+    // as upstream's CpuRenderer.effectParams does.
+    Automation(AutomationValue),
 }
 
 impl From<bool> for ParamValue {
@@ -46,6 +52,46 @@ impl From<String> for ParamValue {
 pub struct NormalizedParameters {
     pub values: BTreeMap<String, Value>,
     pub uniforms: BTreeMap<String, Value>,
+}
+
+// Resolves `osc(...)`/`midi(...)`/`audio(...)` automation values in a step's
+// params to concrete numbers for this render, using the normalized 0..1 loop
+// time the canonical kernels receive. Returns the params unchanged when no
+// param carries automation, so every pre-existing program keeps its exact
+// identity and byte-identical render path. An int parameter with choices is
+// rounded to the selected integer; an int parameter without choices keeps the
+// unrounded scaled value, which the int uniform truncates at upload, as
+// upstream's uniform1i does.
+#[must_use]
+pub fn resolve_effect_automation(
+    effect: &EffectDefinition,
+    params: &BTreeMap<String, ParamValue>,
+    normalized_time: f32,
+) -> BTreeMap<String, ParamValue> {
+    let has_automation = params
+        .values()
+        .any(|value| matches!(value, ParamValue::Automation(_)));
+    if !has_automation {
+        return params.clone();
+    }
+    let mut resolved = params.clone();
+    for (name, value) in resolved.iter_mut() {
+        let ParamValue::Automation(descriptor) = value else {
+            continue;
+        };
+        let Some(spec) = effect.params.get(name) else {
+            continue;
+        };
+        let automation_spec = automation_param_spec(spec);
+        let number =
+            resolve_automation_uniform(descriptor, f64::from(normalized_time), automation_spec);
+        *value = match automation_spec {
+            Some(spec) if spec.round => ParamValue::Int(number as i32),
+            Some(_) if spec.parameter_type == "int" => ParamValue::Int(number as i32),
+            _ => ParamValue::Float(number as f32),
+        };
+    }
+    resolved
 }
 
 pub fn normalize_parameters(

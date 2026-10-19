@@ -7,6 +7,7 @@
 use std::collections::BTreeMap;
 
 use crate::catalog::RenderPass;
+use crate::external_input::{MeshData, empty_mesh_data};
 use crate::pass_runner::texture_dimensions;
 use crate::texture_format::truncate_to_binary16;
 use crate::{
@@ -1063,11 +1064,14 @@ fn mesh_render_triangles(
     external_inputs: &crate::external_input::ExternalInputs,
     destination: &mut Surface,
 ) -> Result<usize, RenderError> {
-    let Some(mesh_data) = &external_inputs.mesh_data else {
-        return Err(RenderError::InvalidGraph {
-            message: "render/meshRender requires external mesh data (external_inputs.mesh_data)"
-                .into(),
-        });
+    // With no mesh_data, draw the zero mesh upstream samples before an upload.
+    let mesh_data: &MeshData = if let Some(mesh_data) = &external_inputs.mesh_data {
+        mesh_data
+    } else {
+        // The zero mesh is constant; a lazily shared instance avoids rebuilding
+        // the 256x256 buffers on every pass.
+        static EMPTY: std::sync::OnceLock<MeshData> = std::sync::OnceLock::new();
+        EMPTY.get_or_init(empty_mesh_data)
     };
     let positions = &mesh_data.position_data;
     let normals = &mesh_data.normal_data;

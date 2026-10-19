@@ -28,7 +28,7 @@ pub(crate) fn resource_surface<'a>(
     resources.get(canonical_resource_name(name))
 }
 
-pub use crate::param::{NormalizedParameters, normalize_parameters};
+pub use crate::param::{NormalizedParameters, normalize_parameters, resolve_effect_automation};
 
 #[must_use]
 pub fn canonical_uniforms(

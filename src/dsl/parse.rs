@@ -37,6 +37,7 @@ pub enum DslValue {
         loc: Location,
     },
     Call(Box<DslCall>),
+    Chain(Box<DslChain>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -51,12 +52,27 @@ pub struct DslCall {
     pub name: String,
     pub args: Vec<DslArgument>,
     pub arg_mode: Option<String>,
+    pub namespace: Option<String>,
+    pub loc: Location,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum DslChainElement {
+    Call(DslCall),
+    Subchain(DslSubchain),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct DslSubchain {
+    pub name: Option<String>,
+    pub id: Option<String>,
+    pub body: Vec<DslCall>,
     pub loc: Location,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct DslChain {
-    pub calls: Vec<DslCall>,
+    pub calls: Vec<DslChainElement>,
     pub loc: Location,
 }
 
@@ -96,14 +112,24 @@ impl Parser {
         self.peek(0).kind == TokenKind::Eof
     }
     fn check(&self, lexeme: &str) -> bool {
-        self.peek(0).lexeme == lexeme
+        // A string token's lexeme is its content, so a string never matches
+        // punctuation, an operator or a keyword: `text(")")` holds the string ")".
+        self.peek(0).kind != TokenKind::String && self.peek(0).lexeme == lexeme
     }
     fn take_if(&mut self, lexemes: &[&str]) -> bool {
-        if !lexemes.contains(&self.peek(0).lexeme.as_str()) {
+        if self.peek(0).kind == TokenKind::String
+            || !lexemes.contains(&self.peek(0).lexeme.as_str())
+        {
             return false;
         }
         self.current += 1;
         true
+    }
+    fn is_punctuation(&self, lexeme: &str) -> bool {
+        self.peek(0).kind == TokenKind::Punctuation && self.peek(0).lexeme == lexeme
+    }
+    fn at_subchain(&self) -> bool {
+        self.peek(0).kind == TokenKind::Keyword && self.peek(0).lexeme == "subchain"
     }
     fn consume(&mut self, lexeme: &str, message: impl Into<String>) -> Result<Token, DslError> {
         if !self.check(lexeme) {
@@ -195,31 +221,177 @@ impl Parser {
     fn parse_chain(&mut self) -> Result<DslChain, DslError> {
         let first = self.parse_call()?;
         let loc = first.loc.clone();
-        let mut calls = vec![first];
+        let mut calls = vec![DslChainElement::Call(first)];
         while self.take_if(&["."]) {
-            calls.push(self.parse_call()?);
+            if self.at_subchain() {
+                calls.push(DslChainElement::Subchain(self.parse_subchain()?));
+            } else if self.peek(0).lexeme == "write3d" && self.peek(0).kind == TokenKind::Identifier
+            {
+                calls.push(DslChainElement::Call(self.parse_write3d()?));
+            } else {
+                calls.push(DslChainElement::Call(self.parse_call()?));
+            }
         }
         Ok(DslChain { calls, loc })
+    }
+    // Port of upstream parseWriteCall for write3d: two positional references, a
+    // volume and a geometry (`write3d(vol0, geo0)`), each an identifier or a surface.
+    fn parse_write3d(&mut self) -> Result<DslCall, DslError> {
+        let name = self.identifier("Expected effect or IO function name")?;
+        self.consume("(", "Expected \"(\"")?;
+        let reference = |parser: &mut Self| -> Result<DslValue, DslError> {
+            let token = parser.peek(0).clone();
+            if token.kind == TokenKind::Surface {
+                return parser.parse_surface().map(DslValue::Surface);
+            }
+            if token.kind != TokenKind::Identifier {
+                return Err(DslError::new(
+                    "Expected surface reference",
+                    &token.location(),
+                ));
+            }
+            parser.current += 1;
+            let loc = token.location();
+            Ok(DslValue::Identifier {
+                name: token.lexeme,
+                loc,
+            })
+        };
+        let volume_loc = self.peek(0).location();
+        let volume = reference(self)?;
+        self.consume(",", "Expected \",\"")?;
+        let geometry_loc = self.peek(0).location();
+        let geometry = reference(self)?;
+        self.consume(")", "Expected \")\"")?;
+        let loc = name.location();
+        Ok(DslCall {
+            name: "write3d".into(),
+            args: vec![
+                DslArgument {
+                    name: None,
+                    value: volume,
+                    loc: volume_loc,
+                },
+                DslArgument {
+                    name: None,
+                    value: geometry,
+                    loc: geometry_loc,
+                },
+            ],
+            arg_mode: Some("positional".into()),
+            namespace: None,
+            loc,
+        })
+    }
+    // Port of upstream parseSubchainCall: `subchain(name: "...", id: "...") { .a() .b() }`.
+    // A single leading string is shorthand for `name`. Unknown keys, duplicate keys and
+    // a missing ',' between keys are upstream warnings (P008-P010): the program still
+    // compiles, an unknown key's value is discarded and the last duplicate wins. The
+    // body holds one or more '.'-prefixed calls and cannot hold write(), write3d() or
+    // another subchain, which upstream's lexer reserves as keywords.
+    fn parse_subchain(&mut self) -> Result<DslSubchain, DslError> {
+        let start = self.tokens[self.current].clone();
+        self.current += 1;
+        self.consume("(", "Expected \"(\"")?;
+        let mut name: Option<String> = None;
+        let mut id: Option<String> = None;
+        if self.peek(0).kind == TokenKind::String {
+            name = self.tokens[self.current].string_value.clone();
+            self.current += 1;
+        } else {
+            while self.peek(0).kind == TokenKind::Identifier && self.peek(1).lexeme == ":" {
+                let key = self.identifier("Expected identifier")?.lexeme;
+                self.consume(":", "Expected \":\"")?;
+                // A value that is not a string ends the arguments, so the closing
+                // ')' check below reports it.
+                if self.peek(0).kind != TokenKind::String {
+                    break;
+                }
+                let value = self.tokens[self.current].string_value.clone();
+                self.current += 1;
+                if key == "name" {
+                    name = value;
+                } else if key == "id" {
+                    id = value;
+                }
+                self.take_if(&[","]);
+            }
+        }
+        self.consume(")", "Expected \")\"")?;
+        self.consume("{", "Expected \"{\"")?;
+        // The body holds at least one element, so an empty block fails on its
+        // missing '.'.
+        let mut body = Vec::new();
+        loop {
+            self.consume(".", "Expected \".\"")?;
+            let call = self.parse_call()?;
+            if call.name == "write" || call.name == "write3d" {
+                return Err(DslError::new(
+                    "Expected effect or IO function name",
+                    &call.loc,
+                ));
+            }
+            body.push(call);
+            if self.check("}") {
+                break;
+            }
+        }
+        self.consume("}", "Expected \"}\"")?;
+        Ok(DslSubchain {
+            name,
+            id,
+            body,
+            loc: start.location(),
+        })
+    }
+    // A chain in a value position (upstream parseChain in its 'expression' context).
+    // It may hold subchain blocks, and it cannot hold write() or write3d().
+    fn parse_expression_chain(&mut self, first: DslCall) -> Result<DslValue, DslError> {
+        let loc = first.loc.clone();
+        let mut calls = vec![DslChainElement::Call(first)];
+        while self.is_punctuation(".") {
+            self.current += 1;
+            if self.at_subchain() {
+                calls.push(DslChainElement::Subchain(self.parse_subchain()?));
+                continue;
+            }
+            let call = self.parse_call()?;
+            // Upstream allows write() and write3d() only in statement context.
+            if call.name == "write" || call.name == "write3d" {
+                return Err(DslError::new(
+                    "Expected effect or IO function name",
+                    &call.loc,
+                ));
+            }
+            calls.push(DslChainElement::Call(call));
+        }
+        Ok(DslValue::Chain(Box::new(DslChain { calls, loc })))
     }
     fn parse_call(&mut self) -> Result<DslCall, DslError> {
         let name = self.identifier("Expected effect or IO function name")?;
         self.consume("(", "Expected \"(\"")?;
         let mut args = Vec::new();
         let mut mode: Option<String> = None;
+        // Upstream's parseCall lets the midi() and audio() value calls mix
+        // positional and keyword arguments (`allowMixed`); every other call keeps
+        // one form.
+        let allow_mixed = matches!(name.lexeme.as_str(), "midi" | "audio");
         if !self.check(")") {
             loop {
                 let is_named =
                     self.peek(0).kind == TokenKind::Identifier && self.peek(1).lexeme == ":";
                 let next_mode = if is_named { "named" } else { "positional" };
-                if mode.as_deref().is_some_and(|mode| mode != next_mode)
-                    && !matches!(name.lexeme.as_str(), "midi" | "audio")
-                {
+                if mode.as_deref().is_some_and(|mode| mode != next_mode) && !allow_mixed {
                     return Err(DslError::new(
                         "Cannot mix positional and named arguments",
                         &self.peek(0).location(),
                     ));
                 }
-                mode = Some(next_mode.into());
+                mode = Some(if mode.as_deref().is_some_and(|mode| mode != next_mode) {
+                    "mixed".into()
+                } else {
+                    next_mode.into()
+                });
                 let arg_name = if is_named {
                     let name = self.identifier("Expected identifier")?.lexeme;
                     self.consume(":", "Expected \":\"")?;
@@ -241,16 +413,56 @@ impl Parser {
         }
         self.consume(")", "Expected \")\"")?;
         let loc = name.location();
-        Ok(DslCall {
+        let call = DslCall {
             name: name.lexeme,
             args,
             arg_mode: mode,
+            namespace: None,
             loc,
+        };
+        Ok(if call.name == "from" {
+            self.apply_from_namespace(call)
+        } else {
+            call
         })
+    }
+
+    // Port of upstream transformFromInvocation: `from(namespace, effect(...))` is
+    // the effect call, resolved in that one namespace instead of the search order.
+    // It takes exactly two positional arguments, an identifier and one call;
+    // upstream's read(), read3d(), osc(), midi() and audio() nodes are not Call
+    // nodes. Any other from(...) stays a call named `from`, which no namespace
+    // defines, so the compiler rejects it as an unknown effect.
+    fn apply_from_namespace(&self, call: DslCall) -> DslCall {
+        if call.arg_mode.as_deref() != Some("positional") || call.args.len() != 2 {
+            return call;
+        }
+        let [namespace, target] = [call.args[0].value.clone(), call.args[1].value.clone()];
+        let inner = match &target {
+            DslValue::Chain(chain) if chain.calls.len() == 1 => match &chain.calls[0] {
+                DslChainElement::Call(call) => Some(call.clone()),
+                DslChainElement::Subchain(_) => None,
+            },
+            _ => None,
+        };
+        let namespace_name = match &namespace {
+            DslValue::Identifier { name, .. } => Some(name.clone()),
+            _ => None,
+        };
+        if let (Some(namespace), Some(mut inner)) = (namespace_name, inner) {
+            if !matches!(inner.name.as_str(), "read" | "read3d" | "write" | "write3d") {
+                inner.namespace = Some(namespace);
+                return inner;
+            }
+        }
+        call
     }
     fn parse_value_expression(&mut self, minimum: u8) -> Result<DslValue, DslError> {
         let mut left = self.parse_value_unary()?;
         loop {
+            if self.peek(0).kind != TokenKind::Operator {
+                break;
+            }
             let precedence = match self.peek(0).lexeme.as_str() {
                 "+" | "-" => 1,
                 "*" | "/" => 2,
@@ -333,9 +545,28 @@ impl Parser {
         if token.kind == TokenKind::Identifier {
             self.current += 1;
             let name = token.lexeme.clone();
-            if matches!(name.as_str(), "midi" | "audio") && self.check("(") {
+            // `Math.PI` is the one numeric constant of upstream's grammar
+            // (`NumberExpr ::= Number | 'Math.PI' | ...`).
+            if name == "Math"
+                && self.is_punctuation(".")
+                && self.peek(1).kind == TokenKind::Identifier
+                && self.peek(1).lexeme == "PI"
+            {
+                self.current += 2;
+                return Ok(DslValue::Number(std::f64::consts::PI));
+            }
+            // A one-argument `read3d(vol0)` names a volume or geometry for a
+            // parameter, as upstream's validator reads it. With two arguments it
+            // starts a chain.
+            if name == "read3d" && self.is_punctuation("(") {
                 self.current -= 1;
-                return Ok(DslValue::Call(Box::new(self.parse_call()?)));
+                let call = self.parse_call()?;
+                if call.args.len() == 1
+                    && matches!(&call.args[0].value, DslValue::Identifier { .. })
+                {
+                    return Ok(call.args[0].value.clone());
+                }
+                return self.parse_expression_chain(call);
             }
             if name == "read" && self.take_if(&["("]) {
                 if self.peek(0).kind == TokenKind::Identifier && self.peek(1).lexeme == ":" {
@@ -350,6 +581,23 @@ impl Parser {
                 }
                 let surface = self.parse_surface()?;
                 self.consume(")", "Expected \")\"")?;
+                // `read(oN).effect()` in a value position is a chain argument that
+                // starts from the surface. A bare `read(oN)` stays a plain surface
+                // reference.
+                if self.is_punctuation(".") {
+                    let read = DslCall {
+                        name: "read".into(),
+                        args: vec![DslArgument {
+                            name: None,
+                            value: DslValue::Surface(surface.clone()),
+                            loc: surface.loc.clone(),
+                        }],
+                        arg_mode: Some("positional".into()),
+                        namespace: None,
+                        loc: token.location(),
+                    };
+                    return self.parse_expression_chain(read);
+                }
                 return Ok(DslValue::Surface(surface));
             }
             if matches!(name.as_str(), "vec2" | "vec3" | "vec4") && self.take_if(&["("]) {
@@ -368,6 +616,21 @@ impl Parser {
                     values,
                     loc: token.location(),
                 });
+            }
+            // `osc(...)`, `midi(...)` and `audio(...)` are the automation value
+            // calls of upstream's parser. Oscillators are offline values. Parse
+            // MIDI/audio calls only so the compiler can warn and ignore these
+            // unsupported real-time inputs.
+            if matches!(name.as_str(), "osc" | "midi" | "audio") && self.check("(") {
+                self.current -= 1;
+                return Ok(DslValue::Call(Box::new(self.parse_call()?)));
+            }
+            // Any other call in a value position starts a chain argument
+            // (upstream `Expr ::= Chain`), for example `tex: solid(color: #f00)`.
+            if self.is_punctuation("(") {
+                self.current -= 1;
+                let call = self.parse_call()?;
+                return self.parse_expression_chain(call);
             }
             let mut path = name;
             while self.take_if(&["."]) {

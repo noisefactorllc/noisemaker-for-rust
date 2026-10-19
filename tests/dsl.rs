@@ -1,7 +1,17 @@
+use std::collections::BTreeMap;
+
 use noisemaker_cpu::{
-    DslValue, ParamValue, RenderStep, SurfaceBinding, TokenKind, compile_dsl, parse_dsl,
-    tokenize_dsl,
+    DslChainElement, DslValue, ParamValue, RenderStep, SurfaceBinding, TokenKind,
+    automation_param_spec, catalog::effect_catalog, compile_dsl, parse_dsl,
+    resolve_automation_uniform, tokenize_dsl,
 };
+
+fn first_call(ast: &noisemaker_cpu::DslProgram) -> &noisemaker_cpu::DslCall {
+    match &ast.chains[0].calls[0] {
+        DslChainElement::Call(call) => call,
+        DslChainElement::Subchain(_) => panic!("expected a top-level call"),
+    }
+}
 
 #[test]
 fn tokenizer_tracks_locations_comments_strings_and_numbers() {
@@ -63,7 +73,7 @@ fn parser_decodes_colors_and_composite_values() {
         "color.dsl",
     )
     .unwrap();
-    let color = &ast.chains[0].calls[0].args[0].value;
+    let color = &first_call(&ast).args[0].value;
     let DslValue::Array { values, .. } = color else {
         panic!("expected color array")
     };
@@ -99,7 +109,7 @@ fn parser_decodes_colors_and_composite_values() {
             "color.dsl",
         )
         .unwrap();
-        let DslValue::Array { values, .. } = &ast.chains[0].calls[0].args[0].value else {
+        let DslValue::Array { values, .. } = &first_call(&ast).args[0].value else {
             panic!("expected color array")
         };
         assert_eq!(
@@ -157,7 +167,7 @@ fn parser_rejects_mixed_arguments_at_the_conflicting_token() {
     assert_eq!(named_then_positional.source_name, "mixed.dsl");
     let positional = parse_dsl("search synth; solid(#fff, .5).write(o0)", "ok.dsl").unwrap();
     assert_eq!(
-        positional.chains[0].calls[0].arg_mode.as_deref(),
+        first_call(&positional).arg_mode.as_deref(),
         Some("positional")
     );
 }
@@ -172,7 +182,7 @@ fn parser_builds_precedence_unary_arrays_vectors_booleans_and_enum_paths() {
     assert!(
         matches!(ast.bindings[0].value, DslValue::Binary { ref operator, .. } if operator == "+")
     );
-    let args = &ast.chains[0].calls[0].args;
+    let args = &first_call(&ast).args;
     assert!(matches!(args[0].value, DslValue::Array { .. }));
     assert!(matches!(args[1].value, DslValue::Vector { width: 3, .. }));
     assert!(
@@ -487,4 +497,618 @@ fn compiler_validates_volume_and_loop_domains_without_executing_them() {
     ] {
         assert!(compile_dsl(source, "domain.dsl").is_err(), "{source}");
     }
+}
+
+// --- GAP-038: float parameter choice names -----------------------------------
+
+// Each program sets `rotation` on one of the five effects with inline float
+// choices (none: 0, fwd: 1, back: -1). `%` is replaced with the rotation value.
+const FLOAT_CHOICE_PROGRAMS: [(&str, &str); 5] = [
+    (
+        "filter/palette",
+        "search filter, synth\nnoise(seed: 1, ridges: true).palette(rotation: %).write(o0)\nrender(o0)\n",
+    ),
+    (
+        "filter/historicPalette",
+        "search filter, synth\nnoise(seed: 1, ridges: true, colorMode: mono).historicPalette(rotation: %).write(o0)\nrender(o0)\n",
+    ),
+    (
+        "filter/tetraColorArray",
+        "search filter, synth\nnoise(seed: 1).tetraColorArray(smoothness: 0, rotation: %).write(o0)\nrender(o0)\n",
+    ),
+    (
+        "filter/tetraCosine",
+        "search filter, synth\nnoise(seed: 1).tetraCosine(rotation: %).write(o0)\nrender(o0)\n",
+    ),
+    (
+        "filter3d/palette3d",
+        "search synth3d, filter3d, render\nnoise3d(seed: 3, volumeSize: 8).palette3d(rotation: %).render3d().write(o0)\nrender(o0)\n",
+    ),
+];
+
+#[test]
+fn float_choice_names_compile_to_their_numeric_choice_values() {
+    let catalog = effect_catalog().unwrap();
+    let mut float_choice_params = Vec::new();
+    for (effect_id, definition) in &catalog.effects {
+        for (name, spec) in &definition.params {
+            if spec.parameter_type == "float" && spec.metadata.contains_key("choices") {
+                float_choice_params.push((effect_id.clone(), name.clone(), spec));
+            }
+        }
+    }
+    assert_eq!(float_choice_params.len(), 5);
+    for (effect_id, name, spec) in &float_choice_params {
+        assert_eq!(name, "rotation");
+        let choices = spec.metadata["choices"].as_object().unwrap();
+        assert_eq!(
+            choices
+                .iter()
+                .map(|(key, value)| (key.as_str(), value.as_f64()))
+                .collect::<BTreeMap<_, _>>(),
+            BTreeMap::from([
+                ("none", Some(0.0)),
+                ("fwd", Some(1.0)),
+                ("back", Some(-1.0))
+            ])
+        );
+        let program = FLOAT_CHOICE_PROGRAMS
+            .iter()
+            .find(|(id, _)| id == effect_id)
+            .unwrap()
+            .1;
+        for (choice, value) in choices {
+            if value.is_null() {
+                continue;
+            }
+            let plan = compile_dsl(&program.replace('%', choice), "choices.dsl").unwrap();
+            let RenderStep::Effect { params, .. } = &plan.chains[0].steps[1] else {
+                panic!("expected the {} effect step", effect_id);
+            };
+            let ParamValue::Float(resolved) = params[name] else {
+                panic!("expected a float param for {effect_id}");
+            };
+            assert_eq!(
+                f64::from(resolved),
+                value.as_f64().unwrap(),
+                "{effect_id}: {choice}"
+            );
+        }
+    }
+}
+
+#[test]
+fn a_name_that_is_not_a_float_choice_fails_and_names_the_parameter() {
+    for (_, program) in FLOAT_CHOICE_PROGRAMS {
+        let error = compile_dsl(&program.replace('%', "wobble"), "choices.dsl").unwrap_err();
+        assert!(error.message.contains("rotation"), "{}", error.message);
+    }
+}
+
+// --- GAP-044: midi() and audio() automation values ---------------------------
+
+#[test]
+fn midi_and_audio_values_compile_to_automation_descriptors_that_resolve_to_min() {
+    const TIME: f64 = 0.25;
+    let spec = {
+        let catalog = effect_catalog().unwrap();
+        automation_param_spec(&catalog.effects["synth/noise"].params["scaleX"]).unwrap()
+    };
+    // `resolved` is the value the authority uses at time 0.25: the compiled
+    // descriptor resolved through the consumer's declared range (1..100).
+    for (value, resolved) in [
+        (
+            "midi(channel: 1, mode: midiMode.velocity, min: 0.25, max: 0.75)",
+            25.75,
+        ),
+        ("midi(channel: 1)", 1.0),
+        (
+            "midi(channel: 2, mode: midiMode.cc, cc: 7, min: 0.3, max: 0.8, sensitivity: 2)",
+            30.7,
+        ),
+        ("midi(zone: midiZone.lower, members: 3, min: 0.6)", 60.4),
+        ("audio(band: audioBand.low, min: 0.25, max: 0.75)", 25.75),
+        (
+            "audio(band: audioBand.vol, min: 0.55, channel: 3, name: \"Mic\", id: \"dev-1\")",
+            55.45,
+        ),
+        ("audio(band: audioBand.raw, min: 0.65)", 65.35000000000001),
+        // Positional and mixed positional/keyword arguments.
+        ("midi(1, midiMode.noteChange, 0.4, 0.9)", 40.6),
+        ("midi(2, min: 0.3, mode: midiMode.cc, cc: 7)", 30.7),
+        ("audio(audioBand.mid, 0.35, 0.8)", 35.65),
+        // let variables that hold an automation value.
+        ("bass", 25.75),
+        // Nested automation in both directions.
+        (
+            "osc(type: oscKind.sine, min: 0.25, max: 0.75, speed: audio(band: audioBand.low, min: 0, max: 1))",
+            25.75,
+        ),
+        (
+            "midi(channel: 1, min: osc(type: oscKind.tri, min: 0.2, max: 0.6))",
+            40.6,
+        ),
+        (
+            "audio(band: audioBand.low, min: osc(type: oscKind.saw, min: 0.1, max: 0.5))",
+            20.8,
+        ),
+        // The authority accepts these with a warning (S002) and falls back.
+        ("midi(channel: 20, min: 0.25)", 25.75),
+        ("midi(channel: 1, mode: midiMode.bogus, min: 0.25)", 25.75),
+        ("midi(zone: midiZone.lower, members: 0)", 1.0),
+        ("midi(channel: 1, min: true)", 100.0),
+        ("midi(channel: 1, min: 1.5)", 100.0),
+        ("audio(band: audioBand.low, min: 0.25, channel: 40)", 25.75),
+        ("audio(band: audioBand.bogus, min: 0.25)", 25.75),
+        ("audio(band: audioBand.low, min: true)", 1.0),
+        (
+            "audio(band: audioBand.low, min: osc(type: oscKind.saw, min: 0.1, max: 0.5), channel: 40)",
+            1.0,
+        ),
+    ] {
+        let lets = match value {
+            "bass" => "let bass = audio(band: audioBand.low, min: 0.25, max: 0.75)\n",
+            _ => "",
+        };
+        let plan = compile_dsl(
+            &format!("search synth\n{lets}noise(seed: 1, scaleX: {value}).write(o0)\nrender(o0)\n"),
+            "midi.dsl",
+        )
+        .unwrap();
+        let RenderStep::Effect { params, .. } = &plan.chains[0].steps[0] else {
+            panic!("expected an effect step");
+        };
+        let ParamValue::Automation(descriptor) = &params["scaleX"] else {
+            panic!("expected an automation descriptor for {value}");
+        };
+        assert_eq!(
+            resolve_automation_uniform(descriptor, TIME, Some(spec)),
+            resolved,
+            "{value}"
+        );
+    }
+}
+
+#[test]
+fn midi_and_audio_arguments_the_authority_rejects_fail() {
+    let midi_fields = "channel, mode, min, max, sensitivity, name, id, cc, nrpn, zone, members";
+    for (value, expected) in [
+        (
+            "midi(channel: 1, wobble: 2)",
+            format!("Unknown parameter \"wobble\" for midi(); accepted: {midi_fields}"),
+        ),
+        (
+            "midi(min: 0.5)",
+            "Missing required parameter \"channel\" for midi()".into(),
+        ),
+        (
+            "midi(1, 2, 3, 4, 5, 6)",
+            "Unknown parameter \"argument 6\" for midi(); accepted: ".into(),
+        ),
+        (
+            "midi(1, 2, 3, 4, 5, channel: 1)",
+            "Unknown parameter \"argument 5\" for midi(); accepted: ".into(),
+        ),
+        (
+            "midi(channel: 1, zone: midiZone.lower)",
+            "Unsupported DSL value Call \"midi\"".into(),
+        ),
+        (
+            "midi(channel: 1, members: 3)",
+            "Missing required parameter \"zone\" for midi()".into(),
+        ),
+        (
+            "midi(channel: 1, id: \"x\")",
+            "Missing required parameter \"name\" for midi()".into(),
+        ),
+        (
+            "midi(channel: 1, name: \"\")",
+            "Unsupported DSL value Call \"midi\"".into(),
+        ),
+        (
+            "midi(channel: 1, name: port)",
+            "Unsupported DSL value Call \"midi\"".into(),
+        ),
+        (
+            "midi(channel: \"1\")",
+            "Parameter \"channel\" must be a finite number".into(),
+        ),
+        (
+            "midi(channel: 1, mode: \"cc\")",
+            "Parameter \"mode\" must be an enum value".into(),
+        ),
+        (
+            "midi(channel: foo)",
+            "Parameter \"channel\" must be a finite number".into(),
+        ),
+        (
+            "audio(min: 0.5)",
+            "Missing required parameter \"band\" for audio()".into(),
+        ),
+        (
+            "audio(band: audioBand.low, name: \"Mic\")",
+            "Missing required parameter \"channel\" for audio()".into(),
+        ),
+        (
+            "audio(band: audioBand.low, id: \"dev\")",
+            "Missing required parameter \"name\" for audio()".into(),
+        ),
+        (
+            "audio(band: \"low\")",
+            "Parameter \"band\" must be an enum value".into(),
+        ),
+        (
+            "audio(band: audioBand.low, channel: \"2\")",
+            "Parameter \"channel\" must be an integer".into(),
+        ),
+        (
+            "audio(band: audioBand.low, min: \"0.2\")",
+            "Parameter \"min\" must be a finite number".into(),
+        ),
+        (
+            "audio(band: audioBand.low, min: lowish)",
+            "Parameter \"min\" must be a finite number".into(),
+        ),
+    ] {
+        let error = compile_dsl(
+            &format!("search synth\nnoise(seed: 1, scaleX: {value}).write(o0)\nrender(o0)\n"),
+            "midi.dsl",
+        )
+        .unwrap_err();
+        assert!(
+            error.message.starts_with(&expected) || error.message.contains(&expected),
+            "{value}: {}",
+            error.message
+        );
+    }
+}
+
+// --- GAP-045: subchain blocks -------------------------------------------------
+
+fn step_ids(plan: &noisemaker_cpu::RenderPlan) -> Vec<String> {
+    plan.chains
+        .iter()
+        .flat_map(|chain| &chain.steps)
+        .map(|step| match step {
+            RenderStep::Read { .. } => "read".into(),
+            RenderStep::Write { .. } => "write".into(),
+            RenderStep::Read3d { .. } => "read3d".into(),
+            RenderStep::Write3d { .. } => "write3d".into(),
+            RenderStep::Effect { effect_id, .. } => effect_id.clone(),
+        })
+        .collect()
+}
+
+#[test]
+fn a_subchain_block_compiles_to_the_steps_of_its_flattened_chain() {
+    let flat = "search synth, filter\nnoise(seed: 1).invert().posterize(levels: 4).write(o0)\nrender(o0)\n";
+    // Each accepted program renders the same bytes as FLAT (renderer test).
+    let accepted = [
+        "search synth, filter\nnoise(seed: 1).subchain(name: \"look\") { .invert() .posterize(levels: 4) }.write(o0)\nrender(o0)\n",
+        "search synth, filter\nnoise(seed: 1).subchain(\"look\") { .invert() .posterize(levels: 4) }.write(o0)\nrender(o0)\n",
+        "search synth, filter\nnoise(seed: 1).subchain(id: \"sc1\") { .invert() .posterize(levels: 4) }.write(o0)\nrender(o0)\n",
+        "search synth, filter\nnoise(seed: 1).subchain(name: \"look\", id: \"sc1\") { .invert() .posterize(levels: 4) }.write(o0)\nrender(o0)\n",
+        "search synth, filter\nnoise(seed: 1).subchain() { .invert() .posterize(levels: 4) }.write(o0)\nrender(o0)\n",
+        // Two blocks in one chain, and a block between ordinary elements.
+        "search synth, filter\nnoise(seed: 1).subchain(name: \"a\") { .invert() }.subchain(name: \"b\") { .posterize(levels: 4) }.write(o0)\nrender(o0)\n",
+        "search synth, filter\nnoise(seed: 1).invert().subchain() { .posterize(levels: 4) }.write(o0)\nrender(o0)\n",
+        // The text that the pinned authority unparser writes for the first program.
+        "search synth, filter\n\nnoise()\n  .subchain(name: \"look\") {\n    .invert()\n    .posterize(levels: 4)\n  }\n  .write(o0)\n\nrender(o0)",
+        // Comments between body elements.
+        "search synth, filter\nnoise(seed: 1)\n  .subchain(name: \"look\") {\n    // grade\n    .invert()\n    /* steps */ .posterize(levels: 4)\n  }\n  .write(o0)\nrender(o0)\n",
+        // Upstream reports these subchain arguments as warnings (P008, P009, P010)
+        // and accepts the program: an unknown key, a duplicate key, a missing
+        // comma and a trailing comma.
+        "search synth, filter\nnoise(seed: 1).subchain(name: \"look\", color: \"red\") { .invert() .posterize(levels: 4) }.write(o0)\nrender(o0)\n",
+        "search synth, filter\nnoise(seed: 1).subchain(name: \"a\", name: \"b\") { .invert() .posterize(levels: 4) }.write(o0)\nrender(o0)\n",
+        "search synth, filter\nnoise(seed: 1).subchain(name: \"a\" id: \"b\") { .invert() .posterize(levels: 4) }.write(o0)\nrender(o0)\n",
+        "search synth, filter\nnoise(seed: 1).subchain(name: \"a\",) { .invert() .posterize(levels: 4) }.write(o0)\nrender(o0)\n",
+    ];
+    let expected = step_ids(&compile_dsl(flat, "flat.dsl").unwrap());
+    for source in accepted {
+        assert_eq!(
+            step_ids(&compile_dsl(source, "subchain.dsl").unwrap()),
+            expected,
+            "{source}"
+        );
+    }
+}
+
+#[test]
+fn a_subchain_that_the_authority_rejects_still_fails() {
+    for (source, expected) in [
+        (
+            "search synth, filter\nnoise(seed: 1).subchain(name: \"x\") { }.write(o0)\nrender(o0)\n",
+            "Expected \".\"",
+        ),
+        (
+            "search synth, filter\nsubchain(name: \"x\") { .invert() }.write(o0)\nrender(o0)\n",
+            "Expected effect or IO function name",
+        ),
+        (
+            "search synth, filter\nnoise(seed: 1).subchain() { .noise() }.write(o0)\nrender(o0)\n",
+            "Generator synth/noise must begin a chain",
+        ),
+        (
+            "search synth, filter\nnoise(seed: 1).write(o1)\nread(o1).subchain() { .read(o1) }.write(o0)\nrender(o0)\n",
+            "read(surface) must begin a chain",
+        ),
+        (
+            "search synth, filter\nnoise(seed: 1).subchain() { .invert().write(o1) }.write(o0)\nrender(o0)\n",
+            "Expected effect or IO function name",
+        ),
+        (
+            "search synth, filter\nnoise(seed: 1).subchain() { .write(o1) }.write(o0)\nrender(o0)\n",
+            "Expected effect or IO function name",
+        ),
+        (
+            "search synth, filter\nnoise(seed: 1).subchain() { .subchain() { .invert() } }.write(o0)\nrender(o0)\n",
+            "Expected effect or IO function name",
+        ),
+        (
+            "search synth, filter\nnoise(seed: 1).subchain() { invert() }.write(o0)\nrender(o0)\n",
+            "Expected \".\"",
+        ),
+        (
+            "search synth, filter\nnoise(seed: 1).subchain(name: 5) { .invert() }.write(o0)\nrender(o0)\n",
+            "Expected \")\"",
+        ),
+        (
+            "search synth, filter\nnoise(seed: 1).subchain(\"look\", id: \"sc1\") { .invert() }.write(o0)\nrender(o0)\n",
+            "Expected \")\"",
+        ),
+        (
+            "search synth, filter\nnoise(seed: 1).subchain(look) { .invert() }.write(o0)\nrender(o0)\n",
+            "Expected \")\"",
+        ),
+        (
+            "search synth, filter\nnoise(seed: 1).subchain() .invert().write(o0)\nrender(o0)\n",
+            "Expected \"{\"",
+        ),
+        (
+            "search synth, filter\nnoise(seed: 1).subchain() { .invert()\n",
+            "Expected \".\"",
+        ),
+    ] {
+        let error = compile_dsl(source, "subchain.dsl").unwrap_err();
+        assert!(
+            error.message.contains(expected),
+            "{source}: {}",
+            error.message
+        );
+    }
+}
+
+// --- GAP-047: grammar forms ---------------------------------------------------
+
+#[test]
+fn write3d_and_read3d_store_and_restore_the_volume_and_geometry_surfaces() {
+    let source = "search synth3d, render\nnoise3d(seed: 1, volumeSize: 8).write3d(vol0, geo0)\nread3d(vol0, geo0).render3d().write(o0)\nrender(o0)\n";
+    let plan = compile_dsl(source, "volume-io.dsl").unwrap();
+    assert_eq!(
+        step_ids(&plan),
+        vec![
+            "synth3d/noise3d".to_string(),
+            "write3d".to_string(),
+            "read3d".to_string(),
+            "render/render3d".to_string(),
+            "write".to_string(),
+        ]
+    );
+    let RenderStep::Write3d {
+        volume, geometry, ..
+    } = &plan.chains[0].steps[1]
+    else {
+        panic!("expected a write3d step");
+    };
+    assert_eq!((volume.as_str(), geometry.as_str()), ("vol0", "geo0"));
+    // A one-argument read3d(vol) names a volume (or geometry) for a parameter.
+    let named = |source: &str| {
+        let plan = compile_dsl(source, "read3d.dsl").unwrap();
+        let RenderStep::Effect { params, .. } = &plan.chains[0].steps[0] else {
+            panic!("expected an effect step");
+        };
+        params.clone()
+    };
+    let value_form = named(
+        "search synth3d, render\ncellularAutomata3d(source: read3d(vol1), geoSource: read3d(geo1), volumeSize: x16).render3d().write(o0)\nrender(o0)\n",
+    );
+    let plain = named(
+        "search synth3d, render\ncellularAutomata3d(source: vol1, geoSource: geo1, volumeSize: x16).render3d().write(o0)\nrender(o0)\n",
+    );
+    assert_eq!(value_form["source"], plain["source"]);
+    assert_eq!(value_form["geoSource"], plain["geoSource"]);
+    assert_eq!(value_form["source"], ParamValue::String("vol1".into()));
+    assert_eq!(value_form["geoSource"], ParamValue::String("geo1".into()));
+}
+
+#[test]
+fn a_triple_quoted_string_keeps_its_raw_content_newlines_and_quotes_included() {
+    let text = |literal: &str| {
+        let source = format!(
+            "search synth, filter\nsolid(color: #000).text(text: {literal}).write(o0)\nrender(o0)\n"
+        );
+        let plan = compile_dsl(&source, "text.dsl").unwrap();
+        let RenderStep::Effect { params, .. } = &plan.chains[0].steps[1] else {
+            panic!("expected the text effect step");
+        };
+        let ParamValue::String(value) = &params["text"] else {
+            panic!("expected a string param");
+        };
+        value.clone()
+    };
+    assert_eq!(text("\"\"\"hi\"\"\""), "hi");
+    assert_eq!(text("\"\"\"Hello\nWorld\"\"\""), "Hello\nWorld");
+    assert_eq!(text("\"\"\"say \"hi\" now\"\"\""), "say \"hi\" now");
+    assert_eq!(text("\"\"\"\"\"\""), "");
+    // Upstream's lexer keeps a triple-quoted string's content raw.
+    assert_eq!(text("\"\"\"a\\tb\"\"\""), "a\\tb");
+    // A string whose content is punctuation is a string, in the first position too.
+    let punctuation = |literal: &str| {
+        let source = format!(
+            "search synth, filter\nsolid(color: #000).text({literal}).write(o0)\nrender(o0)\n"
+        );
+        let plan = compile_dsl(&source, "text.dsl").unwrap();
+        let RenderStep::Effect { params, .. } = &plan.chains[0].steps[1] else {
+            panic!("expected the text effect step");
+        };
+        let ParamValue::String(value) = &params["text"] else {
+            panic!("expected a string param");
+        };
+        value.clone()
+    };
+    assert_eq!(punctuation("\")\""), ")");
+    assert_eq!(punctuation("\"\"\")\"\"\""), ")");
+}
+
+#[test]
+fn forms_that_the_authority_rejects_still_fail() {
+    for (source, expected) in [
+        (
+            "search synth\nnoise(seed: 1, scaleX: Math.E).write(o0)\nrender(o0)\n",
+            "Parameter \"scaleX\" must be a finite number",
+        ),
+        (
+            "search synth\nnoise(seed: 1, scaleX: Math.PI()).write(o0)\nrender(o0)\n",
+            "Expected \")\"",
+        ),
+        (
+            "search synth, filter\nsolid(color: #000).text(text: \"\"\"open\n",
+            "Unterminated string",
+        ),
+        (
+            "search synth\nlet pattern = wobble\npattern().write(o0)\nrender(o0)\n",
+            "Binding \"pattern\" is not callable",
+        ),
+        (
+            "search synth\nlet pattern = noise\nnoise(seed: 1, scaleX: pattern).write(o0)\nrender(o0)\n",
+            "Parameter \"scaleX\" must be a finite number",
+        ),
+        (
+            "search synth3d, render\nnoise3d(seed: 1, volumeSize: x16).write3d(vol0)\nrender(o0)\n",
+            "Expected \",\"",
+        ),
+        (
+            "search synth3d, render\nnoise3d(seed: 1, volumeSize: x16).write3d(tex3d: vol0, geo: geo0)\nrender(o0)\n",
+            "Expected \",\"",
+        ),
+        (
+            "search synth3d, render\nnoise3d(seed: 1, volumeSize: x16).write3d(5, geo0)\nrender(o0)\n",
+            "Expected surface reference",
+        ),
+        (
+            "search synth3d, render\nnoise3d(seed: 1, volumeSize: x16).write3d(vol0, geo0)\nnoise3d(seed: 2).read3d(vol0, geo0).render3d().write(o0)\nrender(o0)\n",
+            "Unknown effect \"read3d\" in search namespaces synth3d, render",
+        ),
+        (
+            "search synth3d, render\nwrite3d(vol0, geo0)\nrender(o0)\n",
+            "Expected effect or IO function name",
+        ),
+        (
+            "search synth3d, render\nnoise3d(seed: 1, volumeSize: x16).write3d(vol0, geo0)\nread3d(vol0).render3d().write(o0)\nrender(o0)\n",
+            "Unknown effect \"read3d\"",
+        ),
+        (
+            "search synth, filter\nfrom(ns: classicNoisedeck, call: noise(seed: 3)).write(o0)\nrender(o0)\n",
+            "Unknown effect \"from\" in search namespaces synth, filter",
+        ),
+        (
+            "search synth, filter\nfrom(classicNoisedeck).write(o0)\nrender(o0)\n",
+            "Unknown effect \"from\" in search namespaces synth, filter",
+        ),
+        (
+            "search synth, filter\nfrom(\"classicNoisedeck\", noise(seed: 3)).write(o0)\nrender(o0)\n",
+            "Unknown effect \"from\" in search namespaces synth, filter",
+        ),
+        (
+            "search synth, filter\nfrom(classicNoisedeck, noise).write(o0)\nrender(o0)\n",
+            "Unknown effect \"from\" in search namespaces synth, filter",
+        ),
+        (
+            "search synth, filter\nfrom(classicNoisedeck, noise(seed: 3).invert()).write(o0)\nrender(o0)\n",
+            "Unknown effect \"from\" in search namespaces synth, filter",
+        ),
+        (
+            "search synth, filter\nfrom(filter, noise(seed: 3)).write(o0)\nrender(o0)\n",
+            "Unknown effect \"noise\" in search namespaces filter",
+        ),
+    ] {
+        let error = compile_dsl(source, "forms.dsl").unwrap_err();
+        assert!(
+            error.message.contains(expected),
+            "{source}: {}",
+            error.message
+        );
+    }
+}
+
+// --- GAP-046: chain arguments -------------------------------------------------
+
+#[test]
+fn a_chain_argument_that_the_authority_rejects_still_fails() {
+    for (source, expected) in [
+        // write() is only allowed in statement context.
+        (
+            "search synth, mixer\nnoise(seed: 1).blendMode(tex: solid(color: #ff0000).write(o1), mode: screen).write(o0)\nrender(o0)\n",
+            "Expected effect or IO function name",
+        ),
+        // A chain argument must start with a generator or read().
+        (
+            "search filter, mixer, synth\nnoise(seed: 1).blendMode(tex: invert(), mode: screen).write(o0)\nrender(o0)\n",
+            "filter/invert requires an input",
+        ),
+        // An effect that the search order does not resolve.
+        (
+            "search synth, mixer\nnoise(seed: 1).blendMode(tex: wobble(), mode: screen).write(o0)\nrender(o0)\n",
+            "Unknown effect \"wobble\"",
+        ),
+    ] {
+        let error = compile_dsl(source, "inline.dsl").unwrap_err();
+        assert!(
+            error.message.contains(expected),
+            "{source}: {}",
+            error.message
+        );
+    }
+}
+
+#[test]
+fn a_chain_argument_compiles_to_a_hidden_inline_chain_on_the_consuming_step() {
+    let source = "search synth, mixer\nnoise(seed: 1).blendMode(tex: solid(color: #ff0000), mode: screen).write(o0)\nrender(o0)\n";
+    let plan = compile_dsl(source, "inline.dsl").unwrap();
+    let RenderStep::Effect { inline_chains, .. } = &plan.chains[0].steps[1] else {
+        panic!("expected an effect step");
+    };
+    assert_eq!(inline_chains.len(), 1);
+    assert_eq!(inline_chains[0].surface, "inline:0");
+    assert_eq!(
+        step_ids(&noisemaker_cpu::RenderPlan {
+            search: Vec::new(),
+            chains: vec![inline_chains[0].chain.clone()],
+            render_surface: "inline:0".into(),
+            ast: plan.ast.clone(),
+        }),
+        vec!["synth/solid".to_string()]
+    );
+}
+
+#[test]
+fn math_pi_evaluates_to_the_same_number_as_the_authority_parser_folds() {
+    let plan = compile_dsl(
+        "search synth\nnoise(seed: 1, scaleX: Math.PI * 4).write(o0)\nrender(o0)\n",
+        "pi.dsl",
+    )
+    .unwrap();
+    let RenderStep::Effect { params, .. } = &plan.chains[0].steps[0] else {
+        panic!("expected an effect step");
+    };
+    let ParamValue::Float(scale_x) = params["scaleX"] else {
+        panic!("expected a float param");
+    };
+    // Step params are stored as f32 uniform values in this port; the authority
+    // folds Math.PI * 4 in f64 and the uniform upload rounds it to the same f32.
+    assert_eq!(
+        f64::from(scale_x),
+        f64::from((std::f64::consts::PI * 4.0) as f32)
+    );
 }

@@ -108,6 +108,33 @@ impl Scanner<'_> {
                 self.push(TokenKind::Color, lexeme.into(), None, None, &location);
                 continue;
             }
+            // A triple-quoted string (upstream `String ::= '\"\"\"' .* '\"\"\"'`) may span
+            // lines. Upstream's lexer keeps its content raw, without escape
+            // processing, and its unparser writes a multi-line string in this form.
+            if character == '"' && self.peek(1) == Some('"') && self.peek(2) == Some('"') {
+                let rest = &self.source[self.index + 3..];
+                let Some(offset) = rest.find("\"\"\"") else {
+                    return Err(DslError::new("Unterminated string", &location));
+                };
+                let value = rest[..offset].to_string();
+                for _ in 0..3 {
+                    self.advance();
+                }
+                for _ in rest[..offset].chars() {
+                    self.advance();
+                }
+                for _ in 0..3 {
+                    self.advance();
+                }
+                self.push(
+                    TokenKind::String,
+                    value.clone(),
+                    None,
+                    Some(value),
+                    &location,
+                );
+                continue;
+            }
             if character == '"' {
                 let start = self.index;
                 self.advance();
@@ -194,7 +221,10 @@ impl Scanner<'_> {
                     && lexeme[1..].bytes().all(|byte| byte.is_ascii_digit())
                 {
                     TokenKind::Surface
-                } else if matches!(lexeme, "search" | "let" | "render" | "true" | "false") {
+                } else if matches!(
+                    lexeme,
+                    "search" | "let" | "render" | "true" | "false" | "subchain"
+                ) {
                     TokenKind::Keyword
                 } else {
                     TokenKind::Identifier
@@ -202,7 +232,7 @@ impl Scanner<'_> {
                 self.push(kind, lexeme.into(), None, None, &location);
                 continue;
             }
-            let kind = if "()[],.:=;".contains(character) {
+            let kind = if "()[],.:=;{}".contains(character) {
                 Some(TokenKind::Punctuation)
             } else if "+-*/".contains(character) {
                 Some(TokenKind::Operator)
