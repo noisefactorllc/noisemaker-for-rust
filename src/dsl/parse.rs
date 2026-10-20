@@ -81,6 +81,10 @@ pub struct DslBinding {
     pub name: String,
     pub value: DslValue,
     pub loc: Location,
+    // Statement order (upstream 9cc041d0): the number of chain statements
+    // written before this `let`. A chain sees only the lets declared at or
+    // before its own statement index.
+    pub plan_index: usize,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -181,7 +185,12 @@ impl Parser {
             }
             if self.take_if(&["let"]) {
                 let start = self.tokens[self.current - 1].location();
-                program.bindings.push(self.parse_binding(start)?);
+                let mut binding = self.parse_binding(start)?;
+                // Statement order (upstream 9cc041d0): a let's planIndex is
+                // the number of chain statements written before it; a chain
+                // sees only the lets declared at or before its own index.
+                binding.plan_index = program.chains.len();
+                program.bindings.push(binding);
             } else if self.take_if(&["render"]) {
                 let start = self.tokens[self.current - 1].location();
                 if program.render.is_some() {
@@ -216,6 +225,8 @@ impl Parser {
             name: name.lexeme,
             value,
             loc,
+            // parse_program sets this from the chain count at the `let`.
+            plan_index: 0,
         })
     }
     fn parse_chain(&mut self) -> Result<DslChain, DslError> {

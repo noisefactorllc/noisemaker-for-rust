@@ -104,6 +104,60 @@ fn flow3d_reevaluates_animated_noise3d_per_tick_while_preserving_static_and_zero
 }
 
 #[test]
+fn points_emit_reruns_animated_image_generator_input_per_iteration_and_leaves_other_shapes_alone() {
+    // The authority renders the whole chain every frame, so pointsEmit colors
+    // agents from its input at that frame's time; evaluating an animated perlin
+    // once would color every agent from the final frame.
+    let emit = effect_with("render/pointsEmit", &[("iterationCount", 3)]);
+    let zero_emit = effect_with("render/pointsEmit", &[("iterationCount", 0)]);
+    let animated = |speed: f32| IterationStep::Effect {
+        effect_id: "synth/perlin".into(),
+        params: BTreeMap::from([("speed".to_string(), ParamValue::Float(speed))]),
+    };
+    let shape = |steps: &[IterationStep]| {
+        compute_iteration_groups(steps)
+            .unwrap()
+            .into_iter()
+            .map(|group| (group.iterated, group.steps.len()))
+            .collect::<Vec<_>>()
+    };
+    let merged = compute_iteration_groups(&[animated(1.0), emit.clone()]).unwrap();
+    assert_eq!(
+        merged
+            .iter()
+            .map(|group| (group.iterated, group.steps.len()))
+            .collect::<Vec<_>>(),
+        [(true, 2)]
+    );
+    assert!(
+        matches!(&merged[0].steps[0], IterationStep::Effect { effect_id, .. } if effect_id == "synth/perlin"),
+        "the animated input generator re-runs inside the group"
+    );
+    assert_eq!(
+        shape(&[animated(0.0), emit.clone()]),
+        [(false, 1), (true, 1)]
+    );
+    assert_eq!(
+        shape(&[effect("synth/perlin"), emit.clone()]),
+        [(false, 1), (true, 1)]
+    );
+    assert_eq!(shape(&[animated(1.0), zero_emit]), [(false, 1), (true, 1)]);
+    // A volume generator keeps its shape, and an iterated image generator
+    // already re-runs as its own group.
+    assert_eq!(
+        shape(&[effect_with("synth3d/noise3d", &[("speed", 1)]), emit]),
+        [(false, 1), (true, 1)]
+    );
+    assert_eq!(
+        shape(&[
+            effect_with("synth/cellularAutomata", &[("speed", 10)]),
+            effect_with("render/pointsEmit", &[("iterationCount", 3)]),
+        ]),
+        [(true, 1), (true, 1)]
+    );
+}
+
+#[test]
 fn balanced_loop_is_one_group_and_planner_defends_invalid_regions() {
     let balanced = compute_iteration_groups(&[
         effect("render/loopBegin"),

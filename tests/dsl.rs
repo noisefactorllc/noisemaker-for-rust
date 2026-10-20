@@ -1,9 +1,8 @@
 use std::collections::BTreeMap;
 
 use noisemaker_cpu::{
-    DslChainElement, DslValue, ParamValue, RenderStep, SurfaceBinding, TokenKind,
-    automation_param_spec, catalog::effect_catalog, compile_dsl, parse_dsl,
-    resolve_automation_uniform, tokenize_dsl,
+    AutomationField, DslChainElement, DslValue, ParamValue, RenderStep, SurfaceBinding, TokenKind,
+    catalog::effect_catalog, compile_dsl, parse_dsl, tokenize_dsl,
 };
 
 fn first_call(ast: &noisemaker_cpu::DslProgram) -> &noisemaker_cpu::DslCall {
@@ -286,8 +285,18 @@ fn compiler_evaluates_values_and_partial_bindings_in_declaration_order() {
         panic!("partial shape")
     };
     assert_eq!(expanded_params, partial_params);
+    // Statement order (upstream 9cc041d0): a later `let` of the same name
+    // reassigns it for later statements, so a duplicate name is not an error.
+    let reassigned = compile_dsl(
+        "search synth; let x=1; let x=2; solid(color:vec3(x,0,0)).write(o0)",
+        "reassign.dsl",
+    )
+    .unwrap();
+    let RenderStep::Effect { params, .. } = &reassigned.chains[0].steps[0] else {
+        panic!("expected an effect step");
+    };
+    assert_eq!(params["color"], ParamValue::Vector(vec![2.0, 0.0, 0.0]));
     for source in [
-        "search synth; let x=1; let x=2; solid().write(o0)",
         "search synth; let x=1; x().write(o0)",
         "search synth; let p=solid(); solid(color:p).write(o0)",
     ] {
@@ -585,184 +594,186 @@ fn a_name_that_is_not_a_float_choice_fails_and_names_the_parameter() {
     }
 }
 
-// --- GAP-044: midi() and audio() automation values ---------------------------
+// --- GAP-044: midi() and audio() real-time input -------------------------------
 
+// MIDI and audio input are unsupported in CPU ports. Their value calls warn and
+// resolve to nothing: the consumer parameter keeps its declared offline default,
+// and no live automation value reaches the renderer.
 #[test]
-fn midi_and_audio_values_compile_to_automation_descriptors_that_resolve_to_min() {
-    const TIME: f64 = 0.25;
-    let spec = {
-        let catalog = effect_catalog().unwrap();
-        automation_param_spec(&catalog.effects["synth/noise"].params["scaleX"]).unwrap()
+fn midi_and_audio_calls_compile_but_leave_the_offline_parameter_default() {
+    let baseline = compile_dsl(
+        "search synth\nnoise(seed: 1).write(o0)\nrender(o0)\n",
+        "baseline.dsl",
+    )
+    .unwrap();
+    let RenderStep::Effect {
+        params: baseline_params,
+        ..
+    } = &baseline.chains[0].steps[0]
+    else {
+        panic!("expected an effect step");
     };
-    // `resolved` is the value the authority uses at time 0.25: the compiled
-    // descriptor resolved through the consumer's declared range (1..100).
-    for (value, resolved) in [
-        (
-            "midi(channel: 1, mode: midiMode.velocity, min: 0.25, max: 0.75)",
-            25.75,
-        ),
-        ("midi(channel: 1)", 1.0),
-        (
-            "midi(channel: 2, mode: midiMode.cc, cc: 7, min: 0.3, max: 0.8, sensitivity: 2)",
-            30.7,
-        ),
-        ("midi(zone: midiZone.lower, members: 3, min: 0.6)", 60.4),
-        ("audio(band: audioBand.low, min: 0.25, max: 0.75)", 25.75),
-        (
-            "audio(band: audioBand.vol, min: 0.55, channel: 3, name: \"Mic\", id: \"dev-1\")",
-            55.45,
-        ),
-        ("audio(band: audioBand.raw, min: 0.65)", 65.35000000000001),
-        // Positional and mixed positional/keyword arguments.
-        ("midi(1, midiMode.noteChange, 0.4, 0.9)", 40.6),
-        ("midi(2, min: 0.3, mode: midiMode.cc, cc: 7)", 30.7),
-        ("audio(audioBand.mid, 0.35, 0.8)", 35.65),
-        // let variables that hold an automation value.
-        ("bass", 25.75),
-        ("rate", 50.5),
-        // Nested automation in both directions.
-        (
-            "osc(type: oscKind.sine, min: 0.25, max: 0.75, speed: audio(band: audioBand.low, min: 0, max: 1))",
-            25.75,
-        ),
-        (
-            "midi(channel: 1, min: osc(type: oscKind.tri, min: 0.2, max: 0.6))",
-            40.6,
-        ),
-        (
-            "audio(band: audioBand.low, min: osc(type: oscKind.saw, min: 0.1, max: 0.5))",
-            20.8,
-        ),
-        // The authority accepts these with a warning (S002) and falls back.
-        ("midi(channel: 20, min: 0.25)", 25.75),
-        ("midi(channel: 1, mode: midiMode.bogus, min: 0.25)", 25.75),
-        ("midi(zone: midiZone.lower, members: 0)", 1.0),
-        ("midi(channel: 1, min: true)", 100.0),
-        ("midi(channel: 1, min: 1.5)", 100.0),
-        ("audio(band: audioBand.low, min: 0.25, channel: 40)", 25.75),
-        ("audio(band: audioBand.bogus, min: 0.25)", 25.75),
-        ("audio(band: audioBand.low, min: true)", 1.0),
-        (
-            "audio(band: audioBand.low, min: osc(type: oscKind.saw, min: 0.1, max: 0.5), channel: 40)",
-            1.0,
-        ),
+    for call in [
+        "midi(channel: 1, min: 0.8)",
+        "audio(band: audioBand.low, min: 0.8)",
     ] {
-        let lets = match value {
-            "bass" => "let bass = audio(band: audioBand.low, min: 0.25, max: 0.75)\n",
-            "rate" => "let rate = osc(type: oscKind.sine, min: 0.25, max: 0.75)\n",
-            _ => "",
-        };
-        let plan = compile_dsl(
-            &format!("search synth\n{lets}noise(seed: 1, scaleX: {value}).write(o0)\nrender(o0)\n"),
-            "midi.dsl",
-        )
-        .unwrap();
-        let RenderStep::Effect { params, .. } = &plan.chains[0].steps[0] else {
-            panic!("expected an effect step");
-        };
-        let ParamValue::Automation(descriptor) = &params["scaleX"] else {
-            panic!("expected an automation descriptor for {value}");
-        };
-        assert_eq!(
-            resolve_automation_uniform(descriptor, TIME, Some(spec)),
-            resolved,
-            "{value}"
-        );
+        for source in [
+            format!("search synth\nnoise(seed: 1, scaleX: {call}).write(o0)\nrender(o0)\n"),
+            format!("search synth\nlet rate = {call}\nnoise(scaleX: rate).write(o0)\nrender(o0)\n"),
+        ] {
+            let plan = compile_dsl(&source, "midi.dsl").unwrap();
+            let RenderStep::Effect { params, .. } = &plan.chains[0].steps[0] else {
+                panic!("expected an effect step for {call}");
+            };
+            assert_eq!(params["scaleX"], baseline_params["scaleX"], "{call}");
+            assert!(
+                !matches!(params["scaleX"], ParamValue::Automation(_)),
+                "{call} must not create live automation"
+            );
+        }
     }
 }
 
+// An audio() field of an osc() warns and takes the field's fallback, so the
+// oscillator itself still compiles to a live automation value.
 #[test]
-fn midi_and_audio_arguments_the_authority_rejects_fail() {
-    let midi_fields = "channel, mode, min, max, sensitivity, name, id, cc, nrpn, zone, members";
-    for (value, expected) in [
-        (
-            "midi(channel: 1, wobble: 2)",
-            format!("Unknown parameter \"wobble\" for midi(); accepted: {midi_fields}"),
-        ),
-        (
-            "midi(min: 0.5)",
-            "Missing required parameter \"channel\" for midi()".into(),
-        ),
-        (
-            "midi(1, 2, 3, 4, 5, 6)",
-            "Unknown parameter \"argument 6\" for midi(); accepted: ".into(),
-        ),
-        (
-            "midi(1, 2, 3, 4, 5, channel: 1)",
-            "Unknown parameter \"argument 5\" for midi(); accepted: ".into(),
-        ),
-        (
-            "midi(channel: 1, zone: midiZone.lower)",
-            "Unsupported DSL value Call \"midi\"".into(),
-        ),
-        (
-            "midi(channel: 1, members: 3)",
-            "Missing required parameter \"zone\" for midi()".into(),
-        ),
-        (
-            "midi(channel: 1, id: \"x\")",
-            "Missing required parameter \"name\" for midi()".into(),
-        ),
-        (
-            "midi(channel: 1, name: \"\")",
-            "Unsupported DSL value Call \"midi\"".into(),
-        ),
-        (
-            "midi(channel: 1, name: port)",
-            "Unsupported DSL value Call \"midi\"".into(),
-        ),
-        (
-            "midi(channel: \"1\")",
-            "Parameter \"channel\" must be a finite number".into(),
-        ),
-        (
-            "midi(channel: 1, mode: \"cc\")",
-            "Parameter \"mode\" must be an enum value".into(),
-        ),
-        (
-            "midi(channel: foo)",
-            "Parameter \"channel\" must be a finite number".into(),
-        ),
-        (
-            "audio(min: 0.5)",
-            "Missing required parameter \"band\" for audio()".into(),
-        ),
-        (
-            "audio(band: audioBand.low, name: \"Mic\")",
-            "Missing required parameter \"channel\" for audio()".into(),
-        ),
-        (
-            "audio(band: audioBand.low, id: \"dev\")",
-            "Missing required parameter \"name\" for audio()".into(),
-        ),
-        (
-            "audio(band: \"low\")",
-            "Parameter \"band\" must be an enum value".into(),
-        ),
-        (
-            "audio(band: audioBand.low, channel: \"2\")",
-            "Parameter \"channel\" must be an integer".into(),
-        ),
-        (
-            "audio(band: audioBand.low, min: \"0.2\")",
-            "Parameter \"min\" must be a finite number".into(),
-        ),
-        (
-            "audio(band: audioBand.low, min: lowish)",
-            "Parameter \"min\" must be a finite number".into(),
-        ),
-    ] {
-        let error = compile_dsl(
-            &format!("search synth\nnoise(seed: 1, scaleX: {value}).write(o0)\nrender(o0)\n"),
-            "midi.dsl",
-        )
-        .unwrap_err();
-        assert!(
-            error.message.starts_with(&expected) || error.message.contains(&expected),
-            "{value}: {}",
-            error.message
-        );
-    }
+fn unsupported_input_inside_oscillator_fields_takes_the_field_fallback() {
+    let plan = compile_dsl(
+        "search synth\nnoise(scaleX: osc(type: sine, speed: audio(band: low))).write(o0)\nrender(o0)\n",
+        "osc-field.dsl",
+    )
+    .unwrap();
+    let RenderStep::Effect { params, .. } = &plan.chains[0].steps[0] else {
+        panic!("expected an effect step");
+    };
+    let ParamValue::Automation(noisemaker_cpu::AutomationValue::Oscillator {
+        osc_type, speed, ..
+    }) = &params["scaleX"]
+    else {
+        panic!("expected an oscillator automation value");
+    };
+    assert_eq!(*osc_type, 0);
+    assert_eq!(speed, &AutomationField::Number(1.0));
+}
+
+// --- upstream 9cc041d0: statement-order lets ----------------------------------
+
+// A chain sees only the lets declared at or before its own statement index, a
+// later let of the same name reassigns it for later statements, and reading a
+// pending name reports S003. Lets may still refer to each other in any order.
+#[test]
+fn a_chain_uses_the_latest_let_declared_before_it_and_reassignment_is_allowed() {
+    let plan = compile_dsl(
+        "search synth\nlet x = 10\nnoise(scaleX: x).write(o0)\nlet x = 90\nnoise(scaleX: x).write(o1)\n",
+        "let-order.dsl",
+    )
+    .unwrap();
+    let RenderStep::Effect { params: first, .. } = &plan.chains[0].steps[0] else {
+        panic!("expected an effect step");
+    };
+    let RenderStep::Effect { params: second, .. } = &plan.chains[1].steps[0] else {
+        panic!("expected an effect step");
+    };
+    assert_eq!(first["scaleX"], ParamValue::Float(10.0));
+    assert_eq!(second["scaleX"], ParamValue::Float(90.0));
+}
+
+#[test]
+fn a_chain_reading_a_let_declared_by_a_later_statement_reports_s003() {
+    let error = compile_dsl(
+        "search synth\nnoise(scaleX: x).write(o0)\nlet x = 20\n",
+        "let-order.dsl",
+    )
+    .unwrap_err();
+    assert!(
+        error
+            .message
+            .contains("Variable used before assignment: 'x'")
+    );
+}
+
+#[test]
+fn a_let_may_reference_a_later_let_inside_its_value_expression() {
+    let plan = compile_dsl(
+        "search synth\nlet a = b + 1\nlet b = 5\nnoise(scaleX: a).write(o0)\n",
+        "let-order.dsl",
+    )
+    .unwrap();
+    let RenderStep::Effect { params, .. } = &plan.chains[0].steps[0] else {
+        panic!("expected an effect step");
+    };
+    assert_eq!(params["scaleX"], ParamValue::Float(6.0));
+}
+
+#[test]
+fn a_bare_identifier_naming_a_later_let_reports_s003_at_declaration() {
+    let error = compile_dsl(
+        "search synth\nlet a = b\nlet b = 5\nnoise(scaleX: a).write(o0)\n",
+        "let-order.dsl",
+    )
+    .unwrap_err();
+    assert!(
+        error
+            .message
+            .contains("Variable used before assignment: 'b'")
+    );
+}
+
+#[test]
+fn a_value_call_may_reference_a_later_let_in_its_arguments() {
+    let plan = compile_dsl(
+        "search synth\nlet outer = osc(type: oscKind.sine, speed: inner)\nlet inner = osc(type: oscKind.tri, speed: 2)\nnoise(scaleX: outer).write(o0)\n",
+        "let-order.dsl",
+    )
+    .unwrap();
+    let RenderStep::Effect { params, .. } = &plan.chains[0].steps[0] else {
+        panic!("expected an effect step");
+    };
+    let ParamValue::Automation(noisemaker_cpu::AutomationValue::Oscillator {
+        osc_type, speed, ..
+    }) = &params["scaleX"]
+    else {
+        panic!("expected an oscillator automation value");
+    };
+    assert_eq!(*osc_type, 0);
+    let AutomationField::Ref(nested) = speed else {
+        panic!("expected a nested oscillator in the speed field");
+    };
+    let noisemaker_cpu::AutomationValue::Oscillator {
+        osc_type: nested_type,
+        speed: nested_speed,
+        ..
+    } = nested.as_ref();
+    assert_eq!(*nested_type, 1);
+    assert_eq!(nested_speed, &AutomationField::Number(2.0));
+}
+
+#[test]
+fn a_cyclic_let_set_fails_with_a_cycle_report() {
+    let error = compile_dsl(
+        "search synth\nlet a = b + 1\nlet b = a + 1\nnoise(scaleX: a).write(o0)\n",
+        "let-order.dsl",
+    )
+    .unwrap_err();
+    assert!(
+        error
+            .message
+            .contains("Automation cycle detected: a -> b -> a")
+    );
+}
+
+#[test]
+fn a_let_whose_bare_identifier_names_nothing_resolvable_reports_s003_at_declaration() {
+    let error = compile_dsl(
+        "search synth\nlet y = x\nnoise().write(o0)\n",
+        "let-order.dsl",
+    )
+    .unwrap_err();
+    assert!(
+        error
+            .message
+            .contains("Variable used before assignment: 'x'")
+    );
 }
 
 // --- GAP-045: subchain blocks -------------------------------------------------
@@ -980,7 +991,7 @@ fn forms_that_the_authority_rejects_still_fail() {
         ),
         (
             "search synth\nlet pattern = wobble\npattern().write(o0)\nrender(o0)\n",
-            "Binding \"pattern\" is not callable",
+            "Variable used before assignment: 'wobble'",
         ),
         (
             "search synth\nlet pattern = noise\nnoise(seed: 1, scaleX: pattern).write(o0)\nrender(o0)\n",

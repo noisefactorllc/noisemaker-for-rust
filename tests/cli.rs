@@ -695,71 +695,69 @@ fn effects_ends_quietly_when_the_reader_closes_the_pipe() {
 }
 
 #[test]
-fn realtime_automation_values_resolve_to_their_min_field_offline() {
-    // With no MIDI or audio input, each automation value resolves to its `min`
-    // field, and the consumer parameter scales that value into its declared
-    // range: noise scaleX (1..100) takes 1 + 0.8 * 99 = 80.2.
-    let root = temp_dir("realtime-automation");
+fn unsupported_realtime_input_warns_and_uses_the_offline_default() {
+    // MIDI and audio input are unsupported in CPU ports: the render succeeds,
+    // stderr carries the unsupported-input warning, and the bytes match the
+    // baseline program that omits the value.
+    let root = temp_dir("unsupported-realtime-input");
     for call in [
         "midi(channel: 1, min: 0.8)",
         "audio(band: audioBand.low, min: 0.8)",
     ] {
-        for binding in [false, true] {
-            let prefix = if binding {
-                format!("let input = {call}; ")
-            } else {
-                String::new()
-            };
-            let value = if binding { "input" } else { call };
-            let source = root.join("case.dsl");
-            fs::write(
-                &source,
-                format!(
-                    "search synth; {prefix}noise(seed: 1, scaleX: {value}).write(o0); render(o0)"
-                ),
-            )
+        let source = root.join("case.dsl");
+        fs::write(
+            &source,
+            format!("search synth; noise(seed: 1, scaleX: {call}).write(o0); render(o0)"),
+        )
+        .unwrap();
+        let ignored_path = root.join("ignored.png");
+        let ignored = cli()
+            .arg("run")
+            .arg(&source)
+            .args([
+                "--width", "8", "--height", "8", "--time", "0.25", "--seed", "1", "--output",
+            ])
+            .arg(&ignored_path)
+            .output()
             .unwrap();
-            let automated_path = root.join("automated.png");
-            let automated = cli()
-                .arg("run")
-                .arg(&source)
-                .args([
-                    "--width", "8", "--height", "8", "--time", "0.25", "--seed", "1", "--output",
-                ])
-                .arg(&automated_path)
-                .output()
-                .unwrap();
-            assert!(
-                automated.status.success(),
-                "{}",
-                String::from_utf8_lossy(&automated.stderr)
-            );
-            fs::write(
-                &source,
-                "search synth; noise(seed: 1, scaleX: 80.2).write(o0); render(o0)",
-            )
+        assert!(
+            ignored.status.success(),
+            "{}",
+            String::from_utf8_lossy(&ignored.stderr)
+        );
+        let stderr = String::from_utf8_lossy(&ignored.stderr);
+        assert!(
+            stderr.contains(&format!(
+                "Warning: {}() is unsupported in CPU ports; real-time input is unavailable",
+                call.split('(').next().unwrap()
+            )),
+            "missing warning: {stderr}"
+        );
+        fs::write(
+            &source,
+            "search synth; noise(seed: 1).write(o0); render(o0)",
+        )
+        .unwrap();
+        let baseline_path = root.join("baseline.png");
+        let baseline = cli()
+            .arg("run")
+            .arg(&source)
+            .args([
+                "--width", "8", "--height", "8", "--time", "0.25", "--seed", "1", "--output",
+            ])
+            .arg(&baseline_path)
+            .output()
             .unwrap();
-            let literal_path = root.join("literal.png");
-            let literal = cli()
-                .arg("run")
-                .arg(&source)
-                .args([
-                    "--width", "8", "--height", "8", "--time", "0.25", "--seed", "1", "--output",
-                ])
-                .arg(&literal_path)
-                .output()
-                .unwrap();
-            assert!(
-                literal.status.success(),
-                "{}",
-                String::from_utf8_lossy(&literal.stderr)
-            );
-            assert!(literal.stderr.is_empty());
-            assert_eq!(
-                fs::read(&automated_path).unwrap(),
-                fs::read(&literal_path).unwrap()
-            );
-        }
+        assert!(
+            baseline.status.success(),
+            "{}",
+            String::from_utf8_lossy(&baseline.stderr)
+        );
+        assert!(baseline.stderr.is_empty());
+        assert_eq!(
+            fs::read(&ignored_path).unwrap(),
+            fs::read(&baseline_path).unwrap()
+        );
     }
     fs::remove_dir_all(root).unwrap();
 }

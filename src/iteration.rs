@@ -1,4 +1,4 @@
-use crate::catalog::effect_catalog;
+use crate::catalog::{EffectCatalog, effect_catalog};
 use crate::param::ParamValue;
 use std::collections::BTreeMap;
 use thiserror::Error;
@@ -49,6 +49,28 @@ pub fn is_particle_state_name(name: &str) -> bool {
         name,
         "global_xyz" | "global_vel" | "global_rgba" | "global_life_data"
     ) || (name.starts_with("global_") && name.ends_with("_trail"))
+}
+
+// An animated image generator: a non-iterated image generator whose speed
+// parameter is not 0. The authority renders the whole chain every frame, and
+// pointsEmit colors each agent it spawns from its input at that frame's time,
+// so an animated image generator that feeds the particle group re-runs with
+// it, once per iteration (the GAP-003 precedent that re-runs animated noise3d
+// ahead of flow3d).
+fn is_animated_image_generator(step: &IterationStep, catalog: &EffectCatalog) -> bool {
+    let IterationStep::Effect { effect_id, params } = step else {
+        return false;
+    };
+    let Some(definition) = catalog.effects.get(effect_id) else {
+        return false;
+    };
+    definition.kind == "generator"
+        && definition.domain == "image"
+        && !definition.iterated
+        && params.get("speed").is_some_and(|speed| {
+            !matches!(speed, ParamValue::Float(value) if *value == 0.0)
+                && !matches!(speed, ParamValue::Int(0))
+        })
 }
 
 #[must_use]
@@ -165,11 +187,29 @@ pub fn compute_iteration_groups(
         });
         if declares_xyz {
             close_particle(&mut groups, &mut particle);
-            particle = Some(IterationGroup {
-                steps: vec![step.clone()],
-                iterated: definition.iterated,
-                is_loop: false,
-            });
+            // An animated image generator that immediately precedes this step
+            // joins the iterated group it feeds: the input then re-runs at
+            // each iteration's time. A static or volume generator, and an
+            // iterationCount 0 group, keep their shape.
+            let merges_previous = matches!(params.get("iterationCount"), Some(ParamValue::Int(count)) if *count > 0)
+                && matches!(
+                    groups.last(),
+                    Some(previous) if previous.steps.len() == 1
+                        && !previous.iterated
+                        && is_animated_image_generator(&previous.steps[0], catalog)
+                );
+            if merges_previous {
+                let mut previous = groups.pop().expect("merges_previous checked groups.last()");
+                previous.steps.push(step.clone());
+                previous.iterated = definition.iterated;
+                particle = Some(previous);
+            } else {
+                particle = Some(IterationGroup {
+                    steps: vec![step.clone()],
+                    iterated: definition.iterated,
+                    is_loop: false,
+                });
+            }
         } else if references_particle && particle.is_some() {
             particle.as_mut().unwrap().steps.push(step.clone());
         } else if particle.is_none() {

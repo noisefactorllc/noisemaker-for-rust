@@ -15,10 +15,10 @@ pub enum ParamValue {
     Float(f32),
     String(String),
     Vector(Vec<f32>),
-    // An `osc(...)`/`midi(...)`/`audio(...)` automation value (numeric params
-    // only, matching upstream's uniformSpecs contract). Kept as-is at compile
-    // time and resolved to a concrete number per render before normalization,
-    // as upstream's CpuRenderer.effectParams does.
+    // An `osc(...)` automation value (numeric params only, matching upstream's
+    // uniformSpecs contract). Kept as-is at compile time and resolved to a
+    // concrete number per render before normalization, as upstream's
+    // CpuRenderer.effectParams does.
     Automation(AutomationValue),
 }
 
@@ -54,8 +54,8 @@ pub struct NormalizedParameters {
     pub uniforms: BTreeMap<String, Value>,
 }
 
-// Resolves `osc(...)`/`midi(...)`/`audio(...)` automation values in a step's
-// params to concrete numbers for this render, using the normalized 0..1 loop
+// Resolves `osc(...)` automation values in a step's params to concrete numbers
+// for this render, using the normalized 0..1 loop
 // time the canonical kernels receive. Returns the params unchanged when no
 // param carries automation, so every pre-existing program keeps its exact
 // identity and byte-identical render path. An int parameter with choices is

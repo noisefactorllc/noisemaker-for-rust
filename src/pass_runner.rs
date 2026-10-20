@@ -297,7 +297,16 @@ pub fn execute_pass(
         uniforms: uniforms.clone(),
         ..PixelContext::default()
     };
-    let pass_resolution = Value::Vec(vec![pass_width as f32, pass_height as f32]);
+    // Upstream binds the canvas size as `resolution` to every MRT pass; the
+    // pixel loop still covers the state-sized MRT destinations. A
+    // single-output pass keeps its destination size, as upstream's
+    // bindCanonicalKernel does for one destination.
+    let (resolution_width, resolution_height) = if output_names.len() > 1 {
+        (width, height)
+    } else {
+        (pass_width, pass_height)
+    };
+    let pass_resolution = Value::Vec(vec![resolution_width as f32, resolution_height as f32]);
     context
         .uniforms
         .insert("resolution".into(), pass_resolution);

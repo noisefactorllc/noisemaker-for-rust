@@ -1,16 +1,16 @@
-// CPU port of upstream Noisemaker automation evaluation: `osc(...)`, `midi(...)`
-// and `audio(...)` parameter values in the DSL. Upstream resolves these per frame
-// inside Pipeline.resolveUniformValue with a normalized 0..1 loop time; the port
+// CPU port of upstream Noisemaker automation evaluation for the `osc(...)`
+// parameter values of the DSL. Upstream resolves these per frame inside
+// Pipeline.resolveUniformValue with a normalized 0..1 loop time; the port
 // resolves them per render in the renderer with the render options' time, which
 // is the same normalized time the canonical kernels receive as their `time`
 // uniform.
 //
-// The CPU port has no live MIDI or audio input, so Midi and Audio values take
-// upstream's no-input branch: they resolve to their `min` field, and an invalid
-// Audio value returns its literal `min` (or 0). The math is a verbatim port of
-// the upstream evaluation, including the noise2d two-stage periodic noise
-// (speed applied once, after the first periodic wrap, matching the osc2d
-// shader). Every computation runs in f64, mirroring JavaScript Numbers.
+// MIDI and audio input are unsupported in CPU ports: their DSL calls warn and
+// leave parameter defaults in place, so this evaluator handles only time-based
+// osc(). The math is a verbatim port of the upstream evaluation, including the
+// noise2d two-stage periodic noise (speed applied once, after the first
+// periodic wrap, matching the osc2d shader). Every computation runs in f64,
+// mirroring JavaScript Numbers.
 
 use crate::catalog::ParameterSpec;
 use serde_json::Value as JsonValue;
@@ -46,117 +46,6 @@ pub enum AutomationValue {
         offset: AutomationField,
         seed: AutomationField,
     },
-    Midi {
-        channel: Option<i64>,
-        mode: i64,
-        cc: Option<i64>,
-        nrpn: Option<i64>,
-        zone: Option<f64>,
-        members: Option<f64>,
-        min: AutomationField,
-        max: AutomationField,
-        sensitivity: AutomationField,
-        name: Option<String>,
-        id: Option<String>,
-        invalid: bool,
-    },
-    Audio {
-        band: Option<f64>,
-        min: AutomationField,
-        max: AutomationField,
-        channel: Option<i64>,
-        name: Option<String>,
-        id: Option<String>,
-        invalid: bool,
-    },
-}
-
-impl AutomationValue {
-    #[must_use]
-    pub fn is_invalid(&self) -> bool {
-        matches!(self, Self::Audio { invalid: true, .. })
-    }
-}
-
-#[must_use]
-pub fn is_automation_field(field: &AutomationField) -> bool {
-    matches!(field, AutomationField::Ref(_))
-}
-
-// The upstream std_enums.js enums that automation descriptors resolve. A dotted
-// path or bare name outside these tables does not resolve, which upstream
-// reports as a warning (S002) and replaces with the field's fallback.
-pub(crate) fn resolve_std_enum(path: &str) -> Option<f64> {
-    let mut parts = path.split('.');
-    let head = parts.next()?;
-    let member = parts.next()?;
-    if parts.next().is_some() {
-        return None;
-    }
-    let value = match head {
-        "oscKind" => match member {
-            "sine" => 0.0,
-            "tri" => 1.0,
-            "saw" => 2.0,
-            "sawInv" => 3.0,
-            "square" => 4.0,
-            "noise" | "noise1d" => 5.0,
-            "noise2d" => 6.0,
-            _ => return None,
-        },
-        "midiMode" => match member {
-            "noteChange" => 0.0,
-            "gateNote" => 1.0,
-            "gateVelocity" => 2.0,
-            "triggerNote" => 3.0,
-            "velocity" => 4.0,
-            "cc" => 5.0,
-            "cc14" => 6.0,
-            "nrpn" => 7.0,
-            "pitchBend" => 8.0,
-            "pressure" => 9.0,
-            "polyPressure" => 10.0,
-            _ => return None,
-        },
-        "midiZone" => match member {
-            "lower" => 0.0,
-            "upper" => 1.0,
-            _ => return None,
-        },
-        "audioBand" => match member {
-            "low" => 0.0,
-            "mid" => 1.0,
-            "high" => 2.0,
-            "vol" => 3.0,
-            "raw" => 4.0,
-            _ => return None,
-        },
-        "oscType" => match member {
-            "sine" => 0.0,
-            "linear" => 1.0,
-            "sawtooth" => 2.0,
-            "sawtoothInv" => 3.0,
-            "square" => 4.0,
-            "noise1d" => 5.0,
-            "noise2d" => 6.0,
-            _ => return None,
-        },
-        "channel" => match member {
-            "r" => 0.0,
-            "g" => 1.0,
-            "b" => 2.0,
-            "a" => 3.0,
-            _ => return None,
-        },
-        "color" => match member {
-            "mono" => 0.0,
-            "rgb" => 1.0,
-            "hsv" => 2.0,
-            _ => return None,
-        },
-        _ => return None,
-    };
-    Some(value)
 }
 
 fn scale_automation_value(value: f64, range: Option<(f64, f64)>) -> f64 {
@@ -361,10 +250,7 @@ fn can_integrate_oscillator_exactly(osc: &AutomationValue) -> bool {
         speed,
         offset,
         seed,
-    } = osc
-    else {
-        return false;
-    };
+    } = osc;
     (0..=4).contains(osc_type)
         && [min, max, speed, offset, seed]
             .iter()
@@ -399,10 +285,7 @@ fn integrate_simple_oscillator(config: &AutomationValue, normalized_time: f64) -
         speed,
         offset,
         ..
-    } = config
-    else {
-        return 0.0;
-    };
+    } = config;
     let min = min.as_number().unwrap_or(0.0);
     let max = max.as_number().unwrap_or(1.0);
     let speed = speed.as_number().unwrap_or(1.0);
@@ -427,14 +310,6 @@ fn integrate_automation(
 ) -> f64 {
     let integral = if can_integrate_oscillator_exactly(config) {
         integrate_simple_oscillator(config, normalized_time)
-    } else if matches!(
-        config,
-        AutomationValue::Midi { .. } | AutomationValue::Audio { .. }
-    ) && !has_dynamic_automation_fields(config)
-    {
-        // External inputs expose the current snapshot rather than a history.
-        // Treat that snapshot as constant across the requested interval.
-        evaluate_automation(config, normalized_time, None, depth + 1) * normalized_time
     } else {
         // Decrease the quadrature order as rate modulators nest. This bounds an
         // eight-level graph to thousands, rather than millions, of evaluations
@@ -463,24 +338,6 @@ fn integrate_automation(
     }
 }
 
-fn has_dynamic_automation_fields(config: &AutomationValue) -> bool {
-    match config {
-        AutomationValue::Midi {
-            min,
-            max,
-            sensitivity,
-            ..
-        } => [min, max, sensitivity]
-            .iter()
-            .copied()
-            .any(is_automation_field),
-        AutomationValue::Audio { min, max, .. } => {
-            [min, max].iter().copied().any(is_automation_field)
-        }
-        AutomationValue::Oscillator { .. } => false,
-    }
-}
-
 fn evaluate_oscillator(osc: &AutomationValue, normalized_time: f64, depth: usize) -> f64 {
     let AutomationValue::Oscillator {
         osc_type,
@@ -489,10 +346,7 @@ fn evaluate_oscillator(osc: &AutomationValue, normalized_time: f64, depth: usize
         speed,
         offset,
         seed,
-    } = osc
-    else {
-        return 0.0;
-    };
+    } = osc;
     let min = resolve_automation_field(min, normalized_time, AUTOMATION_FIELD_UNIT, depth, 0.0);
     let max = resolve_automation_field(max, normalized_time, AUTOMATION_FIELD_UNIT, depth, 1.0);
     let offset = resolve_automation_field(
@@ -563,28 +417,7 @@ pub fn evaluate_automation(
     if depth > MAX_AUTOMATION_DEPTH {
         return scale_automation_value(0.0, range);
     }
-    let value = match config {
-        AutomationValue::Oscillator { .. } => evaluate_oscillator(config, normalized_time, depth),
-        AutomationValue::Midi { min, .. } => {
-            // Upstream resolves min, max and sensitivity, then evaluateMidi
-            // returns min without MIDI state. Max and sensitivity do not change
-            // that result.
-            resolve_automation_field(min, normalized_time, AUTOMATION_FIELD_UNIT, depth, 0.0)
-        }
-        AutomationValue::Audio { min, invalid, .. } => {
-            if *invalid {
-                // An invalid Audio value returns its literal `min` (or 0).
-                match min {
-                    AutomationField::Number(value) if value.is_finite() => *value,
-                    _ => 0.0,
-                }
-            } else {
-                // Upstream resolves min and max, then evaluateAudio returns min
-                // without audio state.
-                resolve_automation_field(min, normalized_time, AUTOMATION_FIELD_UNIT, depth, 0.0)
-            }
-        }
-    };
+    let value = evaluate_oscillator(config, normalized_time, depth);
     scale_automation_value(value, range)
 }
 

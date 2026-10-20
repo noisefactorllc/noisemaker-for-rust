@@ -3,8 +3,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde_json::Value as JsonValue;
 
 use super::{
-    DslArgument, DslCall, DslChain, DslChainElement, DslError, DslProgram, DslValue, Location,
-    SurfaceRef, parse_dsl,
+    DslArgument, DslBinding, DslCall, DslChain, DslChainElement, DslError, DslProgram, DslValue,
+    Location, SurfaceRef, parse_dsl,
 };
 use crate::ParamValue;
 use crate::automation::{AutomationField, AutomationValue};
@@ -76,6 +76,10 @@ pub struct RenderPlan {
 
 #[derive(Clone, Debug)]
 enum Evaluated {
+    // A `midi()`/`audio()` value call: unsupported in CPU ports, warned about
+    // and ignored. Parameter consumers keep their declared default, matching
+    // upstream's undefined-argument skip.
+    Undefined,
     Number(f64),
     String(String),
     Bool(bool),
@@ -100,11 +104,16 @@ struct Partial {
 
 #[derive(Clone, Debug)]
 enum Binding {
-    // A value binding keeps its evaluated value and its source expression: an
-    // automation field substitutes the source expression, as upstream's
-    // validator substitutes symbols before it compiles an automation
-    // descriptor.
-    Value { value: Evaluated, ast: DslValue },
+    // A value binding resolves lazily at its first use: statement order
+    // (upstream 9cc041d0) makes a chain see only the lets declared at or
+    // before its own statement index, so a name declared by a later let stays
+    // pending until its let declares. A bare identifier value must name
+    // something resolvable at declaration, as upstream's declareVar requires.
+    Value {
+        expr: DslValue,
+        resolved: bool,
+        value: Option<Evaluated>,
+    },
     // Upstream `let x = noise` makes `x` an alias of the effect function, and
     // `let y = x` copies a partial or an alias.
     Alias(String),
@@ -120,6 +129,9 @@ struct CompileScope {
     // chain compilation, where a chain is not a usable value.
     pending: Option<Vec<InlineChain>>,
     inline_count: usize,
+    // Names of the program's lets that a later statement declares. Reading one
+    // before its let reports S003, as upstream's validator does.
+    pending_names: Option<BTreeSet<String>>,
 }
 
 impl CompileScope {
@@ -153,35 +165,29 @@ pub fn compile_dsl(source: &str, source_name: &str) -> Result<RenderPlan, DslErr
         bindings: BTreeMap::new(),
         pending: None,
         inline_count: 0,
+        pending_names: None,
     };
-    for binding in &ast.bindings {
-        if scope.bindings.contains_key(&binding.name) {
-            return Err(DslError::new(
-                format!("Duplicate binding {:?}", binding.name),
-                &binding.loc,
-            ));
-        }
-        let value = match &binding.value {
-            DslValue::Call(call) if !matches!(call.name.as_str(), "osc" | "midi" | "audio") => {
-                Binding::Partial(Partial {
-                    call: (**call).clone(),
-                })
-            }
-            value => match alias_binding(value, &scope) {
-                Some(binding) => binding,
-                None => Binding::Value {
-                    value: evaluate_value(value, &mut scope)?,
-                    ast: value.clone(),
-                },
-            },
-        };
-        scope.bindings.insert(binding.name.clone(), value);
-    }
-
+    // Statement order (upstream 9cc041d0): a chain sees only the lets declared
+    // at or before its own statement index; a later `let` of the same name
+    // reassigns it for later statements; reading a pending name reports S003.
+    let mut next_binding = 0usize;
     let mut chains = Vec::new();
-    for chain in &ast.chains {
-        chains.push(compile_chain(chain, &mut scope, false)?);
+    for (chain_index, chain) in ast.chains.iter().enumerate() {
+        declare_through(chain_index, &ast.bindings, &mut next_binding, &mut scope)?;
+        // pendingNames covers the whole chain compile, including inline
+        // chains: every argument position reports a pending read, as upstream
+        // does.
+        scope.pending_names = Some(
+            ast.bindings[next_binding..]
+                .iter()
+                .map(|binding| binding.name.clone())
+                .collect(),
+        );
+        let compiled = compile_chain(chain, &mut scope, false);
+        scope.pending_names = None;
+        chains.push(compiled?);
     }
+    declare_through(usize::MAX, &ast.bindings, &mut next_binding, &mut scope)?;
     let last_written = chains
         .iter()
         .flat_map(|chain| &chain.steps)
@@ -205,6 +211,79 @@ pub fn compile_dsl(source: &str, source_name: &str) -> Result<RenderPlan, DslErr
         chains,
         render_surface,
         ast,
+    })
+}
+
+// Declares every binding whose statement index has arrived. A binding's
+// planIndex is the number of chain statements written before its `let`.
+fn declare_through(
+    chain_index: usize,
+    bindings: &[DslBinding],
+    next_binding: &mut usize,
+    scope: &mut CompileScope,
+) -> Result<(), DslError> {
+    while *next_binding < bindings.len() && bindings[*next_binding].plan_index <= chain_index {
+        declare_binding(&bindings[*next_binding], scope)?;
+        *next_binding += 1;
+    }
+    Ok(())
+}
+
+// Declares one let. Statement order (upstream 9cc041d0): a later `let` of the
+// same name reassigns it for later statements, so a duplicate name is not an
+// error. A bare identifier value must name something resolvable now (an
+// earlier binding, an alias, or an effect), as upstream's declareVar requires.
+fn declare_binding(binding: &DslBinding, scope: &mut CompileScope) -> Result<(), DslError> {
+    if let DslValue::Call(call) = &binding.value {
+        if !matches!(call.name.as_str(), "osc" | "midi" | "audio") {
+            // A partial keeps its call unresolved. Its arguments resolve where
+            // it is called, as upstream's validator substitutes a symbol at
+            // each use.
+            scope.bindings.insert(
+                binding.name.clone(),
+                Binding::Partial(Partial {
+                    call: (**call).clone(),
+                }),
+            );
+            return Ok(());
+        }
+    }
+    if let Some(alias) = alias_binding(&binding.value, scope) {
+        scope.bindings.insert(binding.name.clone(), alias);
+        return Ok(());
+    }
+    if let DslValue::Identifier { name, loc } = &binding.value {
+        let name = name.as_str();
+        if !name.contains('.')
+            && !scope.bindings.contains_key(name)
+            && !resolvable_effect(scope, name)
+        {
+            let loc = loc.clone();
+            return Err(DslError::new(
+                format!("Variable used before assignment: '{name}'"),
+                &loc,
+            ));
+        }
+    }
+    scope.bindings.insert(
+        binding.name.clone(),
+        Binding::Value {
+            expr: binding.value.clone(),
+            resolved: false,
+            value: None,
+        },
+    );
+    Ok(())
+}
+
+// An effect alias declares when the name resolves in the search namespaces, as
+// upstream's registry lookup does.
+fn resolvable_effect(scope: &CompileScope, name: &str) -> bool {
+    scope.search.iter().any(|namespace| {
+        scope
+            .catalog
+            .effects
+            .contains_key(&format!("{namespace}/{name}"))
     })
 }
 
@@ -531,14 +610,23 @@ fn resolve_args(
         .map(|argument| {
             Ok(ResolvedArgument {
                 name: argument.name.clone(),
-                value: evaluate_value(&argument.value, scope)?,
+                value: evaluate_value(&argument.value, scope, 0, &[])?,
                 loc: argument.loc.clone(),
             })
         })
         .collect()
 }
 
-fn evaluate_value(value: &DslValue, scope: &mut CompileScope) -> Result<Evaluated, DslError> {
+// `resolving` threads the chain of binding names currently being resolved so a
+// cyclic let set (`let a = b`, `let b = a`) fails instead of looping forever,
+// as upstream's validator substitution detects the same cycle. `osc_depth` is
+// the automation nesting depth: only oscillator fields deepen it.
+fn evaluate_value(
+    value: &DslValue,
+    scope: &mut CompileScope,
+    osc_depth: usize,
+    resolving: &[String],
+) -> Result<Evaluated, DslError> {
     match value {
         DslValue::Number(value) => Ok(Evaluated::Number(*value)),
         DslValue::String(value) => Ok(Evaluated::String(value.clone())),
@@ -546,23 +634,69 @@ fn evaluate_value(value: &DslValue, scope: &mut CompileScope) -> Result<Evaluate
         DslValue::Surface(surface) => Ok(Evaluated::Surface(surface.clone())),
         DslValue::Array { values, .. } => values
             .iter()
-            .map(|value| evaluate_value(value, scope))
+            .map(|value| evaluate_value(value, scope, osc_depth, resolving))
             .collect::<Result<Vec<_>, _>>()
             .map(Evaluated::Array),
         DslValue::Identifier { name, loc } => match scope.bindings.get(name) {
-            Some(Binding::Value { value, .. }) => Ok(value.clone()),
+            Some(Binding::Value {
+                resolved,
+                value: bound,
+                ..
+            }) if *resolved => Ok(bound.clone().expect("resolved bindings hold a value")),
             Some(Binding::Partial(_)) => Err(DslError::new(
                 format!("Effect partial {name:?} cannot be used as a value"),
                 loc,
             )),
             // An effect alias used as a value stays the effect's bare name.
             Some(Binding::Alias(alias)) => Ok(Evaluated::String(alias.clone())),
-            None => Ok(Evaluated::String(name.clone())),
+            Some(_) => {
+                // A value binding resolves lazily at its first use. A name
+                // declared by a later let is pending here and reading it
+                // reports S003, as upstream does.
+                if resolving.contains(name) {
+                    let mut chain = resolving.to_vec();
+                    chain.push(name.clone());
+                    return Err(DslError::new(
+                        format!("Automation cycle detected: {}", chain.join(" -> ")),
+                        loc,
+                    ));
+                }
+                let expr = match scope.bindings.get(name) {
+                    Some(Binding::Value { expr, .. }) => expr.clone(),
+                    _ => unreachable!("only value bindings reach lazy resolution"),
+                };
+                let mut next_resolving = resolving.to_vec();
+                next_resolving.push(name.clone());
+                let value = evaluate_value(&expr, scope, osc_depth, &next_resolving)?;
+                if let Some(Binding::Value {
+                    resolved,
+                    value: bound,
+                    ..
+                }) = scope.bindings.get_mut(name)
+                {
+                    *resolved = true;
+                    *bound = Some(value.clone());
+                }
+                Ok(value)
+            }
+            None => {
+                if scope
+                    .pending_names
+                    .as_ref()
+                    .is_some_and(|pending| pending.contains(name))
+                {
+                    return Err(DslError::new(
+                        format!("Variable used before assignment: '{name}'"),
+                        loc,
+                    ));
+                }
+                Ok(Evaluated::String(name.clone()))
+            }
         },
         DslValue::Vector { width, values, loc } => {
             let values = values
                 .iter()
-                .map(|value| evaluate_value(value, scope))
+                .map(|value| evaluate_value(value, scope, 0, resolving))
                 .collect::<Result<Vec<_>, _>>()?;
             if values.len() != *width
                 || values
@@ -581,7 +715,7 @@ fn evaluate_value(value: &DslValue, scope: &mut CompileScope) -> Result<Evaluate
             argument,
             loc,
         } => {
-            let Evaluated::Number(value) = evaluate_value(argument, scope)? else {
+            let Evaluated::Number(value) = evaluate_value(argument, scope, 0, resolving)? else {
                 return Err(DslError::new("Unary arithmetic requires a number", loc));
             };
             Ok(Evaluated::Number(if operator == "-" {
@@ -596,9 +730,10 @@ fn evaluate_value(value: &DslValue, scope: &mut CompileScope) -> Result<Evaluate
             right,
             loc,
         } => {
-            let (Evaluated::Number(left), Evaluated::Number(right)) =
-                (evaluate_value(left, scope)?, evaluate_value(right, scope)?)
-            else {
+            let (Evaluated::Number(left), Evaluated::Number(right)) = (
+                evaluate_value(left, scope, 0, resolving)?,
+                evaluate_value(right, scope, 0, resolving)?,
+            ) else {
                 return Err(DslError::new("Arithmetic requires numeric values", loc));
             };
             Ok(Evaluated::Number(match operator.as_str() {
@@ -609,11 +744,12 @@ fn evaluate_value(value: &DslValue, scope: &mut CompileScope) -> Result<Evaluate
             }))
         }
         // Upstream parses `osc(...)`, `midi(...)` and `audio(...)` as automation
-        // values. The CPU port has no live MIDI or audio input, so those take
-        // upstream's no-input branch and resolve to their `min` field.
-        DslValue::Call(call) if matches!(call.name.as_str(), "osc" | "midi" | "audio") => Ok(
-            Evaluated::Automation(compile_automation_call(call, scope, 0)?),
-        ),
+        // value calls. The CPU port has no live MIDI or audio input, so midi()
+        // and audio() warn and leave their consumers' offline defaults in
+        // place.
+        DslValue::Call(call) if matches!(call.name.as_str(), "osc" | "midi" | "audio") => {
+            compile_automation_call(call, scope, osc_depth, resolving)
+        }
         DslValue::Call(call) => Err(DslError::new(
             "Effect call cannot be used as a value",
             &call.loc,
@@ -783,6 +919,12 @@ fn normalize_arguments(
                 loc,
             ));
         };
+        // A midi()/audio() value is undefined in CPU ports: skip it so the
+        // parameter keeps its declared default, as upstream's parameter loop
+        // skips undefined arguments.
+        if matches!(argument.value, Evaluated::Undefined) {
+            continue;
+        }
         apply_parameter(
             &name,
             &definition.params[&name],
@@ -866,10 +1008,9 @@ fn apply_parameter(
     loc: &Location,
 ) -> Result<(), DslError> {
     let fail = |message: String| DslError::new(format!("Parameter {name:?} {message}"), loc);
-    // An `osc(...)`/`midi(...)`/`audio(...)` automation value (numeric params
-    // only, matching upstream's uniformSpecs contract) is kept as-is here and
-    // resolved to a concrete number per render in the renderer; static values
-    // validate as before.
+    // An `osc(...)` automation value (numeric params only, matching upstream's
+    // uniformSpecs contract) is kept as-is here and resolved to a concrete
+    // number per render in the renderer; static values validate as before.
     if let Evaluated::Automation(descriptor) = &value {
         if matches!(spec.parameter_type.as_str(), "float" | "int") {
             params.insert(name.into(), ParamValue::Automation(descriptor.clone()));
@@ -1032,16 +1173,14 @@ fn enum_or_integer(
     Ok(value as i32)
 }
 
-// --- osc(), midi() and audio() automation values ------------------------------
+// --- osc(), midi() and audio() value calls ------------------------------------
 //
-// A port of upstream's parser transformOscInvocation/transformMidiInvocation/
-// transformAudioInvocation and the validator's compileAutomationDescriptor.
-// Errors that upstream reports with severity "error" (its P003 parser errors,
-// S001 and S003) throw DslError. Upstream warnings (S002) keep the field's
-// fallback value and mark the descriptor `_invalid` where upstream does, so the
-// program still compiles. The errors use the port's existing message templates;
-// the P003 errors name the call.
+// Only `osc(...)` compiles to a live automation value. MIDI and audio input are
+// unsupported in CPU ports: their value calls warn and resolve to nothing, so
+// consumers keep their offline defaults.
 
+// Mirrors upstream std_enums.js oscKind (sine..noise2d; noise/noise1d alias
+// kind 5, noise2d is the two-stage periodic noise added upstream at eabb537e).
 const OSC_KIND_VALUES: [(i32, &str); 8] = [
     (0, "sine"),
     (1, "tri"),
@@ -1054,289 +1193,12 @@ const OSC_KIND_VALUES: [(i32, &str); 8] = [
 ];
 
 const OSC_PARAM_ORDER: [&str; 6] = ["type", "min", "max", "speed", "offset", "seed"];
-const MIDI_POSITIONAL: [&str; 5] = ["channel", "mode", "min", "max", "sensitivity"];
-const MIDI_KEYWORD_ONLY: [&str; 6] = ["name", "id", "cc", "nrpn", "zone", "members"];
-const AUDIO_POSITIONAL: [&str; 3] = ["band", "min", "max"];
-const AUDIO_KEYWORD_ONLY: [&str; 3] = ["channel", "name", "id"];
-
-fn automation_unknown_parameter(call: &DslCall, bad_name: &str, valid: &[&str]) -> DslError {
-    DslError::new(
-        format!(
-            "Unknown parameter {:?} for {}(); accepted: {}",
-            bad_name,
-            call.name,
-            valid.join(", ")
-        ),
-        &call.loc,
-    )
-}
-
-fn automation_missing_parameter(call: &DslCall, name: &str) -> DslError {
-    DslError::new(
-        format!("Missing required parameter {name:?} for {}()", call.name),
-        &call.loc,
-    )
-}
-
-fn automation_unsupported_call(call: &DslCall) -> DslError {
-    DslError::new(
-        format!("Unsupported DSL value Call {:?}", call.name),
-        &call.loc,
-    )
-}
-
-// Replaces an identifier bound by `let` with the bound expression, as upstream's
-// validator substitutes symbols before it compiles an automation descriptor, and
-// folds arithmetic to a number, as upstream's parser does.
-fn substitute_field(
-    value: &DslValue,
-    scope: &mut CompileScope,
-    seen: &mut BTreeSet<String>,
-) -> DslValue {
-    match value {
-        DslValue::Unary { .. } | DslValue::Binary { .. } => match evaluate_value(value, scope) {
-            Ok(Evaluated::Number(number)) => DslValue::Number(number),
-            _ => value.clone(),
-        },
-        DslValue::Identifier { name, loc } if !name.contains('.') => {
-            if seen.contains(name) {
-                return value.clone();
-            }
-            let bound = match scope.bindings.get(name) {
-                Some(Binding::Value { ast, .. }) => Some(ast.clone()),
-                Some(Binding::Alias(alias)) => {
-                    return DslValue::Identifier {
-                        name: alias.clone(),
-                        loc: loc.clone(),
-                    };
-                }
-                // An effect partial is a call that is not an automation source.
-                Some(Binding::Partial(partial)) => {
-                    return DslValue::Call(Box::new(DslCall {
-                        name: partial.call.name.clone(),
-                        args: Vec::new(),
-                        arg_mode: None,
-                        namespace: None,
-                        loc: loc.clone(),
-                    }));
-                }
-                None => None,
-            };
-            match bound {
-                Some(bound) => {
-                    seen.insert(name.clone());
-                    substitute_field(&bound, scope, seen)
-                }
-                None => value.clone(),
-            }
-        }
-        _ => value.clone(),
-    }
-}
-
-fn resolve_automation_enum(
-    node: &DslValue,
-    enum_name: &str,
-    fallback: Option<f64>,
-    valid_values: &[f64],
-    call: &DslCall,
-    field: &str,
-) -> Result<Option<f64>, DslError> {
-    // Upstream resolveAutomationEnum: a number, an enum path, or a bare member
-    // name of `enumName`. A string literal is an error; any other unresolved
-    // value is a warning that keeps the fallback.
-    let mut resolved = None;
-    match node {
-        DslValue::Number(value) => resolved = Some(*value),
-        DslValue::Identifier { name, .. } => {
-            resolved = if name.contains('.') {
-                crate::automation::resolve_std_enum(name)
-            } else {
-                crate::automation::resolve_std_enum(&format!("{enum_name}.{name}"))
-            };
-        }
-        _ => {}
-    }
-    if let Some(value) = resolved.filter(|value| valid_values.contains(value)) {
-        return Ok(Some(value));
-    }
-    if matches!(node, DslValue::String(_)) {
-        return Err(DslError::new(
-            format!("Parameter {field:?} must be an enum value"),
-            &call.loc,
-        ));
-    }
-    Ok(fallback)
-}
-
-// Upstream resolveAutomationNumber. Returns the field and whether it is valid;
-// `valid` is false where upstream reports a warning and calls the field's
-// onInvalid callback.
-#[allow(clippy::too_many_arguments)]
-fn resolve_automation_number(
-    node: Option<DslValue>,
-    scope: &mut CompileScope,
-    depth: usize,
-    call: &DslCall,
-    field: &str,
-    fallback: f64,
-    allow_boolean: bool,
-    allow_automation: bool,
-    allow_member: bool,
-    integer: bool,
-    min: Option<f64>,
-    max: Option<f64>,
-    clamp01: bool,
-) -> Result<(AutomationField, bool), DslError> {
-    let Some(node) = node else {
-        return Ok((AutomationField::Number(fallback), true));
-    };
-    let invalid = AutomationField::Number(fallback);
-    let value = match node {
-        DslValue::Number(value) => Some(value),
-        DslValue::Bool(value) if allow_boolean => Some(f64::from(value)),
-        DslValue::Identifier { name, .. } if name.contains('.') && allow_member => {
-            crate::automation::resolve_std_enum(&name)
-        }
-        DslValue::Call(ref call)
-            if allow_automation && matches!(call.name.as_str(), "osc" | "midi" | "audio") =>
-        {
-            let compiled = compile_automation_call(call, scope, depth + 1)?;
-            let invalid = compiled.is_invalid();
-            return Ok((AutomationField::Ref(Box::new(compiled)), !invalid));
-        }
-        DslValue::String(_) => {
-            // Upstream S001 (a string literal) and S003 (an undefined
-            // automation source).
-            return Err(DslError::new(
-                format!("Parameter {field:?} must be a finite number"),
-                &call.loc,
-            ));
-        }
-        DslValue::Identifier { name, .. } if !name.contains('.') => {
-            return Err(DslError::new(
-                format!("Parameter {field:?} must be a finite number"),
-                &call.loc,
-            ));
-        }
-        _ => None,
-    };
-    let Some(value) = value else {
-        return Ok((invalid, false));
-    };
-    if !value.is_finite() {
-        return Ok((invalid, false));
-    }
-    if integer && value.fract() != 0.0 {
-        return Ok((invalid, false));
-    }
-    if min.is_some_and(|min| value < min) || max.is_some_and(|max| value > max) {
-        return Ok((invalid, false));
-    }
-    Ok((
-        AutomationField::Number(if clamp01 {
-            value.clamp(0.0, 1.0)
-        } else {
-            value
-        }),
-        true,
-    ))
-}
-
-// Splits a midi()/audio() call into upstream's resolved fields: positional
-// arguments fill the positional order densely, keyword arguments take their own
-// slots (the last duplicate keyword wins), and omitted fields take defaults.
-fn automation_fields(
-    call: &DslCall,
-    scope: &mut CompileScope,
-    positional_order: &[&str],
-    keyword_only: &[&str],
-    defaults: &[(&str, f64)],
-) -> Result<BTreeMap<String, DslValue>, DslError> {
-    let mut valid: Vec<&str> = positional_order.to_vec();
-    valid.extend_from_slice(keyword_only);
-    let mut positional: Vec<(usize, &DslArgument)> = Vec::new();
-    let mut kwargs: BTreeMap<String, &DslArgument> = BTreeMap::new();
-    for (index, argument) in call.args.iter().enumerate() {
-        match &argument.name {
-            Some(name) => {
-                kwargs.insert(name.clone(), argument);
-            }
-            None => positional.push((index, argument)),
-        }
-    }
-    // Upstream: the keyword-only fields cannot take a positional argument.
-    if positional.len() > positional_order.len() {
-        let (index, _) = positional[positional_order.len()];
-        return Err(automation_unknown_parameter(
-            call,
-            &format!("argument {}", index + 1),
-            &valid,
-        ));
-    }
-    for name in kwargs.keys() {
-        if !valid.contains(&name.as_str()) {
-            return Err(automation_unknown_parameter(call, name, &valid));
-        }
-    }
-    let mut fields: BTreeMap<String, DslValue> = BTreeMap::new();
-    let mut cursor = 0;
-    for field in positional_order {
-        if let Some(argument) = kwargs.get(*field) {
-            fields.insert((*field).into(), argument.value.clone());
-        } else if cursor < positional.len() {
-            let (_, argument) = positional[cursor];
-            cursor += 1;
-            fields.insert((*field).into(), argument.value.clone());
-        } else if let Some((_, default)) = defaults.iter().find(|(name, _)| name == field) {
-            fields.insert((*field).into(), DslValue::Number(*default));
-        }
-    }
-    if cursor < positional.len() {
-        let (index, _) = positional[cursor];
-        return Err(automation_unknown_parameter(
-            call,
-            &format!("argument {}", index + 1),
-            &valid,
-        ));
-    }
-    for field in keyword_only {
-        if let Some(argument) = kwargs.get(*field) {
-            fields.insert((*field).into(), argument.value.clone());
-        }
-    }
-    for (name, field) in fields.iter_mut() {
-        if name != "name" && name != "id" {
-            let mut seen = BTreeSet::new();
-            *field = substitute_field(field, scope, &mut seen);
-        }
-    }
-    Ok(fields)
-}
-
-// The selector strings must be non-empty string literals (upstream parser).
-fn check_selector_strings(
-    call: &DslCall,
-    fields: &BTreeMap<String, DslValue>,
-) -> Result<(), DslError> {
-    for field in ["name", "id"] {
-        if let Some(DslValue::String(value)) = fields.get(field) {
-            if value.is_empty() {
-                return Err(automation_unsupported_call(call));
-            }
-            continue;
-        }
-        if fields.contains_key(field) {
-            return Err(automation_unsupported_call(call));
-        }
-    }
-    Ok(())
-}
 
 fn compile_oscillator(
     call: &DslCall,
     scope: &mut CompileScope,
     depth: usize,
+    resolving: &[String],
 ) -> Result<AutomationValue, DslError> {
     // Mirrors upstream std_enums.js oscKind (sine..noise2d; noise/noise1d alias
     // kind 5, noise2d is the two-stage periodic noise). Compiles an `osc(...)`
@@ -1381,7 +1243,7 @@ fn compile_oscillator(
     }
 
     let raw_type = match fields.get("type") {
-        Some(node) => evaluate_value(node, scope)?,
+        Some(node) => evaluate_value(node, scope, depth + 1, resolving)?,
         None => Evaluated::Number(0.0),
     };
     let osc_type = match raw_type {
@@ -1426,8 +1288,9 @@ fn compile_oscillator(
         let Some(node) = node else {
             return Ok(AutomationField::Number(fallback));
         };
-        let value = evaluate_value(node, scope)?;
+        let value = evaluate_value(node, scope, depth + 1, resolving)?;
         match value {
+            Evaluated::Undefined => Ok(AutomationField::Number(fallback)),
             Evaluated::Automation(descriptor) => Ok(AutomationField::Ref(Box::new(descriptor))),
             Evaluated::Bool(true) => Ok(AutomationField::Number(1.0)),
             Evaluated::Bool(false) => Ok(AutomationField::Number(0.0)),
@@ -1455,342 +1318,18 @@ fn compile_oscillator(
     })
 }
 
-fn compile_midi(
-    call: &DslCall,
-    scope: &mut CompileScope,
-    depth: usize,
-) -> Result<AutomationValue, DslError> {
-    if depth > crate::automation::MAX_AUTOMATION_DEPTH {
-        return Err(DslError::new(
-            format!(
-                "Automation nesting exceeds the maximum depth of {}",
-                crate::automation::MAX_AUTOMATION_DEPTH
-            ),
-            &call.loc,
-        ));
-    }
-    let fields = automation_fields(
-        call,
-        scope,
-        &MIDI_POSITIONAL,
-        &MIDI_KEYWORD_ONLY,
-        &[
-            ("mode", 4.0),
-            ("min", 0.0),
-            ("max", 1.0),
-            ("sensitivity", 1.0),
-        ],
-    )?;
-    let has_zone = fields.contains_key("zone");
-    if !fields.contains_key("channel") && !has_zone {
-        return Err(automation_missing_parameter(call, "channel"));
-    }
-    if fields.contains_key("channel") && has_zone {
-        return Err(automation_unsupported_call(call));
-    }
-    if fields.contains_key("members") && !has_zone {
-        return Err(automation_missing_parameter(call, "zone"));
-    }
-    if fields.contains_key("id") && !fields.contains_key("name") {
-        return Err(automation_missing_parameter(call, "name"));
-    }
-    check_selector_strings(call, &fields)?;
-
-    let mode = resolve_automation_enum(
-        fields.get("mode").unwrap_or(&DslValue::Number(4.0)),
-        "midiMode",
-        Some(4.0),
-        &[0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
-        call,
-        "mode",
-    )?
-    .unwrap_or(4.0) as i64;
-    let zone = if has_zone {
-        resolve_automation_enum(
-            fields.get("zone").unwrap_or(&DslValue::Number(0.0)),
-            "midiZone",
-            None,
-            &[0.0, 1.0],
-            call,
-            "zone",
-        )?
-    } else {
-        None
-    };
-    let mut valid_selection = !has_zone || zone.is_some();
-    let mut members = None;
-    if let Some(node) = fields.get("members") {
-        let (value, valid) = resolve_automation_number(
-            Some(node.clone()),
-            scope,
-            depth,
-            call,
-            "members",
-            f64::NAN,
-            false,
-            false,
-            false,
-            true,
-            Some(1.0),
-            Some(15.0),
-            false,
-        )?;
-        members = valid.then(|| value.as_number()).flatten();
-        if !valid {
-            valid_selection = false;
-        }
-    }
-    let mut valid_channel = true;
-    let mut channel = None;
-    if !has_zone {
-        let (value, valid) = resolve_automation_number(
-            fields
-                .get("channel")
-                .cloned()
-                .or(Some(DslValue::Number(1.0))),
-            scope,
-            depth,
-            call,
-            "channel",
-            1.0,
-            false,
-            false,
-            false,
-            true,
-            Some(1.0),
-            Some(16.0),
-            false,
-        )?;
-        channel = value.as_number().map(|value| value as i64);
-        valid_channel = valid;
-    }
-    let mut valid_cc = true;
-    let mut cc = None;
-    if fields.contains_key("cc") || mode == 5 || mode == 6 {
-        let (value, valid) = resolve_automation_number(
-            fields.get("cc").cloned().or(Some(DslValue::Number(1.0))),
-            scope,
-            depth,
-            call,
-            "cc",
-            1.0,
-            false,
-            false,
-            false,
-            true,
-            Some(0.0),
-            Some(if mode == 6 { 31.0 } else { 127.0 }),
-            false,
-        )?;
-        cc = value.as_number().map(|value| value as i64);
-        valid_cc = valid;
-    }
-    let mut nrpn = None;
-    if fields.contains_key("nrpn") || mode == 7 {
-        if !fields.contains_key("nrpn") {
-            valid_selection = false;
-        }
-        let (value, valid) = resolve_automation_number(
-            fields.get("nrpn").cloned(),
-            scope,
-            depth,
-            call,
-            "nrpn",
-            f64::NAN,
-            false,
-            false,
-            false,
-            true,
-            Some(0.0),
-            Some(16382.0),
-            false,
-        )?;
-        nrpn = valid
-            .then(|| value.as_number().map(|number| number as i64))
-            .flatten();
-        if !valid {
-            valid_selection = false;
-        }
-    }
-    let (min, _) = resolve_automation_number(
-        fields.get("min").cloned().or(Some(DslValue::Number(0.0))),
-        scope,
-        depth,
-        call,
-        "min",
-        0.0,
-        true,
-        true,
-        true,
-        false,
-        None,
-        None,
-        true,
-    )?;
-    let (max, _) = resolve_automation_number(
-        fields.get("max").cloned().or(Some(DslValue::Number(1.0))),
-        scope,
-        depth,
-        call,
-        "max",
-        1.0,
-        true,
-        true,
-        true,
-        false,
-        None,
-        None,
-        true,
-    )?;
-    let (sensitivity, _) = resolve_automation_number(
-        fields
-            .get("sensitivity")
-            .cloned()
-            .or(Some(DslValue::Number(1.0))),
-        scope,
-        depth,
-        call,
-        "sensitivity",
-        1.0,
-        true,
-        true,
-        true,
-        false,
-        None,
-        None,
-        false,
-    )?;
-    let selector = |field: &str| match fields.get(field) {
-        Some(DslValue::String(value)) => Some(value.clone()),
-        _ => None,
-    };
-    Ok(AutomationValue::Midi {
-        channel,
-        mode,
-        cc,
-        nrpn,
-        zone,
-        members,
-        min,
-        max,
-        sensitivity,
-        name: selector("name"),
-        id: selector("id"),
-        invalid: !valid_cc || !valid_channel || !valid_selection,
-    })
-}
-
-fn compile_audio(
-    call: &DslCall,
-    scope: &mut CompileScope,
-    depth: usize,
-) -> Result<AutomationValue, DslError> {
-    if depth > crate::automation::MAX_AUTOMATION_DEPTH {
-        return Err(DslError::new(
-            format!(
-                "Automation nesting exceeds the maximum depth of {}",
-                crate::automation::MAX_AUTOMATION_DEPTH
-            ),
-            &call.loc,
-        ));
-    }
-    let fields = automation_fields(
-        call,
-        scope,
-        &AUDIO_POSITIONAL,
-        &AUDIO_KEYWORD_ONLY,
-        &[("min", 0.0), ("max", 1.0)],
-    )?;
-    if !fields.contains_key("band") {
-        return Err(automation_missing_parameter(call, "band"));
-    }
-    if fields.contains_key("id") && !fields.contains_key("name") {
-        return Err(automation_missing_parameter(call, "name"));
-    }
-    if fields.contains_key("name") && !fields.contains_key("channel") {
-        return Err(automation_missing_parameter(call, "channel"));
-    }
-    check_selector_strings(call, &fields)?;
-
-    let band = resolve_automation_enum(
-        fields.get("band").unwrap_or(&DslValue::Number(0.0)),
-        "audioBand",
-        None,
-        &[0.0, 1.0, 2.0, 3.0, 4.0],
-        call,
-        "band",
-    )?;
-    let (min, min_valid) = resolve_automation_number(
-        fields.get("min").cloned().or(Some(DslValue::Number(0.0))),
-        scope,
-        depth,
-        call,
-        "min",
-        0.0,
-        false,
-        true,
-        false,
-        false,
-        None,
-        None,
-        true,
-    )?;
-    let (max, max_valid) = resolve_automation_number(
-        fields.get("max").cloned().or(Some(DslValue::Number(1.0))),
-        scope,
-        depth,
-        call,
-        "max",
-        1.0,
-        false,
-        true,
-        false,
-        false,
-        None,
-        None,
-        true,
-    )?;
-    let mut channel = None;
-    let mut valid_channel = true;
-    if let Some(node) = fields.get("channel") {
-        if let DslValue::Number(value) = node {
-            if value.fract() == 0.0 && (1.0..=32.0).contains(value) {
-                channel = Some(*value as i64);
-            } else {
-                valid_channel = false;
-            }
-        } else if matches!(node, DslValue::String(_)) {
-            return Err(DslError::new(
-                "Parameter \"channel\" must be an integer",
-                &call.loc,
-            ));
-        } else {
-            valid_channel = false;
-        }
-    }
-    let selector = |field: &str| match fields.get(field) {
-        Some(DslValue::String(value)) => Some(value.clone()),
-        _ => None,
-    };
-    Ok(AutomationValue::Audio {
-        band,
-        min,
-        max,
-        channel,
-        name: selector("name"),
-        id: selector("id"),
-        invalid: band.is_none() || !min_valid || !max_valid || !valid_channel,
-    })
-}
-
 fn compile_automation_call(
     call: &DslCall,
     scope: &mut CompileScope,
     depth: usize,
-) -> Result<AutomationValue, DslError> {
-    match call.name.as_str() {
-        "midi" => compile_midi(call, scope, depth),
-        "audio" => compile_audio(call, scope, depth),
-        _ => compile_oscillator(call, scope, depth),
+    resolving: &[String],
+) -> Result<Evaluated, DslError> {
+    if call.name != "osc" {
+        eprintln!(
+            "Warning: {}() is unsupported in CPU ports; real-time input is unavailable. Ignoring this unsupported input value.",
+            call.name
+        );
+        return Ok(Evaluated::Undefined);
     }
+    compile_oscillator(call, scope, depth, resolving).map(Evaluated::Automation)
 }
