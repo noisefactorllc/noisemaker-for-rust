@@ -890757,6 +890757,113 @@
           {
             "body": [
               {
+                "condition": {
+                  "kind": "binary",
+                  "left": {
+                    "kind": "identifier",
+                    "name": "colorMode",
+                    "storage": "uniform",
+                    "type": "int"
+                  },
+                  "operator": "==",
+                  "right": {
+                    "kind": "literal",
+                    "source": "1",
+                    "type": "int",
+                    "value": 1
+                  },
+                  "type": "bool"
+                },
+                "else": null,
+                "hoistedDeclarations": [],
+                "kind": "if",
+                "then": {
+                  "kind": "return",
+                  "value": {
+                    "arguments": [
+                      {
+                        "kind": "identifier",
+                        "name": "alive",
+                        "storage": "parameter",
+                        "type": "float"
+                      },
+                      {
+                        "kind": "identifier",
+                        "name": "age",
+                        "storage": "parameter",
+                        "type": "float"
+                      },
+                      {
+                        "kind": "literal",
+                        "source": "0.0",
+                        "type": "float",
+                        "value": 0.0
+                      },
+                      {
+                        "kind": "literal",
+                        "source": "1.0",
+                        "type": "float",
+                        "value": 1.0
+                      }
+                    ],
+                    "kind": "construct",
+                    "type": "vec4"
+                  }
+                }
+              },
+              {
+                "kind": "return",
+                "value": {
+                  "arguments": [
+                    {
+                      "kind": "identifier",
+                      "name": "alive",
+                      "storage": "parameter",
+                      "type": "float"
+                    },
+                    {
+                      "kind": "identifier",
+                      "name": "alive",
+                      "storage": "parameter",
+                      "type": "float"
+                    },
+                    {
+                      "kind": "identifier",
+                      "name": "alive",
+                      "storage": "parameter",
+                      "type": "float"
+                    },
+                    {
+                      "kind": "literal",
+                      "source": "1.0",
+                      "type": "float",
+                      "value": 1.0
+                    }
+                  ],
+                  "kind": "construct",
+                  "type": "vec4"
+                }
+              }
+            ],
+            "mangledName": "packState__float_float",
+            "name": "packState",
+            "parameters": [
+              {
+                "name": "alive",
+                "qualifier": "in",
+                "type": "float"
+              },
+              {
+                "name": "age",
+                "qualifier": "in",
+                "type": "float"
+              }
+            ],
+            "returnType": "vec4"
+          },
+          {
+            "body": [
+              {
                 "declarations": [
                   {
                     "arraySize": null,
@@ -894439,24 +894546,14 @@
                             },
                             {
                               "kind": "identifier",
-                              "name": "alive",
+                              "name": "age",
                               "storage": "local",
                               "type": "float"
-                            },
-                            {
-                              "kind": "identifier",
-                              "name": "alive",
-                              "storage": "local",
-                              "type": "float"
-                            },
-                            {
-                              "kind": "literal",
-                              "source": "1.0",
-                              "type": "float",
-                              "value": 1.0
                             }
                           ],
-                          "kind": "construct",
+                          "kind": "call",
+                          "name": "packState",
+                          "target": "packState__float_float",
                           "type": "vec4"
                         }
                       },
@@ -895210,24 +895307,14 @@
                       },
                       {
                         "kind": "identifier",
-                        "name": "finalAlive",
+                        "name": "finalAge",
                         "storage": "local",
                         "type": "float"
-                      },
-                      {
-                        "kind": "identifier",
-                        "name": "finalAlive",
-                        "storage": "local",
-                        "type": "float"
-                      },
-                      {
-                        "kind": "literal",
-                        "source": "1.0",
-                        "type": "float",
-                        "value": 1.0
                       }
                     ],
-                    "kind": "construct",
+                    "kind": "call",
+                    "name": "packState",
+                    "target": "packState__float_float",
                     "type": "vec4"
                   }
                 },
@@ -895253,6 +895340,10 @@
         ],
         "structs": [],
         "uniforms": [
+          {
+            "name": "colorMode",
+            "type": "int"
+          },
           {
             "name": "density",
             "type": "float"
@@ -895301,7 +895392,7 @@
         "varyings": []
       },
       "program": "simulate",
-      "sourceSha256": "d5533f317f8ffe545386591fa317750bdca679402d027740b2d2488978575482"
+      "sourceSha256": "d1f88b1bb7eedf31cedd23e59996d54efef8f3eb84bc24a3bed3a1cde0bc2b64"
     },
     "synth3d/flythrough3d:precompute": {
       "effectId": "synth3d/flythrough3d",
@@ -920232,7 +920323,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "169ca24e6413c5fd2ced1a0787debe263887bb33",
+    "paramContractRevision": "f6b196dc42568576dfc40794040675fde42d2dc1",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"
