@@ -200,6 +200,17 @@ class SweepPlanTest(unittest.TestCase):
                 )
         self.assertEqual(sum(map(len, plan.values())), 697)
 
+    def test_surface_arguments_equal_to_the_default_are_omitted(self):
+        catalog = parity._catalog()
+        dla = parity._program("points/dla", catalog["points/dla"])
+        self.assertNotIn("fieldTex:", dla)
+        grid = parity._program("points/heightGrid", catalog["points/heightGrid"])
+        self.assertNotIn("heightTex:", grid)
+        self.assertIn("diffuseTex:o0", grid)
+        self.assertIn("solid(color:#58c).write(o0); ", grid)
+        mixer = parity._program("mixer/blendMode", catalog["mixer/blendMode"])
+        self.assertIn("tex:inputTex", mixer)
+
     def test_frame_program_reads_the_prior_output_through_media(self):
         catalog = parity._catalog()
         base = parity._program("points/life", catalog["points/life"])

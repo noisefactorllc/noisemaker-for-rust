@@ -315,13 +315,17 @@ def _program(effect_id: str, effect: dict, overrides: dict[str, object] | None =
         if effect.get("params", {}).get(name, {}).get("type") == "surface"
     ]
     prefix = []
+    params = effect.get("params", {})
     for index, name in enumerate(surface_names):
-        if index == 0:
-            args[name] = "inputTex"
-        else:
-            surface = f"o{index - 1}"
-            prefix.append(f"solid(color:#58c).write({surface})")
-            args[name] = surface
+        value = "inputTex" if index == 0 else f"o{index - 1}"
+        if value == params.get(name, {}).get("default"):
+            # Binding a surface parameter to its catalog default is a no-op on
+            # both CLIs. Omit the argument so the shared DSL also stays valid
+            # against published oracle revisions that predate the parameter.
+            continue
+        if index != 0:
+            prefix.append(f"solid(color:#58c).write({value})")
+        args[name] = value
     rendered_args = ",".join(f"{name}:{value}" for name, value in sorted(args.items()))
     call = f"{effect['func']}({rendered_args})"
     search = (
