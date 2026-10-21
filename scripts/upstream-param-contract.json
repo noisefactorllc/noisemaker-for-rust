@@ -1,6 +1,4 @@
 {
-  "source": "noisemaker-for-cpu upstream-snapshot.js",
-  "revision": "f6b196dc42568576dfc40794040675fde42d2dc1",
   "effects": {
     "classicNoisedeck/bitEffects": {
       "paramNames": [
@@ -1581,6 +1579,7 @@
     },
     "points/dla": {
       "paramNames": [
+        "fieldTex",
         "stateSize",
         "anchorDensity",
         "stride",
@@ -1609,6 +1608,7 @@
     },
     "points/flow": {
       "paramNames": [
+        "fieldTex",
         "stateSize",
         "behavior",
         "stride",
@@ -1619,8 +1619,18 @@
         "iterationCount"
       ]
     },
+    "points/heightGrid": {
+      "paramNames": [
+        "heightTex",
+        "diffuseTex",
+        "gridScale",
+        "heightScale",
+        "heightOffset"
+      ]
+    },
     "points/hydraulic": {
       "paramNames": [
+        "heightTex",
         "stride",
         "quantize",
         "inverse",
@@ -1643,6 +1653,7 @@
     },
     "points/life": {
       "paramNames": [
+        "diffuseTex",
         "stateSize",
         "typeCount",
         "attractionScale",
@@ -1660,6 +1671,7 @@
     },
     "points/physarum": {
       "paramNames": [
+        "fieldTex",
         "moveSpeed",
         "turnSpeed",
         "sensorAngle",
@@ -1759,6 +1771,7 @@
     },
     "render/pointsEmit": {
       "paramNames": [
+        "diffuseTex",
         "stateSize",
         "layout",
         "seed",
@@ -1816,6 +1829,32 @@
         "cubeBasis",
         "bgColor",
         "bgAlpha"
+      ]
+    },
+    "render/renderLandscape3d": {
+      "paramNames": [
+        "volumeSize",
+        "threshold",
+        "densitySource",
+        "zoom",
+        "panX",
+        "panY",
+        "lightDirection",
+        "ambient",
+        "diffuseIntensity",
+        "specularIntensity",
+        "bgColor",
+        "bgAlpha",
+        "viewMode",
+        "rotateX",
+        "rotateY",
+        "rotateZ",
+        "viewScale",
+        "posX",
+        "posY",
+        "posZ",
+        "fieldOfView",
+        "filtering"
       ]
     },
     "render/renderLit3d": {
@@ -2583,6 +2622,15 @@
         "colorMode"
       ]
     },
+    "synth3d/heightmap3d": {
+      "paramNames": [
+        "heightTex",
+        "tex",
+        "volumeSize",
+        "heightScale",
+        "baseHeight"
+      ]
+    },
     "synth3d/noise3d": {
       "paramNames": [
         "volumeSize",
@@ -2623,50 +2671,8 @@
         "speedA",
         "speedB"
       ]
-    },
-    "synth3d/heightmap3d": {
-      "paramNames": [
-        "heightTex",
-        "tex",
-        "volumeSize",
-        "heightScale",
-        "baseHeight"
-      ]
-    },
-    "render/renderLandscape3d": {
-      "paramNames": [
-        "volumeSize",
-        "threshold",
-        "densitySource",
-        "zoom",
-        "panX",
-        "panY",
-        "lightDirection",
-        "ambient",
-        "diffuseIntensity",
-        "specularIntensity",
-        "bgColor",
-        "bgAlpha",
-        "viewMode",
-        "rotateX",
-        "rotateY",
-        "rotateZ",
-        "viewScale",
-        "posX",
-        "posY",
-        "posZ",
-        "fieldOfView",
-        "filtering"
-      ]
-    },
-    "points/heightGrid": {
-      "paramNames": [
-        "heightTex",
-        "diffuseTex",
-        "gridScale",
-        "heightScale",
-        "heightOffset"
-      ]
     }
-  }
+  },
+  "revision": "b71a896a4dbdbc01e682b277f6d9a41fe786485e",
+  "source": "noisemaker-for-cpu upstream-snapshot.js"
 }
