@@ -49,6 +49,12 @@ pub fn is_particle_state_name(name: &str) -> bool {
         name,
         "global_xyz" | "global_vel" | "global_rgba" | "global_life_data"
     ) || (name.starts_with("global_") && name.ends_with("_trail"))
+        || (name
+            .strip_prefix("global_")
+            .and_then(|stripped| stripped.strip_suffix("_base_color"))
+            .is_some_and(|middle| {
+                !middle.is_empty() && middle.bytes().all(|byte| byte.is_ascii_lowercase())
+            }))
 }
 
 // An animated image generator: a non-iterated image generator whose speed

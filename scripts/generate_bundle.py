@@ -225,8 +225,9 @@ def _apply_param_contract(source: Path, catalog_effects: dict) -> tuple[dict, di
         names = [name for name in source_names if name in params]
         if len(names) != len(set(names)) or set(names) != set(params):
             raise RuntimeError(f"parameter contract for {effect_id} does not exactly order canonical params")
-        if "paramAliases" in record:
-            raise RuntimeError(f"parameter contract for {effect_id} still carries retired paramAliases")
+        aliases = record.get("paramAliases", {})
+        if aliases:
+            definition["paramAliases"] = aliases
         if not isinstance(overrides, dict):
             raise RuntimeError(f"parameter contract for {effect_id} has invalid paramOverrides")
         for name, values in overrides.items():
@@ -418,7 +419,7 @@ def check_generated(
         compatible_names = [name for name in record["paramNames"] if name in effect.get("params", {})]
         if effect.get("paramNames") != compatible_names:
             raise RuntimeError(f"generated paramNames drift for {effect_id}")
-        if "paramAliases" in effect:
+        if record.get("paramAliases") != effect.get("paramAliases"):
             raise RuntimeError(f"generated paramAliases drift for {effect_id}")
         for name, values in record.get("paramOverrides", {}).items():
             for field, value in values.items():

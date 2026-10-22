@@ -41,10 +41,23 @@ fn catalog_retires_parameter_aliases_and_keeps_declaration_order() {
         &noise.param_names[..5],
         &["type", "octaves", "scaleX", "scaleY", "seed"]
     );
-    assert!(
-        !include_str!("../src/generated/catalog.json").contains("paramAliases"),
-        "parameter aliases are retired and must not reappear in the generated catalog"
+    let aliased_effects = catalog
+        .effects
+        .iter()
+        .filter_map(|(id, effect)| effect.param_aliases.as_ref().map(|_| id.as_str()))
+        .collect::<Vec<&str>>();
+    assert_eq!(
+        aliased_effects,
+        vec!["points/dla", "points/flow", "points/physarum"],
+        "parameter aliases only appear on the three pinned points effects"
     );
+    for id in ["points/dla", "points/flow", "points/physarum"] {
+        assert_eq!(
+            catalog.effects[id].param_aliases.as_ref(),
+            Some(&BTreeMap::from([("fieldTex".into(), "heightTex".into())])),
+            "{id} must carry the upstream heightTex alias"
+        );
+    }
 }
 
 #[test]
@@ -57,7 +70,7 @@ fn embedded_program_inventory_is_complete_and_structural() {
         .flat_map(|effect| effect.passes.iter())
         .filter_map(|pass| pass.key.as_deref())
         .collect::<std::collections::BTreeSet<_>>();
-    assert_eq!(shaders.programs.len(), 302);
+    assert_eq!(shaders.programs.len(), 308);
     assert_eq!(
         pass_keys,
         shaders.programs.keys().map(String::as_str).collect()

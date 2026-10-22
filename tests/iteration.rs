@@ -30,10 +30,20 @@ fn particle_name_contract_and_pure_grouping_are_exact() {
         "global_rgba",
         "global_life_data",
         "global_points_trail",
+        "global_dla_base_color",
+        "global_flock_base_color",
     ] {
         assert!(is_particle_state_name(name), "{name}");
     }
-    for name in ["global_rd_state", "global_flow3d_state1", "global_accum"] {
+    for name in [
+        "global_rd_state",
+        "global_flow3d_state1",
+        "global_accum",
+        "global_base_color",
+        "global__base_color",
+        "global_dla_BaseColor",
+        "global_dla_base_color2",
+    ] {
         assert!(!is_particle_state_name(name), "{name}");
     }
     let groups = compute_iteration_groups(&[

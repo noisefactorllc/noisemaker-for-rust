@@ -11,7 +11,7 @@ mod validation;
 pub use validation::validate_program_ir;
 
 const EXPECTED_EFFECTS: usize = 210;
-const EXPECTED_PROGRAMS: usize = 302;
+const EXPECTED_PROGRAMS: usize = 308;
 const EXPECTED_EXCLUSIONS: [&str; 0] = [];
 
 #[derive(Debug, Error)]
@@ -74,6 +74,8 @@ pub struct EffectDefinition {
     pub output_tex3d: Option<String>,
     pub output_geo: Option<String>,
     pub loop_role: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub param_aliases: Option<BTreeMap<String, String>>,
 }
 
 #[derive(Debug, Deserialize)]

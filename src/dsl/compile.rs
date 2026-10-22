@@ -902,12 +902,32 @@ fn normalize_arguments(
     }
     let mut explicit_params = Vec::new();
     let mut explicit_seen = BTreeSet::new();
+    // Canonical names supplied explicitly by named arguments: an alias never
+    // overrides an explicitly supplied canonical name; the canonical name wins.
+    let canonical_supplied = args
+        .iter()
+        .filter_map(|argument| {
+            let name = argument.name.as_ref()?;
+            if matches!(argument.value, Evaluated::Undefined) {
+                return None;
+            }
+            Some(name.clone())
+        })
+        .collect::<std::collections::BTreeSet<_>>();
+    let mut warned_aliases = BTreeSet::new();
     for (index, argument) in args.iter().enumerate() {
         let supplied_name = argument
             .name
             .clone()
             .or_else(|| definition.param_names.get(index).cloned());
-        let Some(name) = supplied_name
+        let resolved_name = supplied_name.as_ref().and_then(|supplied| {
+            definition
+                .param_aliases
+                .as_ref()
+                .and_then(|aliases| aliases.get(supplied).cloned())
+                .or_else(|| Some(supplied.clone()))
+        });
+        let Some(name) = resolved_name
             .as_ref()
             .filter(|name| definition.params.contains_key(*name))
             .cloned()
@@ -919,10 +939,27 @@ fn normalize_arguments(
                 loc,
             ));
         };
+        // Deprecated aliases resolve exactly as upstream's resolveParamAliases:
+        // an alias migrates its value to the canonical name, and every alias
+        // name warns once per call, as upstream's S007 diagnostic does.
+        if let Some(supplied) = &supplied_name {
+            if supplied != &name
+                && !matches!(argument.value, Evaluated::Undefined)
+                && warned_aliases.insert(supplied.clone())
+            {
+                eprintln!(
+                    "param '{}' is deprecated, use '{}' instead. Aliases will be removed on 2027-06-01.",
+                    supplied, name
+                );
+            }
+        }
         // A midi()/audio() value is undefined in CPU ports: skip it so the
         // parameter keeps its declared default, as upstream's parameter loop
         // skips undefined arguments.
         if matches!(argument.value, Evaluated::Undefined) {
+            continue;
+        }
+        if supplied_name != Some(name.clone()) && canonical_supplied.contains(&name) {
             continue;
         }
         apply_parameter(
@@ -1332,4 +1369,92 @@ fn compile_automation_call(
         return Ok(Evaluated::Undefined);
     }
     compile_oscillator(call, scope, depth, resolving).map(Evaluated::Automation)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn definition_with_alias() -> EffectDefinition {
+        EffectDefinition {
+            namespace: "points".into(),
+            func: "test".into(),
+            kind: "filter".into(),
+            domain: "image".into(),
+            params: BTreeMap::from([(
+                "canonical".to_string(),
+                ParameterSpec {
+                    parameter_type: "int".into(),
+                    default: serde_json::json!(5),
+                    uniform: None,
+                    define: None,
+                    metadata: BTreeMap::new(),
+                },
+            )]),
+            param_names: vec!["canonical".to_string()],
+            textures: BTreeMap::new(),
+            passes: vec![],
+            iterated: false,
+            external_texture: None,
+            output_tex3d: None,
+            output_geo: None,
+            loop_role: None,
+            param_aliases: Some(BTreeMap::from([(
+                "alias".to_string(),
+                "canonical".to_string(),
+            )])),
+        }
+    }
+
+    fn loc() -> Location {
+        Location {
+            source_name: "test.dsl".into(),
+            line: 1,
+            column: 1,
+            index: 0,
+        }
+    }
+
+    fn named(name: &str, value: Evaluated) -> ResolvedArgument {
+        ResolvedArgument {
+            name: Some(name.to_string()),
+            value,
+            loc: loc(),
+        }
+    }
+
+    #[test]
+    fn alias_resolves_and_canonical_wins() {
+        let definition = definition_with_alias();
+        let args = vec![named("alias", Evaluated::Number(10.0))];
+        let normalized = normalize_arguments("points/test", &definition, &args, &loc()).unwrap();
+        assert_eq!(
+            normalized.params.get("canonical"),
+            Some(&ParamValue::Int(10))
+        );
+
+        // An explicitly supplied canonical name wins over the alias.
+        let args = vec![
+            named("canonical", Evaluated::Number(20.0)),
+            named("alias", Evaluated::Number(10.0)),
+        ];
+        let normalized = normalize_arguments("points/test", &definition, &args, &loc()).unwrap();
+        assert_eq!(
+            normalized.params.get("canonical"),
+            Some(&ParamValue::Int(20))
+        );
+    }
+
+    #[test]
+    fn undefined_alias_skipped() {
+        let definition = definition_with_alias();
+        let args = vec![named("alias", Evaluated::Undefined)];
+        let normalized = normalize_arguments("points/test", &definition, &args, &loc()).unwrap();
+        // An undefined alias value is skipped so the canonical parameter keeps
+        // its declared default, as upstream's parameter loop does.
+        assert_eq!(
+            normalized.params.get("canonical"),
+            Some(&ParamValue::Int(5))
+        );
+    }
 }

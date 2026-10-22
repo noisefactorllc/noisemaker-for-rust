@@ -99,10 +99,29 @@ pub fn normalize_parameters(
     supplied: &BTreeMap<String, ParamValue>,
     render_seed: i32,
 ) -> Result<NormalizedParameters, RenderError> {
-    if let Some(name) = supplied
-        .keys()
-        .find(|name| !effect.params.contains_key(name.as_str()))
-    {
+    // A joined group step inherits the owner's stateSize even when it declares
+    // no stateSize param of its own: upstream's initializeGroupStepState
+    // injects it so the step's `inherit: true` base-color textures size from
+    // the group's shared stateSize. The renderer's texture sizing reads it
+    // from the normalized values, so it must survive normalization.
+    let inherits_state_size = supplied.contains_key("stateSize")
+        && !effect.params.contains_key("stateSize")
+        && effect.textures.values().any(|texture| {
+            ["width", "height"].iter().any(|dimension| {
+                texture
+                    .get(*dimension)
+                    .and_then(serde_json::Value::as_object)
+                    .is_some_and(|spec| {
+                        spec.get("inherit").and_then(serde_json::Value::as_bool) == Some(true)
+                            && spec.get("param").and_then(serde_json::Value::as_str)
+                                == Some("stateSize")
+                    })
+            })
+        });
+    if let Some(name) = supplied.keys().find(|name| {
+        !effect.params.contains_key(name.as_str())
+            && !(inherits_state_size && name.as_str() == "stateSize")
+    }) {
         return Err(RenderError::UnknownParameter { name: name.clone() });
     }
     let mut normalized = NormalizedParameters::default();
@@ -124,6 +143,23 @@ pub fn normalize_parameters(
         }
         if let Some(define) = &spec.define {
             normalized.uniforms.insert(define.clone(), value);
+        }
+    }
+    if inherits_state_size {
+        if let Some(value) = supplied.get("stateSize") {
+            match value {
+                ParamValue::Int(number) => {
+                    normalized
+                        .values
+                        .insert("stateSize".into(), Value::Int(*number));
+                }
+                ParamValue::Float(number) => {
+                    normalized
+                        .values
+                        .insert("stateSize".into(), Value::Float(f64::from(*number)));
+                }
+                _ => {}
+            }
         }
     }
     const CLASSIC_PALETTE_UNIFORMS: [&str; 5] = [

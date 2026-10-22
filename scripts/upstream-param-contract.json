@@ -1580,9 +1580,12 @@
       }
     },
     "points/dla": {
+      "paramAliases": {
+        "fieldTex": "heightTex"
+      },
       "paramNames": [
+        "heightTex",
         "diffuseTex",
-        "fieldTex",
         "stateSize",
         "anchorDensity",
         "stride",
@@ -1611,9 +1614,12 @@
       ]
     },
     "points/flow": {
+      "paramAliases": {
+        "fieldTex": "heightTex"
+      },
       "paramNames": [
+        "heightTex",
         "diffuseTex",
-        "fieldTex",
         "stateSize",
         "behavior",
         "stride",
@@ -1677,9 +1683,12 @@
       ]
     },
     "points/physarum": {
+      "paramAliases": {
+        "fieldTex": "heightTex"
+      },
       "paramNames": [
+        "heightTex",
         "diffuseTex",
-        "fieldTex",
         "moveSpeed",
         "turnSpeed",
         "sensorAngle",
@@ -2681,6 +2690,6 @@
       ]
     }
   },
-  "revision": "c4f7cdd7656eb3e3ca8ced6624f19d6474607de8",
+  "revision": "12751c78103ec352bd359a9944bbeac5ad239a4b",
   "source": "noisemaker-for-cpu upstream-snapshot.js"
 }

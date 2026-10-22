@@ -1359,16 +1359,49 @@ fn run_group_frames(
     Ok(())
 }
 
+// A texture dimension spec reading the group's shared `stateSize` through the `inherit: true`
+// flag (upstream's inherited texture dimension): it resolves against the scope's stateSize —
+// `pointsEmit`'s value — and never the behavior's own default over it. Every particle behavior's
+// `global_<behavior>_base_color` memory is sized this way, and several behaviors (flock,
+// hydraulic, lenia, physarum) declare no `stateSize` global of their own.
+fn declares_inherited_state_size_textures(definition: &crate::catalog::EffectDefinition) -> bool {
+    definition.textures.values().any(|texture| {
+        ["width", "height"].iter().any(|dimension| {
+            texture
+                .get(*dimension)
+                .and_then(serde_json::Value::as_object)
+                .is_some_and(|spec| {
+                    spec.get("inherit").and_then(serde_json::Value::as_bool) == Some(true)
+                        && spec.get("param").and_then(serde_json::Value::as_str)
+                            == Some("stateSize")
+                })
+        })
+    })
+}
+
 fn inherit_group_state_size(
     index: usize,
     definition: &crate::catalog::EffectDefinition,
     owner_state_size: Option<&ParamValue>,
     params: &mut BTreeMap<String, ParamValue>,
 ) {
-    if index > 0 && definition.params.contains_key("stateSize") {
-        if let Some(size) = owner_state_size {
-            params.insert("stateSize".into(), size.clone());
+    // Mirrors upstream's initializeGroupStepState: a joined step's stateSize is
+    // forcibly overridden to the owner's normalized value whenever the step
+    // declares a stateSize param at all — or when its own textures read the
+    // scope's stateSize through an `inherit: true` dimension (a joining
+    // behavior's base-color memory). A step with no declared stateSize that
+    // still declares inherited-stateSize textures falls back to the synthetic
+    // particle-state size (256) when nothing to inherit exists.
+    let declares_state_size = params.contains_key("stateSize");
+    let declares_inherited = declares_inherited_state_size_textures(definition);
+    if index > 0 {
+        if owner_state_size.is_some() && (declares_state_size || declares_inherited) {
+            if let Some(size) = owner_state_size {
+                params.insert("stateSize".into(), size.clone());
+            }
         }
+    } else if !declares_state_size && declares_inherited {
+        params.insert("stateSize".into(), ParamValue::Int(256));
     }
 }
 
@@ -1703,6 +1736,52 @@ mod cache_tests {
 
     fn literal(value_type: &str, value: serde_json::Value) -> serde_json::Value {
         serde_json::json!({"kind":"literal","type":value_type,"value":value,"source":null})
+    }
+
+    fn inherited_state_size_definition() -> EffectDefinition {
+        EffectDefinition {
+            namespace: "points".into(),
+            func: "test".into(),
+            kind: "filter".into(),
+            domain: "image".into(),
+            params: Default::default(),
+            param_names: Vec::new(),
+            textures: serde_json::from_value(serde_json::json!({
+                "global_test_base_color": {
+                    "width": {"param": "stateSize", "inherit": true},
+                    "height": {"param": "stateSize", "inherit": true},
+                    "format": "rgba8"
+                }
+            }))
+            .unwrap(),
+            passes: Vec::new(),
+            iterated: false,
+            external_texture: None,
+            output_tex3d: None,
+            output_geo: None,
+            loop_role: None,
+            param_aliases: None,
+        }
+    }
+
+    #[test]
+    fn joined_group_steps_inherit_owner_state_size_and_first_steps_fall_back_to_256() {
+        let definition = inherited_state_size_definition();
+        // A joined step (index > 0) inherits the owner's normalized stateSize.
+        let mut joined = BTreeMap::new();
+        inherit_group_state_size(1, &definition, Some(&ParamValue::Int(64)), &mut joined);
+        assert_eq!(joined.get("stateSize"), Some(&ParamValue::Int(64)));
+
+        // The owner step (index 0) with no declared stateSize falls back to the
+        // synthetic particle-state size.
+        let mut owner = BTreeMap::new();
+        inherit_group_state_size(0, &definition, None, &mut owner);
+        assert_eq!(owner.get("stateSize"), Some(&ParamValue::Int(256)));
+
+        // A joined step with nothing to inherit stays untouched.
+        let mut unjoined = BTreeMap::new();
+        inherit_group_state_size(1, &definition, None, &mut unjoined);
+        assert_eq!(unjoined.get("stateSize"), None);
     }
 
     fn identifier(value_type: &str, name: &str, storage: &str) -> serde_json::Value {

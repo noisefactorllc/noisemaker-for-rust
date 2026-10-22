@@ -192,7 +192,7 @@ fn smoke_options(effect: &EffectDefinition) -> RenderOptions {
 fn exact_smoke_inventory_and_registry_coverage_are_locked() {
     let catalog = effect_catalog().unwrap();
     assert_eq!(catalog.effects.len(), 210);
-    assert_eq!(shader_bundle().unwrap().programs.len(), 302);
+    assert_eq!(shader_bundle().unwrap().programs.len(), 308);
     assert_eq!(
         catalog
             .effects
