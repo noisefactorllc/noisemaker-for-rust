@@ -1553,6 +1553,7 @@
     },
     "points/attractor": {
       "paramNames": [
+        "diffuseTex",
         "stateSize",
         "attractor",
         "speed",
@@ -1562,6 +1563,7 @@
     },
     "points/buddhabrot": {
       "paramNames": [
+        "diffuseTex",
         "stateSize",
         "mode",
         "maxIter",
@@ -1579,6 +1581,7 @@
     },
     "points/dla": {
       "paramNames": [
+        "diffuseTex",
         "fieldTex",
         "stateSize",
         "anchorDensity",
@@ -1593,6 +1596,7 @@
     },
     "points/flock": {
       "paramNames": [
+        "diffuseTex",
         "separation",
         "alignment",
         "cohesion",
@@ -1608,6 +1612,7 @@
     },
     "points/flow": {
       "paramNames": [
+        "diffuseTex",
         "fieldTex",
         "stateSize",
         "behavior",
@@ -1630,6 +1635,7 @@
     },
     "points/hydraulic": {
       "paramNames": [
+        "diffuseTex",
         "heightTex",
         "stride",
         "quantize",
@@ -1640,6 +1646,7 @@
     },
     "points/lenia": {
       "paramNames": [
+        "diffuseTex",
         "muK",
         "sigmaK",
         "muG",
@@ -1671,6 +1678,7 @@
     },
     "points/physarum": {
       "paramNames": [
+        "diffuseTex",
         "fieldTex",
         "moveSpeed",
         "turnSpeed",
@@ -1685,6 +1693,7 @@
     },
     "points/physical": {
       "paramNames": [
+        "diffuseTex",
         "stateSize",
         "gravity",
         "wind",
@@ -1771,7 +1780,6 @@
     },
     "render/pointsEmit": {
       "paramNames": [
-        "diffuseTex",
         "stateSize",
         "layout",
         "seed",
@@ -2673,6 +2681,6 @@
       ]
     }
   },
-  "revision": "b71a896a4dbdbc01e682b277f6d9a41fe786485e",
+  "revision": "c4f7cdd7656eb3e3ca8ced6624f19d6474607de8",
   "source": "noisemaker-for-cpu upstream-snapshot.js"
 }

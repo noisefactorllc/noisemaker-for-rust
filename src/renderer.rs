@@ -637,6 +637,20 @@ fn execute_effect_bundle_with_state(
         })?;
     let params = resolve_effect_automation(effect, params, options.time);
     let mut normalized = normalize_parameters(effect, &params, options.seed)?;
+    // Upstream binds a surface parameter's declared `colorModeUniform` to 1
+    // when the parameter carries a surface and 0 when it resolves to none
+    // (buildBindings). Surface parameters carry no numeric uniform of their
+    // own, so the flag derives from the resolved input bindings.
+    for (name, spec) in &effect.params {
+        if let Some(serde_json::Value::String(mode_uniform)) = spec.metadata.get("colorModeUniform")
+        {
+            let active = inputs.contains_key(name);
+            normalized.uniforms.insert(
+                mode_uniform.clone(),
+                Value::Float(if active { 1.0 } else { 0.0 }),
+            );
+        }
+    }
     inherit_volume_size(effect_id, effect, &mut normalized, input_bundle)?;
     if effect_id == "synth/remap" {
         normalized.uniforms.insert(

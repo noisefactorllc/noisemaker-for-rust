@@ -829,7 +829,9 @@ mod tests {
         let source = effect_program("points/flock", definition, &[]).unwrap();
 
         assert!(source.contains("pointsEmit(stateSize:64,iterationCount:1)"));
-        assert!(source.contains(".flock(iterationCount:1)"));
+        // Upstream binds diffuseTex on the flock owner; the injected
+        // surface parameter follows the scalar arguments in the call.
+        assert!(source.contains(".flock(iterationCount:1,diffuseTex:inputTex)"));
         assert!(source.contains(".pointsRender(iterationCount:1)"));
         compile_dsl(&source, "<cli-particle-test>").unwrap();
     }

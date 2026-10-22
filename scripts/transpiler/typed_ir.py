@@ -252,6 +252,9 @@ class TypedIrEmitter:
                 })
             return {"kind": "declaration", "declarations": declarations}
         if kind == "expr":
+            lowered = self._lower_conditional_vector_assignment(statement["expr"], scope)
+            if lowered is not None:
+                return lowered
             return {"kind": "expression", "expression": self._expression(statement["expr"], scope)}
         if kind == "if":
             hoisted = {}
@@ -433,6 +436,67 @@ class TypedIrEmitter:
         if operator == "metal/" and "mat2" in {left["type"], right["type"]}:
             type_name = "mat2"
         return {"kind": "binary", "type": type_name, "operator": operator, "left": left, "right": right}
+
+    def _lower_conditional_vector_assignment(self, node: dict, scope: Scope) -> dict | None:
+        """Match glsl-transpiler's lowering of `target = cond ? a : b` for vectors.
+
+        The transpiler lowers a whole-vector assignment by appending the
+        vector-copy reducer to the right-hand side text; for a conditional
+        right-hand side the reducer binds to the false arm only, so the
+        emitted JavaScript is `cond ? a : b.reduce(..., target)`: the true
+        arm's value is computed and discarded and the target keeps its prior
+        value. The reference compiler reproduces this verbatim (it rewrites
+        only pointsBillboardRender's outRGB line to an honest if/else), so the
+        typed IR keeps the same lossy semantics here.
+        """
+        if node.get("k") != "assign" or node.get("op") != "=":
+            return None
+        target = self._expression(node["target"], scope)
+        if target["kind"] not in {"identifier", "member", "index"}:
+            return None
+        if _width(target["type"]) <= 1:
+            return None
+        value_node = node["value"]
+        if value_node.get("k") != "cond":
+            return None
+        if self.effect_id == "render/pointsBillboardRender" and target["kind"] == "identifier" and target.get("name") == "outRGB":
+            return None
+        if target["kind"] == "identifier" and target.get("name") == "i1" and self._is_simplex_axis_choice(value_node):
+            return None
+        if self.effect_id == "points/physical" and target["kind"] == "identifier" and target.get("name") == "outRGBA":
+            return None
+        condition = self._expression(value_node["c"], scope)
+        when_true = self._expression(value_node["a"], scope)
+        when_false = self._expression(value_node["b"], scope)
+        return {
+            "kind": "if",
+            "hoistedDeclarations": [],
+            "condition": condition,
+            "then": {"kind": "expression", "expression": when_true},
+            "else": {"kind": "expression", "expression": {
+                "kind": "assignment", "type": target["type"], "operator": "=",
+                "lvalue": target, "value": when_false,
+            }},
+        }
+
+    def _is_simplex_axis_choice(self, value_node: dict) -> bool:
+        """True for `i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0)`.
+
+        The reference compiler rewrites exactly this simplex-noise statement
+        to an honest if/else before transpiling (compile-glsl.js applies the
+        replacement to every effect), so it keeps both arms.
+        """
+        if value_node.get("k") != "cond":
+            return False
+        true_arm, false_arm = value_node.get("a"), value_node.get("b")
+        for arm, comps in ((true_arm, ("1.0", "0.0")), (false_arm, ("0.0", "1.0"))):
+            if not arm or arm.get("k") != "construct" or len(arm.get("args", [])) != 2:
+                return False
+            for item, expected in zip(arm["args"], comps):
+                if item.get("k") != "num" or str(item.get("value")) != expected:
+                    return False
+        condition = value_node.get("c")
+        return bool(condition and condition.get("k") == "binary" and condition.get("op") == ">")
 
     def _expr_assign(self, node: dict, scope: Scope) -> dict:
         target = self._expression(node["target"], scope)

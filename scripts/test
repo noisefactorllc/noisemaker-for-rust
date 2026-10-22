@@ -10,8 +10,33 @@
 # instead of failing on a missing toolchain.
 set -e
 cd "$(dirname "$0")/.."
-PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+# Focused mode: the supervisor passes this candidate's changed paths in
+# NM_CHANGED_FILES (one per line). When set, run only the checks exercising
+# those paths; when unset, run the whole suite exactly as before.
+changed_match() {
+  printf '%s\n' "${NM_CHANGED_FILES-}" | tr -d '\r' | grep -E "$1" || true
+}
+if [ -n "${NM_CHANGED_FILES-}" ]; then
+  # Generated-catalog consistency covers any generator, transpiler, contract,
+  # generated or runtime source change.
+  if [ -n "$(changed_match '^(scripts/|src/)')" ]; then
+    PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check
+  fi
+  # Python unit tests: run the modules that exercise the changed paths, plus
+  # the sync/parity suite whenever generated or runtime behavior moved.
+  modules=$(changed_match '^scripts/tests/test_[a-z_]+\.py$' | sed -E 's|^scripts/tests/||; s|\.py$||')
+  if [ -n "$(changed_match '^(scripts/transpiler/|scripts/generate_bundle\.py|scripts/upstream-param-contract\.json|src/generated/|src/renderer\.rs)')" ]; then
+    modules=$(printf '%s\n%s\n' "$modules" "$(changed_match '^scripts/tests/test_(cpu_sync|parity)\.py$' | sed -E 's|^scripts/tests/||; s|\.py$||')" | awk 'NF && !seen[$0]++')
+  fi
+  if [ -n "$modules" ]; then
+    for module in $modules; do
+      PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p "${module}.py"
+    done
+  fi
+else
+  PYTHONDONTWRITEBYTECODE=1 python3 scripts/generate_bundle.py --check
+  PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+fi
 if ! command -v cargo >/dev/null 2>&1; then
   # Relocated rustup/cargo homes (exec-capable, persistent) when the default
   # PATH carries no toolchain: the configured homes, else the shared
@@ -65,10 +90,14 @@ if command -v cargo >/dev/null 2>&1; then
       rustup toolchain install 1.85.0 --profile minimal
     fi
   fi
-  cargo fmt --all -- --check
-  cargo clippy --all-targets --all-features -- -D warnings
-  cargo +1.85.0 check --all-targets --all-features
-  cargo test --release --locked --all-features
+  if [ -n "${NM_CHANGED_FILES-}" ] && [ -z "$(changed_match '^(src/|Cargo[.]toml$|Cargo[.]lock$|rust-toolchain[.]toml$)')" ]; then
+    echo "changed paths touch no Rust sources; rust checks are enforced by the exact-source ci workflow"
+  else
+    cargo fmt --all -- --check
+    cargo clippy --all-targets --all-features -- -D warnings
+    cargo +1.85.0 check --all-targets --all-features
+    cargo test --release --locked --all-features
+  fi
 else
   echo "cargo toolchain not found on this host; rust checks are enforced by the exact-source ci workflow (quality, test-and-package)"
 fi

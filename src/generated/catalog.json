@@ -19557,6 +19557,7 @@
       "outputTex": null,
       "outputTex3d": null,
       "paramNames": [
+        "diffuseTex",
         "stateSize",
         "attractor",
         "speed",
@@ -19581,6 +19582,15 @@
             "label": "attractor"
           },
           "uniform": "attractor"
+        },
+        "diffuseTex": {
+          "colorModeUniform": "diffuseActive",
+          "default": "none",
+          "type": "surface",
+          "ui": {
+            "category": "general",
+            "label": "diffuse map"
+          }
         },
         "iterationCount": {
           "cpuOnly": true,
@@ -19622,6 +19632,7 @@
         {
           "drawBuffers": 3,
           "inputs": {
+            "diffuseTex": "diffuseTex",
             "rgbaTex": "global_rgba",
             "velTex": "global_vel",
             "xyzTex": "global_xyz"
@@ -19636,6 +19647,7 @@
           "program": "agent",
           "uniforms": {
             "attractor": "attractor",
+            "diffuseActive": "diffuseActive",
             "speed": "speed"
           }
         },
@@ -19664,6 +19676,7 @@
       "outputTex": null,
       "outputTex3d": null,
       "paramNames": [
+        "diffuseTex",
         "stateSize",
         "mode",
         "maxIter",
@@ -19701,6 +19714,15 @@
             "label": "center y"
           },
           "uniform": "centerY"
+        },
+        "diffuseTex": {
+          "colorModeUniform": "diffuseActive",
+          "default": "none",
+          "type": "surface",
+          "ui": {
+            "category": "fractal",
+            "label": "diffuse map"
+          }
         },
         "iterationCount": {
           "cpuOnly": true,
@@ -19777,6 +19799,7 @@
         {
           "drawBuffers": 3,
           "inputs": {
+            "diffuseTex": "diffuseTex",
             "rgbaTex": "global_rgba",
             "velTex": "global_vel",
             "xyzTex": "global_xyz"
@@ -19792,6 +19815,7 @@
           "uniforms": {
             "centerX": "centerX",
             "centerY": "centerY",
+            "diffuseActive": "diffuseActive",
             "maxIter": "maxIter",
             "minIter": "minIter",
             "mode": "mode",
@@ -19847,6 +19871,7 @@
       "outputTex": null,
       "outputTex3d": null,
       "paramNames": [
+        "diffuseTex",
         "fieldTex",
         "stateSize",
         "anchorDensity",
@@ -19911,8 +19936,18 @@
           },
           "uniform": "deposit"
         },
+        "diffuseTex": {
+          "colorModeUniform": "diffuseActive",
+          "default": "none",
+          "type": "surface",
+          "ui": {
+            "category": "chemistry",
+            "label": "diffuse map"
+          }
+        },
         "fieldTex": {
-          "default": "inputTex",
+          "colorModeUniform": "fieldActive",
+          "default": "none",
           "type": "surface",
           "ui": {
             "category": "chemistry",
@@ -20003,8 +20038,10 @@
         {
           "drawBuffers": 3,
           "inputs": {
+            "diffuseTex": "diffuseTex",
+            "fieldTex": "fieldTex",
             "gridTex": "global_dla_grid",
-            "inputTex": "fieldTex",
+            "inputTex": "inputTex",
             "rgbaTex": "global_rgba",
             "velTex": "global_vel",
             "xyzTex": "global_xyz"
@@ -20019,6 +20056,8 @@
           "program": "agent",
           "uniforms": {
             "attrition": "attrition",
+            "diffuseActive": "diffuseActive",
+            "fieldActive": "fieldActive",
             "inputWeight": "inputWeight",
             "stateSize": "stateSize",
             "stride": "stride"
@@ -20081,6 +20120,7 @@
       "outputTex": null,
       "outputTex3d": null,
       "paramNames": [
+        "diffuseTex",
         "separation",
         "alignment",
         "cohesion",
@@ -20133,6 +20173,15 @@
             "label": "cohesion"
           },
           "uniform": "cohesion"
+        },
+        "diffuseTex": {
+          "colorModeUniform": "diffuseActive",
+          "default": "none",
+          "type": "surface",
+          "ui": {
+            "category": "boids",
+            "label": "diffuse map"
+          }
         },
         "iterationCount": {
           "cpuOnly": true,
@@ -20237,6 +20286,7 @@
         {
           "drawBuffers": 3,
           "inputs": {
+            "diffuseTex": "diffuseTex",
             "rgbaTex": "global_rgba",
             "velTex": "global_vel",
             "xyzTex": "global_xyz"
@@ -20253,6 +20303,7 @@
             "alignment": "alignment",
             "boundaryMode": "boundaryMode",
             "cohesion": "cohesion",
+            "diffuseActive": "diffuseActive",
             "maxForce": "maxForce",
             "maxSpeed": "maxSpeed",
             "noiseWeight": "noiseWeight",
@@ -20287,6 +20338,7 @@
       "outputTex": null,
       "outputTex3d": null,
       "paramNames": [
+        "diffuseTex",
         "fieldTex",
         "stateSize",
         "behavior",
@@ -20317,8 +20369,18 @@
           },
           "uniform": "behavior"
         },
+        "diffuseTex": {
+          "colorModeUniform": "diffuseActive",
+          "default": "none",
+          "type": "surface",
+          "ui": {
+            "category": "agents",
+            "label": "diffuse map"
+          }
+        },
         "fieldTex": {
-          "default": "inputTex",
+          "colorModeUniform": "fieldActive",
+          "default": "none",
           "type": "surface",
           "ui": {
             "category": "agents",
@@ -20407,7 +20469,9 @@
         {
           "drawBuffers": 3,
           "inputs": {
-            "inputTex": "fieldTex",
+            "diffuseTex": "diffuseTex",
+            "fieldTex": "fieldTex",
+            "inputTex": "inputTex",
             "rgbaTex": "global_rgba",
             "velTex": "global_vel",
             "xyzTex": "global_xyz"
@@ -20422,6 +20486,8 @@
           "program": "agent",
           "uniforms": {
             "behavior": "behavior",
+            "diffuseActive": "diffuseActive",
+            "fieldActive": "fieldActive",
             "inputWeight": "inputWeight",
             "kink": "kink",
             "quantize": "quantize",
@@ -20566,6 +20632,7 @@
       "outputTex": null,
       "outputTex3d": null,
       "paramNames": [
+        "diffuseTex",
         "heightTex",
         "stride",
         "quantize",
@@ -20574,8 +20641,18 @@
         "iterationCount"
       ],
       "params": {
+        "diffuseTex": {
+          "colorModeUniform": "diffuseActive",
+          "default": "none",
+          "type": "surface",
+          "ui": {
+            "category": "agents",
+            "label": "diffuse map"
+          }
+        },
         "heightTex": {
-          "default": "inputTex",
+          "colorModeUniform": "fieldActive",
+          "default": "none",
           "type": "surface",
           "ui": {
             "category": "agents",
@@ -20640,7 +20717,9 @@
         {
           "drawBuffers": 3,
           "inputs": {
-            "inputTex": "heightTex",
+            "diffuseTex": "diffuseTex",
+            "heightTex": "heightTex",
+            "inputTex": "inputTex",
             "rgbaTex": "global_rgba",
             "velTex": "global_vel",
             "xyzTex": "global_xyz"
@@ -20654,6 +20733,8 @@
           },
           "program": "agent",
           "uniforms": {
+            "diffuseActive": "diffuseActive",
+            "fieldActive": "fieldActive",
             "inputWeight": "inputWeight",
             "inverse": "inverse",
             "quantize": "quantize",
@@ -20685,6 +20766,7 @@
       "outputTex": null,
       "outputTex3d": null,
       "paramNames": [
+        "diffuseTex",
         "muK",
         "sigmaK",
         "muG",
@@ -20708,6 +20790,15 @@
             "label": "deposit"
           },
           "uniform": "depositAmount"
+        },
+        "diffuseTex": {
+          "colorModeUniform": "diffuseActive",
+          "default": "none",
+          "type": "surface",
+          "ui": {
+            "category": "kernel",
+            "label": "diffuse map"
+          }
         },
         "dt": {
           "default": 0.25,
@@ -20854,6 +20945,7 @@
         {
           "drawBuffers": 3,
           "inputs": {
+            "diffuseTex": "diffuseTex",
             "fieldTex": "global_lenia_field",
             "rgbaTex": "global_rgba",
             "velTex": "global_vel",
@@ -20868,6 +20960,7 @@
           },
           "program": "agentField",
           "uniforms": {
+            "diffuseActive": "diffuseActive",
             "dt": "dt",
             "muG": "muG",
             "repulsion": "repulsion",
@@ -20954,7 +21047,8 @@
           "uniform": "boundaryMode"
         },
         "diffuseTex": {
-          "default": "inputTex",
+          "colorModeUniform": "diffuseActive",
+          "default": "none",
           "type": "surface",
           "ui": {
             "category": "types",
@@ -21107,8 +21201,9 @@
           "drawBuffers": 4,
           "inputs": {
             "dataTex": "global_life_data",
+            "diffuseTex": "diffuseTex",
             "forceMatrix": "forceMatrix",
-            "inputTex": "diffuseTex",
+            "inputTex": "inputTex",
             "rgbaTex": "global_rgba",
             "velTex": "global_vel",
             "xyzTex": "global_xyz"
@@ -21125,6 +21220,7 @@
           "uniforms": {
             "attractionScale": "attractionScale",
             "boundaryMode": "boundaryMode",
+            "diffuseActive": "diffuseActive",
             "friction": "friction",
             "matrixSeed": "matrixSeed",
             "maxRadius": "maxRadius",
@@ -21178,6 +21274,7 @@
       "outputTex": null,
       "outputTex3d": null,
       "paramNames": [
+        "diffuseTex",
         "fieldTex",
         "moveSpeed",
         "turnSpeed",
@@ -21216,8 +21313,18 @@
           },
           "uniform": "deposit"
         },
+        "diffuseTex": {
+          "colorModeUniform": "diffuseActive",
+          "default": "none",
+          "type": "surface",
+          "ui": {
+            "category": "general",
+            "label": "diffuse map"
+          }
+        },
         "fieldTex": {
-          "default": "inputTex",
+          "colorModeUniform": "fieldActive",
+          "default": "none",
           "type": "surface",
           "ui": {
             "category": "general",
@@ -21326,7 +21433,9 @@
         {
           "drawBuffers": 3,
           "inputs": {
-            "inputTex": "fieldTex",
+            "diffuseTex": "diffuseTex",
+            "fieldTex": "fieldTex",
+            "inputTex": "inputTex",
             "rgbaTex": "global_rgba",
             "trailTex": "global_physarum_pheromone",
             "velTex": "global_vel",
@@ -21341,6 +21450,8 @@
           },
           "program": "agent",
           "uniforms": {
+            "diffuseActive": "diffuseActive",
+            "fieldActive": "fieldActive",
             "inputWeight": "inputWeight",
             "moveSpeed": "moveSpeed",
             "sensorAngle": "sensorAngle",
@@ -21408,6 +21519,7 @@
       "outputTex": null,
       "outputTex3d": null,
       "paramNames": [
+        "diffuseTex",
         "stateSize",
         "gravity",
         "wind",
@@ -21430,6 +21542,15 @@
             "label": "deviation"
           },
           "uniform": "deviation"
+        },
+        "diffuseTex": {
+          "colorModeUniform": "diffuseActive",
+          "default": "none",
+          "type": "surface",
+          "ui": {
+            "category": "physics",
+            "label": "diffuse map"
+          }
         },
         "drag": {
           "default": 0.15,
@@ -21516,6 +21637,7 @@
         {
           "drawBuffers": 3,
           "inputs": {
+            "diffuseTex": "diffuseTex",
             "rgbaTex": "global_rgba",
             "velTex": "global_vel",
             "xyzTex": "global_xyz"
@@ -21530,6 +21652,7 @@
           "program": "agent",
           "uniforms": {
             "deviation": "deviation",
+            "diffuseActive": "diffuseActive",
             "drag": "drag",
             "energy": "energy",
             "gravity": "gravity",
@@ -23871,7 +23994,6 @@
       "outputTex": null,
       "outputTex3d": null,
       "paramNames": [
-        "diffuseTex",
         "stateSize",
         "layout",
         "seed",
@@ -23890,15 +24012,6 @@
             "label": "attrition"
           },
           "uniform": "attrition"
-        },
-        "diffuseTex": {
-          "default": "inputTex",
-          "type": "surface",
-          "ui": {
-            "category": "general",
-            "label": "diffuse map",
-            "resetOnChange": true
-          }
         },
         "iterationCount": {
           "cpuOnly": true,
@@ -23920,7 +24033,8 @@
           "type": "int",
           "ui": {
             "control": "dropdown",
-            "label": "layout"
+            "label": "layout",
+            "resetOnChange": true
           },
           "uniform": "layout"
         },
@@ -23941,7 +24055,8 @@
           "type": "int",
           "ui": {
             "control": "slider",
-            "label": "seed"
+            "label": "seed",
+            "resetOnChange": true
           },
           "uniform": "seed"
         },
@@ -23975,7 +24090,7 @@
         {
           "drawBuffers": 3,
           "inputs": {
-            "inputTex": "diffuseTex",
+            "inputTex": "inputTex",
             "rgbaTex": "global_rgba",
             "velTex": "global_vel",
             "xyzTex": "global_xyz"
@@ -35216,7 +35331,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "b71a896a4dbdbc01e682b277f6d9a41fe786485e",
+    "paramContractRevision": "c4f7cdd7656eb3e3ca8ced6624f19d6474607de8",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"
