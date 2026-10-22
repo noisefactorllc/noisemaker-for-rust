@@ -215,6 +215,24 @@ class SweepPlanTest(unittest.TestCase):
         mixer = parity._program("mixer/blendMode", catalog["mixer/blendMode"])
         self.assertIn("tex:inputTex", mixer)
 
+    def test_unknown_parameter_rejection_grows_the_omitted_set(self):
+        message = (
+            'noisemaker-cpu: <dsl>:1:143: Unknown parameter "diffuseTex" for '
+            "points/attractor; accepted: stateSize, attractor, speed, viewMode, "
+            "iterationCount"
+        )
+        omit: set[str] = set()
+        self.assertTrue(parity._unknown_parameter_omit(message, omit))
+        self.assertEqual(omit, {"diffuseTex"})
+        # A rejected name that is already omitted must not loop the retry.
+        self.assertFalse(parity._unknown_parameter_omit(message, omit))
+        # An accepted parameter name is never omitted.
+        accepted = (
+            'noisemaker-cpu: <dsl>:1:1: Unknown parameter "speed" for '
+            "points/attractor; accepted: stateSize, speed, iterationCount"
+        )
+        self.assertFalse(parity._unknown_parameter_omit(accepted, set()))
+
     def test_frame_program_reads_the_prior_output_through_media(self):
         catalog = parity._catalog()
         base = parity._program("points/life", catalog["points/life"])

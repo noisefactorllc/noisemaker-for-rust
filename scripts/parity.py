@@ -306,10 +306,40 @@ def _arguments(effect: dict) -> dict[str, str]:
     return args
 
 
-def _program(effect_id: str, effect: dict, overrides: dict[str, object] | None = None) -> str:
+_UNKNOWN_PARAMETER = re.compile(
+    r'Unknown parameter "([A-Za-z_]\w*)" for [\w/]+; accepted: (.+)$', re.MULTILINE
+)
+
+
+def _unknown_parameter_omit(message: str, omit: set[str]) -> bool:
+    """Grow `omit` from an oracle "Unknown parameter" DSL rejection.
+
+    Returns True when the message names a parameter the oracle does not
+    accept and that has not been omitted yet. The caller then re-renders the
+    case without those surface arguments: every argument the oracle accepts
+    stays bound, and only the arguments a pre-parameter oracle revision
+    rejects are dropped, so the comparison keeps all coverage the oracle can
+    render.
+    """
+    match = _UNKNOWN_PARAMETER.search(message)
+    if not match:
+        return False
+    accepted = {name.strip() for name in match.group(2).split(",")}
+    name = match.group(1)
+    if name in accepted or name in omit:
+        return False
+    omit.add(name)
+    return True
+
+
+def _program(
+    effect_id: str, effect: dict, overrides: dict[str, object] | None = None,
+    omit_surface: set[str] | None = None,
+) -> str:
     args = _arguments(effect)
     for name, value in (overrides or {}).items():
         args[name] = _literal(value)
+    skipped = omit_surface or set()
     surface_names = [] if effect["kind"] == "generator" else [
         name for name in effect.get("paramNames", [])
         if effect.get("params", {}).get(name, {}).get("type") == "surface"
@@ -317,6 +347,8 @@ def _program(effect_id: str, effect: dict, overrides: dict[str, object] | None =
     prefix = []
     params = effect.get("params", {})
     for index, name in enumerate(surface_names):
+        if name in skipped:
+            continue
         value = "inputTex" if index == 0 else f"o{index - 1}"
         if value == params.get(name, {}).get("default"):
             # Binding a surface parameter to its catalog default is a no-op on
@@ -1044,11 +1076,6 @@ def main(argv: list[str] | None = None) -> int:
             _write_fixture(fixture, args.size, args.size)
             overlay_ready = effect_id in OVERLAY_READY_IDS
             external_fixture = EXTERNAL_INPUT_IDS.get(effect_id)
-            program = (
-                EXTERNAL_INPUT_PROGRAMS[effect_id]
-                if external_fixture
-                else _program(effect_id, catalog[effect_id])
-            )
             rust_png = directory / f"rust-{index}.png"
             js_png = directory / f"js-{index}.png"
             common = [
@@ -1058,41 +1085,63 @@ def main(argv: list[str] | None = None) -> int:
             if external_fixture:
                 common += ["--external-input", external_fixture]
             try:
+                omit: set[str] = set()
+                # Render the JavaScript side first: it is the side that can
+                # reject a surface parameter this oracle revision predates.
+                # Retry only the JS render until the program is accepted, then
+                # render the Rust side once against the same final program.
+                js_cwd = args.js.resolve().parents[1]
+                while True:
+                    program = (
+                        EXTERNAL_INPUT_PROGRAMS[effect_id]
+                        if external_fixture
+                        else _program(effect_id, catalog[effect_id], omit_surface=omit)
+                    )
+                    js_started = time.monotonic()
+                    try:
+                        if external_fixture:
+                            try:
+                                harness = subprocess.run(
+                                    ["node", str(node_harness), effect_id, str(js_png)],
+                                    cwd=js_cwd,
+                                    env={
+                                        **os.environ,
+                                        "PARITY_WIDTH": str(args.size),
+                                        "PARITY_HEIGHT": str(args.size),
+                                        "PARITY_TIME": str(args.time),
+                                        "PARITY_SEED": str(args.seed),
+                                    },
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    timeout=args.timeout,
+                                    check=False,
+                                )
+                            except subprocess.TimeoutExpired as error:
+                                raise RuntimeError(f"timeout after {args.timeout:g}s") from error
+                            js_elapsed = time.monotonic() - js_started
+                            if harness.returncode != 0:
+                                diagnostic = (
+                                    harness.stderr.strip() or harness.stdout.strip()
+                                    or f"exit {harness.returncode}"
+                                )
+                                raise RuntimeError(f"external-input CPU harness: {diagnostic}")
+                        else:
+                            _run(
+                                ["node", str(args.js), *common, "--output", str(js_png)],
+                                program, args.timeout, js_cwd,
+                            )
+                            js_elapsed = time.monotonic() - js_started
+                        break
+                    except RuntimeError as error:
+                        if len(omit) < 6 and _unknown_parameter_omit(str(error), omit):
+                            continue
+                        raise
                 _, rust_elapsed = _run(
-                    [str(args.rust), *common, "--one-shot", "ready" if overlay_ready else "initial",
+                    [str(args.rust), *common, "--one-shot",
+                     "ready" if overlay_ready else "initial",
                      "--output", str(rust_png)],
                     program, args.timeout, ROOT,
                 )
-                js_cwd = args.js.resolve().parents[1]
-                if external_fixture:
-                    js_started = time.monotonic()
-                    try:
-                        harness = subprocess.run(
-                            ["node", str(node_harness), effect_id, str(js_png)],
-                            cwd=js_cwd,
-                            env={
-                                **os.environ,
-                                "PARITY_WIDTH": str(args.size),
-                                "PARITY_HEIGHT": str(args.size),
-                                "PARITY_TIME": str(args.time),
-                                "PARITY_SEED": str(args.seed),
-                            },
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            timeout=args.timeout,
-                            check=False,
-                        )
-                    except subprocess.TimeoutExpired as error:
-                        raise RuntimeError(f"timeout after {args.timeout:g}s") from error
-                    js_elapsed = time.monotonic() - js_started
-                    if harness.returncode != 0:
-                        diagnostic = harness.stderr.strip() or harness.stdout.strip() or f"exit {harness.returncode}"
-                        raise RuntimeError(f"external-input CPU harness: {diagnostic}")
-                else:
-                    _, js_elapsed = _run(
-                        ["node", str(args.js), *common, "--output", str(js_png)],
-                        program, args.timeout, js_cwd,
-                    )
                 rust_width, rust_height, rust_bytes = _decode_png(rust_png)
                 js_width, js_height, js_bytes = _decode_png(js_png)
                 if (rust_width, rust_height) != (args.size, args.size):
@@ -1107,13 +1156,16 @@ def main(argv: list[str] | None = None) -> int:
                     )
                 if (rust_width, rust_height) != (js_width, js_height):
                     raise ValueError(
-                        f"shape mismatch: Rust {rust_width}x{rust_height}, JS {js_width}x{js_height}"
+                        f"shape mismatch: Rust {rust_width}x{rust_height}, "
+                        f"JS {js_width}x{js_height}"
                     )
                 record = {"id": effect_id, "status": "compared", **_metrics(rust_bytes, js_bytes)}
                 if overlay_ready:
                     record["overlay_one_shot"] = "ready"
                 if external_fixture:
                     record["external_inputs"] = external_fixture
+                if omit:
+                    record["omitted_surface_args"] = sorted(omit)
                 record["rust_seconds"] = rust_elapsed
                 record["js_seconds"] = js_elapsed
                 results.append(record)
