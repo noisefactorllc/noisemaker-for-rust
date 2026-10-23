@@ -20633,10 +20633,12 @@
         "global_attractor_base_color": {
           "format": "rgba8",
           "height": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           },
           "width": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           }
@@ -20838,10 +20840,12 @@
         "global_buddhabrot_base_color": {
           "format": "rgba8",
           "height": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           },
           "width": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           }
@@ -21116,10 +21120,12 @@
         "global_dla_base_color": {
           "format": "rgba8",
           "height": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           },
           "width": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           }
@@ -21361,10 +21367,12 @@
         "global_flock_base_color": {
           "format": "rgba8",
           "height": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           },
           "width": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           }
@@ -21567,10 +21575,12 @@
         "global_flow_base_color": {
           "format": "rgba8",
           "height": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           },
           "width": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           }
@@ -21837,10 +21847,12 @@
         "global_hydraulic_base_color": {
           "format": "rgba8",
           "height": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           },
           "width": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           }
@@ -22085,10 +22097,12 @@
         "global_lenia_base_color": {
           "format": "rgba8",
           "height": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           },
           "width": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           }
@@ -22636,10 +22650,12 @@
         "global_physarum_base_color": {
           "format": "rgba8",
           "height": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           },
           "width": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           }
@@ -22829,10 +22845,12 @@
         "global_physical_base_color": {
           "format": "rgba8",
           "height": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           },
           "width": {
+            "default": 256,
             "inherit": true,
             "param": "stateSize"
           }
@@ -36808,7 +36826,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "12751c78103ec352bd359a9944bbeac5ad239a4b",
+    "paramContractRevision": "32d8d3e6a6dbb3dee2dfbcc8d31bd1c52342eca3",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"
