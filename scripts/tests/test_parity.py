@@ -198,16 +198,20 @@ class SweepPlanTest(unittest.TestCase):
                     sum(case["kind"] == "frame" for case in plan[effect_id]),
                     parity.SWEEP_FRAMES, effect_id,
                 )
-        self.assertEqual(sum(map(len, plan.values())), 697)
+        # The count follows the pinned CPU snapshot: mixer/mashup gains
+        # variants because the snapshot defines min/max for layers and
+        # smoothness where the earlier bundle metadata had none.
+        self.assertEqual(sum(map(len, plan.values())), 699)
 
     def test_surface_arguments_equal_to_the_default_are_omitted(self):
         catalog = parity._catalog()
         dla = parity._program("points/dla", catalog["points/dla"])
-        # Upstream moved fieldTex/diffuseTex defaults to "none", so the parity
+        # Upstream renamed fieldTex to the heightTex canonical parameter and
+        # moved the heightTex/diffuseTex defaults to "none", so the parity
         # program binds both explicitly; the omission rule itself stays
         # covered by points/heightGrid below.
-        self.assertIn("diffuseTex:inputTex", dla)
-        self.assertIn("fieldTex:o0", dla)
+        self.assertIn("heightTex:inputTex", dla)
+        self.assertIn("diffuseTex:o0", dla)
         grid = parity._program("points/heightGrid", catalog["points/heightGrid"])
         self.assertNotIn("heightTex:", grid)
         self.assertIn("diffuseTex:o0", grid)

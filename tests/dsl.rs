@@ -594,6 +594,28 @@ fn a_name_that_is_not_a_float_choice_fails_and_names_the_parameter() {
     }
 }
 
+#[test]
+fn a_named_palette_compiles_to_its_numeric_choice_value() {
+    let catalog = effect_catalog().unwrap();
+    let spec = &catalog.effects["classicNoisedeck/cellNoise"].params["palette"];
+    let choices = spec.metadata["choices"].as_object().unwrap();
+    let expected = choices["fiveG"].as_i64().unwrap();
+    let plan = compile_dsl(
+        "search synth, classicNoisedeck; solid(color: #58c).cellNoise(palette: fiveG).write(o0)",
+        "palette.dsl",
+    )
+    .unwrap();
+    let RenderStep::Effect { params, .. } = &plan.chains[0].steps[1] else {
+        panic!("expected the cellNoise effect step");
+    };
+    let resolved = match &params["palette"] {
+        ParamValue::Int(value) => i64::from(*value),
+        ParamValue::Float(value) => f64::from(*value) as i64,
+        other => panic!("expected a numeric palette value, got {other:?}"),
+    };
+    assert_eq!(resolved, expected);
+}
+
 // --- GAP-044: midi() and audio() real-time input -------------------------------
 
 // MIDI and audio input are unsupported in CPU ports. Their value calls warn and

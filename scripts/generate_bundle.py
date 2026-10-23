@@ -226,6 +226,8 @@ def _apply_param_contract(source: Path, catalog_effects: dict) -> tuple[dict, di
         if len(names) != len(set(names)) or set(names) != set(params):
             raise RuntimeError(f"parameter contract for {effect_id} does not exactly order canonical params")
         aliases = record.get("paramAliases", {})
+        if set(aliases) != set(definition.get("paramAliases", {})):
+            raise RuntimeError(f"parameter contract for {effect_id} still carries retired paramAliases")
         if aliases:
             definition["paramAliases"] = aliases
         if not isinstance(overrides, dict):
