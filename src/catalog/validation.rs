@@ -1186,7 +1186,32 @@ fn builtin_return_type(name: &str, arguments: &[String]) -> Result<String, Strin
         }
         "step" => Ok(arguments[1].clone()),
         "smoothstep" => Ok(arguments[2].clone()),
-        "atan" | "clamp" | "max" | "min" | "mix" | "mod" | "pow" => {
+        "mix" => {
+            // GLSL mix(genType x, genType y, genBType a) selects per
+            // component instead of blending arithmetically; the selector
+            // must match the value width and x and y must share a type.
+            if let Some(selector_width) = bool_shape(
+                arguments
+                    .get(2)
+                    .ok_or_else(|| "builtin mix has no selector argument".to_string())?,
+            ) {
+                let value_width = type_components(first)
+                    .ok_or_else(|| format!("builtin mix argument type {first} is invalid"))?;
+                if selector_width != value_width
+                    || common_type(first, &arguments[1]).as_deref() != Some(first.as_str())
+                {
+                    return Err("builtin mix has incompatible argument types".into());
+                }
+                return Ok(first.clone());
+            }
+            let mut result = first.clone();
+            for argument in &arguments[1..] {
+                result = common_type(&result, argument)
+                    .ok_or_else(|| format!("builtin {name} has incompatible argument types"))?;
+            }
+            Ok(result)
+        }
+        "atan" | "clamp" | "max" | "min" | "mod" | "pow" => {
             let mut result = first.clone();
             for argument in &arguments[1..] {
                 result = common_type(&result, argument)

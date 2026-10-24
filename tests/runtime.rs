@@ -180,3 +180,35 @@ fn unknown_builtin_and_wrong_arity_are_typed_errors() {
         Err(VmError::Arity { .. })
     ));
 }
+
+#[test]
+fn mix_selects_per_lane_through_a_bool_vector_mask() {
+    // The prng sign fold is mix(-p * 2.0 + 1.0, p * 2.0,
+    // greaterThanEqual(p, vec3(0.0))): the mask picks the y lane values.
+    let mut rt = runtime();
+    let x = Value::Vec(vec![1.0, 1.0, 1.0]);
+    let y = Value::Vec(vec![4.0, 4.0, 4.0]);
+    let mask = rt
+        .call_builtin(
+            "greaterThanEqual",
+            &[
+                Value::Vec(vec![2.0, -2.0, 0.0]),
+                Value::Vec(vec![0.0, 0.0, 0.0]),
+            ],
+        )
+        .unwrap();
+    assert_eq!(mask, Value::BVec(vec![true, false, true]));
+    assert_eq!(
+        rt.call_builtin("mix", &[x, y, mask]).unwrap(),
+        Value::Vec(vec![4.0, 1.0, 4.0])
+    );
+    // A scalar bool selector coerces the same way for scalar mixes.
+    assert_eq!(
+        rt.call_builtin(
+            "mix",
+            &[Value::Float(3.0), Value::Float(7.0), Value::Bool(false)]
+        )
+        .unwrap(),
+        Value::Float(3.0)
+    );
+}

@@ -238,6 +238,49 @@ fn rejects_storage_type_and_out_argument_inconsistencies() {
     );
 }
 
+fn prng_mix_selector(selector_type: &str) -> Value {
+    let mut value = fixture();
+    value
+        .pointer_mut("/functions/2/body/0/declarations/0/initializer")
+        .unwrap()
+        .clone_from(&json!({
+            "kind": "member", "type": "float", "field": "x",
+            "object": {
+                "kind": "call", "type": "vec3", "name": "mix", "target": "builtin:mix",
+                "arguments": [
+                    {"kind": "construct", "type": "vec3", "arguments": [
+                        {"kind": "literal", "type": "float", "value": 1.0, "source": "1.0"},
+                        {"kind": "literal", "type": "float", "value": 1.0, "source": "1.0"},
+                        {"kind": "literal", "type": "float", "value": 1.0, "source": "1.0"}
+                    ]},
+                    {"kind": "construct", "type": "vec3", "arguments": [
+                        {"kind": "literal", "type": "float", "value": 2.0, "source": "2.0"},
+                        {"kind": "literal", "type": "float", "value": 2.0, "source": "2.0"},
+                        {"kind": "literal", "type": "float", "value": 2.0, "source": "2.0"}
+                    ]},
+                    {"kind": "construct", "type": selector_type, "arguments": [
+                        {"kind": "literal", "type": "bool", "value": true},
+                        {"kind": "literal", "type": "bool", "value": false},
+                        {"kind": "literal", "type": "bool", "value": true}
+                    ]}
+                ]
+            }
+        }));
+    value
+}
+
+#[test]
+fn accepts_a_mix_bool_selector_and_rejects_a_mismatched_selector_width() {
+    // The prng sign fold emits mix(vec3, vec3, bvec3); the validator must
+    // type it as the first argument's type like the GLSL genBType overload.
+    let program: ProgramIr = serde_json::from_value(prng_mix_selector("bvec3")).unwrap();
+    validate_program_ir(&program).unwrap();
+    assert_invalid(
+        |value| *value = prng_mix_selector("bvec2"),
+        "builtin mix has incompatible argument types",
+    );
+}
+
 #[test]
 fn hoisted_declarations_deserialize_and_resolve_in_the_enclosing_scope() {
     let mut value = fixture();

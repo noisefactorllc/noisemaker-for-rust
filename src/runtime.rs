@@ -1057,6 +1057,12 @@ fn component_builtin(name: &str, args: &[Value]) -> Result<Value, VmError> {
             Value::Int(x) => Ok(vec![f64::from(*x)]),
             Value::Uint(x) => Ok(vec![f64::from(*x)]),
             Value::Bool(x) => Ok(vec![if *x { 1.0 } else { 0.0 }]),
+            // A genBType mix selector reaches the arithmetic as 1.0/0.0
+            // lanes, matching the oracle's boolean-to-Number coercion.
+            Value::BVec(values) => Ok(values
+                .iter()
+                .map(|value| if *value { 1.0 } else { 0.0 })
+                .collect()),
             _ => Err(type_error(format!(
                 "cannot use {} as a float operand",
                 arg.kind()
