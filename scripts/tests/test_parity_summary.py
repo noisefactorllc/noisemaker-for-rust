@@ -112,7 +112,7 @@ class ReportDerivationTest(unittest.TestCase):
 
 
 class GuardBehaviorTest(unittest.TestCase):
-    """The revision gate is advisory; the entrypoint still fails without an oracle."""
+    """The revision gate fails closed; the entrypoint still fails without an oracle."""
 
     @staticmethod
     def _load_entrypoint():
@@ -125,17 +125,32 @@ class GuardBehaviorTest(unittest.TestCase):
         loader.exec_module(module)
         return module
 
-    def test_revision_mismatch_is_advisory_not_fatal(self) -> None:
+    def test_revision_mismatch_fails_closed(self) -> None:
+        import argparse
+        import tempfile
+        from pathlib import Path
+
         module = self._load_entrypoint()
-        contract = json.loads((ROOT / "scripts" / "upstream-param-contract.json").read_text())
-        contract_revision = contract["revision"]
-        # An agreeing revision produces no warning; any other revision produces
-        # only a warning string. The run itself must proceed either way.
+        contract_revision = json.loads(
+            (ROOT / "scripts" / "upstream-param-contract.json").read_text()
+        )["revision"]
+        # An agreeing revision produces no warning and the run proceeds.
         self.assertIsNone(module._revision_warning(contract_revision, contract_revision))
-        warning = module._revision_warning("0" * 40, contract_revision)
-        self.assertIsNotNone(warning)
-        self.assertIn("does not match the", warning)
-        self.assertIn("warning:", warning)
+        with tempfile.TemporaryDirectory() as temp:
+            checkout = Path(temp)
+            (checkout / "bin").mkdir()
+            (checkout / "src" / "effects" / "generated").mkdir(parents=True)
+            (checkout / "bin" / "noisemaker-cpu.js").write_text("export {};\n")
+            (checkout / "src" / "effects" / "generated" / "upstream-snapshot.js").write_text(
+                "export const UPSTREAM_REVISION = \"" + "0" * 40 + "\"\n"
+                "export const sourceEffectIds = Object.freeze([\"synth/noise\"])\n"
+            )
+            args = ["--js", str(checkout / "bin" / "noisemaker-cpu.js")]
+            # The stale oracle must abort the gate before any rendering: a
+            # passing summary bound to the wrong revision is worse than no run.
+            with self.assertRaises(SystemExit) as raised:
+                module.main(args)
+            self.assertIn("does not match the published", str(raised.exception))
 
     def test_missing_oracle_fails_loudly(self) -> None:
         import argparse

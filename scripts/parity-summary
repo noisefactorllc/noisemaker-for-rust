@@ -18,10 +18,10 @@ The oracle is a noisemaker-for-cpu checkout supplied through
 NOISEMAKER_JS_CPU_DIR (or ../noisemaker-for-cpu next to this checkout, the
 layout the cross-port tests and the exact-source ci workflow use). The
 checkout's oracle snapshot revision should match this repository's published
-parameter-contract revision. A mismatch is advisory, not fatal: the run
-prints a loud warning and the PARITY-SUMMARY line records the oracle's own
-revision, so the gate never stops a comparison against the real authority
-checkout.
+parameter-contract revision. A mismatch is fatal: the run fails closed
+before rendering, because a stale oracle checkout would otherwise emit
+a passing summary against sources this port does not publish a contract
+revision for.
 """
 
 from __future__ import annotations
@@ -123,7 +123,14 @@ def main(argv: list[str] | None = None) -> int:
     contract_revision = _contract_revision()
     warning = _revision_warning(oracle_revision, contract_revision)
     if warning is not None:
+        # Fail closed: a stale oracle checkout would render a passing summary
+        # against sources this port does not publish a contract revision for.
         print(warning, file=sys.stderr)
+        raise SystemExit(
+            "oracle snapshot revision does not match the published "
+            "parameter-contract revision; regenerate the bundle against the "
+            "oracle at the contract revision before running the gate"
+        )
 
     manifest = _authority_manifest(checkout)
     if not manifest:
