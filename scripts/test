@@ -26,7 +26,9 @@ if [ -n "${NM_CHANGED_FILES-}" ]; then
   # the sync/parity suite whenever generated or runtime behavior moved.
   modules=$(changed_match '^scripts/tests/test_[a-z_]+\.py$' | sed -E 's|^scripts/tests/||; s|\.py$||')
   if [ -n "$(changed_match '^(scripts/transpiler/|scripts/generate_bundle\.py|scripts/upstream-param-contract\.json|src/generated/|src/renderer\.rs)')" ]; then
-    modules=$(printf '%s\n%s\n' "$modules" "$(changed_match '^scripts/tests/test_(cpu_sync|parity)\.py$' | sed -E 's|^scripts/tests/||; s|\.py$||')" | awk 'NF && !seen[$0]++')
+    # Generated or runtime behavior moved: the sync/parity suite always runs,
+    # whether or not its test files are themselves changed paths.
+    modules=$(printf '%s\n%s\n%s\n' "$modules" "test_cpu_sync" "test_parity" | awk 'NF && !seen[$0]++')
   fi
   if [ -n "$modules" ]; then
     for module in $modules; do
