@@ -10286,7 +10286,7 @@
         "varyings": []
       },
       "program": "bitEffects",
-      "sourceSha256": "adf44e902e12ef9395076470a65ada857ecc1a057ee1a5e978d143906606a191"
+      "sourceSha256": "fbf5fe6e657bd742e2777e922d6e3a9bc0c299485c24424616c29e33edd180b9"
     },
     "classicNoisedeck/caustic:caustic": {
       "effectId": "classicNoisedeck/caustic",
@@ -44431,7 +44431,7 @@
         "varyings": []
       },
       "program": "cellRefract",
-      "sourceSha256": "d4c2cbbd00dbc5b5f36ed54630685521588d5f3193770dfe34ba771825e27136"
+      "sourceSha256": "81a5231c94a9579546bf7f05c307e1bc7645b255186d8002de16e0ae8535391a"
     },
     "classicNoisedeck/coalesce:coalesce": {
       "effectId": "classicNoisedeck/coalesce",
@@ -85671,7 +85671,7 @@
         "varyings": []
       },
       "program": "effects",
-      "sourceSha256": "b905f9ffd4efcd8112f3d74bec94183af7da321436ec5d54ac976a4befcbabc2"
+      "sourceSha256": "fea962830e496d95ae1137a62fd53ccd0ae126bfe8c03d4ce04a585817fe66db"
     },
     "classicNoisedeck/fractal:fractal": {
       "effectId": "classicNoisedeck/fractal",
@@ -124585,7 +124585,7 @@
         "varyings": []
       },
       "program": "kaleido",
-      "sourceSha256": "18a201e5189430578a2cd1d03cea911957a08f3bd7f3e74e78b97eb9f946ed52"
+      "sourceSha256": "f8bc2df0d3aaf1386d767c257d187ba291b94fdf2797b670eba8c4c19be94f9d"
     },
     "classicNoisedeck/lensDistortion:lensDistortion": {
       "effectId": "classicNoisedeck/lensDistortion",
@@ -208142,7 +208142,7 @@
         "varyings": []
       },
       "program": "shapeMixer",
-      "sourceSha256": "f3f1ed9751ed13501f80d9f7dab5c9a478c202156bbb6ff3a2d9ac5726f045e1"
+      "sourceSha256": "63fee18c7d888873d15912bf6e4ef55d4555c0534da8c644e8e54392f2c6d9b4"
     },
     "classicNoisedeck/shapes3d:shapes3d": {
       "effectId": "classicNoisedeck/shapes3d",
@@ -219127,7 +219127,7 @@
         "varyings": []
       },
       "program": "shapes3d",
-      "sourceSha256": "fe64b743219cd137be63bf2b1db0ec1af178c301da58a78cab3cb7575981ff0f"
+      "sourceSha256": "7604c36139f69851887f74437553638fd6c3cd552dd056b461571fd03e10f63b"
     },
     "classicNoisedeck/shapes:shapes": {
       "effectId": "classicNoisedeck/shapes",
@@ -236143,7 +236143,7 @@
         "varyings": []
       },
       "program": "shapes",
-      "sourceSha256": "6bd5e24180fd111712972152e84038ab947606645d8061b1e1c3b3cd50550776"
+      "sourceSha256": "b31ec6a9074f9c30c544eca3707719c8ca4c024fd0ad77a548d11e597dfee9f8"
     },
     "classicNoisedeck/splat:splat": {
       "effectId": "classicNoisedeck/splat",
@@ -255958,7 +255958,7 @@
         "varyings": []
       },
       "program": "chMap",
-      "sourceSha256": "5d8031837d075b819b64bfac1cf3832cbf1b2e147aff830ed109239970c9129f"
+      "sourceSha256": "6f246b103ae29c52082c72ef23155e02214c9c57456dde14c53cd2e9ea88270b"
     },
     "filter/clouds:clouds": {
       "effectId": "filter/clouds",
@@ -269662,7 +269662,7 @@
         "varyings": []
       },
       "program": "craquelure",
-      "sourceSha256": "dd6e98df385bb73fcf8e0efed271b7a8cbd8b5f5dcd7cc8f89bf517180f8e340"
+      "sourceSha256": "4a4e45337334727178f889fe11cc59cf03b9830a6f8a9cf13689de900cd38219"
     },
     "filter/crt:crt": {
       "effectId": "filter/crt",
@@ -292033,7 +292033,7 @@
         "varyings": []
       },
       "program": "degauss",
-      "sourceSha256": "cfefff702ef78db421c088a3b679da2c576b7f4484c777f1d414c66aef0c1a1a"
+      "sourceSha256": "24273ebee92991305a127f025dfe12d878f175b4a005b9a8e64f8529580f3f02"
     },
     "filter/deriv:deriv": {
       "effectId": "filter/deriv",
@@ -305707,7 +305707,7 @@
         "varyings": []
       },
       "program": "dither",
-      "sourceSha256": "00ab40675f89d0ffbcb51987712c85dee4c8e936b069151b93794240b5815918"
+      "sourceSha256": "30f809590473f3cf4c907c479fcc2aa5fd838fe47f65495aca69740984e55200"
     },
     "filter/edge:edge": {
       "effectId": "filter/edge",
@@ -319328,7 +319328,7 @@
         "varyings": []
       },
       "program": "extrude",
-      "sourceSha256": "aaac4ede28b8166fe642f1bff9d784787941a5acbda415999965593b324cbc03"
+      "sourceSha256": "a8301045610c5284d1a55de5590e4d3f8933a3dd675830a2df6d48c6c0065639"
     },
     "filter/feedback:copy": {
       "effectId": "filter/feedback",
@@ -375793,7 +375793,7 @@
         "varyings": []
       },
       "program": "halftone",
-      "sourceSha256": "1163e2e1c9191f452132713e11680ca953643f355194b862e022b70ef8342592"
+      "sourceSha256": "b689937fb9c6d197d72d692773af433d650627f946b8de7b0308a667cb23be1c"
     },
     "filter/hatch:hatch": {
       "effectId": "filter/hatch",
@@ -380712,7 +380712,7 @@
         "varyings": []
       },
       "program": "hatch",
-      "sourceSha256": "5ee44d64010be3efa18cc4ced48880bb8a11f69d026fabb47d1ffba975b6e07e"
+      "sourceSha256": "c347c4ae488283623888c92ed61ebf87657daacc2af1fadf7d9d9bdaf198c35d"
     },
     "filter/highPass:hpBlurH": {
       "effectId": "filter/highPass",
@@ -386518,7 +386518,7 @@
         "varyings": []
       },
       "program": "historicPalette",
-      "sourceSha256": "ef55896bdb58403f5729dc4620d11eaa95e967ce14a227944df2fc0c3842d89f"
+      "sourceSha256": "4c776e98a98a7dbbbb248241cd94c9299c69d1d402be56cafdd552a737192190"
     },
     "filter/invert:inv": {
       "effectId": "filter/invert",
@@ -392461,7 +392461,7 @@
         "varyings": []
       },
       "program": "lensFlare",
-      "sourceSha256": "f7bd2aa382dee307bc3b3dfeacc4c4867a990f4738aae5007a75e8aafa4c79b3"
+      "sourceSha256": "3ec358afc5c5fc0a8b4f222be52522dd53e18c56202187b7b33e40b183199845"
     },
     "filter/lensWarp:lensWarp": {
       "effectId": "filter/lensWarp",
@@ -407560,7 +407560,7 @@
         "varyings": []
       },
       "program": "lowPoly",
-      "sourceSha256": "3787be908adf8b76e5953ed96f82891123f9f0630c8c6cf69b5b454ee8e29a3c"
+      "sourceSha256": "e2a31e80ff3a3d1d10bbce91bfa43d03a85832ff9b28325bd32b3ad06fa8b926"
     },
     "filter/median:median": {
       "effectId": "filter/median",
@@ -410793,7 +410793,7 @@
         "varyings": []
       },
       "program": "morphA",
-      "sourceSha256": "8073ba40886477540b07c84ab5d691dd71f0360a80f873d05444f53995e769b2"
+      "sourceSha256": "f3dbd19ed864e2a45b37d8714c6c59c18a09d021e940e22d1d8f8968f4ee19ff"
     },
     "filter/morphology:morphB": {
       "effectId": "filter/morphology",
@@ -411370,7 +411370,7 @@
         "varyings": []
       },
       "program": "morphB",
-      "sourceSha256": "84e8fe9ac42a2b917628737621cbbb04221224ef3e863a1afb39e618f25b49d2"
+      "sourceSha256": "2d0f381d1d80a86173e70f44d0b75ac2c2dde0dba578c60d012356e84aa40659"
     },
     "filter/mosaicTiles:mosaicTiles": {
       "effectId": "filter/mosaicTiles",
@@ -415067,7 +415067,7 @@
         "varyings": []
       },
       "program": "mosaicTiles",
-      "sourceSha256": "68db12d7b22260bd418f0bf8149f474885108041b580ddcfcacb5ee7f24c71d6"
+      "sourceSha256": "4f1b1f24e0db89ca7a19a0d59d0a7d8124baaba2a024e4fc2370c74aee5276d3"
     },
     "filter/motionBlur:copy": {
       "effectId": "filter/motionBlur",
@@ -423989,7 +423989,7 @@
         "varyings": []
       },
       "program": "octaveWarp",
-      "sourceSha256": "357cdfb7eec0aff3dce54f99d64838685d0f9d35cc3f38ccfffd24c8eacfa02b"
+      "sourceSha256": "d4e82c1312560e12ec512b2e798652f43fb60caa917bcbddc5063d67234f03ae"
     },
     "filter/oilPaint:oilFlatten": {
       "effectId": "filter/oilPaint",
@@ -431515,7 +431515,7 @@
         "varyings": []
       },
       "program": "oilPost",
-      "sourceSha256": "699253dbe0491bed42ed7a08bf9b9e3ebea1b5eb1856197922afb1585742e701"
+      "sourceSha256": "d348475d325be70f9cfd39353c10bb16cf2913119bf434b18c607b96b121e6e3"
     },
     "filter/osd:osd": {
       "effectId": "filter/osd",
@@ -453190,7 +453190,7 @@
         "varyings": []
       },
       "program": "pcCombine",
-      "sourceSha256": "875db5ed4861475cf82aba2277837d98270f70a636832c8327ba62251a84fda7"
+      "sourceSha256": "44a4d631bdcebc135b4bcc418eb8c51971d04f8f1c742007f97b7d8b4a168f0f"
     },
     "filter/pinch:pinch": {
       "effectId": "filter/pinch",
@@ -466740,7 +466740,7 @@
         "varyings": []
       },
       "program": "pondRipples",
-      "sourceSha256": "834ea1ef11ab93856a204df7d9e6a4f883f576d131855185de4c80cb396367a7"
+      "sourceSha256": "8d807bbb13b4ec30be57cc955826293f87286bcbfcd135c70b46c9c16ad3957d"
     },
     "filter/posterize:posterize": {
       "effectId": "filter/posterize",
@@ -479029,7 +479029,7 @@
         "varyings": []
       },
       "program": "rlShade",
-      "sourceSha256": "6b1116c14672f1e5f1500c4bf8c57419d2e13473bd65db7dcba74a2ae413f3da"
+      "sourceSha256": "c2979578b0ea0d719990b6a9d896ff19ae58299b62066168600a843a352f9028"
     },
     "filter/repeat:repeat": {
       "effectId": "filter/repeat",
@@ -494489,7 +494489,7 @@
         "varyings": []
       },
       "program": "scatterJitter",
-      "sourceSha256": "94704b2a7051954d4dd043bc386a3eee46d029d68354b18045e9e398dc70830f"
+      "sourceSha256": "2cf31ef7d6afceb95e3114c8f5a17d3626c7cba0226fe020f8cf637cf5254c19"
     },
     "filter/scatter:scatterSmooth": {
       "effectId": "filter/scatter",
@@ -521713,7 +521713,7 @@
         ]
       },
       "program": "spookyTicker",
-      "sourceSha256": "f7db18bcbf2910bdbc78afa23332ab3c66b630e6b9e1daf38e9b5a2db8361592"
+      "sourceSha256": "6e79d6cc8cf05ca0771fc0d8e9b38e200b25eb824ffd6545f33ad5104a21c31b"
     },
     "filter/stamp:stBlurH": {
       "effectId": "filter/stamp",
@@ -522347,7 +522347,7 @@
         "varyings": []
       },
       "program": "stBlurH",
-      "sourceSha256": "8e5527e8ab1d97e0d4c0129982b17a44487b4e1d6439211a7c5008676d843871"
+      "sourceSha256": "77149e30f2d8177bdc47392f2c2559418b77d9ca08058c55ba2dab6e2d9be835"
     },
     "filter/stamp:stBlurV": {
       "effectId": "filter/stamp",
@@ -527996,7 +527996,7 @@
         "varyings": []
       },
       "program": "stipple",
-      "sourceSha256": "7a24df540d7cb51393dd50393929f7ea5f8f50a7e4dc2c01bc8ddbb5d22de1a1"
+      "sourceSha256": "39cf37ee3bc53445d6795599a93d11e098b4a92eb6555613651cc350bc7b8949"
     },
     "filter/strayHair:strayHairBlend": {
       "effectId": "filter/strayHair",
@@ -529126,7 +529126,7 @@
         "varyings": []
       },
       "program": "stkPost",
-      "sourceSha256": "076cecd7fb8427f5f82c4256e6ff096fa7f7a29cbc3ba446bbc823f4a9ee6116"
+      "sourceSha256": "c60d28531ebf1ba198d53637f0a0eda82e81afe5953b6ae7c30304ea6b795686"
     },
     "filter/strokes:stkSmear": {
       "effectId": "filter/strokes",
@@ -536888,7 +536888,7 @@
         "varyings": []
       },
       "program": "stkSmear",
-      "sourceSha256": "28ac98b6e89e96189b530c1158041a552ec3ab342fde8141e661dc401fc6f17e"
+      "sourceSha256": "12a8ba6ecdc5a1087f54c02582f71d284b0a80ee94332932f2a7cc0f25a5fcee"
     },
     "filter/temporalAberration:delayShift": {
       "effectId": "filter/temporalAberration",
@@ -545160,7 +545160,7 @@
         "varyings": []
       },
       "program": "tetraColorArray",
-      "sourceSha256": "f439168b56cf3f71bda4be1e6d94ce3c2c2ad05367e39cf35e481209d7923465"
+      "sourceSha256": "e7eaae1577fb6f813575c326a50034620dd1c5094bc6fbbdae26c4b25e4ff108"
     },
     "filter/tetraCosine:tetraCosine": {
       "effectId": "filter/tetraCosine",
@@ -548050,7 +548050,7 @@
         "varyings": []
       },
       "program": "tetraCosine",
-      "sourceSha256": "c30e783a0d6e2a76df45de4a313d8cbad87ff6bcaebf071ec1c2dfb6d71e9724"
+      "sourceSha256": "4c37d06e51ec63653d59d16b33f50da9838c2d1ddcff3ab0635d6b3977a4800f"
     },
     "filter/text:text": {
       "effectId": "filter/text",
@@ -548526,7 +548526,7 @@
         "varyings": []
       },
       "program": "text",
-      "sourceSha256": "300681bfa97d513033b9b79b6773aa04763310d1617796359a49e15732520c5f"
+      "sourceSha256": "a7a24814d4b0a99335b8ddb486dc8ed12fb2ebb0cceb8a5c80f44b0f7dd8b178"
     },
     "filter/texture:texture": {
       "effectId": "filter/texture",
@@ -558810,7 +558810,7 @@
         ]
       },
       "program": "texture",
-      "sourceSha256": "92864203702c38cd6c62db441b2ce61ced5329cf860ebe7b86d755f4725eeaf8"
+      "sourceSha256": "b92b2a4d4161240895758d1e80df13c592208501b783f3c12be4419c942c10a7"
     },
     "filter/threshold:thresh": {
       "effectId": "filter/threshold",
@@ -561058,7 +561058,7 @@
         "varyings": []
       },
       "program": "tile",
-      "sourceSha256": "ff85419a24f0cdcc7f12334885cb87bca74a51cf6617ab549d3ebdc6d34e03a7"
+      "sourceSha256": "53104c1dd58535dcc68502354bbcb4c09e991c6b16d32e2fc0abd91b2b25b573"
     },
     "filter/tint:colorize": {
       "effectId": "filter/tint",
@@ -565446,7 +565446,7 @@
         "varyings": []
       },
       "program": "tunnel",
-      "sourceSha256": "f7140e8844b2947c23dccf2a91468c9ad3f8ec7eba434e2a3cb714e17dae1a98"
+      "sourceSha256": "92054f3a30996bf1f183341a19f3937488d3a9e7874d84d17d7ebc1a235810d9"
     },
     "filter/unsharpMask:usmBlurH": {
       "effectId": "filter/unsharpMask",
@@ -574168,7 +574168,7 @@
         "varyings": []
       },
       "program": "wcComposite",
-      "sourceSha256": "609b4d762284f1c60ca5a7c3716794347c5bfb15ce5e35b33617c6e3a8179d20"
+      "sourceSha256": "b8bd50354b4e6ce2da1faf67b93cf5a513fc48a6b9e3f46043be4a4e1ca6a607"
     },
     "filter/watercolor:wcSeed": {
       "effectId": "filter/watercolor",
@@ -575772,7 +575772,7 @@
         "varyings": []
       },
       "program": "wcSimplify",
-      "sourceSha256": "7655d6d34a1d015fad9b5189818fae7e13569233ecec86c663bf99b9de338515"
+      "sourceSha256": "9e5e86b15c9ce5db5dfc94d7cac8af151b8fa6179b52e680e10c3557186b1c17"
     },
     "filter/waves:waves": {
       "effectId": "filter/waves",
@@ -579215,7 +579215,7 @@
         "varyings": []
       },
       "program": "wind",
-      "sourceSha256": "ec6ef90d13f02368ac238ddee1c65f33f91443f6273f4c02212b424c81f3c73f"
+      "sourceSha256": "3540e81343c42ae16e3d56508efecf81e2d380ad328ac44264482de07aeda0e7"
     },
     "filter/wobble:wobble": {
       "effectId": "filter/wobble",
@@ -588922,7 +588922,7 @@
         "varyings": []
       },
       "program": "agent",
-      "sourceSha256": "e75c26b2c77d2d1529f334505a90b4b28ee8451b67803ab35c9af3d12d3199b0"
+      "sourceSha256": "47ce0d7414618d1c6827e3b8b2c78b638ea85b70b7bb93288e020b9036b7d402"
     },
     "filter3d/flow3d:blend": {
       "effectId": "filter3d/flow3d",
@@ -589336,7 +589336,7 @@
         "varyings": []
       },
       "program": "blend",
-      "sourceSha256": "94bd0f16d49acced4e42d8bd2413f3941666dced655fa9743436475b8c5e63c9"
+      "sourceSha256": "1007a9350b480132170183d9f91cb55670eb448a9320b737be9d00c81310908a"
     },
     "filter3d/flow3d:copy": {
       "effectId": "filter3d/flow3d",
@@ -599962,7 +599962,7 @@
         "varyings": []
       },
       "program": "alphaMask",
-      "sourceSha256": "153ecbd3ce3ae674c70030ddfbdf90960fa318fcbb76c086cf2720b9833c3b03"
+      "sourceSha256": "9ae43b8a3eba7550748dc7960ca49ee7d34e1ce8ab08cbdf7d2e2799fbe95883"
     },
     "mixer/applyMode:applyMode": {
       "effectId": "mixer/applyMode",
@@ -618887,7 +618887,7 @@
         "varyings": []
       },
       "program": "mashup",
-      "sourceSha256": "aa4c30ab0df13667546565caa37bf6aeb23dd41ede8e875d0f4e340f1997f954"
+      "sourceSha256": "095df90bf5bac850f686e3869d77e1e8f254ed067afc38a06082b684f0825e37"
     },
     "mixer/patternMix:patternMix": {
       "effectId": "mixer/patternMix",
@@ -636930,7 +636930,7 @@
         "varyings": []
       },
       "program": "agent",
-      "sourceSha256": "8947f54d15fef17f81eccd015a90159e6bd13325068e36742edde4fec32ac6af"
+      "sourceSha256": "ab3673001876c93334f94bd5f04735e769a216950ff1a60319f03b001c43d992"
     },
     "points/attractor:passthrough": {
       "effectId": "points/attractor",
@@ -641057,7 +641057,7 @@
         "varyings": []
       },
       "program": "agent",
-      "sourceSha256": "e066eef8041062f4b1f8f67722cbd9839c6d7f02cd47b1c6e9923a8fb935ffab"
+      "sourceSha256": "b838c6351056df68e2eef8bc481a84b98f7bb2994b2d5c0003a2f6a7bf338357"
     },
     "points/buddhabrot:passthrough": {
       "effectId": "points/buddhabrot",
@@ -641767,7 +641767,7 @@
         "varyings": []
       },
       "program": "zWrite",
-      "sourceSha256": "40ca19dc0bc2ea099d3d8ab1255bc509a5f9201e3fc2fc3d4bbb20ded456dbc5"
+      "sourceSha256": "c0f906db3e6fdee5a008c9e540c2522935659566da6355e6ec318d1ae5eb2aea"
     },
     "points/dla:agent": {
       "effectId": "points/dla",
@@ -645852,7 +645852,7 @@
         "varyings": []
       },
       "program": "agent",
-      "sourceSha256": "664349e948be6287724780f1b9bf1b790b6bef20e6a912d9d09346ccae236a02"
+      "sourceSha256": "c910b284584e93d48f99fe4b1b7ee3ef96b07d05ef017394736c9290ac85f2fb"
     },
     "points/dla:copyGrid": {
       "effectId": "points/dla",
@@ -646797,7 +646797,7 @@
         "varyings": []
       },
       "program": "initGrid",
-      "sourceSha256": "af082193e7da5cf553cbeddb2a612492cb7e651596e0241c0a02415262c370a4"
+      "sourceSha256": "f4dc9b894883271d0ff2162ae690c6cef165a65593100cbf48832181b1658aea"
     },
     "points/dla:passthrough": {
       "effectId": "points/dla",
@@ -665825,7 +665825,7 @@
         "varyings": []
       },
       "program": "agentField",
-      "sourceSha256": "b8f4949843da52f4d19142761fd073aff2fbdcd17f993cff08081b413c5beda8"
+      "sourceSha256": "ca0b204d04977d045c11d5a29ab2330cff96604b03bb693e388743a18bb129b0"
     },
     "points/lenia:clear": {
       "effectId": "points/lenia",
@@ -666898,7 +666898,7 @@
         "varyings": []
       },
       "program": "convolve",
-      "sourceSha256": "29c79c24c455fd4af831a556dd45fcf7293d89f6728efa77cfe8866cc72a0005"
+      "sourceSha256": "f35d9eaeafb8b9cab782905196f89a54df3e77e5de13252ba2e3dad5ee9c332d"
     },
     "points/lenia:passthrough": {
       "effectId": "points/lenia",
@@ -676500,7 +676500,7 @@
         "varyings": []
       },
       "program": "agent",
-      "sourceSha256": "616f06db2a0a73383de0bdeb972a44e77088cbc718a70f814c4bc27669017b3e"
+      "sourceSha256": "7b57a45962fecc58ebeac58a6db8972a7e856e764e08345a5fc414b8496b4b40"
     },
     "points/physarum:diffuse": {
       "effectId": "points/physarum",
@@ -685216,7 +685216,7 @@
         ]
       },
       "program": "deposit",
-      "sourceSha256": "0425e2cb37df0c0b4fbf740ec41457cc135ef6fde1df4f0634833f2f4f763bfa"
+      "sourceSha256": "25b6c966f454bd5a75473a26c7ba4c5e5975fee30cf802f97794aeb7efa0dd9d"
     },
     "render/pointsBillboardRender:depthKeys": {
       "effectId": "render/pointsBillboardRender",
@@ -701428,7 +701428,7 @@
         "varyings": []
       },
       "program": "render3d",
-      "sourceSha256": "839e82ac94923e51f7768838a3fac2c07030016f9f7fec53e97b96e60bd4cd65"
+      "sourceSha256": "6e36e33fb43c2f031bb22fd787a54df64367a9f05e4835822dba07762bc800a3"
     },
     "render/renderCubemap3d:renderCubemap3d": {
       "effectId": "render/renderCubemap3d",
@@ -709538,7 +709538,7 @@
         "varyings": []
       },
       "program": "renderCubemap3d",
-      "sourceSha256": "61a7d476715ad233e212e32427045076370dcf12c65469db952b4d1cacf3ea61"
+      "sourceSha256": "93162b85b7415b2e5886f3fb9d25bdfbd98733a2f28fe917527646bc3a5d4959"
     },
     "render/renderCubemapSurface:renderCubemapSurface": {
       "effectId": "render/renderCubemapSurface",
@@ -712218,7 +712218,7 @@
         "varyings": []
       },
       "program": "renderCubemapSurface",
-      "sourceSha256": "1fa05f440095b4b2b61969908ae6a5524006fd6756a117f4d0a95173c4d032cc"
+      "sourceSha256": "68d9e00cf7695461e610e831d4be9ff2ec115ade67909200a8f068cf7f7c040c"
     },
     "render/renderLandscape3d:landscape": {
       "effectId": "render/renderLandscape3d",
@@ -731177,7 +731177,7 @@
         "varyings": []
       },
       "program": "bitwise",
-      "sourceSha256": "01d15df7ecc72b98e43c6022555fa890ef92509f5248d57402bd9162b90de696"
+      "sourceSha256": "cea5c703d058636a55a729c94222cf825e180ff88cb7dd1fdb562f423c924d27"
     },
     "synth/cell:cell": {
       "effectId": "synth/cell",
@@ -741761,7 +741761,7 @@
         "varyings": []
       },
       "program": "ca",
-      "sourceSha256": "eb7c23451988f560b4cdc23d50f4b7b6dcd61a40bdd63341198cc572b59fc73c"
+      "sourceSha256": "6145069942fd7af1416282480a5972fc5639be7e4077be2b9582fe7ad5a56a0b"
     },
     "synth/cellularAutomata:caFb": {
       "effectId": "synth/cellularAutomata",
@@ -746182,7 +746182,7 @@
         "varyings": []
       },
       "program": "caFb",
-      "sourceSha256": "a39db01dcafb08000ec4e8e5103fa6fe08caaeabd9eb2505e7ee787e2679352e"
+      "sourceSha256": "92aba9eba70682dcc645aa4a304fff78b6625fbc0546f9651977f61812059498"
     },
     "synth/curl:curl": {
       "effectId": "synth/curl",
@@ -750993,7 +750993,7 @@
         "varyings": []
       },
       "program": "curl",
-      "sourceSha256": "86a0724c79c32d591faef38c243ade14c9912b6f1e3eb993002958a1a3796cd4"
+      "sourceSha256": "170691d0574c8d0c11dcc8f3c94ea2ae30c81c9b98e5e2f32a0e166c153690a2"
     },
     "synth/gabor:gabor": {
       "effectId": "synth/gabor",
@@ -765085,7 +765085,7 @@
         "varyings": []
       },
       "program": "julia",
-      "sourceSha256": "0cd2d41832934d1eb957a3fe99ac5c46e1b67e47f6a538d75ed1694f68750a42"
+      "sourceSha256": "8e0f356ca2fed1491e7ab8910aa288df6a47f8e05051b35d9a4fd576fe516571"
     },
     "synth/mandala:mandala": {
       "effectId": "synth/mandala",
@@ -768097,7 +768097,7 @@
         "varyings": []
       },
       "program": "mandala",
-      "sourceSha256": "9845a5e7fc71209668d53c9d35fe028e1b53ff69714f790692807293c3a4aaa9"
+      "sourceSha256": "c6a621908ebb4a15f2973688aad2be743c297ad8735a9da6c007616e214cbb61"
     },
     "synth/mandelbrot:mandelbrot": {
       "effectId": "synth/mandelbrot",
@@ -775546,7 +775546,7 @@
         "varyings": []
       },
       "program": "mandelbrot",
-      "sourceSha256": "151abc350f93f011ba272adfbd1caf435eccb3ac5ef188dcdbac85bd6b2c662d"
+      "sourceSha256": "20c03e2c913627b824575a2c18effb4686efa9d7444b2aa6dc3dc3129324a914"
     },
     "synth/media:mediaInput": {
       "effectId": "synth/media",
@@ -790715,7 +790715,7 @@
         "varyings": []
       },
       "program": "mnca",
-      "sourceSha256": "f72b2b4b8010466562d9ec344c457180230137e9515d85cc7bc19b303386880a"
+      "sourceSha256": "273b077af3954874221a2ebcfb757360ee8d967c6f19e538e40641be19eadb18"
     },
     "synth/mnca:mncaFb": {
       "effectId": "synth/mnca",
@@ -797279,7 +797279,7 @@
         "varyings": []
       },
       "program": "ns",
-      "sourceSha256": "a076fd3721b82843c9c61d19711101057a5df7cde207e97e249e199f467d9d09"
+      "sourceSha256": "344be324156d3b00b0447db07578899b3a99fe35bd2725cdcd2ad8c6c2f40ee3"
     },
     "synth/navierStokes:nsAdvect": {
       "effectId": "synth/navierStokes",
@@ -798513,7 +798513,7 @@
         "varyings": []
       },
       "program": "nsAdvect",
-      "sourceSha256": "7d9608c474c96cef4b557b2883f54699989570b48544964bb246425f54f52742"
+      "sourceSha256": "b96431e4362fbc8246eccdf29925572d9d94772891fa79aab0923222cda00969"
     },
     "synth/navierStokes:nsDivergence": {
       "effectId": "synth/navierStokes",
@@ -799939,7 +799939,7 @@
         "varyings": []
       },
       "program": "nsGradient",
-      "sourceSha256": "749ca079ed9cb133eba9878b1d4ca50c0e9c048057da0bed530f127ed9c94cd7"
+      "sourceSha256": "165fccbb35b5287ac4d6bec43699fcfcc89aedc322be6163743c6f9851bfdbc2"
     },
     "synth/navierStokes:nsPressure": {
       "effectId": "synth/navierStokes",
@@ -800499,7 +800499,7 @@
         "varyings": []
       },
       "program": "nsPressure",
-      "sourceSha256": "6b5856ba8f18433a8d7a710eb0f7ad81063fd5175e3c07da41dcf84cf7ed598a"
+      "sourceSha256": "37ca98d5827e8685fc75b43a9f514df52b91c35d19b5541d7bc806514d0c507b"
     },
     "synth/navierStokes:nsSmooth": {
       "effectId": "synth/navierStokes",
@@ -805490,7 +805490,7 @@
         "varyings": []
       },
       "program": "nsSmooth",
-      "sourceSha256": "f05c4c9a77c3f42f1db64eb7461d20235304c06c7c6e997ddbc6ffca079c7d1f"
+      "sourceSha256": "c1abd2c369e8fa09236fc25c209f676ec15f3d586588608c772c2f522ea78f8b"
     },
     "synth/navierStokes:nsSplat": {
       "effectId": "synth/navierStokes",
@@ -807381,7 +807381,7 @@
         "varyings": []
       },
       "program": "nsSplat",
-      "sourceSha256": "6cf472fbd7e7562ecdaab97368c1dfcf7d9ffb7acae8220b68fa333b4be72c9f"
+      "sourceSha256": "7f581d7c634e4f2b523c40af625809b2e3d1900196e0d92d28ff5f62bcc4bf8d"
     },
     "synth/newton:newton": {
       "effectId": "synth/newton",
@@ -836984,7 +836984,7 @@
         "varyings": []
       },
       "program": "pattern",
-      "sourceSha256": "0a4a9a44e49563643138b27e2b91ce3237341c087dfa0b1ed0f5245485045ac2"
+      "sourceSha256": "5880be776e572e54b6e53182ffe2bfae44e56a9552875046e1f4668403999c26"
     },
     "synth/perlin:perlin": {
       "effectId": "synth/perlin",
@@ -853678,7 +853678,7 @@
         "varyings": []
       },
       "program": "rd",
-      "sourceSha256": "ab8051c7a8009d3fe28fa9321f2863bb5fb550b5d37d459139ce68af679099ac"
+      "sourceSha256": "c78fab0071794bbf4dd7fe4d098819da411364d235e547bf16ca1714cdf02bd4"
     },
     "synth/reactionDiffusion:rdFb": {
       "effectId": "synth/reactionDiffusion",
@@ -860935,7 +860935,7 @@
         "varyings": []
       },
       "program": "remap",
-      "sourceSha256": "e7f68f8813c2298443b6e589fa10a5ec40b5e8ec931335ca86f8dcc1eb3b9a19"
+      "sourceSha256": "25aa18519ff02194bbd24a4249664f6f75d480241cd8058dfbfdfd2f3719c382"
     },
     "synth/roll:copy": {
       "effectId": "synth/roll",
@@ -869711,7 +869711,7 @@
         "varyings": []
       },
       "program": "sacredGeometry",
-      "sourceSha256": "f5114ce01d2e546d54ed1adf3d745292b81c0fe7ec4ae2458ae22fe1836fb04b"
+      "sourceSha256": "61a4f6b49daf95a2968d278f9213a6322f6950b15e5e424db26ec38eebeb05b0"
     },
     "synth/scope:scope": {
       "effectId": "synth/scope",
@@ -870860,358 +870860,102 @@
           {
             "body": [
               {
-                "condition": {
-                  "kind": "binary",
-                  "left": {
-                    "field": "x",
-                    "kind": "member",
-                    "object": {
-                      "kind": "identifier",
-                      "name": "p",
-                      "storage": "parameter",
-                      "type": "vec3"
-                    },
-                    "type": "float"
+                "expression": {
+                  "kind": "assignment",
+                  "lvalue": {
+                    "kind": "identifier",
+                    "name": "p",
+                    "storage": "parameter",
+                    "type": "vec3"
                   },
-                  "operator": ">=",
-                  "right": {
-                    "kind": "literal",
-                    "source": "0.0",
-                    "type": "float",
-                    "value": 0.0
-                  },
-                  "type": "bool"
-                },
-                "else": {
-                  "body": [
-                    {
-                      "expression": {
-                        "kind": "assignment",
-                        "lvalue": {
-                          "field": "x",
-                          "kind": "member",
-                          "object": {
-                            "kind": "identifier",
-                            "name": "p",
-                            "storage": "parameter",
-                            "type": "vec3"
-                          },
-                          "type": "float"
-                        },
-                        "operator": "=",
-                        "type": "float",
-                        "value": {
+                  "operator": "=",
+                  "type": "vec3",
+                  "value": {
+                    "arguments": [
+                      {
+                        "kind": "binary",
+                        "left": {
                           "kind": "binary",
                           "left": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "unary",
-                              "operand": {
-                                "field": "x",
-                                "kind": "member",
-                                "object": {
-                                  "kind": "identifier",
-                                  "name": "p",
-                                  "storage": "parameter",
-                                  "type": "vec3"
-                                },
-                                "type": "float"
-                              },
-                              "operator": "-",
-                              "type": "float"
+                            "kind": "unary",
+                            "operand": {
+                              "kind": "identifier",
+                              "name": "p",
+                              "storage": "parameter",
+                              "type": "vec3"
                             },
-                            "operator": "*",
-                            "right": {
-                              "kind": "literal",
-                              "source": "2.0",
-                              "type": "float",
-                              "value": 2.0
-                            },
-                            "type": "float"
-                          },
-                          "operator": "+",
-                          "right": {
-                            "kind": "literal",
-                            "source": "1.0",
-                            "type": "float",
-                            "value": 1.0
-                          },
-                          "type": "float"
-                        }
-                      },
-                      "kind": "expression"
-                    }
-                  ],
-                  "kind": "block"
-                },
-                "hoistedDeclarations": [],
-                "kind": "if",
-                "then": {
-                  "body": [
-                    {
-                      "expression": {
-                        "kind": "assignment",
-                        "lvalue": {
-                          "field": "x",
-                          "kind": "member",
-                          "object": {
-                            "kind": "identifier",
-                            "name": "p",
-                            "storage": "parameter",
+                            "operator": "-",
                             "type": "vec3"
                           },
-                          "type": "float"
+                          "operator": "*",
+                          "right": {
+                            "kind": "literal",
+                            "source": "2.0",
+                            "type": "float",
+                            "value": 2.0
+                          },
+                          "type": "vec3"
                         },
-                        "operator": "*=",
-                        "type": "float",
-                        "value": {
+                        "operator": "+",
+                        "right": {
+                          "kind": "literal",
+                          "source": "1.0",
+                          "type": "float",
+                          "value": 1.0
+                        },
+                        "type": "vec3"
+                      },
+                      {
+                        "kind": "binary",
+                        "left": {
+                          "kind": "identifier",
+                          "name": "p",
+                          "storage": "parameter",
+                          "type": "vec3"
+                        },
+                        "operator": "*",
+                        "right": {
                           "kind": "literal",
                           "source": "2.0",
                           "type": "float",
                           "value": 2.0
-                        }
+                        },
+                        "type": "vec3"
                       },
-                      "kind": "expression"
-                    }
-                  ],
-                  "kind": "block"
-                }
-              },
-              {
-                "condition": {
-                  "kind": "binary",
-                  "left": {
-                    "field": "y",
-                    "kind": "member",
-                    "object": {
-                      "kind": "identifier",
-                      "name": "p",
-                      "storage": "parameter",
-                      "type": "vec3"
-                    },
-                    "type": "float"
-                  },
-                  "operator": ">=",
-                  "right": {
-                    "kind": "literal",
-                    "source": "0.0",
-                    "type": "float",
-                    "value": 0.0
-                  },
-                  "type": "bool"
-                },
-                "else": {
-                  "body": [
-                    {
-                      "expression": {
-                        "kind": "assignment",
-                        "lvalue": {
-                          "field": "y",
-                          "kind": "member",
-                          "object": {
+                      {
+                        "arguments": [
+                          {
                             "kind": "identifier",
                             "name": "p",
                             "storage": "parameter",
                             "type": "vec3"
                           },
-                          "type": "float"
-                        },
-                        "operator": "=",
-                        "type": "float",
-                        "value": {
-                          "kind": "binary",
-                          "left": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "unary",
-                              "operand": {
-                                "field": "y",
-                                "kind": "member",
-                                "object": {
-                                  "kind": "identifier",
-                                  "name": "p",
-                                  "storage": "parameter",
-                                  "type": "vec3"
-                                },
-                                "type": "float"
-                              },
-                              "operator": "-",
-                              "type": "float"
-                            },
-                            "operator": "*",
-                            "right": {
-                              "kind": "literal",
-                              "source": "2.0",
-                              "type": "float",
-                              "value": 2.0
-                            },
-                            "type": "float"
-                          },
-                          "operator": "+",
-                          "right": {
-                            "kind": "literal",
-                            "source": "1.0",
-                            "type": "float",
-                            "value": 1.0
-                          },
-                          "type": "float"
-                        }
-                      },
-                      "kind": "expression"
-                    }
-                  ],
-                  "kind": "block"
-                },
-                "hoistedDeclarations": [],
-                "kind": "if",
-                "then": {
-                  "body": [
-                    {
-                      "expression": {
-                        "kind": "assignment",
-                        "lvalue": {
-                          "field": "y",
-                          "kind": "member",
-                          "object": {
-                            "kind": "identifier",
-                            "name": "p",
-                            "storage": "parameter",
+                          {
+                            "arguments": [
+                              {
+                                "kind": "literal",
+                                "source": "0.0",
+                                "type": "float",
+                                "value": 0.0
+                              }
+                            ],
+                            "kind": "construct",
                             "type": "vec3"
-                          },
-                          "type": "float"
-                        },
-                        "operator": "*=",
-                        "type": "float",
-                        "value": {
-                          "kind": "literal",
-                          "source": "2.0",
-                          "type": "float",
-                          "value": 2.0
-                        }
-                      },
-                      "kind": "expression"
-                    }
-                  ],
-                  "kind": "block"
-                }
-              },
-              {
-                "condition": {
-                  "kind": "binary",
-                  "left": {
-                    "field": "z",
-                    "kind": "member",
-                    "object": {
-                      "kind": "identifier",
-                      "name": "p",
-                      "storage": "parameter",
-                      "type": "vec3"
-                    },
-                    "type": "float"
-                  },
-                  "operator": ">=",
-                  "right": {
-                    "kind": "literal",
-                    "source": "0.0",
-                    "type": "float",
-                    "value": 0.0
-                  },
-                  "type": "bool"
+                          }
+                        ],
+                        "kind": "call",
+                        "name": "greaterThanEqual",
+                        "target": "builtin:greaterThanEqual",
+                        "type": "bvec3"
+                      }
+                    ],
+                    "kind": "call",
+                    "name": "mix",
+                    "target": "builtin:mix",
+                    "type": "vec3"
+                  }
                 },
-                "else": {
-                  "body": [
-                    {
-                      "expression": {
-                        "kind": "assignment",
-                        "lvalue": {
-                          "field": "z",
-                          "kind": "member",
-                          "object": {
-                            "kind": "identifier",
-                            "name": "p",
-                            "storage": "parameter",
-                            "type": "vec3"
-                          },
-                          "type": "float"
-                        },
-                        "operator": "=",
-                        "type": "float",
-                        "value": {
-                          "kind": "binary",
-                          "left": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "unary",
-                              "operand": {
-                                "field": "z",
-                                "kind": "member",
-                                "object": {
-                                  "kind": "identifier",
-                                  "name": "p",
-                                  "storage": "parameter",
-                                  "type": "vec3"
-                                },
-                                "type": "float"
-                              },
-                              "operator": "-",
-                              "type": "float"
-                            },
-                            "operator": "*",
-                            "right": {
-                              "kind": "literal",
-                              "source": "2.0",
-                              "type": "float",
-                              "value": 2.0
-                            },
-                            "type": "float"
-                          },
-                          "operator": "+",
-                          "right": {
-                            "kind": "literal",
-                            "source": "1.0",
-                            "type": "float",
-                            "value": 1.0
-                          },
-                          "type": "float"
-                        }
-                      },
-                      "kind": "expression"
-                    }
-                  ],
-                  "kind": "block"
-                },
-                "hoistedDeclarations": [],
-                "kind": "if",
-                "then": {
-                  "body": [
-                    {
-                      "expression": {
-                        "kind": "assignment",
-                        "lvalue": {
-                          "field": "z",
-                          "kind": "member",
-                          "object": {
-                            "kind": "identifier",
-                            "name": "p",
-                            "storage": "parameter",
-                            "type": "vec3"
-                          },
-                          "type": "float"
-                        },
-                        "operator": "*=",
-                        "type": "float",
-                        "value": {
-                          "kind": "literal",
-                          "source": "2.0",
-                          "type": "float",
-                          "value": 2.0
-                        }
-                      },
-                      "kind": "expression"
-                    }
-                  ],
-                  "kind": "block"
-                }
+                "kind": "expression"
               },
               {
                 "declarations": [
@@ -884236,7 +883980,7 @@
         "varyings": []
       },
       "program": "shape",
-      "sourceSha256": "a96c338c8cb12acbc1af4045e705da6bd648eb8929deffbc68c30c584f06ea6a"
+      "sourceSha256": "6f9aacf4dd1afbe6a5432e13edc59d93566fcb2f659805f613f05d19c5dd3362"
     },
     "synth/solid:solid": {
       "effectId": "synth/solid",
@@ -897664,7 +897408,7 @@
         "varyings": []
       },
       "program": "precompute",
-      "sourceSha256": "9ae4b67a3ef3db9030be6cb2b7d9d6283b0faf7d1b10f9c9c4e9d29709ffe912"
+      "sourceSha256": "9a78c0011a65b7b6b94505455ae1924311780bbe8296235595a099a8a1c36c80"
     },
     "synth3d/cellularAutomata3d:simulate": {
       "effectId": "synth3d/cellularAutomata3d",
@@ -923810,7 +923554,7 @@
         "varyings": []
       },
       "program": "simulate",
-      "sourceSha256": "2a234e02d3efc396cdd09eb876d01c37e225bbf6e4dd7781e4795fa0da0c6bcd"
+      "sourceSha256": "8bd1504a960862595eeeb96c92a42192b5d87ef2df7c45db63f0effa051a8c67"
     },
     "synth3d/shape3d:precompute": {
       "effectId": "synth3d/shape3d",
@@ -927841,7 +927585,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "d0ed94ae19cca7328bc7d6b28902712a0838e1a9",
+    "paramContractRevision": "06070900e506b6c8ff6eb7b12d33e6c1bf285108",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"

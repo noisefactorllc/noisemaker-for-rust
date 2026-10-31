@@ -92,6 +92,21 @@ if command -v cargo >/dev/null 2>&1; then
   fi
   if [ -n "${NM_CHANGED_FILES-}" ] && [ -z "$(changed_match '^(src/|Cargo[.]toml$|Cargo[.]lock$|rust-toolchain[.]toml$)')" ]; then
     echo "changed paths touch no Rust sources; rust checks are enforced by the exact-source ci workflow"
+  elif [ -n "${NM_SHARD_COUNT-}" ] && [ -n "${NM_SHARD_INDEX-}" ]; then
+    # Sharded invocation: the supervisor runs each shard within its 5-minute
+    # limit; together the shards run every Rust check (see .nm-test-shards).
+    case "${NM_SHARD_INDEX}" in
+      0)
+        cargo fmt --all -- --check
+        cargo clippy --all-targets --all-features -- -D warnings
+        ;;
+      1)
+        cargo +1.85.0 check --all-targets --all-features
+        ;;
+      2)
+        cargo test --release --locked --all-features
+        ;;
+    esac
   else
     cargo fmt --all -- --check
     cargo clippy --all-targets --all-features -- -D warnings
