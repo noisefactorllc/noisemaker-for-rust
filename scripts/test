@@ -45,9 +45,7 @@ fi
 # against the pinned JavaScript CPU oracle. The oracle resolves from
 # NOISEMAKER_JS_CPU_DIR or a noisemaker-for-cpu checkout beside this checkout
 # (or the session's declared-sources directory). Without a discoverable oracle
-# the gate is left to the exact-source export-kit workflow, which runs it
-# against the pinned oracle, and this entrypoint says so explicitly instead of
-# failing on a missing oracle.
+# the slice fails: skipped cases must not count as passes.
 parity_triggered() {
   [ -n "${NM_CHANGED_FILES-}" ] \
     && [ -n "$(changed_match '^(scripts/test$|scripts/upstream-param-contract[.]json$|scripts/parity[.]py$|scripts/parity-summary$|src/generated/)')" ]
@@ -66,12 +64,13 @@ resolve_oracle() {
 }
 # One bounded slice of the authority manifest: $1 = slice index (from 0),
 # $2 = slice count. Builds the release CLI, renders the slice against the
-# oracle, and fails on any non-zero fail/missing count in the PARITY-SUMMARY
-# verdict line (the entrypoint's exit code alone reports audit completion).
+# oracle, and fails when no oracle is discoverable or when the PARITY-SUMMARY
+# verdict line misses the gate contract: expected > 0, executed == expected,
+# exact + strict + near == expected, and defer, skip, fail, missing all 0.
 run_parity_slice() {
   oracle=$(resolve_oracle) || {
-    echo "rendered parity gate: no oracle checkout found (set NOISEMAKER_JS_CPU_DIR to a noisemaker-for-cpu checkout); the export-kit workflow enforces the gate"
-    return 0
+    echo "rendered parity gate: FAILED: no oracle checkout found (set NOISEMAKER_JS_CPU_DIR to a noisemaker-for-cpu checkout)"
+    return 1
   }
   slice_file="$(mktemp "${TMPDIR:-/tmp}/noisemaker-parity-slice.XXXXXX")"
   node --input-type=module -e "const m = await import(process.argv[1] + '/src/effects/generated/upstream-snapshot.js'); console.log(m.sourceEffectIds.join('\n'))" "$oracle" \
@@ -81,10 +80,24 @@ run_parity_slice() {
   summary=$(NOISEMAKER_JS_CPU_DIR="$oracle" python3 scripts/parity-summary $(cat "$slice_file") | tail -n 1)
   rm -f "$slice_file"
   printf '%s\n' "$summary"
-  case "$summary" in
-    *'"fail": 0,'*'"missing": 0,'*) return 0 ;;
-    *) return 1 ;;
-  esac
+  printf '%s\n' "$summary" | python3 -c '
+import json, sys
+line = sys.stdin.read().strip()
+prefix = "PARITY-SUMMARY "
+if not line.startswith(prefix):
+    raise SystemExit(1)
+counts = json.loads(line[len(prefix):])
+ok = (
+    counts["expected"] > 0
+    and counts["executed"] == counts["expected"]
+    and counts["exact"] + counts["strict"] + counts["near"] == counts["expected"]
+    and counts["defer"] == 0
+    and counts["skip"] == 0
+    and counts["fail"] == 0
+    and counts["missing"] == 0
+)
+raise SystemExit(0 if ok else 1)
+' || return 1
 }
 if ! command -v cargo >/dev/null 2>&1; then
   # Relocated rustup/cargo homes (exec-capable, persistent) when the default
