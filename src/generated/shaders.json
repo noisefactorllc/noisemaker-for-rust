@@ -844839,41 +844839,85 @@
                   {
                     "arraySize": null,
                     "initializer": {
-                      "arguments": [
-                        {
+                      "condition": {
+                        "kind": "binary",
+                        "left": {
                           "kind": "identifier",
-                          "name": "radius",
+                          "name": "smoothing",
                           "storage": "uniform",
                           "type": "float"
                         },
-                        {
-                          "kind": "binary",
-                          "left": {
+                        "operator": ">",
+                        "right": {
+                          "kind": "literal",
+                          "source": "0.0",
+                          "type": "float",
+                          "value": 0.0
+                        },
+                        "type": "bool"
+                      },
+                      "kind": "conditional",
+                      "type": "float",
+                      "whenFalse": {
+                        "arguments": [
+                          {
+                            "kind": "binary",
+                            "left": {
+                              "kind": "identifier",
+                              "name": "d",
+                              "storage": "local",
+                              "type": "float"
+                            },
+                            "operator": "<",
+                            "right": {
+                              "kind": "identifier",
+                              "name": "radius",
+                              "storage": "uniform",
+                              "type": "float"
+                            },
+                            "type": "bool"
+                          }
+                        ],
+                        "kind": "construct",
+                        "type": "float"
+                      },
+                      "whenTrue": {
+                        "arguments": [
+                          {
                             "kind": "identifier",
                             "name": "radius",
                             "storage": "uniform",
                             "type": "float"
                           },
-                          "operator": "-",
-                          "right": {
-                            "kind": "identifier",
-                            "name": "smoothing",
-                            "storage": "uniform",
+                          {
+                            "kind": "binary",
+                            "left": {
+                              "kind": "identifier",
+                              "name": "radius",
+                              "storage": "uniform",
+                              "type": "float"
+                            },
+                            "operator": "-",
+                            "right": {
+                              "kind": "identifier",
+                              "name": "smoothing",
+                              "storage": "uniform",
+                              "type": "float"
+                            },
                             "type": "float"
                           },
-                          "type": "float"
-                        },
-                        {
-                          "kind": "identifier",
-                          "name": "d",
-                          "storage": "local",
-                          "type": "float"
-                        }
-                      ],
-                      "kind": "call",
-                      "name": "smoothstep",
-                      "target": "builtin:smoothstep",
-                      "type": "float"
+                          {
+                            "kind": "identifier",
+                            "name": "d",
+                            "storage": "local",
+                            "type": "float"
+                          }
+                        ],
+                        "kind": "call",
+                        "name": "smoothstep",
+                        "target": "builtin:smoothstep",
+                        "type": "float"
+                      }
                     },
                     "name": "m",
                     "type": "float"
@@ -845181,7 +845225,7 @@
         "varyings": []
       },
       "program": "shape",
-      "sourceSha256": "49a231e38a8f1f9c17fec70216f12710137d366ccb9761b0943c8fb96a29ef36"
+      "sourceSha256": "4acfdb2d99ec98f23da51ca1177395a269e6d4553eb35f9e5a55ec6d0d96e3bb"
     },
     "synth/reactionDiffusion:rd": {
       "effectId": "synth/reactionDiffusion",

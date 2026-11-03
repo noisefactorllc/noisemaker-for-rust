@@ -18,10 +18,13 @@ The oracle is a noisemaker-for-cpu checkout supplied through
 NOISEMAKER_JS_CPU_DIR (or ../noisemaker-for-cpu next to this checkout, the
 layout the cross-port tests and the exact-source ci workflow use). The
 checkout's oracle snapshot revision should match this repository's published
-parameter-contract revision. A mismatch is fatal: the run fails closed
-before rendering, because a stale oracle checkout would otherwise emit
-a passing summary against sources this port does not publish a contract
-revision for.
+parameter-contract revision. When the checkout's head has moved past the
+contract revision, the oracle resolves from the checkout's own git history
+at the contract revision, extracted with git archive into a regular
+directory (never a worktree). Any other mismatch is fatal: the run fails
+closed before rendering, because a stale oracle checkout would otherwise
+emit a passing summary against sources this port does not publish a
+contract revision for.
 """
 
 from __future__ import annotations
@@ -32,6 +35,8 @@ import os
 import re
 import subprocess
 import sys
+import tarfile
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,6 +45,59 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import parity  # noqa: E402  (path set above)
 
 CONTRACT_PATH = ROOT / "scripts" / "upstream-param-contract.json"
+
+
+_ORACLE_EXTRACT_ROOT = Path(tempfile.gettempdir()) / "noisemaker-oracle"
+
+
+def _contract_commit(checkout: Path, revision: str) -> str | None:
+    """Newest commit in the checkout whose snapshot declares ``revision``."""
+    try:
+        log = subprocess.run(
+            ["git", "-C", str(checkout), "log", f"-S{revision}", "--format=%H", "--",
+             "src/effects/generated/upstream-snapshot.js"],
+            check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    for commit in log.stdout.decode("utf-8", "replace").split():
+        try:
+            show = subprocess.run(
+                ["git", "-C", str(checkout), "show",
+                 f"{commit}:src/effects/generated/upstream-snapshot.js"],
+                check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            )
+        except (OSError, subprocess.CalledProcessError):
+            continue
+        if f'export const UPSTREAM_REVISION = "{revision}"' in show.stdout.decode(
+            "utf-8", "replace"
+        ):
+            return commit
+    return None
+
+
+def _extract_oracle(checkout: Path, commit: str) -> Path:
+    """Extract the checkout at ``commit`` into a regular directory (git archive)."""
+    target = _ORACLE_EXTRACT_ROOT / commit[:12]
+    snapshot = target / "src" / "effects" / "generated" / "upstream-snapshot.js"
+    cli = target / "bin" / "noisemaker-cpu.js"
+    if snapshot.is_file() and cli.is_file():
+        return target
+    target.mkdir(parents=True, exist_ok=True)
+    tarball = _ORACLE_EXTRACT_ROOT / f"{target.name}.tar"
+    with tarball.open("wb") as handle:
+        subprocess.run(
+            ["git", "-C", str(checkout), "archive", commit],
+            check=True, stdout=handle, stderr=subprocess.DEVNULL,
+        )
+    with tarfile.open(tarball) as tar:
+        tar.extractall(target)
+    tarball.unlink()
+    if not (snapshot.is_file() and cli.is_file()):
+        raise SystemExit(
+            f"oracle extraction at the contract revision lacks a usable oracle: {target}"
+        )
+    return target
 
 
 def _oracle_checkout(args: argparse.Namespace, candidates: list[Path] | None = None) -> Path:
@@ -52,10 +110,20 @@ def _oracle_checkout(args: argparse.Namespace, candidates: list[Path] | None = N
         if configured:
             candidates.append(Path(configured).resolve())
         candidates.append(ROOT.parent / "noisemaker-for-cpu")
+    contract_revision = _contract_revision()
     for candidate in candidates:
         snapshot = candidate / "src" / "effects" / "generated" / "upstream-snapshot.js"
         cli = candidate / "bin" / "noisemaker-cpu.js"
         if snapshot.is_file() and cli.is_file():
+            if _oracle_revision(candidate) == contract_revision:
+                return candidate
+            # The checkout's head has moved past (or before) the contract
+            # revision: resolve the oracle from the checkout's own history at
+            # the contract revision. A checkout whose history does not reach
+            # that revision stays as-is and fails closed in main().
+            commit = _contract_commit(candidate, contract_revision)
+            if commit is not None:
+                return _extract_oracle(candidate, commit)
             return candidate
     raise SystemExit(
         "no noisemaker-for-cpu oracle checkout found; set NOISEMAKER_JS_CPU_DIR "

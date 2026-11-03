@@ -166,5 +166,125 @@ class GuardBehaviorTest(unittest.TestCase):
         self.assertIn("no noisemaker-for-cpu oracle checkout found", str(raised.exception))
 
 
+class OracleResolutionTest(unittest.TestCase):
+    """A checkout head that moved past the contract revision resolves at it."""
+
+    @staticmethod
+    def _load_entrypoint():
+        import importlib.machinery
+        import importlib.util
+
+        loader = importlib.machinery.SourceFileLoader("parity_summary_resolution", str(ENTRYPOINT))
+        spec = importlib.util.spec_from_loader(loader.name, loader)
+        module = importlib.util.module_from_spec(spec)
+        loader.exec_module(module)
+        return module
+
+    @staticmethod
+    def _commit_checkout(root: Path, revision: str, message: str) -> None:
+        import subprocess
+
+        subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+        subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=root, check=True)
+        subprocess.run(["git", "config", "user.name", "test"], cwd=root, check=True)
+        (root / "bin").mkdir(exist_ok=True)
+        generated = root / "src" / "effects" / "generated"
+        generated.mkdir(parents=True, exist_ok=True)
+        (root / "bin" / "noisemaker-cpu.js").write_text("export {};\n")
+        (generated / "upstream-snapshot.js").write_text(
+            f'export const UPSTREAM_REVISION = "{revision}"\n'
+            'export const sourceEffectIds = Object.freeze(["synth/noise"])\n'
+        )
+        subprocess.run(["git", "add", "-A"], cwd=root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", message], cwd=root, check=True)
+
+    def test_contract_commit_finds_the_declaring_revision(self) -> None:
+        import subprocess
+        import tempfile
+
+        module = self._load_entrypoint()
+        with tempfile.TemporaryDirectory() as temp:
+            checkout = Path(temp) / "checkout"
+            checkout.mkdir()
+            self._commit_checkout(checkout, "a" * 40, "older")
+            self._commit_checkout(checkout, "b" * 40, "contract")
+            self._commit_checkout(checkout, "c" * 40, "head")
+            found = module._contract_commit(checkout, "b" * 40)
+            self.assertIsNotNone(found)
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=checkout, check=True,
+                stdout=subprocess.PIPE,
+            ).stdout.decode().strip()
+            self.assertNotEqual(found, head)
+            shown = subprocess.run(
+                ["git", "show", f"{found}:src/effects/generated/upstream-snapshot.js"],
+                cwd=checkout, check=True, stdout=subprocess.PIPE,
+            ).stdout.decode()
+            self.assertIn(f'export const UPSTREAM_REVISION = "{"b" * 40}"', shown)
+
+    def test_contract_commit_returns_none_without_the_revision(self) -> None:
+        import tempfile
+
+        module = self._load_entrypoint()
+        with tempfile.TemporaryDirectory() as temp:
+            checkout = Path(temp) / "checkout"
+            checkout.mkdir()
+            self._commit_checkout(checkout, "d" * 40, "only")
+            self.assertIsNone(module._contract_commit(checkout, "b" * 40))
+
+    def test_extract_oracle_yields_a_usable_directory(self) -> None:
+        import subprocess
+        import tempfile
+
+        module = self._load_entrypoint()
+        with tempfile.TemporaryDirectory() as temp:
+            checkout = Path(temp) / "checkout"
+            checkout.mkdir()
+            self._commit_checkout(checkout, "a" * 40, "older")
+            self._commit_checkout(checkout, "b" * 40, "contract")
+            self._commit_checkout(checkout, "c" * 40, "head")
+            commit = module._contract_commit(checkout, "b" * 40)
+            self.assertIsNotNone(commit)
+            module._ORACLE_EXTRACT_ROOT = Path(temp) / "extract"
+            resolved = module._extract_oracle(checkout, commit)
+            self.assertEqual(resolved, Path(temp) / "extract" / commit[:12])
+            self.assertEqual(module._oracle_revision(resolved), "b" * 40)
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=checkout, check=True,
+                stdout=subprocess.PIPE,
+            ).stdout.decode().strip()
+            # A second call reuses the extraction without re-archiving.
+            self.assertEqual(module._extract_oracle(checkout, commit), resolved)
+            self.assertEqual(module._oracle_revision(resolved), "b" * 40)
+            self.assertNotEqual(resolved, head)
+
+    def test_checkout_resolution_prefers_the_contract_revision(self) -> None:
+        import argparse
+        import subprocess
+        import tempfile
+
+        module = self._load_entrypoint()
+        with tempfile.TemporaryDirectory() as temp:
+            checkout = Path(temp) / "checkout"
+            checkout.mkdir()
+            self._commit_checkout(checkout, "a" * 40, "older")
+            self._commit_checkout(checkout, "b" * 40, "contract")
+            self._commit_checkout(checkout, "c" * 40, "head")
+            contract = json.loads(
+                (ROOT / "scripts" / "upstream-param-contract.json").read_text()
+            )["revision"]
+            self._commit_checkout(checkout, contract, "published contract")
+            module._ORACLE_EXTRACT_ROOT = Path(temp) / "extract"
+            resolved = module._oracle_checkout(
+                argparse.Namespace(js=Path(checkout / "bin" / "noisemaker-cpu.js"))
+            )
+            self.assertEqual(module._oracle_revision(resolved), contract)
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=checkout, check=True,
+                stdout=subprocess.PIPE,
+            ).stdout.decode().strip()
+            self.assertNotEqual(resolved, head)
+
+
 if __name__ == "__main__":
     unittest.main()
