@@ -927629,7 +927629,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "71771987158d6a2583b50d68ea4ded90dd461548",
+    "paramContractRevision": "2cf5bad078ecd94b00c966d08a2dd50cd095f884",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"
