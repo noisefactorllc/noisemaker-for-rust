@@ -36826,7 +36826,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "babf6b2dbb3d3bc991bfd095bcf6783c13cd9f07",
+    "paramContractRevision": "7aa54b54492c0a158b000a5c563e94e6e4dce3dc",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"
