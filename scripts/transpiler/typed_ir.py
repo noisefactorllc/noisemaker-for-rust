@@ -780,6 +780,33 @@ class TypedIrEmitter:
                 value["left"]["operator"] = "trunc/"
             elif name == "mid" and text == "((low + high) / 2)":
                 value["operator"] = "trunc/"
+        if self.effect_id == "filter/stipple":
+            # filter/stipple is fixed-point uint arithmetic. Its scalar
+            # `(uint(d - radius + aa) << 12u) / uint(2 * aa)` edge fraction must
+            # truncate (the CPU kernel lowers it to Math.trunc); a raw float64
+            # quotient would carry a fraction into smooth12 and shift every
+            # threshold. The vector divisions lower through integer division
+            # and need no mark.
+            needle = "(uint(d - radius + aa) << 12u) / uint(2 * aa)"
+            if needle not in self.original_source:
+                raise ValueError("stipple edge fixed-point division source changed")
+            if needle in self._cpu_text(source, scope):
+                self._mark_uint_divisions_truncating(value)
+
+    def _mark_uint_divisions_truncating(self, node):
+        if isinstance(node, dict):
+            if (
+                node.get("kind") == "binary"
+                and node.get("operator") == "/"
+                and node.get("left", {}).get("type") == "uint"
+                and node.get("right", {}).get("type") == "uint"
+            ):
+                node["operator"] = "trunc/"
+            for child in node.values():
+                self._mark_uint_divisions_truncating(child)
+        elif isinstance(node, list):
+            for child in node:
+                self._mark_uint_divisions_truncating(child)
 
 
 def emit_typed_ir(

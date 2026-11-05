@@ -6,7 +6,7 @@ fn check_case(name: &str) {
         serde_json::from_str(include_str!("fixtures/cpu-sync/seeded-cases.json")).unwrap();
     assert_eq!(
         fixtures["oracleRevision"],
-        "7aa54b54492c0a158b000a5c563e94e6e4dce3dc"
+        "1faed961be169863e84fd719a4ca85c27a8b1322"
     );
     let cases = fixtures["cases"].as_array().unwrap();
     let case = cases

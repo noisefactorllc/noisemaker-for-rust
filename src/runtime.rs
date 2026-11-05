@@ -380,6 +380,51 @@ impl Runtime {
             // shift coercions (`row >> (6 - gx)`, `cellX | 0`).
             (Value::Float(a), Value::Int(b)) => int_binary(operator, *a as i32, *b).map(Value::Int),
             (Value::Int(a), Value::Float(b)) => int_binary(operator, *a, *b as i32).map(Value::Int),
+            // The stipple factory carries uint-typed scalars as raw f64
+            // Numbers too, so mixed scalar arithmetic stays in f64 and the
+            // remaining operators keep the JavaScript bitwise coercions.
+            (Value::Float(a), Value::Uint(b))
+                if operator == "+"
+                    || operator == "-"
+                    || operator == "*"
+                    || operator == "/"
+                    || operator == "%" =>
+            {
+                float_number_binary(operator, *a, f64::from(*b)).map(Value::Float)
+            }
+            (Value::Uint(a), Value::Float(b))
+                if operator == "+"
+                    || operator == "-"
+                    || operator == "*"
+                    || operator == "/"
+                    || operator == "%" =>
+            {
+                float_number_binary(operator, f64::from(*a), *b).map(Value::Float)
+            }
+            (Value::Uint(a), Value::Int(b))
+                if operator == "+"
+                    || operator == "-"
+                    || operator == "*"
+                    || operator == "/"
+                    || operator == "%" =>
+            {
+                float_number_binary(operator, f64::from(*a), f64::from(*b)).map(Value::Float)
+            }
+            (Value::Int(a), Value::Uint(b))
+                if operator == "+"
+                    || operator == "-"
+                    || operator == "*"
+                    || operator == "/"
+                    || operator == "%" =>
+            {
+                float_number_binary(operator, f64::from(*a), f64::from(*b)).map(Value::Float)
+            }
+            (Value::Float(a), Value::Uint(b)) => {
+                int_binary(operator, *a as i32, *b as i32).map(Value::Int)
+            }
+            (Value::Uint(a), Value::Float(b)) => {
+                int_binary(operator, *a as i32, *b as i32).map(Value::Int)
+            }
             (Value::Uint(a), Value::Uint(b)) => {
                 if operator == ">>" && self.javascript_arithmetic_uint_shift {
                     Ok(Value::Uint(((*a as i32) >> (*b & 31)) as u32))
