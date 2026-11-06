@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: noisefactorllc/noisemaker-for-cpu
-          ref: 4aeb3e1e028b2dc412401f7b7f17c014c603bf14
+          ref: 0670ceace1c0c52791ef7d57493ded6e0b35a4b9
           path: oracle
           persist-credentials: false
 
