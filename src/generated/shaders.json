@@ -6022,144 +6022,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -10286,7 +10189,7 @@
         "varyings": []
       },
       "program": "bitEffects",
-      "sourceSha256": "fbf5fe6e657bd742e2777e922d6e3a9bc0c299485c24424616c29e33edd180b9"
+      "sourceSha256": "b8b0cbb7bdcc7ebdfadb54643cd1107d6849f46aa76f08f3361a734cbe8b6778"
     },
     "classicNoisedeck/caustic:caustic": {
       "effectId": "classicNoisedeck/caustic",
@@ -11777,144 +11680,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -24075,7 +23881,7 @@
         "varyings": []
       },
       "program": "caustic",
-      "sourceSha256": "f2e3edc2d97fba3bd2f07f741a0db53ccfa742c35cbe676942bd8c4069fa2f4c"
+      "sourceSha256": "01178db705b2cb4acadf8e74fdbea8c05208ba5be2f6ec70bfb2205e4619f88b"
     },
     "classicNoisedeck/cellNoise:cellNoise": {
       "effectId": "classicNoisedeck/cellNoise",
@@ -25265,144 +25071,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -31914,7 +31623,7 @@
         "varyings": []
       },
       "program": "cellNoise",
-      "sourceSha256": "ede3003edd833c1928f1b4cfc2f2328980a89be084a0e41d9ce059a2b8d70c86"
+      "sourceSha256": "50223688f520ff3e3c43eca40b06345b63e708ded3e927c141b0771916c563df"
     },
     "classicNoisedeck/cellRefract:cellRefract": {
       "effectId": "classicNoisedeck/cellRefract",
@@ -35317,144 +35026,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -44431,7 +44043,7 @@
         "varyings": []
       },
       "program": "cellRefract",
-      "sourceSha256": "81a5231c94a9579546bf7f05c307e1bc7645b255186d8002de16e0ae8535391a"
+      "sourceSha256": "5af3f6d676afed5823611fa7c60a4eabdcc5ed5320fce76d6f643ee89c110abe"
     },
     "classicNoisedeck/coalesce:coalesce": {
       "effectId": "classicNoisedeck/coalesce",
@@ -46700,144 +46312,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -52281,7 +51796,7 @@
         "varyings": []
       },
       "program": "coalesce",
-      "sourceSha256": "bdfeb9d6dd3bf2dca59bec6a1e71cebd4d5e9b814e26a6d189c74874008287cb"
+      "sourceSha256": "cc585ee4b3470b71eaa1e0cd5826cb1c330c9d83290d76655767f4f6b09acb8b"
     },
     "classicNoisedeck/colorLab:colorLab": {
       "effectId": "classicNoisedeck/colorLab",
@@ -54337,144 +53852,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -59382,7 +58800,7 @@
         "varyings": []
       },
       "program": "colorLab",
-      "sourceSha256": "9df136417f022f65b55b2a6fb7fcdaa86d1638d98593e2fc0b6b6ca353573279"
+      "sourceSha256": "b489b8fb6e2be44e31a7cceda7530215f109c914ba84ead628efc23772bfe950"
     },
     "classicNoisedeck/composite:composite": {
       "effectId": "classicNoisedeck/composite",
@@ -59909,144 +59327,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -64146,7 +63467,7 @@
         "varyings": []
       },
       "program": "composite",
-      "sourceSha256": "fddb1c73c44fac55f7f43615125a93628119313b06c4e484c0a5d1e45998fb4d"
+      "sourceSha256": "6074ebbddd0518635664b03e2c38d1b6cce171c32ac2f45ec41ca00e82080a4c"
     },
     "classicNoisedeck/effects:effects": {
       "effectId": "classicNoisedeck/effects",
@@ -68821,144 +68142,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -85671,7 +84895,7 @@
         "varyings": []
       },
       "program": "effects",
-      "sourceSha256": "fea962830e496d95ae1137a62fd53ccd0ae126bfe8c03d4ce04a585817fe66db"
+      "sourceSha256": "47a42cbf3228cfe4dcd78cec5a7608a297b5a9faf267ab56bba9a4851a4853c6"
     },
     "classicNoisedeck/fractal:fractal": {
       "effectId": "classicNoisedeck/fractal",
@@ -86767,144 +85991,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -93709,7 +92836,7 @@
         "varyings": []
       },
       "program": "fractal",
-      "sourceSha256": "d041e8b1fc4e9aff5b674fff5a42db40510b0af4412c23e2f5f4224dcfdf91db"
+      "sourceSha256": "261751916c9e168390c84ef51390836b3a902c783b678147ffa92b9319b1124c"
     },
     "classicNoisedeck/glitch:glitch": {
       "effectId": "classicNoisedeck/glitch",
@@ -114030,144 +113157,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -124585,7 +123615,7 @@
         "varyings": []
       },
       "program": "kaleido",
-      "sourceSha256": "f8bc2df0d3aaf1386d767c257d187ba291b94fdf2797b670eba8c4c19be94f9d"
+      "sourceSha256": "c114f110f403bfea6ee5125ecd04605a6696b392adc8dac6b142862a46a4be6c"
     },
     "classicNoisedeck/lensDistortion:lensDistortion": {
       "effectId": "classicNoisedeck/lensDistortion",
@@ -125221,144 +124251,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -132159,7 +131092,7 @@
         "varyings": []
       },
       "program": "lensDistortion",
-      "sourceSha256": "5c8245a234fe7eade0d45178cb21b82dc93ea823f82ae0cb47e48943db45d9ef"
+      "sourceSha256": "e3af8f9433b7656d2f6fc46eff8f8f0293b3999c614549eebe04557f5d7b79d6"
     },
     "classicNoisedeck/moodscape:moodscape": {
       "effectId": "classicNoisedeck/moodscape",
@@ -133650,144 +132583,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -148455,7 +147291,7 @@
         "varyings": []
       },
       "program": "moodscape",
-      "sourceSha256": "8fda60bc4d0b38fb45e15692ae3e9809a6695219d35945a660ccb2daf4870e80"
+      "sourceSha256": "f4a10f127a1fbe8e128d1cdc61db63e2d65e605a54364bac34b16230289dcf17"
     },
     "classicNoisedeck/noise3d:noise3d": {
       "effectId": "classicNoisedeck/noise3d",
@@ -162276,144 +161112,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -164400,7 +163139,7 @@
         "varyings": []
       },
       "program": "noise3d",
-      "sourceSha256": "27ae463d2cf5c9371b06badea8301ddcde9d16e09a739339d9e09e7b22e1b3ae"
+      "sourceSha256": "61740d010a7fccfe7cf0391a461611c786395ea86dbcd4b8e03dc0f9e073a691"
     },
     "classicNoisedeck/noise:noise": {
       "effectId": "classicNoisedeck/noise",
@@ -179659,144 +178398,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -187085,7 +185727,7 @@
         "varyings": []
       },
       "program": "noise",
-      "sourceSha256": "3d09d507072dd7926e7f588aabac82f854488415e7b4ffd3e475100f68a39e8f"
+      "sourceSha256": "6da0a030a1dea1748ddb17a6827308d9b9a7e3ebbabe1e0257a20a3f5c15a4fe"
     },
     "classicNoisedeck/refract:refract": {
       "effectId": "classicNoisedeck/refract",
@@ -193902,144 +192544,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -208142,7 +206687,7 @@
         "varyings": []
       },
       "program": "shapeMixer",
-      "sourceSha256": "63fee18c7d888873d15912bf6e4ef55d4555c0534da8c644e8e54392f2c6d9b4"
+      "sourceSha256": "3fe0e5ac8e1e2e3278daff72ec984f1155d2cb5188c29deadfcbe91ad3bcdfe0"
     },
     "classicNoisedeck/shapes3d:shapes3d": {
       "effectId": "classicNoisedeck/shapes3d",
@@ -210064,144 +208609,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -219127,7 +217575,7 @@
         "varyings": []
       },
       "program": "shapes3d",
-      "sourceSha256": "7604c36139f69851887f74437553638fd6c3cd552dd056b461571fd03e10f63b"
+      "sourceSha256": "123d77469f465b949b74674f047afea82aa393bc9e414916ebcb63cf424a6c8e"
     },
     "classicNoisedeck/shapes:shapes": {
       "effectId": "classicNoisedeck/shapes",
@@ -232494,144 +230942,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -236143,7 +234494,7 @@
         "varyings": []
       },
       "program": "shapes",
-      "sourceSha256": "b31ec6a9074f9c30c544eca3707719c8ca4c024fd0ad77a548d11e597dfee9f8"
+      "sourceSha256": "4929fc5502705890574824f9b35e644d145efee3a36193d64a5baad3f9bcfd50"
     },
     "classicNoisedeck/splat:splat": {
       "effectId": "classicNoisedeck/splat",
@@ -320369,39 +318720,47 @@
               {
                 "kind": "return",
                 "value": {
-                  "kind": "binary",
-                  "left": {
-                    "kind": "identifier",
-                    "name": "q",
-                    "storage": "local",
-                    "type": "float"
-                  },
-                  "operator": "+",
-                  "right": {
-                    "arguments": [
-                      {
-                        "kind": "binary",
-                        "left": {
-                          "kind": "identifier",
-                          "name": "r",
-                          "storage": "local",
-                          "type": "float"
-                        },
-                        "operator": "/",
-                        "right": {
-                          "kind": "identifier",
-                          "name": "b",
-                          "storage": "parameter",
-                          "type": "float"
-                        },
+                  "arguments": [
+                    {
+                      "kind": "binary",
+                      "left": {
+                        "kind": "identifier",
+                        "name": "q",
+                        "storage": "local",
                         "type": "float"
-                      }
-                    ],
-                    "kind": "call",
-                    "name": "pin",
-                    "target": "pin__float",
-                    "type": "float"
-                  },
+                      },
+                      "operator": "+",
+                      "right": {
+                        "arguments": [
+                          {
+                            "kind": "binary",
+                            "left": {
+                              "kind": "identifier",
+                              "name": "r",
+                              "storage": "local",
+                              "type": "float"
+                            },
+                            "operator": "/",
+                            "right": {
+                              "kind": "identifier",
+                              "name": "b",
+                              "storage": "parameter",
+                              "type": "float"
+                            },
+                            "type": "float"
+                          }
+                        ],
+                        "kind": "call",
+                        "name": "pin",
+                        "target": "pin__float",
+                        "type": "float"
+                      },
+                      "type": "float"
+                    }
+                  ],
+                  "kind": "call",
+                  "name": "pin",
+                  "target": "pin__float",
                   "type": "float"
                 }
               }
@@ -325573,144 +323932,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -329016,7 +327278,7 @@
         "varyings": []
       },
       "program": "feedback",
-      "sourceSha256": "9b62c87abd5efdda7a32eda6971132fb6d9a505e3138b8464463451678c5b065"
+      "sourceSha256": "ce50194a2903a65fb7c1d43e7fd739ef280481aa5b7d4f9ed42a715e2776ae1c"
     },
     "filter/fibers:fibersBlend": {
       "effectId": "filter/fibers",
@@ -469842,144 +468104,47 @@
                           "type": "bool"
                         },
                         "else": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "binary",
-                                "left": {
-                                  "kind": "literal",
-                                  "source": "5.0",
-                                  "type": "float",
-                                  "value": 5.0
+                          "body": [
+                            {
+                              "expression": {
+                                "kind": "assignment",
+                                "lvalue": {
+                                  "kind": "identifier",
+                                  "name": "rgb",
+                                  "storage": "local",
+                                  "type": "vec3"
                                 },
-                                "operator": "/",
-                                "right": {
-                                  "kind": "literal",
-                                  "source": "6.0",
-                                  "type": "float",
-                                  "value": 6.0
-                                },
-                                "type": "float"
+                                "operator": "=",
+                                "type": "vec3",
+                                "value": {
+                                  "arguments": [
+                                    {
+                                      "kind": "identifier",
+                                      "name": "c",
+                                      "storage": "local",
+                                      "type": "float"
+                                    },
+                                    {
+                                      "kind": "literal",
+                                      "source": "0.0",
+                                      "type": "float",
+                                      "value": 0.0
+                                    },
+                                    {
+                                      "kind": "identifier",
+                                      "name": "x",
+                                      "storage": "local",
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "construct",
+                                  "type": "vec3"
+                                }
                               },
-                              "operator": "<=",
-                              "right": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "type": "bool"
-                            },
-                            "operator": "&&",
-                            "right": {
-                              "kind": "binary",
-                              "left": {
-                                "kind": "identifier",
-                                "name": "h",
-                                "storage": "local",
-                                "type": "float"
-                              },
-                              "operator": "<",
-                              "right": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "type": "bool"
-                            },
-                            "type": "bool"
-                          },
-                          "else": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          },
-                          "hoistedDeclarations": [],
-                          "kind": "if",
-                          "then": {
-                            "body": [
-                              {
-                                "expression": {
-                                  "kind": "assignment",
-                                  "lvalue": {
-                                    "kind": "identifier",
-                                    "name": "rgb",
-                                    "storage": "local",
-                                    "type": "vec3"
-                                  },
-                                  "operator": "=",
-                                  "type": "vec3",
-                                  "value": {
-                                    "arguments": [
-                                      {
-                                        "kind": "identifier",
-                                        "name": "c",
-                                        "storage": "local",
-                                        "type": "float"
-                                      },
-                                      {
-                                        "kind": "literal",
-                                        "source": "0.0",
-                                        "type": "float",
-                                        "value": 0.0
-                                      },
-                                      {
-                                        "kind": "identifier",
-                                        "name": "x",
-                                        "storage": "local",
-                                        "type": "float"
-                                      }
-                                    ],
-                                    "kind": "construct",
-                                    "type": "vec3"
-                                  }
-                                },
-                                "kind": "expression"
-                              }
-                            ],
-                            "kind": "block"
-                          }
+                              "kind": "expression"
+                            }
+                          ],
+                          "kind": "block"
                         },
                         "hoistedDeclarations": [],
                         "kind": "if",
@@ -472616,7 +470781,7 @@
         "varyings": []
       },
       "program": "prismaticAberration",
-      "sourceSha256": "513eac95fdf7f67a6839ee5d96e5bbfd76b6cfa62d3254df6fed23d8effe380e"
+      "sourceSha256": "3461a6b0ec3d47f4be1d06ae3ecfbacdb98836a8424bb0ed7f3d3c67af3173d9"
     },
     "filter/reindex:nmReindexApply": {
       "effectId": "filter/reindex",
@@ -930756,7 +928921,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "1faed961be169863e84fd719a4ca85c27a8b1322",
+    "paramContractRevision": "6f98d26ab84f17ba7fb154bb74252d6362736f89",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"
