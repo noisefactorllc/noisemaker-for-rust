@@ -90,7 +90,7 @@ Common options are:
 --texture NAME=PATH bind a named external PNG; repeatable
 --param NAME=VALUE  override a catalog parameter; repeatable, last value wins
 --external-input FIX bind a deterministic external-input fixture (repeatable):
-                    `midi`, `audio`, or `mesh`. Required by the reactive
+                    `midi`, `audio`, or `mesh`. Required by the external-input
                     (`synth/roll`, `synth/scope`, `synth/spectrum`) and mesh
                     (`render/meshLoader`, `render/meshRender`) effects; the
                     fixtures byte-match the CPU port's parity fixtures.
@@ -109,8 +109,8 @@ Width times height is limited to 16,777,216 pixels.
 
 The catalog contains all 210 CPU effects across image, volume, particle, renderer,
 and loop domains, including the five upstream external-input effects that were
-formerly excluded: the reactive `synth/roll`, `synth/scope`, and `synth/spectrum`
-(MIDI/audio state bound as uniforms through `--external-input midi` or `audio`)
+formerly excluded: the external-input `synth/roll`, `synth/scope`, and `synth/spectrum`
+(MIDI/audio state bound as uniforms through `--external-input midi` or `audio` for offline frames; this does not provide real-time input response)
 and the mesh `render/meshLoader` and `render/meshRender` (a parsed OBJ packed
 into data textures and rasterized by a native CPU triangle-mesh draw adapter
 matching the upstream `drawMode: 'triangles'` semantics: depth test LESS, CCW

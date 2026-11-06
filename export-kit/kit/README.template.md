@@ -71,14 +71,10 @@ than paying process startup each time.
 
 {{NM_EFFECT_LIST}}
 
-## What this port cannot render
+## External inputs
 
-This port cannot render five effects from the upstream catalog:
+The engine includes the effects that read external input. `synth/roll` reads MIDI state. `synth/scope` and `synth/spectrum` read audio waveform or spectrum values. `render/meshLoader` and `render/meshRender` read mesh data. The engine binds deterministic fixtures for these inputs with `--external-input midi`, `audio` or `mesh`. It does not capture live audio or MIDI.
 
-- `synth/roll`, `synth/scope` and `synth/spectrum` react to live audio.
-- `render/meshLoader` and `render/meshRender` need a mesh pipeline.
-
-Everything else in the catalog renders here.
 `cargo run --release --manifest-path engine/Cargo.toml -- effects` lists exactly which effects this engine contains.
 
 To check an edited `program.dsl` against a different build of this port:
