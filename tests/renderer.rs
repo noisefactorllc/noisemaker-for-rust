@@ -217,6 +217,78 @@ fn renderer_two_loop_regions_in_one_chain_share_the_chain_scoped_accumulator() {
 }
 
 #[test]
+fn renderer_repeated_stateful_instances_render_like_their_flattened_per_instance_programs() {
+    let mut renderer = CpuRenderer::new().unwrap();
+    let pairs = [
+        (
+            "search synth, mixer\nreactionDiffusion(zoom: x4).blendMode(tex: reactionDiffusion(zoom: x16)).write(o0)\nrender(o0)\n",
+            "search synth, mixer\nreactionDiffusion(zoom: x16).write(o2)\nreactionDiffusion(zoom: x4).blendMode(tex: read(o2)).write(o0)\nrender(o0)\n",
+        ),
+        (
+            "search synth, mixer\nnoise(seed: 1).blendMode(tex: reactionDiffusion(zoom: x4)).blendMode(tex: reactionDiffusion(zoom: x16)).write(o0)\nrender(o0)\n",
+            "search synth, mixer\nreactionDiffusion(zoom: x4).write(o2)\nreactionDiffusion(zoom: x16).write(o3)\nnoise(seed: 1).blendMode(tex: read(o2)).blendMode(tex: read(o3)).write(o0)\nrender(o0)\n",
+        ),
+        (
+            "search synth, mixer\nreactionDiffusion(zoom: x4).blendMode(tex: reactionDiffusion()).blendMode(tex: reactionDiffusion(zoom: x16)).write(o0)\nrender(o0)\n",
+            "search synth, mixer\nreactionDiffusion().write(o2)\nreactionDiffusion(zoom: x16).write(o3)\nreactionDiffusion(zoom: x4).blendMode(tex: read(o2)).blendMode(tex: read(o3)).write(o0)\nrender(o0)\n",
+        ),
+        (
+            "search synth, filter\nnoise(seed: 1).watercolor().watercolor().write(o0)\nrender(o0)\n",
+            "search synth, filter\nnoise(seed: 1).watercolor().write(o1)\nread(o1).watercolor().write(o0)\nrender(o0)\n",
+        ),
+        (
+            "search synth, mixer\nreactionDiffusion(zoom: x4).blendMode(tex: cellularAutomata(zoom: x16)).write(o0)\nrender(o0)\n",
+            "search synth, mixer\ncellularAutomata(zoom: x16).write(o2)\nreactionDiffusion(zoom: x4).blendMode(tex: read(o2)).write(o0)\nrender(o0)\n",
+        ),
+        (
+            "search synth, mixer\nnoise(seed: 1).blendMode(tex: reactionDiffusion(zoom: x4)).blendMode(tex: cellularAutomata(zoom: x16)).write(o0)\nrender(o0)\n",
+            "search synth, mixer\ncellularAutomata(zoom: x16).write(o2)\nreactionDiffusion(zoom: x4).write(o3)\nnoise(seed: 1).blendMode(tex: read(o3)).blendMode(tex: read(o2)).write(o0)\nrender(o0)\n",
+        ),
+    ];
+    for (inline, flat) in pairs {
+        let rendered = renderer
+            .render(inline, &options())
+            .unwrap()
+            .surface
+            .to_rgba8();
+        let flattened = renderer
+            .render(flat, &options())
+            .unwrap()
+            .surface
+            .to_rgba8();
+        assert_eq!(rendered, flattened, "{inline}");
+    }
+}
+
+#[test]
+fn renderer_repeated_mesh_renderers_keep_the_loader_mesh_and_work_with_the_loader_in_another_chain()
+{
+    let mut renderer = CpuRenderer::new().unwrap();
+    let repeated = "search render\nmeshLoader().meshRender().meshRender().write(o0)\nrender(o0)\n";
+    let flattened = "search render\nmeshLoader().meshRender().write(o1)\nread(o1).meshRender().write(o0)\nrender(o0)\n";
+    let rendered = renderer
+        .render(repeated, &options())
+        .unwrap()
+        .surface
+        .to_rgba8();
+    let flattened_bytes = renderer
+        .render(flattened, &options())
+        .unwrap()
+        .surface
+        .to_rgba8();
+    assert_eq!(rendered, flattened_bytes, "{repeated}");
+    let cross_chain = renderer
+        .render(
+            "search render\nmeshLoader().write(o0)\nread(o0).meshRender().meshRender().write(o1)\nrender(o1)\n",
+            &options(),
+        )
+        .unwrap()
+        .surface
+        .to_rgba8();
+    assert_eq!(cross_chain.len(), 8 * 8 * 4);
+}
+
+#[test]
 fn renderer_chain_arguments_render_like_their_textual_expansions() {
     let mut renderer = CpuRenderer::new().unwrap();
     let pairs = [
