@@ -48,7 +48,7 @@ fi
 # the slice fails: skipped cases must not count as passes.
 parity_triggered() {
   [ -n "${NM_CHANGED_FILES-}" ] \
-    && [ -n "$(changed_match '^(scripts/test$|scripts/upstream-param-contract[.]json$|scripts/parity[.]py$|scripts/parity-summary$|src/generated/)')" ]
+    && [ -n "$(changed_match '^(scripts/test$|scripts/upstream-param-contract[.]json$|scripts/parity[.]py$|scripts/parity-summary$|src/generated/|src/renderer[.]rs$|src/vm[.]rs$|src/pass_runner[.]rs$|src/iteration[.]rs$)')" ]
 }
 resolve_oracle() {
   for candidate in "${NOISEMAKER_JS_CPU_DIR-}" \

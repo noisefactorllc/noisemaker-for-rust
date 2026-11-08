@@ -679,6 +679,22 @@ fn execute_effect_bundle_with_state(
     );
     let mut resources = persistent.clone();
     resources.extend(inputs.clone());
+    // A surface parameter that resolved to none still binds: upstream's
+    // buildBindings substitutes its 1x1 `emptySurface` for a null surface value
+    // (`if (value === null) surface = this.emptySurface`), so every pass input
+    // referencing the parameter's texture name finds a blank surface.
+    for (name, spec) in &effect.params {
+        if spec.parameter_type == "surface" && !inputs.contains_key(name) {
+            resources.insert(
+                spec.metadata
+                    .get("texture")
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or(name)
+                    .to_string(),
+                Surface::new(1, 1)?,
+            );
+        }
+    }
     resources.extend(options.external_textures.clone());
     bind_external_input_resources(effect_id, effect, &options.external_inputs, &mut resources)?;
     if let Some(image) = &input_bundle.image {
