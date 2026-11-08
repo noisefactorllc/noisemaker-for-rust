@@ -172,6 +172,51 @@ fn renderer_a_loop_in_a_subchain_renders_like_the_untouched_expansion() {
 }
 
 #[test]
+fn renderer_two_loop_regions_in_one_chain_share_the_chain_scoped_accumulator() {
+    let mut renderer = CpuRenderer::new().unwrap();
+    // Adjacent loop regions share the chain-scoped accumulator, whose content
+    // equals the region input there, so each region passes the image through.
+    let single = renderer
+        .render(
+            "search synth, render\nperlin(seed: 1).loopBegin().loopEnd().write(o0)\nrender(o0)\n",
+            &options(),
+        )
+        .unwrap()
+        .surface
+        .to_rgba8();
+    let pair = renderer
+        .render(
+            "search synth, render\nperlin(seed: 1).loopBegin().loopEnd().loopBegin().loopEnd().write(o0)\nrender(o0)\n",
+            &options(),
+        )
+        .unwrap()
+        .surface
+        .to_rgba8();
+    assert_eq!(pair, single);
+
+    // A step between the two regions makes the shared feedback observable: the
+    // second region reads the first region's accumulator, which still holds the
+    // pre-invert image, so the chain is not the flattened fresh-per-region form.
+    let shared = renderer
+        .render(
+            "search synth, filter, render\nperlin(seed: 1).loopBegin(alpha: 100).loopEnd().invert().loopBegin(alpha: 100).loopEnd().write(o0)\nrender(o0)\n",
+            &options(),
+        )
+        .unwrap()
+        .surface
+        .to_rgba8();
+    let fresh = renderer
+        .render(
+            "search synth, filter, render\nperlin(seed: 1).loopBegin(alpha: 100).loopEnd().write(o1)\nread(o1).invert().loopBegin(alpha: 100).loopEnd().write(o0)\nrender(o0)\n",
+            &options(),
+        )
+        .unwrap()
+        .surface
+        .to_rgba8();
+    assert_ne!(shared, fresh);
+}
+
+#[test]
 fn renderer_chain_arguments_render_like_their_textual_expansions() {
     let mut renderer = CpuRenderer::new().unwrap();
     let pairs = [

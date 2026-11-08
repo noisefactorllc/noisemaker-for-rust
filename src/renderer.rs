@@ -344,6 +344,11 @@ impl CpuRenderer {
         // Current image/volume/geometry state is deliberately local to a
         // chain. Only an explicit write/read crosses a chain boundary.
         let mut bundle = ChainBundle::default();
+        // The chain-scoped loop accumulator carries a loop region's feedback
+        // surface to the chain's next loop region, matching upstream's
+        // chain-scoped shared globals. Each inline chain argument is its own
+        // chain scope (a fresh accumulator inside the recursive call).
+        let mut chain_accum = Option::<Surface>::None;
         // Retain shared states across the plan so earlier particle owner
         // allocations remain live, preventing allocator address reuse across chains.
         let mut retained_shared = Vec::new();
@@ -415,6 +420,7 @@ impl CpuRenderer {
                     surfaces,
                     options,
                     &mut self.cpu_texture_cache,
+                    chain_accum.take(),
                 )?;
                 if execution
                     .shared
@@ -424,6 +430,7 @@ impl CpuRenderer {
                     observe_particle_group(&execution.shared);
                 }
                 bundle = execution.bundle;
+                chain_accum = execution.chain_accum;
                 retained_shared.push(execution.shared);
                 continue;
             }
@@ -1151,6 +1158,8 @@ fn remap_uniform_data(
 struct IterationExecution {
     bundle: ChainBundle,
     shared: BTreeMap<String, Surface>,
+    // The chain-scoped loop accumulator a group hands back to the chain.
+    chain_accum: Option<Surface>,
 }
 
 fn execute_iteration_group(
@@ -1159,6 +1168,7 @@ fn execute_iteration_group(
     surfaces: &BTreeMap<String, Surface>,
     options: &RenderOptions,
     cache: &mut CpuTextureCache,
+    mut chain_accum: Option<Surface>,
 ) -> Result<IterationExecution, RenderError> {
     let catalog = effect_catalog()?;
     let Some(RenderStep::Effect {
@@ -1221,6 +1231,9 @@ fn execute_iteration_group(
                 options,
             )?,
             shared: BTreeMap::new(),
+            // A zero-iteration group never touches the loop accumulator, so it
+            // stays in the chain scope untouched.
+            chain_accum,
         });
     }
     let count = u32::try_from(count).map_err(|_| RenderError::InvalidParameter {
@@ -1265,10 +1278,22 @@ fn execute_iteration_group(
             .ok_or_else(|| RenderError::InvalidGraph {
                 message: "loop iteration group requires an input image".into(),
             })?;
-        shared.insert(
-            "global_accum".into(),
-            Surface::new(image.width(), image.height())?,
-        );
+        // Upstream scopes the loop accumulator by chain (a global that different
+        // effects share keeps its chain scope), so a second loop region in the
+        // same chain continues the first region's feedback surface instead of a
+        // zeroed one. An inherited surface of the wrong size (cannot arise in one
+        // chain's image stream, but guarded) is released and re-created.
+        let wrong_size = chain_accum.as_ref().is_some_and(|accum| {
+            accum.width() != image.width() || accum.height() != image.height()
+        });
+        if wrong_size {
+            chain_accum = None;
+        }
+        let accum = match chain_accum.take() {
+            Some(accum) => accum,
+            None => Surface::new(image.width(), image.height())?,
+        };
+        shared.insert("global_accum".into(), accum);
     }
     let mut final_output = group_input.clone();
     run_group_frames(count, options.time, |frame| {
@@ -1358,9 +1383,14 @@ fn execute_iteration_group(
         final_output = step_input;
         Ok(())
     })?;
+    // The loop accumulator is chain-scoped: hand it to the chain's next loop
+    // region instead of releasing it with the group's other scratch resources.
+    // A non-loop iterated group never touches it, so the chain scope keeps it.
+    let chain_accum = shared.remove("global_accum").or(chain_accum);
     Ok(IterationExecution {
         bundle: final_output,
         shared,
+        chain_accum,
     })
 }
 
@@ -2075,6 +2105,7 @@ mod cache_tests {
             &BTreeMap::new(),
             &options(1),
             &mut cache,
+            None,
         )
         .unwrap();
         for name in ["global_xyz", "global_vel", "global_rgba"] {
@@ -2100,6 +2131,7 @@ mod cache_tests {
             &BTreeMap::new(),
             &options(1),
             &mut cache,
+            None,
         )
         .unwrap();
         let first_xyz = first.shared["global_xyz"].clone();
@@ -2110,6 +2142,7 @@ mod cache_tests {
             &BTreeMap::new(),
             &options(9),
             &mut cache,
+            None,
         )
         .unwrap();
         let repeated = execute_iteration_group(
@@ -2118,6 +2151,7 @@ mod cache_tests {
             &BTreeMap::new(),
             &options(1),
             &mut cache,
+            None,
         )
         .unwrap();
         assert_ne!(first_xyz, changed.shared["global_xyz"]);
