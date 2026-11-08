@@ -680865,64 +680865,67 @@
                       "kind": "expression"
                     },
                     {
-                      "expression": {
-                        "kind": "assignment",
-                        "lvalue": {
+                      "condition": {
+                        "kind": "binary",
+                        "left": {
                           "kind": "identifier",
-                          "name": "outRGBA",
-                          "storage": "global",
-                          "type": "vec4"
+                          "name": "diffuseActive",
+                          "storage": "uniform",
+                          "type": "float"
                         },
-                        "operator": "=",
-                        "type": "vec4",
-                        "value": {
-                          "condition": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "identifier",
-                              "name": "diffuseActive",
-                              "storage": "uniform",
-                              "type": "float"
-                            },
-                            "operator": ">",
-                            "right": {
-                              "kind": "literal",
-                              "source": "0.5",
-                              "type": "float",
-                              "value": 0.5
-                            },
-                            "type": "bool"
+                        "operator": ">",
+                        "right": {
+                          "kind": "literal",
+                          "source": "0.5",
+                          "type": "float",
+                          "value": 0.5
+                        },
+                        "type": "bool"
+                      },
+                      "else": {
+                        "expression": {
+                          "kind": "assignment",
+                          "lvalue": {
+                            "kind": "identifier",
+                            "name": "outRGBA",
+                            "storage": "global",
+                            "type": "vec4"
                           },
-                          "kind": "conditional",
+                          "operator": "=",
                           "type": "vec4",
-                          "whenFalse": {
+                          "value": {
                             "kind": "identifier",
                             "name": "base",
                             "storage": "local",
                             "type": "vec4"
-                          },
-                          "whenTrue": {
-                            "arguments": [
-                              {
-                                "field": "xy",
-                                "kind": "member",
-                                "object": {
-                                  "kind": "identifier",
-                                  "name": "outXYZ",
-                                  "storage": "global",
-                                  "type": "vec4"
-                                },
-                                "type": "vec2"
-                              }
-                            ],
-                            "kind": "call",
-                            "name": "selectedDiffuse",
-                            "target": "selectedDiffuse__vec2",
-                            "type": "vec4"
                           }
-                        }
+                        },
+                        "kind": "expression"
                       },
-                      "kind": "expression"
+                      "hoistedDeclarations": [],
+                      "kind": "if",
+                      "then": {
+                        "expression": {
+                          "arguments": [
+                            {
+                              "field": "xy",
+                              "kind": "member",
+                              "object": {
+                                "kind": "identifier",
+                                "name": "outXYZ",
+                                "storage": "global",
+                                "type": "vec4"
+                              },
+                              "type": "vec2"
+                            }
+                          ],
+                          "kind": "call",
+                          "name": "selectedDiffuse",
+                          "target": "selectedDiffuse__vec2",
+                          "type": "vec4"
+                        },
+                        "kind": "expression"
+                      }
                     },
                     {
                       "expression": {

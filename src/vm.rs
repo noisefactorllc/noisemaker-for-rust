@@ -83,6 +83,10 @@ pub struct ShaderVm {
     root_frame: usize,
     statement_count: u64,
     call_depth: usize,
+    // Canonical kernels declare their output arrays once per kernel bind and
+    // never reset them per pixel; branches that skip an output leave the
+    // previous pixel's value in place. Mirror that closure-variable lifetime.
+    persisted_outputs: BTreeMap<String, Value>,
 }
 
 impl ShaderVm {
@@ -141,6 +145,7 @@ impl ShaderVm {
             root_frame: 0,
             statement_count: 0,
             call_depth: 0,
+            persisted_outputs: BTreeMap::new(),
         })
     }
 
@@ -212,7 +217,12 @@ impl ShaderVm {
             }
         }
         for global in self.program.globals.clone() {
-            let value = if let Some(initializer) = &global.initializer {
+            let value = if self.persisted_outputs.contains_key(&global.name) {
+                self.persisted_outputs
+                    .get(&global.name)
+                    .cloned()
+                    .unwrap_or(Value::Float(0.0))
+            } else if let Some(initializer) = &global.initializer {
                 self.eval(initializer)?
             } else {
                 self.variable_default(&global)?
@@ -233,7 +243,9 @@ impl ShaderVm {
         }
         outputs.clear();
         for name in self.program.outputs.clone() {
-            outputs.insert(name.clone(), self.read_root(&name)?.clone());
+            let value = self.read_root(&name)?.clone();
+            self.persisted_outputs.insert(name.clone(), value.clone());
+            outputs.insert(name, value);
         }
         Ok(())
     }

@@ -463,8 +463,6 @@ class TypedIrEmitter:
             return None
         if target["kind"] == "identifier" and target.get("name") == "i1" and self._is_simplex_axis_choice(value_node):
             return None
-        if self.effect_id == "points/physical" and target["kind"] == "identifier" and target.get("name") == "outRGBA":
-            return None
         condition = self._expression(value_node["c"], scope)
         when_true = self._expression(value_node["a"], scope)
         when_false = self._expression(value_node["b"], scope)
