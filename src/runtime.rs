@@ -141,6 +141,9 @@ impl Runtime {
             },
             name if vector_spec(name).is_some() => {
                 let (base, width) = vector_spec(name).unwrap();
+                if base == "int" || base == "uint" {
+                    return Self::construct_integer_vector(name, base, width, arguments);
+                }
                 let flat = flatten(arguments);
                 if flat.is_empty() {
                     return Err(type_error(format!("{name} constructor has no components")));
@@ -213,6 +216,115 @@ impl Runtime {
             }
             _ => Err(type_error(format!("unknown constructor type {value_type}"))),
         }
+    }
+
+    /// Integer-vector constructors fill their result in place, without the
+    /// flattened temporary the float path builds (oracle commit bee1eb78): a
+    /// single scalar argument broadcasts, otherwise the arguments' components
+    /// fill left to right and zero fills the remainder. Hash kernels construct
+    /// integer vectors per pixel.
+    fn construct_integer_vector(
+        _name: &str,
+        base: &str,
+        width: usize,
+        arguments: &[Value],
+    ) -> Result<Value, VmError> {
+        let unsigned = base == "uint";
+        let scalar = |value: &Value| -> Result<i64, VmError> {
+            Ok(if unsigned {
+                i64::from(to_u32(value)?)
+            } else {
+                i64::from(to_i32(value)?)
+            })
+        };
+        let pack = |out: Vec<i64>| -> Value {
+            if unsigned {
+                Value::UVec(out.into_iter().map(|v| v as u32).collect())
+            } else {
+                Value::IVec(out.into_iter().map(|v| v as i32).collect())
+            }
+        };
+        if arguments.len() <= 1 {
+            return match arguments.first() {
+                // A single scalar argument broadcasts across the width.
+                Some(value)
+                    if !matches!(
+                        value,
+                        Value::IVec(_) | Value::UVec(_) | Value::Vec(_) | Value::BVec(_)
+                    ) =>
+                {
+                    scalar(value).map(|value| pack(vec![value; width]))
+                }
+                // No arguments at all leave the zero-filled result in place.
+                None => Ok(pack(vec![0; width])),
+                Some(_) => {
+                    let mut out = vec![0i64; width];
+                    Self::fill_integer_vector(&scalar, &mut out, arguments)?;
+                    Ok(pack(out))
+                }
+            };
+        }
+        let mut out = vec![0i64; width];
+        Self::fill_integer_vector(&scalar, &mut out, arguments)?;
+        Ok(pack(out))
+    }
+
+    /// Fill `out` left to right from the arguments' components, truncating
+    /// anything past its width, in the oracle's constructor order.
+    fn fill_integer_vector(
+        scalar: &dyn Fn(&Value) -> Result<i64, VmError>,
+        out: &mut [i64],
+        arguments: &[Value],
+    ) -> Result<(), VmError> {
+        let mut index = 0;
+        for argument in arguments {
+            if index >= out.len() {
+                break;
+            }
+            match argument {
+                Value::IVec(items) => {
+                    for &item in items {
+                        if index >= out.len() {
+                            break;
+                        }
+                        out[index] = scalar(&Value::Int(item))?;
+                        index += 1;
+                    }
+                }
+                Value::UVec(items) => {
+                    for &item in items {
+                        if index >= out.len() {
+                            break;
+                        }
+                        out[index] = scalar(&Value::Uint(item))?;
+                        index += 1;
+                    }
+                }
+                Value::Vec(items) => {
+                    for &item in items {
+                        if index >= out.len() {
+                            break;
+                        }
+                        out[index] = scalar(&Value::Float(f64::from(item)))?;
+                        index += 1;
+                    }
+                }
+                Value::BVec(items) => {
+                    for &item in items {
+                        if index >= out.len() {
+                            break;
+                        }
+                        out[index] = scalar(&Value::Bool(item))?;
+                        index += 1;
+                    }
+                }
+                value => {
+                    out[index] = scalar(value)?;
+                    index += 1;
+                }
+            }
+        }
+        Ok(())
     }
 
     pub fn convert(&self, value_type: &str, value: &Value) -> Result<Value, VmError> {
@@ -702,19 +814,47 @@ fn to_i32(v: &Value) -> Result<i32, VmError> {
     match v {
         Value::Int(x) => Ok(*x),
         Value::Uint(x) => Ok(*x as i32),
-        Value::Float(x) => Ok(*x as i32),
+        // The oracle converts through `| 0` (ToInt32: truncate toward zero,
+        // then wrap modulo 2^32 into the signed range); Rust's float `as i32`
+        // would instead saturate non-finite and out-of-range values.
+        Value::Float(x) => Ok(js_to_int32(*x)),
         Value::Bool(x) => Ok(i32::from(*x)),
         _ => Err(type_error(format!("cannot convert {} to int", v.kind()))),
+    }
+}
+/// JavaScript `| 0` (ToInt32): NaN and the infinities give 0, the value
+/// truncates toward zero, and the result wraps modulo 2^32 into the signed
+/// range.
+fn js_to_int32(x: f64) -> i32 {
+    if x.is_nan() || x.is_infinite() {
+        return 0;
+    }
+    let modulo = x.trunc().rem_euclid(4_294_967_296.0);
+    if modulo >= 2_147_483_648.0 {
+        (modulo - 4_294_967_296.0) as i32
+    } else {
+        modulo as i32
     }
 }
 fn to_u32(v: &Value) -> Result<u32, VmError> {
     match v {
         Value::Uint(x) => Ok(*x),
         Value::Int(x) => Ok(*x as u32),
-        Value::Float(x) => Ok(*x as u32),
+        // The oracle converts through `>>> 0` (ToUint32: truncate toward
+        // zero, then wrap modulo 2^32); Rust's float `as u32` would instead
+        // saturate negative and out-of-range values.
+        Value::Float(x) => Ok(js_to_uint32(*x)),
         Value::Bool(x) => Ok(u32::from(*x)),
         _ => Err(type_error(format!("cannot convert {} to uint", v.kind()))),
     }
+}
+/// JavaScript `>>> 0` (ToUint32): NaN and the infinities give 0, the value
+/// truncates toward zero, and the result wraps modulo 2^32.
+fn js_to_uint32(x: f64) -> u32 {
+    if x.is_nan() || x.is_infinite() {
+        return 0;
+    }
+    x.trunc().rem_euclid(4_294_967_296.0) as u32
 }
 fn to_bool(v: &Value) -> Result<bool, VmError> {
     match v {

@@ -30,6 +30,71 @@ fn constructors_flatten_splat_and_reject_invalid_conversions() {
 }
 
 #[test]
+fn integer_constructors_broadcast_one_scalar_and_fill_components_left_to_right() {
+    let rt = runtime();
+    let floats = Value::Vec(vec![1.5, -2.25, 3000.0, 65536.7]);
+    assert_eq!(
+        rt.construct("ivec4", std::slice::from_ref(&floats))
+            .unwrap(),
+        Value::IVec(vec![1, -2, 3000, 65536])
+    );
+    assert_eq!(
+        rt.construct("uvec4", std::slice::from_ref(&floats))
+            .unwrap(),
+        Value::UVec(vec![1, 4_294_967_294, 3000, 65536])
+    );
+    assert_eq!(
+        rt.construct("uvec3", &[Value::UVec(vec![7, 9]), Value::Uint(5)])
+            .unwrap(),
+        Value::UVec(vec![7, 9, 5])
+    );
+    assert_eq!(
+        rt.construct("uvec4", &[Value::UVec(vec![1, 2]), Value::UVec(vec![3, 4])])
+            .unwrap(),
+        Value::UVec(vec![1, 2, 3, 4])
+    );
+    assert_eq!(
+        rt.construct("ivec3", &[Value::IVec(vec![-4, 5])]).unwrap(),
+        Value::IVec(vec![-4, 5, 0])
+    );
+    assert_eq!(
+        rt.construct("ivec2", &[Value::IVec(vec![6, 7, 8, 9])])
+            .unwrap(),
+        Value::IVec(vec![6, 7])
+    );
+    assert_eq!(
+        rt.construct("ivec2", &[Value::Float(3.9)]).unwrap(),
+        Value::IVec(vec![3, 3])
+    );
+    assert_eq!(
+        rt.construct("uvec3", &[Value::Int(-1)]).unwrap(),
+        Value::UVec(vec![4_294_967_295; 3])
+    );
+    assert_eq!(rt.construct("uvec3", &[]).unwrap(), Value::UVec(vec![0; 3]));
+    // The oracle's integer conversions are ToInt32/ToUint32 (`| 0` and
+    // `>>> 0`), not Rust's saturating casts: truncation wraps modulo 2^32
+    // and non-finite values give 0.
+    assert_eq!(
+        rt.construct(
+            "ivec4",
+            &[
+                Value::Float(3.0e9),
+                Value::Float(f64::INFINITY),
+                Value::Float(-2.25),
+                Value::Float(1.0e10),
+            ]
+        )
+        .unwrap(),
+        Value::IVec(vec![-1_294_967_296, 0, -2, 1_410_065_408])
+    );
+    assert_eq!(
+        rt.construct("uvec2", &[Value::Float(-1.0), Value::Float(f64::NAN)])
+            .unwrap(),
+        Value::UVec(vec![4_294_967_295, 0])
+    );
+}
+
+#[test]
 fn integer_ops_wrap_and_float_division_preserves_signed_zero_semantics() {
     let rt = runtime();
     assert_eq!(
