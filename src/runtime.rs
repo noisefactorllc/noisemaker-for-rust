@@ -218,11 +218,6 @@ impl Runtime {
         }
     }
 
-    /// Integer-vector constructors fill their result in place, without the
-    /// flattened temporary the float path builds (oracle commit bee1eb78): a
-    /// single scalar argument broadcasts, otherwise the arguments' components
-    /// fill left to right and zero fills the remainder. Hash kernels construct
-    /// integer vectors per pixel.
     fn construct_integer_vector(
         _name: &str,
         base: &str,
@@ -246,7 +241,6 @@ impl Runtime {
         };
         if arguments.len() <= 1 {
             return match arguments.first() {
-                // A single scalar argument broadcasts across the width.
                 Some(value)
                     if !matches!(
                         value,
@@ -255,7 +249,6 @@ impl Runtime {
                 {
                     scalar(value).map(|value| pack(vec![value; width]))
                 }
-                // No arguments at all leave the zero-filled result in place.
                 None => Ok(pack(vec![0; width])),
                 Some(_) => {
                     let mut out = vec![0i64; width];
@@ -269,8 +262,6 @@ impl Runtime {
         Ok(pack(out))
     }
 
-    /// Fill `out` left to right from the arguments' components, truncating
-    /// anything past its width, in the oracle's constructor order.
     fn fill_integer_vector(
         scalar: &dyn Fn(&Value) -> Result<i64, VmError>,
         out: &mut [i64],
@@ -814,17 +805,11 @@ fn to_i32(v: &Value) -> Result<i32, VmError> {
     match v {
         Value::Int(x) => Ok(*x),
         Value::Uint(x) => Ok(*x as i32),
-        // The oracle converts through `| 0` (ToInt32: truncate toward zero,
-        // then wrap modulo 2^32 into the signed range); Rust's float `as i32`
-        // would instead saturate non-finite and out-of-range values.
         Value::Float(x) => Ok(js_to_int32(*x)),
         Value::Bool(x) => Ok(i32::from(*x)),
         _ => Err(type_error(format!("cannot convert {} to int", v.kind()))),
     }
 }
-/// JavaScript `| 0` (ToInt32): NaN and the infinities give 0, the value
-/// truncates toward zero, and the result wraps modulo 2^32 into the signed
-/// range.
 fn js_to_int32(x: f64) -> i32 {
     if x.is_nan() || x.is_infinite() {
         return 0;
@@ -840,16 +825,11 @@ fn to_u32(v: &Value) -> Result<u32, VmError> {
     match v {
         Value::Uint(x) => Ok(*x),
         Value::Int(x) => Ok(*x as u32),
-        // The oracle converts through `>>> 0` (ToUint32: truncate toward
-        // zero, then wrap modulo 2^32); Rust's float `as u32` would instead
-        // saturate negative and out-of-range values.
         Value::Float(x) => Ok(js_to_uint32(*x)),
         Value::Bool(x) => Ok(u32::from(*x)),
         _ => Err(type_error(format!("cannot convert {} to uint", v.kind()))),
     }
 }
-/// JavaScript `>>> 0` (ToUint32): NaN and the infinities give 0, the value
-/// truncates toward zero, and the result wraps modulo 2^32.
 fn js_to_uint32(x: f64) -> u32 {
     if x.is_nan() || x.is_infinite() {
         return 0;

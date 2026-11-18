@@ -71,9 +71,6 @@ fn integer_constructors_broadcast_one_scalar_and_fill_components_left_to_right()
         Value::UVec(vec![4_294_967_295; 3])
     );
     assert_eq!(rt.construct("uvec3", &[]).unwrap(), Value::UVec(vec![0; 3]));
-    // The oracle's integer conversions are ToInt32/ToUint32 (`| 0` and
-    // `>>> 0`), not Rust's saturating casts: truncation wraps modulo 2^32
-    // and non-finite values give 0.
     assert_eq!(
         rt.construct(
             "ivec4",
