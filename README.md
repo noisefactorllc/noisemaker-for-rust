@@ -7,6 +7,8 @@
 
 > This package supports the "Export Shader Pipeline" feature in Noisedeck.app. The feature runs shader compositions on other platforms. Noise Factor derives this package from the upstream Noisemaker Engine project and tests it for pixel-level parity.
 
+> **Rust on the CPU.** This repository renders on the CPU only and needs no GPU, browser or JavaScript. Its crate is `noisemaker-for-rust`, its command is `noisemaker-rs`, and its library is `noisemaker_cpu`. In Noisedeck's Export Shader Pipeline dialog it is the **Rust** target. Its sibling, [Noisemaker for Rust GPU](https://github.com/noisefactorllc/noisemaker-for-rust-gpu), is a separate port that renders on the GPU through wgpu. That is the **Rust GPU (wgpu)** target.
+
 Noisemaker for Rust is a standalone CPU renderer for Noisemaker's generated
 effect catalog. The Cargo package and command are named `noisemaker-for-rust` and `noisemaker-rs`. Rust code imports the library as `noisemaker_cpu`.
 
