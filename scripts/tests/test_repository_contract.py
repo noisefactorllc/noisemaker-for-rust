@@ -85,8 +85,13 @@ class WeeklySweepWorkflowTest(unittest.TestCase):
         self.ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
         self.sweep = "\n".join(nested_block(top_level_block(self.ci, "jobs"), "sweep", 2))
 
-    def test_the_sweep_runs_off_push_and_never_soft_fails(self):
-        self.assertRegex(self.sweep, r"(?m)^\s{4}if: github\.event_name != 'push'$")
+    def test_the_sweep_runs_only_on_schedule_or_dispatch_and_never_soft_fails(self):
+        conditions = [line.strip() for line in self.sweep.splitlines() if line.startswith("    if:")]
+        self.assertEqual(
+            conditions,
+            ["if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'"],
+            "the sweep runs only on the weekly schedule and on manual dispatch",
+        )
         self.assertNotIn("continue-on-error", self.sweep)
 
     def test_the_sweep_compares_against_the_same_pinned_oracle_as_the_parity_gate(self):
