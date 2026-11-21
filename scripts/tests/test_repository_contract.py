@@ -78,6 +78,71 @@ class ExportKitWorkflowTest(unittest.TestCase):
         self.assertIn("github.event_name != 'push'", condition)
 
 
+# The reviewed weekly sweep job and workflow triggers in .github/workflows/ci.yml.
+SWEEP_JOB = """    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check out pinned JavaScript CPU oracle
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: noisefactorllc/noisemaker-for-cpu
+          ref: 0670ceace1c0c52791ef7d57493ded6e0b35a4b9
+          path: oracle
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Install stable Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Build the CLI and the sequence example
+        run: cargo +stable build --locked --release --bin noisemaker-rs --example parity_sequence
+
+      - name: Sweep non-default parameters and stateful sequences against the pinned oracle
+        run: python3 scripts/parity.py --rust "$GITHUB_WORKSPACE/target/release/noisemaker-rs" --rust-sequence "$GITHUB_WORKSPACE/target/release/examples/parity_sequence" --js "$GITHUB_WORKSPACE/oracle/bin/noisemaker-cpu.js" --timeout 120 --sweep --json sweep-report.json
+
+      - name: Retain sweep report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
+        with:
+          name: rust-sweep-${{ github.sha }}
+          path: sweep-report.json
+          if-no-files-found: error"""
+
+ON_BLOCK = """  push:
+    paths:
+      - '**'
+      - '!*.md'
+      - '!.github/ISSUE_TEMPLATE/**'
+      - '!.github/PULL_REQUEST_TEMPLATE*'
+      - '!.github/FUNDING.yml'
+      - '!.github/CODEOWNERS'
+      - '!.editorconfig'
+      - '!docs/**'
+      - 'docs/EFFECTS.md'
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '23 8 * * 1'
+"""
+
+
 class WeeklySweepWorkflowTest(unittest.TestCase):
     """The bounded parameter sweep and stateful sequences gate the weekly CI."""
 
@@ -100,22 +165,19 @@ class WeeklySweepWorkflowTest(unittest.TestCase):
         gate = "\n".join(nested_block(top_level_block(export_kit, "jobs"), "rendered-parity", 2))
         self.assertEqual(re.search(pin, self.sweep).group(1), re.search(pin, gate).group(1))
 
-    def test_nothing_can_hide_a_failed_sweep(self):
-        commands = [line for line in self.sweep.splitlines() if "scripts/parity.py" in line]
-        self.assertEqual(len(commands), 1, "the job runs scripts/parity.py exactly once")
-        for token in ("||", "|", ";", "&", "set +e"):
-            self.assertNotIn(token, commands[0], f"the sweep command must not contain {token!r}")
-        self.assertNotRegex(self.sweep, r"(?m)^\s+shell:", "the job keeps the default fail-fast shell")
-        step_conditions = [re.sub(r"^-\s+", "", line.strip()) for line in self.sweep.splitlines()
-                           if re.match(r" {6,}(?:-\s+)?if:", line)]
-        self.assertEqual(step_conditions, ["if: always()"], "only the report upload carries a step condition")
-        self.assertIn("if-no-files-found: error", self.sweep)
+    def test_the_sweep_job_is_exactly_the_reviewed_job(self):
+        # The whole job is pinned: any change to its steps, commands, shell,
+        # conditions, needs, runner or pins needs a reviewed change here.
+        self.assertEqual(self.sweep, SWEEP_JOB)
+        jobs = top_level_block(self.ci, "jobs")
+        self.assertEqual(jobs.count("  sweep:"), 1, "ci.yml defines the sweep job once")
 
-    def test_the_sweep_runs_weekly_on_a_hosted_runner(self):
-        on = "\n".join(top_level_block(self.ci, "on"))
-        self.assertRegex(on, r"(?m)^\s+- cron: '23 8 \* \* 1'$")
-        self.assertRegex(on, r"(?m)^  workflow_dispatch:")
-        self.assertRegex(self.sweep, r"(?m)^    runs-on: ubuntu-latest$")
+    def test_no_workflow_default_changes_the_sweep_shell(self):
+        self.assertIsNone(re.search(r"""(?m)^["']?defaults["']?\s*:""", self.ci),
+                          "ci.yml sets no top-level defaults")
+
+    def test_the_sweep_runs_on_the_reviewed_triggers(self):
+        self.assertEqual("\n".join(top_level_block(self.ci, "on")), ON_BLOCK)
 
     def test_the_sweep_runs_every_case_with_the_sequence_example(self):
         self.assertIn("--example parity_sequence", self.sweep)
