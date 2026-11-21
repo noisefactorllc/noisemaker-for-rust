@@ -100,6 +100,23 @@ class WeeklySweepWorkflowTest(unittest.TestCase):
         gate = "\n".join(nested_block(top_level_block(export_kit, "jobs"), "rendered-parity", 2))
         self.assertEqual(re.search(pin, self.sweep).group(1), re.search(pin, gate).group(1))
 
+    def test_nothing_can_hide_a_failed_sweep(self):
+        commands = [line for line in self.sweep.splitlines() if "scripts/parity.py" in line]
+        self.assertEqual(len(commands), 1, "the job runs scripts/parity.py exactly once")
+        for token in ("||", "|", ";", "&", "set +e"):
+            self.assertNotIn(token, commands[0], f"the sweep command must not contain {token!r}")
+        self.assertNotRegex(self.sweep, r"(?m)^\s+shell:", "the job keeps the default fail-fast shell")
+        step_conditions = [re.sub(r"^-\s+", "", line.strip()) for line in self.sweep.splitlines()
+                           if re.match(r" {6,}(?:-\s+)?if:", line)]
+        self.assertEqual(step_conditions, ["if: always()"], "only the report upload carries a step condition")
+        self.assertIn("if-no-files-found: error", self.sweep)
+
+    def test_the_sweep_runs_weekly_on_a_hosted_runner(self):
+        on = "\n".join(top_level_block(self.ci, "on"))
+        self.assertRegex(on, r"(?m)^\s+- cron: '23 8 \* \* 1'$")
+        self.assertRegex(on, r"(?m)^  workflow_dispatch:")
+        self.assertRegex(self.sweep, r"(?m)^    runs-on: ubuntu-latest$")
+
     def test_the_sweep_runs_every_case_with_the_sequence_example(self):
         self.assertIn("--example parity_sequence", self.sweep)
         command = next(line for line in self.sweep.splitlines() if "scripts/parity.py" in line)
