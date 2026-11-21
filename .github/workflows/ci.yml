@@ -184,3 +184,53 @@ jobs:
         run: >-
           cargo +stable test --release --all-features --locked
           --test catalog_smoke --test parity_spine -- --include-ignored
+
+  # The bounded parameter sweep and stateful multi-frame sequences against the
+  # same pinned CPU oracle as the rendered-parity gate (scripts/parity.py
+  # --sweep). Weekly and on manual dispatch, like the other catalog renders.
+  sweep:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check out pinned JavaScript CPU oracle
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: noisefactorllc/noisemaker-for-cpu
+          ref: 0670ceace1c0c52791ef7d57493ded6e0b35a4b9
+          path: oracle
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Install stable Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Build the CLI and the sequence example
+        run: cargo +stable build --locked --release --bin noisemaker-rs --example parity_sequence
+
+      - name: Sweep non-default parameters and stateful sequences against the pinned oracle
+        run: python3 scripts/parity.py --rust "$GITHUB_WORKSPACE/target/release/noisemaker-rs" --rust-sequence "$GITHUB_WORKSPACE/target/release/examples/parity_sequence" --js "$GITHUB_WORKSPACE/oracle/bin/noisemaker-cpu.js" --timeout 120 --sweep --json sweep-report.json
+
+      - name: Retain sweep report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
+        with:
+          name: rust-sweep-${{ github.sha }}
+          path: sweep-report.json
+          if-no-files-found: error

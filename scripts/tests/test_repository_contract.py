@@ -78,5 +78,30 @@ class ExportKitWorkflowTest(unittest.TestCase):
         self.assertIn("github.event_name != 'push'", condition)
 
 
+class WeeklySweepWorkflowTest(unittest.TestCase):
+    """The bounded parameter sweep and stateful sequences gate the weekly CI."""
+
+    def setUp(self):
+        self.ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        self.sweep = "\n".join(nested_block(top_level_block(self.ci, "jobs"), "sweep", 2))
+
+    def test_the_sweep_runs_off_push_and_never_soft_fails(self):
+        self.assertRegex(self.sweep, r"(?m)^\s{4}if: github\.event_name != 'push'$")
+        self.assertNotIn("continue-on-error", self.sweep)
+
+    def test_the_sweep_compares_against_the_same_pinned_oracle_as_the_parity_gate(self):
+        pin = r"repository: noisefactorllc/noisemaker-for-cpu\n\s+ref: ([0-9a-f]{40})\n"
+        export_kit = (ROOT / ".github" / "workflows" / "export-kit.yml").read_text(encoding="utf-8")
+        gate = "\n".join(nested_block(top_level_block(export_kit, "jobs"), "rendered-parity", 2))
+        self.assertEqual(re.search(pin, self.sweep).group(1), re.search(pin, gate).group(1))
+
+    def test_the_sweep_runs_every_case_with_the_sequence_example(self):
+        self.assertIn("--example parity_sequence", self.sweep)
+        command = next(line for line in self.sweep.splitlines() if "scripts/parity.py" in line)
+        for flag in ("--sweep", "--rust-sequence", "--json"):
+            self.assertIn(flag, command)
+        self.assertNotIn("--only", command, "the sweep covers the whole catalog")
+
+
 if __name__ == "__main__":
     unittest.main()
