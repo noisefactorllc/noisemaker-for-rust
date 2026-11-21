@@ -37,6 +37,14 @@ def nested_block(lines, key, indent):
     return block
 
 
+
+def trimmed(lines):
+    """The lines without trailing blank or comment-only lines."""
+    lines = list(lines)
+    while lines and (not lines[-1].strip() or lines[-1].lstrip().startswith("#")):
+        lines.pop()
+    return lines
+
 class ReadmeTest(unittest.TestCase):
     def test_readme_links_the_live_compatibility_report_and_gap_issues(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -78,7 +86,7 @@ class ExportKitWorkflowTest(unittest.TestCase):
         self.assertIn("github.event_name != 'push'", condition)
 
 
-# The reviewed weekly sweep job and workflow triggers in .github/workflows/ci.yml.
+# The reviewed weekly sweep job in .github/workflows/ci.yml.
 SWEEP_JOB = """    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 90
@@ -125,22 +133,39 @@ SWEEP_JOB = """    if: github.event_name == 'schedule' || github.event_name == '
           path: sweep-report.json
           if-no-files-found: error"""
 
-ON_BLOCK = """  push:
-    paths:
-      - '**'
-      - '!*.md'
-      - '!.github/ISSUE_TEMPLATE/**'
-      - '!.github/PULL_REQUEST_TEMPLATE*'
-      - '!.github/FUNDING.yml'
-      - '!.github/CODEOWNERS'
-      - '!.editorconfig'
-      - '!docs/**'
-      - 'docs/EFFECTS.md'
-    branches: [main]
-  workflow_dispatch:
-  schedule:
-    - cron: '23 8 * * 1'
-"""
+# Everything in ci.yml before `jobs:`: its name, triggers, permissions and
+# concurrency.
+PREAMBLE = "\n".join([
+    'name: ci',
+    '',
+    'on:',
+    '  push:',
+    '    paths:',
+    "      - '**'",
+    "      - '!*.md'",
+    "      - '!.github/ISSUE_TEMPLATE/**'",
+    "      - '!.github/PULL_REQUEST_TEMPLATE*'",
+    "      - '!.github/FUNDING.yml'",
+    "      - '!.github/CODEOWNERS'",
+    "      - '!.editorconfig'",
+    "      - '!docs/**'",
+    "      - 'docs/EFFECTS.md'",
+    '    branches: [main]',
+    '  workflow_dispatch:',
+    '  schedule:',
+    "    - cron: '23 8 * * 1'",
+    '',
+    'permissions:',
+    '  contents: read',
+    '',
+    '# A push runs the quality checks and the test suite. Everything that renders',
+    '# the catalog on the CPU (the catalog smoke tests, the cross-port spine and the',
+    '# Windows rendered parity) runs weekly and on manual dispatch.',
+    'concurrency:',
+    "  group: ci-${{ github.ref }}-${{ github.event_name == 'push' && 'gate' || 'full' }}",
+    "  cancel-in-progress: ${{ github.event_name == 'push' }}",
+    '',
+])
 
 
 class WeeklySweepWorkflowTest(unittest.TestCase):
@@ -166,18 +191,30 @@ class WeeklySweepWorkflowTest(unittest.TestCase):
         self.assertEqual(re.search(pin, self.sweep).group(1), re.search(pin, gate).group(1))
 
     def test_the_sweep_job_is_exactly_the_reviewed_job(self):
-        # The whole job is pinned: any change to its steps, commands, shell,
-        # conditions, needs, runner or pins needs a reviewed change here.
-        self.assertEqual(self.sweep, SWEEP_JOB)
-        jobs = top_level_block(self.ci, "jobs")
-        self.assertEqual(jobs.count("  sweep:"), 1, "ci.yml defines the sweep job once")
+        # The whole job is pinned, and so is everything before `jobs:`, and no
+        # top-level key may follow `jobs:`: any change to the job or to a
+        # workflow-level key that reaches it needs a reviewed change here.
+        self.assertEqual("\n".join(trimmed(nested_block(top_level_block(self.ci, "jobs"), "sweep", 2))), SWEEP_JOB)
 
-    def test_no_workflow_default_changes_the_sweep_shell(self):
-        self.assertIsNone(re.search(r"""(?m)^["']?defaults["']?\s*:""", self.ci),
-                          "ci.yml sets no top-level defaults")
+    def test_the_workflow_runs_under_the_reviewed_preamble(self):
+        self.assertIn("\njobs:\n", self.ci)
+        self.assertEqual(self.ci.split("\njobs:\n", 1)[0], PREAMBLE)
 
-    def test_the_sweep_runs_on_the_reviewed_triggers(self):
-        self.assertEqual("\n".join(top_level_block(self.ci, "on")), ON_BLOCK)
+    def test_jobs_is_the_last_top_level_key_and_every_job_id_is_plain_and_unique(self):
+        lines = self.ci.splitlines()
+        after = lines[lines.index("jobs:") + 1:]
+        self.assertEqual([line for line in after if line and not line.startswith((" ", "#"))], [],
+                         "no top-level key follows jobs:")
+        ids = [line for line in after if re.match(r"^ {2}\S", line) and not line.lstrip().startswith("#")]
+        for line in ids:
+            self.assertRegex(line, r"^  [a-z][a-z0-9_-]*:$")
+        names = [line.strip()[:-1].lower() for line in ids]
+        self.assertEqual(len(names), len(set(names)), "job ids are unique")
+        self.assertIn("  sweep:", ids)
+
+    def test_ci_runs_every_contract_test(self):
+        self.assertEqual(self.ci.count("discover -s scripts/tests"), 1)
+        self.assertIn("\n        run: python -m unittest discover -s scripts/tests -p 'test_*.py'\n", self.ci)
 
     def test_the_sweep_runs_every_case_with_the_sequence_example(self):
         self.assertIn("--example parity_sequence", self.sweep)
