@@ -678,6 +678,8 @@ def _summarize_sweep(results: list[dict], plan: dict[str, list[dict]], size: int
 
 def _validate_sweep(report: dict, plan: dict[str, list[dict]]) -> None:
     expected = [case["id"] for effect_id in sorted(plan) for case in plan[effect_id]]
+    if not expected:
+        raise ValueError("the sweep planned no cases")
     results = report.get("results")
     if not isinstance(results, list) or len(results) != len(expected):
         raise ValueError("results do not match sweep denominator")

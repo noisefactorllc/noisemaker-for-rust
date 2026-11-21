@@ -323,6 +323,11 @@ class SweepValidationTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unapproved delta"):
             parity._validate_sweep(report, plan)
 
+    def test_an_empty_sweep_fails(self):
+        report = parity._summarize_sweep([], {}, 1, 0.25, 1)
+        with self.assertRaisesRegex(ValueError, "planned no cases"):
+            parity._validate_sweep(report, {})
+
     def test_a_missing_case_breaks_the_denominator(self):
         plan = self._plan()
         results = self._results(plan)[1:]
