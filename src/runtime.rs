@@ -364,6 +364,9 @@ impl Runtime {
             "sampler2D" => Ok(Value::Sampler(usize::MAX)),
             name if vector_spec(name).is_some() => {
                 let (base, width) = vector_spec(name).unwrap();
+                if base == "bool" {
+                    return Ok(Value::BVec(vec![false; width]));
+                }
                 build_vector(base, std::iter::repeat_n(&Value::Int(0), width))
             }
             name if name.starts_with("mat") => {
