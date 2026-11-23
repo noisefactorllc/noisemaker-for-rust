@@ -154,6 +154,78 @@ fn canonical_uniforms_override_effect_aliases() {
 }
 
 #[test]
+fn height_grid_agent_scales_grid_depth_by_the_frame_aspect() {
+    // The agent program sizes the grid plane's depth as gridScale *
+    // aspectInv. On a non-square frame the depth extent follows the frame's
+    // proportions instead of staying at the full gridScale. With a 8x4
+    // frame the aspect is 2 and the f32-rounded aspectInv is 0.5, so a
+    // gridScale of 100 puts the two state rows' depth at +12.5 and -12.5;
+    // a program that ignores the aspect would put them at +25 and -25.
+    let effect = &effect_catalog().unwrap().effects["points/heightGrid"];
+    let pass = effect
+        .passes
+        .iter()
+        .find(|pass| pass.name == "agent")
+        .unwrap();
+    let ir = &shader_bundle().unwrap().programs[pass.key.as_ref().unwrap()].ir;
+    let blank = || Surface::from_f32(4, 2, vec![0.0; 4 * 2 * 4]).unwrap();
+    let mut resources = BTreeMap::from([
+        ("heightTex".to_string(), blank()),
+        ("diffuseTex".to_string(), blank()),
+        ("global_vel".to_string(), blank()),
+        ("global_xyz".to_string(), blank()),
+    ]);
+    let mut uniforms = BTreeMap::from([
+        ("gridScale".to_string(), Value::Float(100.0)),
+        ("heightScale".to_string(), Value::Float(1.0)),
+        ("heightOffset".to_string(), Value::Float(0.0)),
+    ]);
+    for (name, value) in canonical_uniforms(8, 4, 0.25, 1, 0, 0.1, &BTreeMap::new()) {
+        uniforms.insert(name, value);
+    }
+    execute_pass(
+        ir,
+        pass,
+        &uniforms,
+        &mut resources,
+        4,
+        2,
+        &BTreeMap::new(),
+        None,
+        false,
+    )
+    .unwrap();
+    let xyz = resources["global_xyz"].data();
+    let mut depths = xyz
+        .iter()
+        .skip(2)
+        .step_by(4)
+        .map(|v| v.to_bits() as i64)
+        .collect::<Vec<_>>();
+    depths.sort();
+    let mut expected = vec![12.5f32.to_bits() as i64; 4];
+    expected.extend(vec![(-12.5f32).to_bits() as i64; 4]);
+    expected.sort();
+    assert_eq!(depths, expected, "xyz depth components {xyz:?}");
+    for pixel in xyz.chunks_exact(4) {
+        assert_eq!(pixel[3].to_bits(), 1.0f32.to_bits());
+        assert_eq!(pixel[1], 0.0);
+    }
+    let mut widths = xyz
+        .iter()
+        .step_by(4)
+        .map(|v| v.to_bits() as i64)
+        .collect::<Vec<_>>();
+    widths.sort();
+    let mut expected_widths = [37.5f32, -12.5, 12.5, 37.5]
+        .iter()
+        .flat_map(|v| [v.to_bits() as i64, (-*v).to_bits() as i64])
+        .collect::<Vec<_>>();
+    expected_widths.sort();
+    assert_eq!(widths, expected_widths, "xyz width components {xyz:?}");
+}
+
+#[test]
 fn conditions_repeats_and_resource_dimensions_are_deterministic() {
     let uniforms = BTreeMap::from([
         ("mode".into(), Value::Int(1)),
