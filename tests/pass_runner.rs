@@ -226,6 +226,69 @@ fn height_grid_agent_scales_grid_depth_by_the_frame_aspect() {
 }
 
 #[test]
+fn heightmap3d_precompute_keeps_the_frame_proportions() {
+    // The precompute program sizes the terrain span from the frame's aspect
+    // and aspectInv and keeps the columns outside the span at zero height.
+    // On an 8x4 frame the aspect is 2 and the f32-rounded aspectInv is 0.5,
+    // so a volumeSize of 8 spans the full width but only the four depth
+    // columns 2 to 5; a program that ignores the aspect would fill every
+    // depth column of the volume.
+    let effect = &effect_catalog().unwrap().effects["synth3d/heightmap3d"];
+    let pass = effect
+        .passes
+        .iter()
+        .find(|pass| pass.name == "precompute")
+        .unwrap();
+    let ir = &shader_bundle().unwrap().programs[pass.key.as_ref().unwrap()].ir;
+    let white = Surface::from_f32(8, 8, vec![1.0; 8 * 8 * 4]).unwrap();
+    let mut resources = BTreeMap::from([
+        ("heightTex".to_string(), white.clone()),
+        ("tex".to_string(), white.clone()),
+    ]);
+    let mut uniforms = BTreeMap::from([
+        ("volumeSize".to_string(), Value::Int(8)),
+        ("heightScale".to_string(), Value::Float(1.0)),
+        ("baseHeight".to_string(), Value::Float(0.0)),
+    ]);
+    for (name, value) in canonical_uniforms(8, 4, 0.25, 1, 0, 0.1, &BTreeMap::new()) {
+        uniforms.insert(name, value);
+    }
+    execute_pass(
+        ir,
+        pass,
+        &uniforms,
+        &mut resources,
+        8,
+        4,
+        &BTreeMap::new(),
+        None,
+        false,
+    )
+    .unwrap();
+    let volume = resources["volumeCache"].data();
+    assert_eq!(volume.len(), 8 * 64 * 4);
+    for row in 0..64usize {
+        let depth = row / 8;
+        let expected: f32 = if (2..=5).contains(&depth) { 1.0 } else { 0.0 };
+        for column in 0..8usize {
+            let pixel = &volume[(row * 8 + column) * 4..(row * 8 + column) * 4 + 4];
+            assert_eq!(
+                pixel[3].to_bits(),
+                expected.to_bits(),
+                "occupancy at column {column}, atlas row {row} (depth {depth}): {pixel:?}"
+            );
+            for channel in 0..3 {
+                assert_eq!(
+                    pixel[channel].to_bits(),
+                    expected.to_bits(),
+                    "color channel {channel} at column {column}, atlas row {row}: {pixel:?}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
 fn conditions_repeats_and_resource_dimensions_are_deterministic() {
     let uniforms = BTreeMap::from([
         ("mode".into(), Value::Int(1)),
