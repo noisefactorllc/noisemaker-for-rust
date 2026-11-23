@@ -11,6 +11,65 @@ fn options() -> RenderOptions {
 }
 
 #[test]
+fn renderer_a_voxel_ray_through_an_edge_shows_the_face_its_neighbors_leave_exposed() {
+    // A voxel ray that passes through the edge shared by two cell boundaries
+    // crosses both at one distance and enters the cell beyond the edge.
+    // Whether the two crossings compare equal depends on rounding. On the
+    // center column of an odd-width orthographic frame the ray's x and z
+    // crossings are equal at every step, so the cell there must show the
+    // first face its neighbors leave exposed, not the first crossed axis in
+    // y, x, z order. A white cliff lit only from +z shows this: every face
+    // the pixels beside the center column show, the center column must show
+    // too.
+    const WIDTH: u32 = 129;
+    const HEIGHT: u32 = 129;
+    let width = WIDTH as usize;
+    let height = HEIGHT as usize;
+    let mut renderer = CpuRenderer::new().unwrap();
+    let cliff = "search synth, filter, synth3d, render\ngradient(type: linear, color1: #000000, color2: #ffffff).threshold(level: 0.5, sharpness: 1).write(o1)\nsolid(color: #ffffff).write(o2)\nheightmap3d(heightTex: read(o1), tex: read(o2), volumeSize: x16, heightScale: 1, baseHeight: 0).renderLandscape3d(lightDirection: vec3(0, 0, 1), ambient: 0, diffuseIntensity: 1, specularIntensity: 0, bgAlpha: 0).write(o0)\nrender(o0)";
+    let options = RenderOptions {
+        width: WIDTH,
+        height: HEIGHT,
+        ..RenderOptions::default()
+    };
+    let frame = renderer.render(cliff, &options).unwrap().surface.to_rgba8();
+    let pixel = |x: usize, y: usize| -> [u8; 4] {
+        let offset = (y * width + x) * 4;
+        [
+            frame[offset],
+            frame[offset + 1],
+            frame[offset + 2],
+            frame[offset + 3],
+        ]
+    };
+    let white = [255u8, 255, 255, 255];
+    let middle = (width - 1) / 2;
+    let mut face_rows = Vec::new();
+    for y in 0..height {
+        if pixel(middle - 1, y) == white && pixel(middle + 1, y) == white {
+            face_rows.push(y);
+        }
+    }
+    assert!(
+        face_rows.len() > 8,
+        "the center column must cross lit faces through voxel edges, saw {} rows",
+        face_rows.len()
+    );
+    let off_face: Vec<usize> = face_rows
+        .iter()
+        .copied()
+        .filter(|y| pixel(middle, *y) != white)
+        .collect();
+    assert!(
+        off_face.is_empty(),
+        "the center column looks at lit faces through voxel edges, and {} of its {} pixels there show {:?}",
+        off_face.len(),
+        face_rows.len(),
+        pixel(middle, off_face[0])
+    );
+}
+
+#[test]
 fn renderer_renders_solid_and_generator_filter_literal_pixels() {
     let mut renderer = CpuRenderer::new().unwrap();
     let solid = renderer

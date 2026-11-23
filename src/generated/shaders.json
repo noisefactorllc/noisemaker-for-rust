@@ -659456,6 +659456,33 @@
                 "kind": "declaration"
               },
               {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "kind": "binary",
+                      "left": {
+                        "kind": "identifier",
+                        "name": "gridScale",
+                        "storage": "uniform",
+                        "type": "float"
+                      },
+                      "operator": "*",
+                      "right": {
+                        "kind": "identifier",
+                        "name": "aspectInv",
+                        "storage": "uniform",
+                        "type": "float"
+                      },
+                      "type": "float"
+                    },
+                    "name": "gridDepth",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
                 "expression": {
                   "kind": "assignment",
                   "lvalue": {
@@ -659556,8 +659583,8 @@
                         "operator": "*",
                         "right": {
                           "kind": "identifier",
-                          "name": "gridScale",
-                          "storage": "uniform",
+                          "name": "gridDepth",
+                          "storage": "local",
                           "type": "float"
                         },
                         "type": "float"
@@ -659713,6 +659740,10 @@
         "structs": [],
         "uniforms": [
           {
+            "name": "aspectInv",
+            "type": "float"
+          },
+          {
             "name": "diffuseTex",
             "type": "sampler2D"
           },
@@ -659744,7 +659775,7 @@
         "varyings": []
       },
       "program": "agent",
-      "sourceSha256": "78f4791c91eb874c3c024be5d79534e45c478dc61e47a0bc4ba392ed2bd480d2"
+      "sourceSha256": "27d494941e36fd86b3e930937864a1a2c30ac77fd89c3cc1cac1f4fbf02cdfdb"
     },
     "points/heightGrid:passthrough": {
       "effectId": "points/heightGrid",
@@ -929768,7 +929799,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "7f3721e973944db9a680bc7048b2c3a5b49c9d8a",
+    "paramContractRevision": "75027859fbb9016880152d5155ef8221fb71a558",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"
