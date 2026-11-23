@@ -915354,9 +915354,278 @@
                   {
                     "arraySize": null,
                     "initializer": {
-                      "arguments": [
-                        {
-                          "field": "x",
+                      "kind": "binary",
+                      "left": {
+                        "arguments": [
+                          {
+                            "kind": "identifier",
+                            "name": "volumeSize",
+                            "storage": "uniform",
+                            "type": "int"
+                          }
+                        ],
+                        "kind": "construct",
+                        "type": "float"
+                      },
+                      "operator": "*",
+                      "right": {
+                        "kind": "literal",
+                        "source": "0.5",
+                        "type": "float",
+                        "value": 0.5
+                      },
+                      "type": "float"
+                    },
+                    "name": "halfSize",
+                    "type": "float"
+                  }
+                ],
+                "kind": "declaration"
+              },
+              {
+                "kind": "return",
+                "value": {
+                  "arguments": [
+                    {
+                      "condition": {
+                        "kind": "binary",
+                        "left": {
+                          "kind": "identifier",
+                          "name": "aspect",
+                          "storage": "uniform",
+                          "type": "float"
+                        },
+                        "operator": "<",
+                        "right": {
+                          "kind": "literal",
+                          "source": "1.0",
+                          "type": "float",
+                          "value": 1.0
+                        },
+                        "type": "bool"
+                      },
+                      "kind": "conditional",
+                      "type": "int",
+                      "whenFalse": {
+                        "kind": "identifier",
+                        "name": "volumeSize",
+                        "storage": "uniform",
+                        "type": "int"
+                      },
+                      "whenTrue": {
+                        "arguments": [
+                          {
+                            "kind": "literal",
+                            "source": "2",
+                            "type": "int",
+                            "value": 2
+                          },
+                          {
+                            "kind": "binary",
+                            "left": {
+                              "kind": "literal",
+                              "source": "2",
+                              "type": "int",
+                              "value": 2
+                            },
+                            "operator": "*",
+                            "right": {
+                              "arguments": [
+                                {
+                                  "arguments": [
+                                    {
+                                      "kind": "binary",
+                                      "left": {
+                                        "kind": "binary",
+                                        "left": {
+                                          "kind": "identifier",
+                                          "name": "halfSize",
+                                          "storage": "local",
+                                          "type": "float"
+                                        },
+                                        "operator": "*",
+                                        "right": {
+                                          "kind": "identifier",
+                                          "name": "aspect",
+                                          "storage": "uniform",
+                                          "type": "float"
+                                        },
+                                        "type": "float"
+                                      },
+                                      "operator": "+",
+                                      "right": {
+                                        "kind": "literal",
+                                        "source": "0.5",
+                                        "type": "float",
+                                        "value": 0.5
+                                      },
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "call",
+                                  "name": "floor",
+                                  "target": "builtin:floor",
+                                  "type": "float"
+                                }
+                              ],
+                              "kind": "construct",
+                              "type": "int"
+                            },
+                            "type": "int"
+                          }
+                        ],
+                        "kind": "call",
+                        "name": "max",
+                        "target": "builtin:max",
+                        "type": "int"
+                      }
+                    },
+                    {
+                      "condition": {
+                        "kind": "binary",
+                        "left": {
+                          "kind": "identifier",
+                          "name": "aspectInv",
+                          "storage": "uniform",
+                          "type": "float"
+                        },
+                        "operator": "<",
+                        "right": {
+                          "kind": "literal",
+                          "source": "1.0",
+                          "type": "float",
+                          "value": 1.0
+                        },
+                        "type": "bool"
+                      },
+                      "kind": "conditional",
+                      "type": "int",
+                      "whenFalse": {
+                        "kind": "identifier",
+                        "name": "volumeSize",
+                        "storage": "uniform",
+                        "type": "int"
+                      },
+                      "whenTrue": {
+                        "arguments": [
+                          {
+                            "kind": "literal",
+                            "source": "2",
+                            "type": "int",
+                            "value": 2
+                          },
+                          {
+                            "kind": "binary",
+                            "left": {
+                              "kind": "literal",
+                              "source": "2",
+                              "type": "int",
+                              "value": 2
+                            },
+                            "operator": "*",
+                            "right": {
+                              "arguments": [
+                                {
+                                  "arguments": [
+                                    {
+                                      "kind": "binary",
+                                      "left": {
+                                        "kind": "binary",
+                                        "left": {
+                                          "kind": "identifier",
+                                          "name": "halfSize",
+                                          "storage": "local",
+                                          "type": "float"
+                                        },
+                                        "operator": "*",
+                                        "right": {
+                                          "kind": "identifier",
+                                          "name": "aspectInv",
+                                          "storage": "uniform",
+                                          "type": "float"
+                                        },
+                                        "type": "float"
+                                      },
+                                      "operator": "+",
+                                      "right": {
+                                        "kind": "literal",
+                                        "source": "0.5",
+                                        "type": "float",
+                                        "value": 0.5
+                                      },
+                                      "type": "float"
+                                    }
+                                  ],
+                                  "kind": "call",
+                                  "name": "floor",
+                                  "target": "builtin:floor",
+                                  "type": "float"
+                                }
+                              ],
+                              "kind": "construct",
+                              "type": "int"
+                            },
+                            "type": "int"
+                          }
+                        ],
+                        "kind": "call",
+                        "name": "max",
+                        "target": "builtin:max",
+                        "type": "int"
+                      }
+                    }
+                  ],
+                  "kind": "construct",
+                  "type": "ivec2"
+                }
+              }
+            ],
+            "mangledName": "terrainSpan__void",
+            "name": "terrainSpan",
+            "parameters": [],
+            "returnType": "ivec2"
+          },
+          {
+            "body": [
+              {
+                "kind": "return",
+                "value": {
+                  "kind": "binary",
+                  "left": {
+                    "arguments": [
+                      {
+                        "field": "x",
+                        "kind": "member",
+                        "object": {
+                          "kind": "identifier",
+                          "name": "column",
+                          "storage": "parameter",
+                          "type": "ivec2"
+                        },
+                        "type": "int"
+                      },
+                      {
+                        "kind": "binary",
+                        "left": {
+                          "kind": "binary",
+                          "left": {
+                            "kind": "identifier",
+                            "name": "volumeSize",
+                            "storage": "uniform",
+                            "type": "int"
+                          },
+                          "operator": "-",
+                          "right": {
+                            "kind": "literal",
+                            "source": "1",
+                            "type": "int",
+                            "value": 1
+                          },
+                          "type": "int"
+                        },
+                        "operator": "-",
+                        "right": {
+                          "field": "y",
                           "kind": "member",
                           "object": {
                             "kind": "identifier",
@@ -915366,41 +915635,75 @@
                           },
                           "type": "int"
                         },
+                        "type": "int"
+                      }
+                    ],
+                    "kind": "construct",
+                    "type": "ivec2"
+                  },
+                  "operator": "-",
+                  "right": {
+                    "kind": "binary",
+                    "left": {
+                      "kind": "binary",
+                      "left": {
+                        "kind": "identifier",
+                        "name": "volumeSize",
+                        "storage": "uniform",
+                        "type": "int"
+                      },
+                      "operator": "-",
+                      "right": {
+                        "arguments": [],
+                        "kind": "call",
+                        "name": "terrainSpan",
+                        "target": "terrainSpan__void",
+                        "type": "ivec2"
+                      },
+                      "type": "ivec2"
+                    },
+                    "operator": "/",
+                    "right": {
+                      "kind": "literal",
+                      "source": "2",
+                      "type": "int",
+                      "value": 2
+                    },
+                    "type": "ivec2"
+                  },
+                  "type": "ivec2"
+                }
+              }
+            ],
+            "mangledName": "terrainColumn__ivec2",
+            "name": "terrainColumn",
+            "parameters": [
+              {
+                "name": "column",
+                "qualifier": "in",
+                "type": "ivec2"
+              }
+            ],
+            "returnType": "ivec2"
+          },
+          {
+            "body": [
+              {
+                "declarations": [
+                  {
+                    "arraySize": null,
+                    "initializer": {
+                      "arguments": [
                         {
-                          "kind": "binary",
-                          "left": {
-                            "kind": "binary",
-                            "left": {
-                              "kind": "identifier",
-                              "name": "volumeSize",
-                              "storage": "uniform",
-                              "type": "int"
-                            },
-                            "operator": "-",
-                            "right": {
-                              "kind": "literal",
-                              "source": "1",
-                              "type": "int",
-                              "value": 1
-                            },
-                            "type": "int"
-                          },
-                          "operator": "-",
-                          "right": {
-                            "field": "y",
-                            "kind": "member",
-                            "object": {
-                              "kind": "identifier",
-                              "name": "column",
-                              "storage": "parameter",
-                              "type": "ivec2"
-                            },
-                            "type": "int"
-                          },
-                          "type": "int"
+                          "kind": "identifier",
+                          "name": "column",
+                          "storage": "parameter",
+                          "type": "ivec2"
                         }
                       ],
-                      "kind": "construct",
+                      "kind": "call",
+                      "name": "terrainColumn",
+                      "target": "terrainColumn__ivec2",
                       "type": "ivec2"
                     },
                     "name": "image",
@@ -915409,6 +915712,91 @@
                 ],
                 "kind": "declaration"
               },
+              {
+                "kind": "return",
+                "value": {
+                  "kind": "binary",
+                  "left": {
+                    "arguments": [
+                      {
+                        "arguments": [
+                          {
+                            "kind": "identifier",
+                            "name": "image",
+                            "storage": "local",
+                            "type": "ivec2"
+                          },
+                          {
+                            "arguments": [
+                              {
+                                "kind": "literal",
+                                "source": "0",
+                                "type": "int",
+                                "value": 0
+                              }
+                            ],
+                            "kind": "construct",
+                            "type": "ivec2"
+                          }
+                        ],
+                        "kind": "call",
+                        "name": "greaterThanEqual",
+                        "target": "builtin:greaterThanEqual",
+                        "type": "bvec2"
+                      }
+                    ],
+                    "kind": "call",
+                    "name": "all",
+                    "target": "builtin:all",
+                    "type": "bool"
+                  },
+                  "operator": "&&",
+                  "right": {
+                    "arguments": [
+                      {
+                        "arguments": [
+                          {
+                            "kind": "identifier",
+                            "name": "image",
+                            "storage": "local",
+                            "type": "ivec2"
+                          },
+                          {
+                            "arguments": [],
+                            "kind": "call",
+                            "name": "terrainSpan",
+                            "target": "terrainSpan__void",
+                            "type": "ivec2"
+                          }
+                        ],
+                        "kind": "call",
+                        "name": "lessThan",
+                        "target": "builtin:lessThan",
+                        "type": "bvec2"
+                      }
+                    ],
+                    "kind": "call",
+                    "name": "all",
+                    "target": "builtin:all",
+                    "type": "bool"
+                  },
+                  "type": "bool"
+                }
+              }
+            ],
+            "mangledName": "inTerrain__ivec2",
+            "name": "inTerrain",
+            "parameters": [
+              {
+                "name": "column",
+                "qualifier": "in",
+                "type": "ivec2"
+              }
+            ],
+            "returnType": "bool"
+          },
+          {
+            "body": [
               {
                 "kind": "return",
                 "value": {
@@ -915422,9 +915810,17 @@
                           "left": {
                             "kind": "binary",
                             "left": {
-                              "kind": "identifier",
-                              "name": "image",
-                              "storage": "local",
+                              "arguments": [
+                                {
+                                  "kind": "identifier",
+                                  "name": "column",
+                                  "storage": "parameter",
+                                  "type": "ivec2"
+                                }
+                              ],
+                              "kind": "call",
+                              "name": "terrainColumn",
+                              "target": "terrainColumn__ivec2",
                               "type": "ivec2"
                             },
                             "operator": "*",
@@ -915458,10 +915854,11 @@
                       "right": {
                         "kind": "binary",
                         "left": {
-                          "kind": "identifier",
-                          "name": "volumeSize",
-                          "storage": "uniform",
-                          "type": "int"
+                          "arguments": [],
+                          "kind": "call",
+                          "name": "terrainSpan",
+                          "target": "terrainSpan__void",
+                          "type": "ivec2"
                         },
                         "operator": "*",
                         "right": {
@@ -915470,7 +915867,7 @@
                           "type": "int",
                           "value": 2
                         },
-                        "type": "int"
+                        "type": "ivec2"
                       },
                       "type": "ivec2"
                     },
@@ -915529,6 +915926,39 @@
           },
           {
             "body": [
+              {
+                "condition": {
+                  "kind": "unary",
+                  "operand": {
+                    "arguments": [
+                      {
+                        "kind": "identifier",
+                        "name": "column",
+                        "storage": "parameter",
+                        "type": "ivec2"
+                      }
+                    ],
+                    "kind": "call",
+                    "name": "inTerrain",
+                    "target": "inTerrain__ivec2",
+                    "type": "bool"
+                  },
+                  "operator": "!",
+                  "type": "bool"
+                },
+                "else": null,
+                "hoistedDeclarations": [],
+                "kind": "if",
+                "then": {
+                  "kind": "return",
+                  "value": {
+                    "kind": "literal",
+                    "source": "0.0",
+                    "type": "float",
+                    "value": 0.0
+                  }
+                }
+              },
               {
                 "declarations": [
                   {
@@ -916683,6 +917113,14 @@
         "structs": [],
         "uniforms": [
           {
+            "name": "aspect",
+            "type": "float"
+          },
+          {
+            "name": "aspectInv",
+            "type": "float"
+          },
+          {
             "name": "baseHeight",
             "type": "float"
           },
@@ -916706,7 +917144,7 @@
         "varyings": []
       },
       "program": "precompute",
-      "sourceSha256": "85d3d98f08181500765e54b01153163ac6a18a1db7766e88a32fa7de0628e0dc"
+      "sourceSha256": "8797f5f7cd9a16e4a0bcb1de2ea5032748c90e0f371f0608130204666dc8d741"
     },
     "synth3d/noise3d:precompute": {
       "effectId": "synth3d/noise3d",
@@ -929799,7 +930237,7 @@
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
     "lockVersion": "1.0",
-    "paramContractRevision": "75027859fbb9016880152d5155ef8221fb71a558",
+    "paramContractRevision": "478f94eae7ebe34116dfc661ac52b373b884008b",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
     "version": "1.0"
