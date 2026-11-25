@@ -12,7 +12,7 @@ on:
       - '!.editorconfig'
       - '!docs/**'
       - 'docs/EFFECTS.md'
-    branches: [main]
+    branches: [main, 2.x]
   workflow_dispatch:
   schedule:
     - cron: '23 8 * * 1'
@@ -116,11 +116,19 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Read the pinned JavaScript CPU oracle revision
+        id: oracle
+        shell: bash
+        run: |
+          revision=$(tr -d '\r\n' < scripts/cpu-oracle-revision)
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::scripts/cpu-oracle-revision holds no full commit SHA"; exit 1; }
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+
       - name: Check out pinned JavaScript CPU oracle
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: noisefactorllc/noisemaker-for-cpu
-          ref: 0670ceace1c0c52791ef7d57493ded6e0b35a4b9
+          ref: ${{ steps.oracle.outputs.revision }}
           path: oracle
           persist-credentials: false
 
@@ -163,11 +171,19 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Read the pinned JavaScript CPU oracle revision
+        id: oracle
+        shell: bash
+        run: |
+          revision=$(tr -d '\r\n' < scripts/cpu-oracle-revision)
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::scripts/cpu-oracle-revision holds no full commit SHA"; exit 1; }
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+
       - name: Check out pinned JavaScript CPU oracle
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: noisefactorllc/noisemaker-for-cpu
-          ref: 0670ceace1c0c52791ef7d57493ded6e0b35a4b9
+          ref: ${{ steps.oracle.outputs.revision }}
           path: oracle
           persist-credentials: false
 
@@ -202,11 +218,19 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Read the pinned JavaScript CPU oracle revision
+        id: oracle
+        shell: bash
+        run: |
+          revision=$(tr -d '\r\n' < scripts/cpu-oracle-revision)
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::scripts/cpu-oracle-revision holds no full commit SHA"; exit 1; }
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+
       - name: Check out pinned JavaScript CPU oracle
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: noisefactorllc/noisemaker-for-cpu
-          ref: 0670ceace1c0c52791ef7d57493ded6e0b35a4b9
+          ref: ${{ steps.oracle.outputs.revision }}
           path: oracle
           persist-credentials: false
 

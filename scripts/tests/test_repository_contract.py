@@ -10,6 +10,11 @@ import unittest
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 REPO_URL = "https://github.com/noisefactorllc/noisemaker-for-rust"
+# Every checkout of the JavaScript CPU oracle reads its revision from this
+# tracked file, through the step that reads it into steps.oracle.
+ORACLE_REVISION_FILE = "scripts/cpu-oracle-revision"
+ORACLE_PIN = r"repository: noisefactorllc/noisemaker-for-cpu\n\s+ref: \$\{\{ steps\.oracle\.outputs\.revision \}\}\n"
+ORACLE_READ = r"id: oracle\n(?:.*\n)*?.*< scripts/cpu-oracle-revision\)\n"
 
 
 def top_level_block(text, key):
@@ -65,7 +70,9 @@ class ExportKitWorkflowTest(unittest.TestCase):
         on = top_level_block(self.text, "on")
         self.assertIn("  push:", on, "export-kit.yml must run on push")
         push = nested_block(on, "push", 2)
-        self.assertTrue(any(re.fullmatch(r"\s*branches:\s*\[main\]\s*", line) for line in push))
+        branches = [m.group(1) for line in push if (m := re.fullmatch(r"\s*branches:\s*\[([^\]]*)\]\s*", line))]
+        self.assertEqual(len(branches), 1, "export-kit.yml push must list its branches inline")
+        self.assertIn("main", [branch.strip() for branch in branches[0].split(",")])
         paths = [m.group(1) for line in push if (m := re.fullmatch(r"\s*-\s*[\"']?([^\"']+)[\"']?\s*", line))]
         self.assertIn("src/**", paths, "a src/** push must trigger the rendered parity")
 
@@ -77,7 +84,8 @@ class ExportKitWorkflowTest(unittest.TestCase):
             "rendered-parity must not be skipped on any trigger",
         )
         body = "\n".join(parity)
-        self.assertRegex(body, r"repository: noisefactorllc/noisemaker-for-cpu\n\s+ref: [0-9a-f]{40}\n")
+        self.assertRegex(body, ORACLE_PIN)
+        self.assertRegex(body, ORACLE_READ)
         self.assertIn("scripts/parity.py", body)
         self.assertNotIn("--only", body, "the gate compares the whole catalog")
 
@@ -88,6 +96,35 @@ class ExportKitWorkflowTest(unittest.TestCase):
         condition = next(line for line in dispatch if re.match(r"\s{4}if:", line))
         self.assertIn("github.ref == 'refs/heads/main'", condition)
         self.assertIn("github.event_name != 'push'", condition)
+
+
+class OracleRevisionTest(unittest.TestCase):
+    """Every oracle checkout reads one tracked revision, so moving the oracle edits no workflow."""
+
+    def test_the_tracked_file_holds_one_full_commit_sha(self):
+        text = (ROOT / ORACLE_REVISION_FILE).read_text(encoding="utf-8")
+        self.assertRegex(text, r"\A[0-9a-f]{40}\n\Z")
+
+    def test_every_oracle_checkout_reads_the_tracked_file(self):
+        expected = {
+            "ci.yml": {"parity-windows", "catalog-smoke", "sweep"},
+            "export-kit.yml": {"rendered-parity"},
+        }
+        for name, oracle_jobs in expected.items():
+            with self.subTest(workflow=name):
+                text = (ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8")
+                block = top_level_block(text, "jobs")
+                names = [m.group(1) for line in block if (m := re.fullmatch(r"  ([\w-]+):", line))]
+                found = set()
+                for job in names:
+                    body = "\n".join(nested_block(block, job, 2))
+                    checkouts = body.count("repository: noisefactorllc/noisemaker-for-cpu")
+                    if not checkouts:
+                        continue
+                    found.add(job)
+                    self.assertEqual(len(re.findall(ORACLE_PIN, body)), checkouts, f"{name} job {job}")
+                    self.assertRegex(body, ORACLE_READ, f"{name} job {job} does not read {ORACLE_REVISION_FILE}")
+                self.assertEqual(found, oracle_jobs)
 
 
 class WeeklySweepWorkflowTest(unittest.TestCase):
@@ -120,10 +157,11 @@ class WeeklySweepWorkflowTest(unittest.TestCase):
         self.assertNotRegex(self.gate[0], r"\|\|\s*true", "the sweep command must not ignore its exit status")
 
     def test_the_sweep_compares_against_the_same_pinned_oracle_as_the_parity_gate(self):
-        pin = r"repository: noisefactorllc/noisemaker-for-cpu\n\s+ref: ([0-9a-f]{40})\n"
         export_kit = (ROOT / ".github" / "workflows" / "export-kit.yml").read_text(encoding="utf-8")
         gate = "\n".join(nested_block(top_level_block(export_kit, "jobs"), "rendered-parity", 2))
-        self.assertEqual(re.search(pin, self.sweep).group(1), re.search(pin, gate).group(1))
+        for body in (self.sweep, gate):
+            self.assertRegex(body, ORACLE_PIN)
+            self.assertRegex(body, ORACLE_READ)
 
     def test_the_sweep_runs_every_case_with_the_sequence_example(self):
         self.assertIn("--example parity_sequence", self.sweep)

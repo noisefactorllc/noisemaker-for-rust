@@ -6,21 +6,23 @@ name: Export kit
 
 # The kit releases only after the rendered cross-port parity against the pinned
 # JavaScript CPU oracle passes, and only from the weekly run or a manual
-# dispatch. A push to main that changes the renderer runs the same parity as a
-# push gate without releasing a kit. The parity renders 210 cases at 8x8 in
-# under five minutes on the runner, which keeps the push gate under ten
-# minutes. The catalog smoke tests and the Windows parity stay weekly in ci.yml.
+# dispatch. A push to main or 2.x that changes the renderer runs the same
+# parity as a push gate without releasing a kit. The parity renders 210 cases
+# at 8x8 in under five minutes on the runner, which keeps the push gate under
+# ten minutes. The catalog smoke tests and the Windows parity stay weekly in
+# ci.yml.
 on:
   workflow_dispatch:
   schedule:
     - cron: '53 8 * * 1'
   push:
-    branches: [main]
+    branches: [main, 2.x]
     paths:
       - "src/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - "scripts/parity.py"
+      - "scripts/cpu-oracle-revision"
       - ".github/workflows/export-kit.yml"
 
 permissions: {}
@@ -39,11 +41,19 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Read the pinned JavaScript CPU oracle revision
+        id: oracle
+        shell: bash
+        run: |
+          revision=$(tr -d '\r\n' < scripts/cpu-oracle-revision)
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::scripts/cpu-oracle-revision holds no full commit SHA"; exit 1; }
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+
       - name: Check out pinned JavaScript CPU oracle
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: noisefactorllc/noisemaker-for-cpu
-          ref: 0670ceace1c0c52791ef7d57493ded6e0b35a4b9
+          ref: ${{ steps.oracle.outputs.revision }}
           path: oracle
           persist-credentials: false
 
