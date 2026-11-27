@@ -180,6 +180,117 @@ pub fn texture_dimensions(
     ))
 }
 
+pub(crate) fn declared_attachment_dimensions(
+    spec: Option<&JsonValue>,
+    viewport: Option<&JsonValue>,
+    params: &BTreeMap<String, Value>,
+    width: u32,
+    height: u32,
+    resources: &BTreeMap<String, Surface>,
+) -> Result<(u32, u32), RenderError> {
+    let axis = |short: &str, long: &str| {
+        viewport
+            .and_then(|v| v.get(short).or_else(|| v.get(long)))
+            .or_else(|| spec.and_then(|v| v.get(long)))
+    };
+    Ok((
+        size_component(axis("w", "width"), params, width, resources, true)?,
+        size_component(axis("h", "height"), params, height, resources, false)?,
+    ))
+}
+
+/// A single-output kernel uses the first attachment in the authored declaration.
+pub(crate) fn first_output(pass: &RenderPass) -> Option<&String> {
+    pass.execution
+        .get("outputOrder")
+        .and_then(JsonValue::as_array)
+        .and_then(|order| order.first())
+        .and_then(JsonValue::as_str)
+        .and_then(|name| pass.outputs.get(name))
+        .or_else(|| pass.outputs.values().next())
+}
+
+fn blend_factor(value: Option<&JsonValue>) -> u64 {
+    if let Some(code) = value.and_then(JsonValue::as_u64) {
+        return code;
+    }
+    match value
+        .and_then(JsonValue::as_str)
+        .unwrap_or_default()
+        .to_ascii_lowercase()
+        .replace('_', "-")
+        .as_str()
+    {
+        "zero" => 0,
+        "src" | "src-color" => 0x300,
+        "one-minus-src" | "one-minus-src-color" => 0x301,
+        "src-alpha" => 0x302,
+        "one-minus-src-alpha" => 0x303,
+        "dst-alpha" => 0x304,
+        "one-minus-dst-alpha" => 0x305,
+        "dst" | "dst-color" => 0x306,
+        "one-minus-dst" | "one-minus-dst-color" => 0x307,
+        _ => 1,
+    }
+}
+
+fn blend_weight(factor: u64, src: f64, dst: f64, src_alpha: f64, dst_alpha: f64) -> f64 {
+    match factor {
+        0 => 0.,
+        0x300 => src,
+        0x301 => 1. - src,
+        0x302 => src_alpha,
+        0x303 => 1. - src_alpha,
+        0x304 => dst_alpha,
+        0x305 => 1. - dst_alpha,
+        0x306 => dst,
+        0x307 => 1. - dst,
+        _ => 1.,
+    }
+}
+
+fn finish_attachment(
+    surface: &mut Surface,
+    previous: Option<&Surface>,
+    blend: Option<&JsonValue>,
+    format: TextureFormat,
+) {
+    if let Some(blend) =
+        blend.filter(|value| !matches!(value, JsonValue::Null | JsonValue::Bool(false)))
+    {
+        let src_factor = blend_factor(blend.get(0));
+        let dst_factor = blend_factor(blend.get(1));
+        let backdrop = previous
+            .filter(|prev| prev.width() == surface.width() && prev.height() == surface.height());
+        for (index, pixel) in surface.data_mut().chunks_exact_mut(4).enumerate() {
+            let dst = backdrop.map_or(&[0.; 4][..], |surface| {
+                &surface.data()[index * 4..index * 4 + 4]
+            });
+            let src_alpha = f64::from(pixel[3]);
+            let dst_alpha = f64::from(dst[3]);
+            for (channel, &dst) in pixel.iter_mut().zip(dst) {
+                let src = f64::from(*channel);
+                let dst = f64::from(dst);
+                *channel = (src * blend_weight(src_factor, src, dst, src_alpha, dst_alpha)
+                    + dst * blend_weight(dst_factor, src, dst, src_alpha, dst_alpha))
+                    as f32;
+            }
+        }
+    }
+    quantize_texture(surface, format);
+}
+
+pub(crate) fn uses_mrt(program: &ProgramIr, pass: &RenderPass, graph: bool) -> bool {
+    program.outputs.len() > 1
+        && (!graph
+            || pass
+                .execution
+                .get("drawBuffers")
+                .and_then(JsonValue::as_u64)
+                .unwrap_or(1)
+                >= 2)
+}
+
 /// Execute one fragment pass and replace each named output attachment.
 #[allow(clippy::too_many_arguments)]
 pub fn execute_pass(
@@ -193,7 +304,40 @@ pub fn execute_pass(
     external_sampler: Option<&str>,
     derivatives: bool,
 ) -> Result<(), RenderError> {
-    if program.outputs.len() != render_pass.outputs.len() {
+    execute_pass_with_bindings(
+        program,
+        render_pass,
+        uniforms,
+        resources,
+        width,
+        height,
+        formats,
+        external_sampler,
+        derivatives,
+        &BTreeMap::new(),
+        false,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn execute_pass_with_bindings(
+    program: &ProgramIr,
+    render_pass: &RenderPass,
+    uniforms: &BTreeMap<String, Value>,
+    resources: &mut BTreeMap<String, Surface>,
+    width: u32,
+    height: u32,
+    formats: &BTreeMap<String, TextureFormat>,
+    external_sampler: Option<&str>,
+    derivatives: bool,
+    declared_dimensions: &BTreeMap<String, (u32, u32)>,
+    graph: bool,
+) -> Result<(), RenderError> {
+    if render_pass.outputs.is_empty()
+        || (!graph
+            && program.outputs.len() != 1
+            && program.outputs.len() != render_pass.outputs.len())
+    {
         return Err(RenderError::InvalidGraph {
             message: format!(
                 "pass {:?} maps {} attachments from {} shader outputs",
@@ -203,10 +347,14 @@ pub fn execute_pass(
             ),
         });
     }
-    let output_names = program.outputs.clone();
+    let output_names = if !graph || uses_mrt(program, render_pass, graph) {
+        program.outputs.clone()
+    } else {
+        program.outputs.first().cloned().into_iter().collect()
+    };
     let attachment_names =
         if output_names.len() == 1 {
-            vec![render_pass.outputs.values().next().unwrap().clone()]
+            vec![first_output(render_pass).unwrap().clone()]
         } else {
             output_names
                 .iter()
@@ -233,7 +381,9 @@ pub fn execute_pass(
     let destination_dimensions = attachment_names
         .iter()
         .map(|name| {
-            let dimensions = if viewport.is_none() {
+            let dimensions = if let Some(dimensions) = declared_dimensions.get(name) {
+                *dimensions
+            } else if viewport.is_none() {
                 resources
                     .get(name)
                     .map(|surface| (surface.width(), surface.height()))
@@ -283,8 +433,10 @@ pub fn execute_pass(
             pass_height,
         )?);
         if let Some((attachment, mut surface)) = adapted {
-            quantize_texture(
+            finish_attachment(
                 &mut surface,
+                resources.get(&attachment),
+                render_pass.execution.get("blend"),
                 formats.get(&attachment).copied().unwrap_or_default(),
             );
             resources.insert(attachment, surface);
@@ -330,11 +482,13 @@ pub fn execute_pass(
             .and_then(|name| resource_surface(resources, name))
             .cloned()
             .unwrap_or_else(|| black.clone());
-        surface.set_filter_mode(if external_sampler == Some(uniform.name.as_str()) {
-            FilterMode::Linear
-        } else {
-            FilterMode::Nearest
-        });
+        if !graph {
+            surface.set_filter_mode(if external_sampler == Some(uniform.name.as_str()) {
+                FilterMode::Linear
+            } else {
+                FilterMode::Nearest
+            });
+        }
         let sampler = runtime.add_texture(surface);
         context.uniforms.insert(uniform.name.clone(), sampler);
     }
@@ -392,8 +546,10 @@ pub fn execute_pass(
         }
     }
     for (attachment, surface) in attachment_names.iter().zip(surfaces.iter_mut()) {
-        quantize_texture(
+        finish_attachment(
             surface,
+            resources.get(attachment),
+            render_pass.execution.get("blend"),
             formats.get(attachment).copied().unwrap_or_default(),
         );
     }
@@ -571,7 +727,7 @@ fn numeric_value(value: &Value) -> Option<f64> {
 fn integer_value(value: &Value) -> Option<i64> {
     numeric_value(value).map(|value| value as i64)
 }
-fn json_to_value(value: &JsonValue) -> Option<Value> {
+pub(crate) fn json_to_value(value: &JsonValue) -> Option<Value> {
     match value {
         JsonValue::Bool(value) => Some(Value::Bool(*value)),
         JsonValue::Number(value) if value.is_i64() => Some(Value::Int(value.as_i64()? as i32)),

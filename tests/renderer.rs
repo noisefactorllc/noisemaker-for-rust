@@ -396,14 +396,14 @@ fn renderer_chain_arguments_render_like_their_textual_expansions() {
             "search synth, filter, synth3d, render\nheightmap3d(heightTex: solid(color: #00ff00).invert(), tex: solid(color: #ff0000), volumeSize: x16).renderLandscape3d().write(o0)\nrender(o0)\n",
             "search synth, filter, synth3d, render\nsolid(color: #00ff00).invert().write(o1)\nsolid(color: #ff0000).write(o2)\nheightmap3d(heightTex: read(o1), tex: read(o2), volumeSize: x16).renderLandscape3d().write(o0)\nrender(o0)\n",
         ),
-        // A chain that starts from read(), after a mid-chain write in the same statement.
+        // Hoist the read/filter chain into a named surface before using it as a mixer argument.
         (
-            "search synth, filter, mixer\nnoise(seed: 1).write(o1).blendMode(tex: read(o1).invert(), mode: screen).write(o0)\nrender(o0)\n",
+            "search synth, filter, mixer\nlet inverted = invert()\nnoise(seed: 1).write(o1)\nread(o1).inverted().write(o2)\nread(o1).blendMode(tex: read(o2), mode: screen).write(o0)\nrender(o0)\n",
             "search synth, filter, mixer\nnoise(seed: 1).write(o1)\nread(o1).invert().write(o2)\nread(o1).blendMode(tex: read(o2), mode: screen).write(o0)\nrender(o0)\n",
         ),
-        // A subchain block inside a chain argument.
+        // A subchain block can render a layer consumed by a later mixer.
         (
-            "search synth, filter, mixer\nnoise(seed: 1).blendMode(tex: noise(seed: 2).subchain(name: \"x\") { .invert() }, mode: screen).write(o0)\nrender(o0)\n",
+            "search synth, filter, mixer\nlet inverted = invert()\nnoise(seed: 2).subchain(name: \"x\") { .inverted() }.write(o1)\nnoise(seed: 1).blendMode(tex: read(o1), mode: screen).write(o0)\nrender(o0)\n",
             "search synth, filter, mixer\nnoise(seed: 2).invert().write(o1)\nnoise(seed: 1).blendMode(tex: read(o1), mode: screen).write(o0)\nrender(o0)\n",
         ),
     ];
@@ -425,6 +425,11 @@ fn renderer_chain_arguments_render_like_their_textual_expansions() {
 #[test]
 fn renderer_grammar_forms_render_like_their_plain_equivalents() {
     let mut renderer = CpuRenderer::new().unwrap();
+    let mut options = options();
+    options.external_textures.insert(
+        "textTex".into(),
+        noisemaker_cpu::Surface::from_rgba8(1, 1, &[255, 255, 255, 255]).unwrap(),
+    );
     let pi_third = ((std::f64::consts::PI + 1.0) / 2.0) - (-std::f64::consts::PI);
     let pairs = [
         // Math.PI
@@ -450,13 +455,9 @@ fn renderer_grammar_forms_render_like_their_plain_equivalents() {
         ("search synth, filter\nlet n = from(classicNoisedeck, noise(seed: 3))\nn().write(o0)\nrender(o0)\n", "search classicNoisedeck\nnoise(seed: 3).write(o0)\nrender(o0)\n".to_string()),
     ];
     for (form, plain) in pairs {
-        let left = renderer
-            .render(form, &options())
-            .unwrap()
-            .surface
-            .to_rgba8();
+        let left = renderer.render(form, &options).unwrap().surface.to_rgba8();
         let right = renderer
-            .render(&plain, &options())
+            .render(&plain, &options)
             .unwrap()
             .surface
             .to_rgba8();
@@ -467,19 +468,20 @@ fn renderer_grammar_forms_render_like_their_plain_equivalents() {
 #[test]
 fn renderer_text_textures_render_like_their_explicit_wiring() {
     let mut renderer = CpuRenderer::new().unwrap();
+    let mut options = options();
+    options.external_textures.insert(
+        "textTex".into(),
+        noisemaker_cpu::Surface::from_rgba8(1, 1, &[255, 255, 255, 255]).unwrap(),
+    );
     let inline = "search synth, filter\nsolid(color: #000).text(text: \"\"\"ok\"\"\").write(o0)\nrender(o0)\n";
     let wired =
         "search synth, filter\nsolid(color: #000).text(text: \"ok\").write(o0)\nrender(o0)\n";
     let left = renderer
-        .render(inline, &options())
+        .render(inline, &options)
         .unwrap()
         .surface
         .to_rgba8();
-    let right = renderer
-        .render(wired, &options())
-        .unwrap()
-        .surface
-        .to_rgba8();
+    let right = renderer.render(wired, &options).unwrap().surface.to_rgba8();
     assert_eq!(left, right);
 }
 
@@ -525,4 +527,40 @@ fn renderer_float_choice_names_render_like_their_numeric_values() {
             .to_rgba8();
         assert_eq!(left, right, "{named}");
     }
+}
+
+#[test]
+fn ordinary_dsl_particle_pass_reports_the_first_missing_agent_texture() {
+    let mut options = options();
+    options.external_textures.insert(
+        "global_xyz".into(),
+        noisemaker_cpu::Surface::new(1, 1).unwrap(),
+    );
+    let error = noisemaker_cpu::CpuRenderer::new()
+        .unwrap()
+        .render(
+            "search synth,points\nsolid().heightGrid().write(o0)",
+            &options,
+        )
+        .unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("points/heightGrid pass \"agent\" requires texture \"global_xyz\""),
+        "{error}"
+    );
+}
+
+#[test]
+fn dsl_media_effect_requires_its_declared_external_input() {
+    let error = CpuRenderer::new()
+        .unwrap()
+        .render("search synth\nmedia().write(o0)", &options())
+        .unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("synth/media requires external texture \"imageTex\""),
+        "{error}"
+    );
 }

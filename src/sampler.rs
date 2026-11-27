@@ -32,10 +32,19 @@ fn nearest_texel(coordinate: f64, size: usize) -> usize {
 /// GLSL bottom-left UV coordinates.
 #[must_use]
 pub fn sample_bilinear(surface: &Surface, u: f32, v: f32) -> [f32; 4] {
+    bilinear(surface, f64::from(u), f64::from(v), true)
+}
+
+// CPU semantic kernels pass JS Number coordinates to the top-down sampler.
+pub(crate) fn sample_bilinear_top_down(surface: &Surface, u: f64, v: f64) -> [f32; 4] {
+    bilinear(surface, u, v, false)
+}
+
+fn bilinear(surface: &Surface, u: f64, v: f64, bottom_left: bool) -> [f32; 4] {
     let width = surface.width() as usize;
     let height = surface.height() as usize;
-    let px = clamp_coordinate(f64::from(u) * width as f64 - 0.5, width);
-    let py = clamp_coordinate(f64::from(v) * height as f64 - 0.5, height);
+    let px = clamp_coordinate(u * width as f64 - 0.5, width);
+    let py = clamp_coordinate(v * height as f64 - 0.5, height);
     let x0 = px.floor() as usize;
     let shader_y0 = py.floor() as usize;
     let x1 = (x0 + 1).min(width - 1);
@@ -43,10 +52,11 @@ pub fn sample_bilinear(surface: &Surface, u: f32, v: f32) -> [f32; 4] {
     let tx = px - x0 as f64;
     let ty = py - shader_y0 as f64;
 
-    let p00 = pixel_offset(width, x0, height - 1 - shader_y0);
-    let p10 = pixel_offset(width, x1, height - 1 - shader_y0);
-    let p01 = pixel_offset(width, x0, height - 1 - shader_y1);
-    let p11 = pixel_offset(width, x1, height - 1 - shader_y1);
+    let row = |y| if bottom_left { height - 1 - y } else { y };
+    let p00 = pixel_offset(width, x0, row(shader_y0));
+    let p10 = pixel_offset(width, x1, row(shader_y0));
+    let p01 = pixel_offset(width, x0, row(shader_y1));
+    let p11 = pixel_offset(width, x1, row(shader_y1));
     let data = surface.data();
     let mut output = [0.0; 4];
 

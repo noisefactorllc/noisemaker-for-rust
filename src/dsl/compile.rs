@@ -9,7 +9,7 @@ use super::{
 use crate::ParamValue;
 use crate::automation::{AutomationField, AutomationValue};
 use crate::catalog::{EffectCatalog, EffectDefinition, ParameterSpec, effect_catalog};
-use crate::param::{validate_parameter_number, validate_parameter_vector};
+use crate::param::{uses_authored_precision, validate_parameter_number, validate_parameter_vector};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SurfaceBinding {
@@ -30,10 +30,13 @@ pub struct InlineChain {
 #[derive(Clone, Debug, PartialEq)]
 pub enum RenderStep {
     Read {
+        id: Option<String>,
+        skip: bool,
         surface: String,
         loc: Location,
     },
     Effect {
+        id: Option<String>,
         effect_id: String,
         params: BTreeMap<String, ParamValue>,
         surface_params: BTreeMap<String, SurfaceBinding>,
@@ -42,6 +45,7 @@ pub enum RenderStep {
         loc: Location,
     },
     Write {
+        id: Option<String>,
         surface: String,
         loc: Location,
     },
@@ -49,11 +53,14 @@ pub enum RenderStep {
     // the current volume and geometry under the two names and passes the chain
     // through; read3d starts a chain from them.
     Read3d {
+        id: Option<String>,
+        skip: bool,
         volume: String,
         geometry: String,
         loc: Location,
     },
     Write3d {
+        id: Option<String>,
         volume: String,
         geometry: String,
         loc: Location,
@@ -100,6 +107,7 @@ struct ResolvedArgument {
 #[derive(Clone, Debug)]
 struct Partial {
     call: DslCall,
+    color_splat_limit: Option<usize>,
 }
 
 #[derive(Clone, Debug)]
@@ -236,15 +244,23 @@ fn declare_through(
 fn declare_binding(binding: &DslBinding, scope: &mut CompileScope) -> Result<(), DslError> {
     if let DslValue::Call(call) = &binding.value {
         if !matches!(call.name.as_str(), "osc" | "midi" | "audio") {
-            // A partial keeps its call unresolved. Its arguments resolve where
-            // it is called, as upstream's validator substitutes a symbol at
-            // each use.
-            scope.bindings.insert(
-                binding.name.clone(),
-                Binding::Partial(Partial {
-                    call: (**call).clone(),
-                }),
-            );
+            let mut call = (**call).clone();
+            capture_call_colors(&mut call, scope);
+            let partial = match scope.bindings.get(&call.name) {
+                Some(Binding::Partial(previous)) => merge_partial(previous, &call),
+                previous => {
+                    if let Some(Binding::Alias(name)) = previous {
+                        call.name = name.clone();
+                    }
+                    Partial {
+                        call,
+                        color_splat_limit: None,
+                    }
+                }
+            };
+            scope
+                .bindings
+                .insert(binding.name.clone(), Binding::Partial(partial));
             return Ok(());
         }
     }
@@ -265,15 +281,66 @@ fn declare_binding(binding: &DslBinding, scope: &mut CompileScope) -> Result<(),
             ));
         }
     }
+    let mut expr = binding.value.clone();
+    capture_hex_colors(&mut expr, scope);
     scope.bindings.insert(
         binding.name.clone(),
         Binding::Value {
-            expr: binding.value.clone(),
+            expr,
             resolved: false,
             value: None,
         },
     );
     Ok(())
+}
+
+// Inspect a value alias without evaluating unused expressions or compiling chains.
+fn bound_expression<'a>(mut value: &'a DslValue, scope: &'a CompileScope) -> &'a DslValue {
+    let mut seen = BTreeSet::new();
+    while let DslValue::Identifier { name, .. } = value {
+        if !seen.insert(name) {
+            break;
+        }
+        let Some(Binding::Value { expr, .. }) = scope.bindings.get(name) else {
+            break;
+        };
+        value = expr;
+    }
+    value
+}
+
+fn capture_call_colors(call: &mut DslCall, scope: &CompileScope) {
+    for arg in &mut call.args {
+        capture_hex_colors(&mut arg.value, scope);
+    }
+}
+
+// Only a hex colour is captured at declaration. Other values keep their
+// use-site resolution, including values inside an inline effect chain.
+fn capture_hex_colors(value: &mut DslValue, scope: &CompileScope) {
+    match value {
+        DslValue::Call(call) => capture_call_colors(call, scope),
+        DslValue::Chain(chain) => {
+            for element in &mut chain.calls {
+                if let DslChainElement::Call(call) = element {
+                    capture_call_colors(call, scope);
+                }
+            }
+        }
+        DslValue::Identifier { .. } => {
+            let resolved = bound_expression(value, scope);
+            if matches!(
+                resolved,
+                DslValue::Array {
+                    hex_color: true,
+                    ..
+                }
+            ) {
+                *value = resolved.clone();
+            }
+        }
+        _ => {}
+    }
 }
 
 // An effect alias declares when the name resolves in the search namespaces, as
@@ -341,10 +408,15 @@ fn compile_chain(
         .collect::<Vec<_>>();
     for (index, source_call) in calls.iter().enumerate() {
         let mut call = source_call.clone();
+        let mut color_splat_limit = None;
         let bound = scope.bindings.get(&call.name).cloned();
         match bound {
             Some(Binding::Alias(alias)) => call.name = alias,
-            Some(Binding::Partial(partial)) => call = merge_partial(&partial.call, &call)?,
+            Some(Binding::Partial(partial)) => {
+                let merged = merge_partial(&partial, &call);
+                color_splat_limit = merged.color_splat_limit;
+                call = merged.call;
+            }
             Some(_) => {
                 return Err(DslError::new(
                     format!("Binding {:?} is not callable", call.name),
@@ -353,11 +425,42 @@ fn compile_chain(
             }
             None => {}
         }
+        let mut id = None;
+        let mut skip = false;
+        let is_read = matches!(call.name.as_str(), "read" | "read3d");
+        call.args.retain(|argument| match argument.name.as_deref() {
+            Some("_id") => {
+                id = match &argument.value {
+                    DslValue::String(value) if valid_element_id(value) => Some(value.clone()),
+                    _ => None,
+                };
+                false
+            }
+            Some("_skip") if is_read => {
+                skip = matches!(argument.value, DslValue::Bool(true));
+                false
+            }
+            Some("_skip") => !matches!(argument.value, DslValue::Bool(false)),
+            _ => true,
+        });
+        let namespaces: Vec<String> = call
+            .namespace
+            .clone()
+            .map(|namespace| vec![namespace])
+            .unwrap_or_else(|| scope.search.clone());
+        let effect_id = namespaces
+            .iter()
+            .map(|namespace| format!("{namespace}/{}", call.name))
+            .find(|effect_id| catalog.effects.contains_key(effect_id.as_str()));
+        let definition = effect_id.as_ref().map(|id| &catalog.effects[id]);
+        if let Some(definition) = definition {
+            call.args = effect_arguments(&call, definition, scope, color_splat_limit);
+        }
         // Chain arguments compile while the arguments resolve; they belong to
         // this call.
         let outer_pending = scope.pending.take();
         scope.pending = Some(Vec::new());
-        let resolved = resolve_args(&call.args, scope);
+        let resolved = resolve_args(&call, definition, scope);
         let inline_chains = scope.pending.take().unwrap_or_default();
         scope.pending = outer_pending;
         let args = resolved?;
@@ -370,6 +473,8 @@ fn compile_chain(
                 return Err(DslError::new("read(surface) must begin a chain", &call_loc));
             }
             steps.push(RenderStep::Read {
+                id,
+                skip,
                 surface,
                 loc: call_loc,
             });
@@ -392,6 +497,7 @@ fn compile_chain(
                 ));
             }
             steps.push(RenderStep::Write {
+                id,
                 surface,
                 loc: call_loc,
             });
@@ -420,6 +526,7 @@ fn compile_chain(
                 return Err(DslError::new("Expected surface reference", &call_loc));
             };
             steps.push(RenderStep::Write3d {
+                id,
                 volume,
                 geometry,
                 loc: call_loc,
@@ -429,6 +536,8 @@ fn compile_chain(
         if index == 0 && call.name == "read3d" {
             if let Some((volume, geometry)) = read3d_references(&call) {
                 steps.push(RenderStep::Read3d {
+                    id,
+                    skip,
                     volume,
                     geometry,
                     loc: call_loc,
@@ -438,27 +547,16 @@ fn compile_chain(
             }
         }
 
-        let namespaces: Vec<String> = call
-            .namespace
-            .clone()
-            .map(|namespace| vec![namespace])
-            .unwrap_or_else(|| scope.search.clone());
-        let effect_id = namespaces
-            .iter()
-            .map(|namespace| format!("{namespace}/{}", call.name))
-            .find(|effect_id| catalog.effects.contains_key(effect_id.as_str()))
-            .ok_or_else(|| {
-                DslError::new(
-                    format!(
-                        "Unknown effect {:?} in search namespaces {}",
-                        call.name,
-                        namespaces.join(", ")
-                    ),
-                    &call_loc,
-                )
-            })?;
-        let definition = &catalog.effects[&effect_id];
-        let mut requires_bound_surface_to_start = false;
+        let (effect_id, definition) = effect_id.zip(definition).ok_or_else(|| {
+            DslError::new(
+                format!(
+                    "Unknown effect {:?} in search namespaces {}",
+                    call.name,
+                    namespaces.join(", ")
+                ),
+                &call_loc,
+            )
+        })?;
         match definition.domain.as_str() {
             "volume-generator" => {
                 if index != 0 && !(definition.iterated && has_volume) {
@@ -543,32 +641,13 @@ fn compile_chain(
                         &call_loc,
                     ));
                 }
-                requires_bound_surface_to_start = true;
                 has_image = true;
             }
             _ => {}
         }
         let normalized = normalize_arguments(&effect_id, definition, &args, &call_loc)?;
-        // External-input effects (render/meshLoader) begin a chain with no
-        // surface binding at all: their pass inputs are host-fed data
-        // textures, so only effects that declare surface parameters must
-        // have one bound to start.
-        if requires_bound_surface_to_start
-            && normalized.surface_params.is_empty()
-            && definition
-                .params
-                .values()
-                .any(|spec| spec.parameter_type == "surface")
-        {
-            return Err(DslError::new(
-                format!(
-                    "{} {effect_id} requires at least one surface input to begin a chain",
-                    definition.kind
-                ),
-                &call_loc,
-            ));
-        }
         steps.push(RenderStep::Effect {
+            id,
             effect_id,
             params: normalized.params,
             surface_params: normalized.surface_params,
@@ -601,20 +680,107 @@ fn compile_chain(
     })
 }
 
+fn valid_element_id(value: &str) -> bool {
+    let mut chars = value.bytes();
+    chars.next().is_some_and(|c| c.is_ascii_alphabetic())
+        && chars.all(|c| c.is_ascii_alphanumeric() || c == b'_')
+}
+
+fn canonical_name<'a>(definition: &'a EffectDefinition, name: &'a str) -> &'a str {
+    definition
+        .param_aliases
+        .as_ref()
+        .and_then(|aliases| aliases.get(name))
+        .map_or(name, String::as_str)
+}
+
+fn effect_arguments(
+    call: &DslCall,
+    definition: &EffectDefinition,
+    scope: &CompileScope,
+    color_splat_limit: Option<usize>,
+) -> Vec<DslArgument> {
+    let (mut positional, named): (Vec<_>, Vec<_>) = call
+        .args
+        .iter()
+        .cloned()
+        .partition(|arg| arg.name.is_none());
+    let names = &definition.param_names;
+    if positional.len() > names.len() {
+        eprintln!(
+            "Too many positional arguments for {0}(): '{0}' takes {1}",
+            call.name,
+            names.len()
+        );
+        positional.truncate(names.len());
+    }
+    if let Some(r) = names.iter().position(|name| name == "r") {
+        if r < positional.len()
+            && r < color_splat_limit.unwrap_or(usize::MAX)
+            && definition.params["r"].parameter_type != "color"
+            && names.get(r + 1).map(String::as_str) == Some("g")
+            && names.get(r + 2).map(String::as_str) == Some("b")
+        {
+            let arg = &positional[r];
+            if let DslValue::Array {
+                hex_color: true,
+                values,
+                ..
+            } = bound_expression(&arg.value, scope)
+            {
+                let rgb: Vec<_> = values
+                    .iter()
+                    .take(3)
+                    .map(|value| DslArgument {
+                        value: value.clone(),
+                        ..arg.clone()
+                    })
+                    .collect();
+                positional.splice(r..(r + 3).min(positional.len()), rgb);
+            }
+        }
+    }
+    if call.arg_mode.as_deref() == Some("merged") {
+        // Drop overridden positionals before compiling inline chains or evaluating their values.
+        let overridden: BTreeSet<_> = named
+            .iter()
+            .filter_map(|arg| arg.name.as_deref())
+            .map(|name| canonical_name(definition, name))
+            .collect();
+        positional = positional
+            .into_iter()
+            .zip(names)
+            .filter(|(_, name)| !overridden.contains(name.as_str()))
+            .map(|(mut arg, name)| {
+                arg.name = Some(name.clone());
+                arg
+            })
+            .collect();
+    }
+    positional.extend(named);
+    positional
+}
+
 fn resolve_args(
-    arguments: &[DslArgument],
+    call: &DslCall,
+    definition: Option<&EffectDefinition>,
     scope: &mut CompileScope,
 ) -> Result<Vec<ResolvedArgument>, DslError> {
-    arguments
-        .iter()
-        .map(|argument| {
-            Ok(ResolvedArgument {
-                name: argument.name.clone(),
-                value: evaluate_value(&argument.value, scope, 0, &[])?,
-                loc: argument.loc.clone(),
-            })
-        })
-        .collect()
+    call.args.iter().enumerate().map(|(index, argument)| {
+        if let Some(definition) = definition {
+            if let DslValue::Chain(chain) = bound_expression(&argument.value, scope) {
+                if chain.calls.iter().any(|element| !matches!(element,
+                    DslChainElement::Call(call) if !matches!(call.name.as_str(), "read" | "read3d"))) {
+                    let name = argument.name.as_deref().map(|name| canonical_name(definition, name)).unwrap_or_else(|| &definition.param_names[index]);
+                    return Err(DslError {
+                        code: Some("S001"),
+                        ..DslError::new(format!("Chain for argument '{name}' in {}() may contain only effect calls", call.name), &chain.loc)
+                    });
+                }
+            }
+        }
+        Ok(ResolvedArgument { name: argument.name.clone(), value: evaluate_value(&argument.value, scope, 0, &[])?, loc: argument.loc.clone() })
+    }).collect()
 }
 
 // `resolving` threads the chain of binding names currently being resolved so a
@@ -763,64 +929,60 @@ fn evaluate_value(
     }
 }
 
-fn merge_args(stored: &DslCall, call: &DslCall) -> Result<DslCall, DslError> {
-    if stored.arg_mode.is_none() {
-        return Ok(DslCall {
-            name: stored.name.clone(),
-            args: call.args.clone(),
-            arg_mode: call.arg_mode.clone(),
-            namespace: call.namespace.clone(),
-            loc: call.loc.clone(),
-        });
-    }
+fn merge_partial(stored: &Partial, call: &DslCall) -> Partial {
+    let previous = &stored.call;
+    let mut merged = call.clone();
+    merged.name = previous.name.clone();
+    merged.namespace = call
+        .namespace
+        .clone()
+        .or_else(|| previous.namespace.clone());
+    let mut color_splat_limit = stored.color_splat_limit;
     if call.arg_mode.is_none() {
-        let mut retained = stored.clone();
-        retained.loc = call.loc.clone();
-        return Ok(retained);
-    }
-    if stored.arg_mode != call.arg_mode {
-        return Err(DslError::new(
-            "Partial and call arguments must use the same named or positional form",
-            &call.loc,
-        ));
-    }
-    if stored.arg_mode.as_deref() == Some("positional") {
-        let mut args = stored.args.clone();
-        args.extend(call.args.clone());
-        return Ok(DslCall {
-            name: stored.name.clone(),
-            args,
-            arg_mode: stored.arg_mode.clone(),
-            namespace: call.namespace.clone(),
-            loc: call.loc.clone(),
-        });
-    }
-    let mut args = stored.args.clone();
-    for replacement in &call.args {
-        if let Some(existing) = args
-            .iter_mut()
-            .find(|argument| argument.name == replacement.name)
-        {
-            *existing = replacement.clone();
-        } else {
-            args.push(replacement.clone());
+        merged.args = previous.args.clone();
+        merged.arg_mode = previous.arg_mode.clone();
+    } else if previous.arg_mode.is_some() {
+        let (mut positional, mut named) = (Vec::new(), Vec::<DslArgument>::new());
+        for arg in previous.args.iter().chain(&call.args) {
+            if arg.name.is_none() {
+                positional.push(arg.clone());
+            } else if let Some(existing) = named.iter_mut().find(|other| other.name == arg.name) {
+                *existing = arg.clone();
+            } else {
+                named.push(arg.clone());
+            }
         }
+        merged.arg_mode = Some(
+            if positional.is_empty() {
+                "named"
+            } else if named.is_empty() {
+                "positional"
+            } else {
+                "merged"
+            }
+            .into(),
+        );
+        if !positional.is_empty()
+            && previous
+                .args
+                .iter()
+                .any(|arg| !matches!(arg.name.as_deref(), None | Some("_id" | "_skip")))
+        {
+            color_splat_limit.get_or_insert_with(|| {
+                previous
+                    .args
+                    .iter()
+                    .filter(|arg| arg.name.is_none())
+                    .count()
+            });
+        }
+        positional.extend(named);
+        merged.args = positional;
     }
-    Ok(DslCall {
-        name: stored.name.clone(),
-        args,
-        arg_mode: Some("named".into()),
-        namespace: call.namespace.clone(),
-        loc: call.loc.clone(),
-    })
-}
-
-fn merge_partial(stored: &DslCall, call: &DslCall) -> Result<DslCall, DslError> {
-    // A `from(ns, ...)` namespace on the call site wins over one stored in the
-    // partial, as in upstream's resolveCall.
-    let mut merged = merge_args(stored, call)?;
-    merged.namespace = call.namespace.clone().or_else(|| stored.namespace.clone());
-    Ok(merged)
+    Partial {
+        call: merged,
+        color_splat_limit,
+    }
 }
 
 // `read3d(vol, geo)` and `write3d(vol, geo)` take two positional references:
@@ -897,7 +1059,15 @@ fn normalize_arguments(
     for name in &definition.param_names {
         let spec = &definition.params[name];
         if let Some(value) = json_default(&spec.default) {
-            apply_parameter(name, spec, value, &mut params, &mut surface_params, loc)?;
+            apply_parameter(
+                name,
+                spec,
+                value,
+                &mut params,
+                &mut surface_params,
+                loc,
+                uses_authored_precision(definition),
+            )?;
         }
     }
     let mut explicit_params = Vec::new();
@@ -959,6 +1129,11 @@ fn normalize_arguments(
         if matches!(argument.value, Evaluated::Undefined) {
             continue;
         }
+        // The first spelling of a parameter fixes its explicit-parameter
+        // index, even if the canonical spelling supplies its final value.
+        if explicit_seen.insert(name.clone()) {
+            explicit_params.push(name.clone());
+        }
         if supplied_name != Some(name.clone()) && canonical_supplied.contains(&name) {
             continue;
         }
@@ -969,10 +1144,8 @@ fn normalize_arguments(
             &mut params,
             &mut surface_params,
             &argument.loc,
+            uses_authored_precision(definition),
         )?;
-        if explicit_seen.insert(name.clone()) {
-            explicit_params.push(name);
-        }
     }
     for name in &definition.param_names {
         let parameter_type = definition.params[name].parameter_type.as_str();
@@ -1043,6 +1216,7 @@ fn apply_parameter(
     params: &mut BTreeMap<String, ParamValue>,
     surfaces: &mut BTreeMap<String, SurfaceBinding>,
     loc: &Location,
+    keep_precision: bool,
 ) -> Result<(), DslError> {
     let fail = |message: String| DslError::new(format!("Parameter {name:?} {message}"), loc);
     // An `osc(...)` automation value (numeric params only, matching upstream's
@@ -1074,11 +1248,10 @@ fn apply_parameter(
             };
             validate_parameter_number(name, spec, value, false)
                 .map_err(|message| DslError::new(message, loc))?;
-            let value = value as f32;
-            if !value.is_finite() {
+            if !(value as f32).is_finite() {
                 return Err(fail("must be representable as a finite f32 number".into()));
             }
-            params.insert(name.into(), ParamValue::Float(value));
+            params.insert(name.into(), ParamValue::number(value, keep_precision));
         }
         "int" | "enum" | "member" | "palette" => {
             let integer = enum_or_integer(name, spec, value, loc)?;
@@ -1114,8 +1287,7 @@ fn apply_parameter(
                 .into_iter()
                 .map(|value| match value {
                     Evaluated::Number(value) if value.is_finite() => {
-                        let value = value as f32;
-                        if value.is_finite() {
+                        if (value as f32).is_finite() {
                             Ok(value)
                         } else {
                             Err(fail(format!(
@@ -1129,7 +1301,7 @@ fn apply_parameter(
                 .collect::<Result<Vec<_>, _>>()?;
             validate_parameter_vector(name, spec, &components)
                 .map_err(|message| DslError::new(message, loc))?;
-            params.insert(name.into(), ParamValue::Vector(components));
+            params.insert(name.into(), ParamValue::vector(components, keep_precision));
         }
         "string" => {
             let Evaluated::String(value) = value else {
@@ -1392,6 +1564,11 @@ mod tests {
                 },
             )]),
             param_names: vec!["canonical".to_string()],
+            texture_order: vec![],
+            output_tex: None,
+            output_xyz: None,
+            output_vel: None,
+            output_rgba: None,
             textures: BTreeMap::new(),
             passes: vec![],
             iterated: false,
@@ -1443,6 +1620,84 @@ mod tests {
             normalized.params.get("canonical"),
             Some(&ParamValue::Int(20))
         );
+    }
+
+    #[test]
+    fn positional_hex_colors_fill_scalar_rgb_slots_and_respect_earlier_keywords() {
+        // The shipped catalog has no scalar r/g/b triple. Use the same custom
+        // parameter definition as the CPU compiler's rgbprobe fixture.
+        let mut definition = definition_with_alias();
+        definition.param_names = ["r", "g", "b", "a", "x"]
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
+        definition.params = definition
+            .param_names
+            .iter()
+            .map(|name| {
+                (
+                    name.clone(),
+                    ParameterSpec {
+                        parameter_type: "float".into(),
+                        default: serde_json::json!(1),
+                        uniform: None,
+                        define: None,
+                        metadata: BTreeMap::new(),
+                    },
+                )
+            })
+            .collect();
+        let color = [128.0_f32 / 255.0, 64.0 / 255.0, 32.0 / 255.0];
+        for (source, expected) in [
+            (
+                "rgbprobe(#804020, .1, .2, .7)",
+                [color[0], color[1], color[2], 0.7, 1.0],
+            ),
+            (
+                "let c=#804020; let t=rgbprobe(c); let u=t(g:.25); let c=#fff; u(_id:'u')",
+                [color[0], 0.25, color[2], 1.0, 1.0],
+            ),
+            (
+                "let t=rgbprobe(r:.25); let u=t(#804020,.6); u(_id:'u')",
+                [0.25, 0.6, 1.0, 1.0, 1.0],
+            ),
+            (
+                "let t=rgbprobe(_id:'t'); t(#804020)",
+                [color[0], color[1], color[2], 1.0, 1.0],
+            ),
+        ] {
+            let ast = parse_dsl(source, "rgb.dsl").unwrap();
+            let mut scope = CompileScope {
+                catalog: effect_catalog().unwrap(),
+                search: vec![],
+                bindings: BTreeMap::new(),
+                pending_names: None,
+                pending: None,
+                inline_count: 0,
+            };
+            for binding in &ast.bindings {
+                declare_binding(binding, &mut scope).unwrap();
+            }
+            let DslChainElement::Call(call) = &ast.chains[0].calls[0] else {
+                unreachable!()
+            };
+            let mut partial = match scope.bindings.get(&call.name) {
+                Some(Binding::Partial(p)) => merge_partial(p, call),
+                _ => Partial {
+                    call: call.clone(),
+                    color_splat_limit: None,
+                },
+            };
+            let call = &mut partial.call;
+            call.args.retain(|arg| arg.name.as_deref() != Some("_id"));
+            call.args = effect_arguments(call, &definition, &scope, partial.color_splat_limit);
+            let args = resolve_args(call, Some(&definition), &mut scope).unwrap();
+            let result =
+                normalize_arguments("filter/rgbprobe", &definition, &args, &loc()).unwrap();
+            for (name, number) in definition.param_names.iter().zip(expected) {
+                assert_eq!(result.params[name], ParamValue::Float(number), "{source}");
+            }
+        }
     }
 
     #[test]

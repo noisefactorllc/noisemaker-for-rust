@@ -240,6 +240,42 @@ class GeneratorTests(unittest.TestCase):
             self.assertEqual(len(backups), 1)
             real_rmtree(backups[0])
 
+    def test_published_textures_are_taken_from_the_effect_definition(self):
+        from scripts.transpiler.cdn import published_textures
+
+        ordinary = """new Effect({namespace:"points",passes:[{inputs:{outputTex:"shadow",
+                       outputRgba:"shadow"}}], outputXyz:"positions",outputRgba:"colors"})"""
+        fields = published_textures(ordinary)
+        self.assertIsNone(fields["outputTex"])
+        self.assertEqual(fields["outputRgba"], "colors")
+        self.assertEqual(fields["outputXyz"], "positions")
+        quoted_example = """new Effect({namespace:"points",description:'f(this,"outputGeo","fake")'})"""
+        self.assertIsNone(published_textures(quoted_example)["outputGeo"])
+        lowered = 'f(this,"namespace","points");f(this,"outputVel","velocity")'
+        self.assertEqual(published_textures(lowered)["outputVel"], "velocity")
+
+    def test_preserves_resource_order_and_only_emits_shader_outputs(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source = fixture_source(root)
+            path = source / "metadata.json"
+            metadata = json.loads(path.read_text())
+            effect = metadata["effects"]["synth/test"]
+            effect["textures"] = {"zTexture": {}, "aTexture": {}}
+            render_pass = effect["passes"][0]
+            render_pass["inputs"] = {"zFirst": "zTexture", "aSecond": "aTexture"}
+            render_pass["outputs"] = {"zFirst": "zTexture", "aSecond": "aTexture"}
+            render_pass["storageTextures"] = {"zStore": "zTexture", "aStore": "aTexture"}
+            path.write_text(json.dumps(metadata))
+            generate_bundle(source, root / "out")
+            emitted = json.loads((root / "out/catalog.json").read_text())["effects"]["synth/test"]
+            program = json.loads((root / "out/shaders.json").read_text())["programs"]["synth/test:main"]
+            self.assertEqual(program["ir"]["outputs"], ["fragColor"])
+            self.assertEqual(emitted["textureOrder"], ["zTexture", "aTexture"])
+            self.assertEqual(emitted["passes"][0]["inputOrder"], ["zFirst", "aSecond"])
+            self.assertEqual(emitted["passes"][0]["outputOrder"], ["zFirst", "aSecond"])
+            self.assertEqual(emitted["passes"][0]["storageTextureOrder"], ["zStore", "aStore"])
+
     def test_canonical_parameter_order_is_emitted_from_locked_contract(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

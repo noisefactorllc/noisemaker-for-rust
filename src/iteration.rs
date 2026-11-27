@@ -100,7 +100,13 @@ pub fn iteration_schedule(count: u32, render_time: f32) -> Vec<IterationFrame> {
 pub fn compute_iteration_groups(
     steps: &[IterationStep],
 ) -> Result<Vec<IterationGroup>, IterationError> {
-    let catalog = effect_catalog()?;
+    compute_groups_with_catalog(steps, effect_catalog()?)
+}
+
+pub(crate) fn compute_groups_with_catalog(
+    steps: &[IterationStep],
+    catalog: &EffectCatalog,
+) -> Result<Vec<IterationGroup>, IterationError> {
     let mut groups = Vec::new();
     let mut particle: Option<IterationGroup> = None;
     let mut loop_steps: Option<Vec<IterationStep>> = None;
@@ -189,7 +195,10 @@ pub fn compute_iteration_groups(
             pass.inputs
                 .values()
                 .chain(pass.outputs.values())
-                .any(|name| is_particle_state_name(name))
+                .any(|name| {
+                    is_particle_state_name(name)
+                        || matches!(name.as_str(), "inputXyz" | "inputVel" | "inputRgba")
+                })
         });
         if declares_xyz {
             close_particle(&mut groups, &mut particle);

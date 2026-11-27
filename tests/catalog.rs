@@ -128,3 +128,74 @@ fn walk_statements(statements: &[Statement], visitor: &mut impl FnMut(&Expressio
         statement.visit_expressions(visitor);
     }
 }
+
+#[test]
+fn storage_targets_supply_missing_color_outputs_in_authored_order() {
+    let mut pass = serde_json::json!({
+        "name": "store",
+        "program": "store",
+        "storageTextures": { "zFirst": "left", "aSecond": "right" },
+        "storageTextureOrder": ["zFirst", "aSecond"]
+    });
+    for outputs in [None, Some(serde_json::json!({}))] {
+        if let Some(outputs) = outputs {
+            pass["outputs"] = outputs;
+        }
+        let loaded: noisemaker_cpu::catalog::RenderPass =
+            serde_json::from_value(pass.clone()).unwrap();
+        assert_eq!(
+            loaded.outputs.get("zFirst").map(String::as_str),
+            Some("left")
+        );
+        assert_eq!(loaded.execution["outputOrder"], pass["storageTextureOrder"]);
+    }
+    pass["outputs"] = serde_json::json!({ "fragColor": "screen" });
+    let loaded: noisemaker_cpu::catalog::RenderPass = serde_json::from_value(pass).unwrap();
+    assert_eq!(
+        loaded.outputs,
+        BTreeMap::from([("fragColor".into(), "screen".into())])
+    );
+    assert!(!loaded.execution.contains_key("outputOrder"));
+}
+
+#[test]
+fn storage_only_json_keeps_its_original_attachment_order() {
+    let loaded: noisemaker_cpu::catalog::RenderPass = serde_json::from_str(
+        r#"{"name":"raw","program":"raw","storageTextures":{"zFirst":"left","aSecond":"right"}}"#,
+    )
+    .unwrap();
+    assert_eq!(
+        loaded.execution["outputOrder"],
+        serde_json::json!(["zFirst", "aSecond"])
+    );
+}
+
+#[test]
+fn published_resource_names_must_be_nonempty_strings_when_declared() {
+    let base = serde_json::json!({
+        "namespace": "synth", "func": "custom", "kind": "generator", "domain": "image",
+        "paramNames": [], "passes": []
+    });
+    for field in [
+        "outputTex",
+        "outputTex3d",
+        "outputGeo",
+        "outputXyz",
+        "outputVel",
+        "outputRgba",
+    ] {
+        for invalid in [
+            serde_json::Value::Null,
+            serde_json::json!(7),
+            serde_json::json!("  "),
+        ] {
+            let mut definition = base.clone();
+            definition[field] = invalid;
+            assert!(
+                serde_json::from_value::<noisemaker_cpu::catalog::EffectDefinition>(definition)
+                    .is_err(),
+                "{field}"
+            );
+        }
+    }
+}

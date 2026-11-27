@@ -638167,10 +638167,10 @@
           }
         ],
         "outputs": [
-          "outBaseColor",
-          "outRGBA",
+          "outXYZ",
           "outVel",
-          "outXYZ"
+          "outRGBA",
+          "outBaseColor"
         ],
         "structs": [],
         "uniforms": [
@@ -642282,10 +642282,10 @@
           }
         ],
         "outputs": [
-          "outBaseColor",
-          "outRGBA",
+          "outXYZ",
           "outVel",
-          "outXYZ"
+          "outRGBA",
+          "outBaseColor"
         ],
         "structs": [],
         "uniforms": [
@@ -647061,10 +647061,10 @@
           }
         ],
         "outputs": [
-          "outBaseColor",
-          "outRGBA",
+          "outXYZ",
           "outVel",
-          "outXYZ"
+          "outRGBA",
+          "outBaseColor"
         ],
         "structs": [],
         "uniforms": [
@@ -654786,10 +654786,10 @@
           }
         ],
         "outputs": [
-          "outBaseColor",
-          "outRGBA",
+          "outXYZ",
           "outVel",
-          "outXYZ"
+          "outRGBA",
+          "outBaseColor"
         ],
         "structs": [],
         "uniforms": [
@@ -659070,10 +659070,10 @@
           }
         ],
         "outputs": [
-          "outBaseColor",
-          "outRGBA",
+          "outXYZ",
           "outVel",
-          "outXYZ"
+          "outRGBA",
+          "outBaseColor"
         ],
         "structs": [],
         "uniforms": [
@@ -659733,9 +659733,9 @@
           }
         ],
         "outputs": [
-          "outRGBA",
+          "outXYZ",
           "outVel",
-          "outXYZ"
+          "outRGBA"
         ],
         "structs": [],
         "uniforms": [
@@ -664476,10 +664476,10 @@
           }
         ],
         "outputs": [
-          "outBaseColor",
-          "outRGBA",
+          "outXYZ",
           "outVel",
-          "outXYZ"
+          "outRGBA",
+          "outBaseColor"
         ],
         "structs": [],
         "uniforms": [
@@ -667085,10 +667085,10 @@
           }
         ],
         "outputs": [
-          "outBaseColor",
-          "outRGBA",
+          "outXYZ",
           "outVel",
-          "outXYZ"
+          "outRGBA",
+          "outBaseColor"
         ],
         "structs": [],
         "uniforms": [
@@ -673453,10 +673453,10 @@
           }
         ],
         "outputs": [
-          "outData",
-          "outRGBA",
+          "outXYZ",
           "outVel",
-          "outXYZ"
+          "outRGBA",
+          "outData"
         ],
         "structs": [],
         "uniforms": [
@@ -677744,10 +677744,10 @@
           }
         ],
         "outputs": [
-          "outBaseColor",
-          "outRGBA",
+          "outXYZ",
           "outVel",
-          "outXYZ"
+          "outRGBA",
+          "outBaseColor"
         ],
         "structs": [],
         "uniforms": [
@@ -681167,10 +681167,10 @@
           }
         ],
         "outputs": [
-          "outBaseColor",
-          "outRGBA",
+          "outXYZ",
           "outVel",
-          "outXYZ"
+          "outRGBA",
+          "outBaseColor"
         ],
         "structs": [],
         "uniforms": [
@@ -693496,9 +693496,9 @@
           }
         ],
         "outputs": [
-          "outRGBA",
+          "outXYZ",
           "outVel",
-          "outXYZ"
+          "outRGBA"
         ],
         "structs": [],
         "uniforms": [
@@ -700348,14 +700348,9 @@
                         {
                           "arguments": [
                             {
-                              "kind": "unary",
-                              "operand": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "operator": "-",
+                              "kind": "identifier",
+                              "name": "MARCHER_LIGHT_X",
+                              "storage": "global",
                               "type": "float"
                             },
                             {
@@ -700881,14 +700876,9 @@
                         {
                           "arguments": [
                             {
-                              "kind": "unary",
-                              "operand": {
-                                "kind": "literal",
-                                "source": "1.0",
-                                "type": "float",
-                                "value": 1.0
-                              },
-                              "operator": "-",
+                              "kind": "identifier",
+                              "name": "MARCHER_LIGHT_X",
+                              "storage": "global",
                               "type": "float"
                             },
                             {
@@ -702653,6 +702643,22 @@
             },
             "name": "MAX_DIST",
             "type": "float"
+          },
+          {
+            "arraySize": null,
+            "initializer": {
+              "kind": "unary",
+              "operand": {
+                "kind": "literal",
+                "source": "1.0",
+                "type": "float",
+                "value": 1.0
+              },
+              "operator": "-",
+              "type": "float"
+            },
+            "name": "MARCHER_LIGHT_X",
+            "type": "float"
           }
         ],
         "outputs": [
@@ -702754,7 +702760,7 @@
         "varyings": []
       },
       "program": "render3d",
-      "sourceSha256": "6e36e33fb43c2f031bb22fd787a54df64367a9f05e4835822dba07762bc800a3"
+      "sourceSha256": "44a55ea4e16bdb696eef6fe78161990a8f9602efb99391e25cdcede7115658f0"
     },
     "render/renderCubemap3d:renderCubemap3d": {
       "effectId": "render/renderCubemap3d",
@@ -708745,10 +708751,10 @@
                         {
                           "arguments": [
                             {
-                              "kind": "literal",
-                              "source": "1.0",
-                              "type": "float",
-                              "value": 1.0
+                              "kind": "identifier",
+                              "name": "MARCHER_LIGHT_X",
+                              "storage": "global",
+                              "type": "float"
                             },
                             {
                               "kind": "literal",
@@ -709273,10 +709279,10 @@
                         {
                           "arguments": [
                             {
-                              "kind": "literal",
-                              "source": "1.0",
-                              "type": "float",
-                              "value": 1.0
+                              "kind": "identifier",
+                              "name": "MARCHER_LIGHT_X",
+                              "storage": "global",
+                              "type": "float"
                             },
                             {
                               "kind": "literal",
@@ -710767,6 +710773,17 @@
             },
             "name": "MAX_DIST",
             "type": "float"
+          },
+          {
+            "arraySize": null,
+            "initializer": {
+              "kind": "literal",
+              "source": "1.0",
+              "type": "float",
+              "value": 1.0
+            },
+            "name": "MARCHER_LIGHT_X",
+            "type": "float"
           }
         ],
         "outputs": [
@@ -710864,7 +710881,7 @@
         "varyings": []
       },
       "program": "renderCubemap3d",
-      "sourceSha256": "93162b85b7415b2e5886f3fb9d25bdfbd98733a2f28fe917527646bc3a5d4959"
+      "sourceSha256": "20416cc1130dbe510e3abc966d52d492b31b16e66aee236822995ba00acd129b"
     },
     "render/renderCubemapSurface:renderCubemapSurface": {
       "effectId": "render/renderCubemapSurface",
@@ -713544,7 +713561,7 @@
         "varyings": []
       },
       "program": "renderCubemapSurface",
-      "sourceSha256": "68d9e00cf7695461e610e831d4be9ff2ec115ade67909200a8f068cf7f7c040c"
+      "sourceSha256": "65ffddca574bb04919fcf239afe7e3a1c564670329ad0367e03317d33a7f5c30"
     },
     "render/renderLandscape3d:landscape": {
       "effectId": "render/renderLandscape3d",
@@ -731391,7 +731408,7 @@
         "varyings": []
       },
       "program": "renderLit3d",
-      "sourceSha256": "d0bfd1fd9cc7223c364d0f3cf78639a6f661d7fe7b69fb2c9850dbcbb263387b"
+      "sourceSha256": "aec01886c00ecaa73c24cf8ed6057be819e73aab7510cf03fd68f1071c3a55ab"
     },
     "synth/bitwise:bitwise": {
       "effectId": "synth/bitwise",
@@ -930236,10 +930253,10 @@
   "provenance": {
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
-    "lockVersion": "1.0",
-    "paramContractRevision": "478f94eae7ebe34116dfc661ac52b373b884008b",
+    "lockVersion": "1.5.17",
+    "paramContractRevision": "5596e69fd6e3b9014e9df0f8674e10e70c332e11",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
-    "version": "1.0"
+    "version": "1.5.17"
   }
 }

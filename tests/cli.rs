@@ -761,3 +761,32 @@ fn unsupported_realtime_input_warns_and_uses_the_offline_default() {
     }
     fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn rendering_warns_once_for_discarded_positional_arguments() {
+    let root = temp_dir("excess-positionals");
+    let source = root.join("case.dsl");
+    let image = root.join("render.png");
+    fs::write(&source, "search synth; solid(#f00,1,unknown()).write(o0)").unwrap();
+    let result = cli()
+        .arg("render")
+        .arg(&source)
+        .args(["--width", "1", "--height", "1", "--output"])
+        .arg(&image)
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    assert_eq!(
+        String::from_utf8_lossy(&result.stderr).trim(),
+        "Too many positional arguments for solid(): 'solid' takes 2"
+    );
+    assert_eq!(
+        decode_png(&fs::read(&image).unwrap()).unwrap().to_rgba8(),
+        [255, 0, 0, 255]
+    );
+    fs::remove_dir_all(root).unwrap();
+}

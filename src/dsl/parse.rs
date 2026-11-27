@@ -12,6 +12,7 @@ pub enum DslValue {
     String(String),
     Bool(bool),
     Array {
+        hex_color: bool,
         values: Vec<DslValue>,
         loc: Location,
     },
@@ -216,7 +217,12 @@ impl Parser {
         let name = self.identifier("Expected binding name after let")?;
         self.consume("=", "Expected \"=\"")?;
         let value = if self.peek(0).kind == TokenKind::Identifier && self.peek(1).lexeme == "(" {
-            DslValue::Call(Box::new(self.parse_call()?))
+            let call = self.parse_call()?;
+            if matches!(call.name.as_str(), "read" | "read3d") && self.is_punctuation(".") {
+                self.parse_expression_chain(call)?
+            } else {
+                DslValue::Call(Box::new(call))
+            }
         } else {
             self.parse_value_expression(0)?
         };
@@ -273,26 +279,47 @@ impl Parser {
         self.consume(",", "Expected \",\"")?;
         let geometry_loc = self.peek(0).location();
         let geometry = reference(self)?;
+        let mut args = vec![
+            DslArgument {
+                name: None,
+                value: volume,
+                loc: volume_loc,
+            },
+            DslArgument {
+                name: None,
+                value: geometry,
+                loc: geometry_loc,
+            },
+        ];
+        self.parse_io_element_id(&mut args)?;
         self.consume(")", "Expected \")\"")?;
         let loc = name.location();
         Ok(DslCall {
             name: "write3d".into(),
-            args: vec![
-                DslArgument {
-                    name: None,
-                    value: volume,
-                    loc: volume_loc,
-                },
-                DslArgument {
-                    name: None,
-                    value: geometry,
-                    loc: geometry_loc,
-                },
-            ],
+            args,
             arg_mode: Some("positional".into()),
             namespace: None,
             loc,
         })
+    }
+    // Positional I/O targets can be followed by a single authored element ID.
+    fn parse_io_element_id(&mut self, args: &mut Vec<DslArgument>) -> Result<bool, DslError> {
+        if !self.check(",")
+            || self.peek(1).kind != TokenKind::Identifier
+            || self.peek(1).lexeme != "_id"
+            || self.peek(2).kind != TokenKind::Punctuation
+            || self.peek(2).lexeme != ":"
+        {
+            return Ok(false);
+        }
+        self.current += 3;
+        let loc = self.peek(0).location();
+        args.push(DslArgument {
+            name: Some("_id".into()),
+            value: self.parse_value_expression(0)?,
+            loc,
+        });
+        Ok(true)
     }
     // Port of upstream parseSubchainCall: `subchain(name: "...", id: "...") { .a() .b() }`.
     // A single leading string is shorthand for `name`. Unknown keys, duplicate keys and
@@ -391,6 +418,12 @@ impl Parser {
             loop {
                 let is_named =
                     self.peek(0).kind == TokenKind::Identifier && self.peek(1).lexeme == ":";
+                if name.lexeme == "write" && is_named && self.peek(0).lexeme == "_id" {
+                    return Err(DslError::new(
+                        "write() requires a positional surface before _id",
+                        &self.peek(0).location(),
+                    ));
+                }
                 let next_mode = if is_named { "named" } else { "positional" };
                 if mode.as_deref().is_some_and(|mode| mode != next_mode) && !allow_mixed {
                     return Err(DslError::new(
@@ -417,7 +450,19 @@ impl Parser {
                     value,
                     loc,
                 });
-                if !self.take_if(&[","]) {
+                if mode.as_deref() == Some("positional") {
+                    if name.lexeme == "write" {
+                        self.parse_io_element_id(&mut args)?;
+                        break;
+                    }
+                    if matches!(name.lexeme.as_str(), "read" | "read3d")
+                        && self.parse_io_element_id(&mut args)?
+                    {
+                        self.take_if(&[","]);
+                        break;
+                    }
+                }
+                if !self.take_if(&[","]) || self.check(")") {
                     break;
                 }
             }
@@ -524,6 +569,7 @@ impl Parser {
         if token.kind == TokenKind::Color {
             self.current += 1;
             return Ok(DslValue::Array {
+                hex_color: true,
                 values: parse_color(&token.lexeme)
                     .into_iter()
                     .map(DslValue::Number)
@@ -540,13 +586,17 @@ impl Parser {
             if !self.check("]") {
                 loop {
                     values.push(self.parse_value_expression(0)?);
-                    if !self.take_if(&[","]) {
+                    if !self.take_if(&[","]) || self.check("]") {
                         break;
                     }
                 }
             }
             self.consume("]", "Expected \"]\"")?;
-            return Ok(DslValue::Array { values, loc });
+            return Ok(DslValue::Array {
+                hex_color: false,
+                values,
+                loc,
+            });
         }
         if self.take_if(&["("]) {
             let value = self.parse_value_expression(0)?;
@@ -569,54 +619,43 @@ impl Parser {
             // A one-argument `read3d(vol0)` names a volume or geometry for a
             // parameter, as upstream's validator reads it. With two arguments it
             // starts a chain.
-            if name == "read3d" && self.is_punctuation("(") {
+            if matches!(name.as_str(), "read" | "read3d") && self.is_punctuation("(") {
                 self.current -= 1;
                 let call = self.parse_call()?;
-                if call.args.len() == 1
-                    && matches!(&call.args[0].value, DslValue::Identifier { .. })
-                {
-                    return Ok(call.args[0].value.clone());
-                }
-                return self.parse_expression_chain(call);
-            }
-            if name == "read" && self.take_if(&["("]) {
-                if self.peek(0).kind == TokenKind::Identifier && self.peek(1).lexeme == ":" {
-                    let argument_name = self.identifier("Expected identifier")?;
-                    if !matches!(argument_name.lexeme.as_str(), "surface" | "tex") {
-                        return Err(DslError::new(
-                            "read() surface argument must be named \"surface\" or \"tex\"",
-                            &argument_name.location(),
-                        ));
-                    }
-                    self.consume(":", "Expected \":\"")?;
-                }
-                let surface = self.parse_surface()?;
-                self.consume(")", "Expected \")\"")?;
-                // `read(oN).effect()` in a value position is a chain argument that
-                // starts from the surface. A bare `read(oN)` stays a plain surface
-                // reference.
                 if self.is_punctuation(".") {
-                    let read = DslCall {
-                        name: "read".into(),
-                        args: vec![DslArgument {
-                            name: None,
-                            value: DslValue::Surface(surface.clone()),
-                            loc: surface.loc.clone(),
-                        }],
-                        arg_mode: Some("positional".into()),
-                        namespace: None,
-                        loc: token.location(),
-                    };
-                    return self.parse_expression_chain(read);
+                    return self.parse_expression_chain(call);
                 }
-                return Ok(DslValue::Surface(surface));
+                let mut targets = call
+                    .args
+                    .iter()
+                    .filter(|arg| !matches!(arg.name.as_deref(), Some("_id" | "_skip")));
+                let target = targets.next().filter(|_| targets.next().is_none());
+                if name == "read3d" {
+                    if let Some(arg) = target {
+                        if matches!(&arg.value, DslValue::Identifier { .. }) {
+                            return Ok(arg.value.clone());
+                        }
+                    }
+                    return self.parse_expression_chain(call);
+                }
+                let Some(arg) = target.filter(|arg| matches!(&arg.value, DslValue::Surface(_)))
+                else {
+                    return Err(DslError::new("Expected surface reference", &call.loc));
+                };
+                if !matches!(arg.name.as_deref(), None | Some("surface" | "tex")) {
+                    return Err(DslError::new(
+                        "read() surface argument must be named \"surface\" or \"tex\"",
+                        &arg.loc,
+                    ));
+                }
+                return Ok(arg.value.clone());
             }
             if matches!(name.as_str(), "vec2" | "vec3" | "vec4") && self.take_if(&["("]) {
                 let mut values = Vec::new();
                 if !self.check(")") {
                     loop {
                         values.push(self.parse_value_expression(0)?);
-                        if !self.take_if(&[","]) {
+                        if !self.take_if(&[","]) || self.check(")") {
                             break;
                         }
                     }

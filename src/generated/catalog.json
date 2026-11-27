@@ -1190,6 +1190,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "tex": "tex"
@@ -1655,6 +1659,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "tex": "tex"
@@ -4310,6 +4318,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "tex": "tex"
@@ -5836,6 +5848,10 @@
           "program": "ntapGather"
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "bloomTex"
+          ],
           "inputs": {
             "bloomTex": "_bloomTex",
             "inputTex": "inputTex"
@@ -5850,6 +5866,10 @@
       ],
       "tags": [
         "lens"
+      ],
+      "textureOrder": [
+        "_brightTex",
+        "_bloomTex"
       ],
       "textures": {
         "_bloomTex": {
@@ -6198,6 +6218,11 @@
           "program": "celShadingEdges"
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "colorTex",
+            "edgeTex"
+          ],
           "inputs": {
             "colorTex": "celShadingColorTex",
             "edgeTex": "celShadingEdgeTex",
@@ -6214,6 +6239,10 @@
       "tags": [
         "color",
         "edges"
+      ],
+      "textureOrder": [
+        "celShadingColorTex",
+        "celShadingEdgeTex"
       ],
       "textures": {
         "celShadingColorTex": {
@@ -6502,6 +6531,10 @@
           "program": "chBlurV"
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "blurTex"
+          ],
           "inputs": {
             "blurTex": "_chBlur",
             "inputTex": "inputTex"
@@ -6518,6 +6551,10 @@
         "blur",
         "edges",
         "artist"
+      ],
+      "textureOrder": [
+        "_chBlurH",
+        "_chBlur"
       ],
       "textures": {
         "_chBlur": {
@@ -6868,6 +6905,10 @@
           "program": "cfBlur"
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "feedbackTex"
+          ],
           "inputs": {
             "feedbackTex": "_cfBlurred",
             "inputTex": "inputTex"
@@ -6882,6 +6923,10 @@
       ],
       "tags": [
         "sim"
+      ],
+      "textureOrder": [
+        "_cfSharpened",
+        "_cfBlurred"
       ],
       "textures": {
         "_cfBlurred": {
@@ -8127,6 +8172,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "selfTex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "selfTex": "_selfTex"
@@ -8216,6 +8265,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "overlayTex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "overlayTex": "overlayTex"
@@ -9192,6 +9245,13 @@
       "tags": [
         "color"
       ],
+      "textureOrder": [
+        "_primaryTex",
+        "_creativeTex",
+        "_wheelsTex",
+        "_hslTex",
+        "_lutTex"
+      ],
       "textures": {
         "_creativeTex": {
           "format": "rgba16f",
@@ -9774,6 +9834,10 @@
           "program": "hpBlurV"
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "blurTex"
+          ],
           "inputs": {
             "blurTex": "_hpBlur",
             "inputTex": "inputTex"
@@ -9789,6 +9853,10 @@
       "tags": [
         "edges",
         "artist"
+      ],
+      "textureOrder": [
+        "_hpBlurH",
+        "_hpBlur"
       ],
       "textures": {
         "_hpBlur": {
@@ -10486,6 +10554,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "heightMap"
+          ],
           "inputs": {
             "heightMap": "heightMap",
             "inputTex": "inputTex"
@@ -11033,6 +11105,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "selfTex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "selfTex": "_selfTex"
@@ -11145,6 +11221,10 @@
           "program": "statsFinal"
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "statsTex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "statsTex": "stats"
@@ -11159,6 +11239,11 @@
       ],
       "tags": [
         "color"
+      ],
+      "textureOrder": [
+        "reduce1",
+        "reduce2",
+        "stats"
       ],
       "textures": {
         "reduce1": {
@@ -11414,6 +11499,10 @@
           }
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "flatTex"
+          ],
           "inputs": {
             "flatTex": "_paintTmp",
             "inputTex": "inputTex"
@@ -11616,6 +11705,10 @@
           "program": "outlineSobel"
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "edgesTexture"
+          ],
           "inputs": {
             "edgesTexture": "outlineEdges",
             "inputTex": "inputTex"
@@ -11630,6 +11723,10 @@
       ],
       "tags": [
         "edges"
+      ],
+      "textureOrder": [
+        "outlineValueMap",
+        "outlineEdges"
       ],
       "textures": {
         "outlineEdges": {
@@ -11855,6 +11952,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "heightMap"
+          ],
           "inputs": {
             "heightMap": "heightMap",
             "inputTex": "inputTex"
@@ -12032,6 +12133,10 @@
           "program": "pcBlurV"
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "blurTex"
+          ],
           "inputs": {
             "blurTex": "_pcBlur",
             "inputTex": "inputTex"
@@ -12048,6 +12153,10 @@
         "blur",
         "edges",
         "artist"
+      ],
+      "textureOrder": [
+        "_pcBlurH",
+        "_pcBlur"
       ],
       "textures": {
         "_pcBlur": {
@@ -12271,6 +12380,11 @@
           "program": "computeRank"
         },
         {
+          "inputOrder": [
+            "preparedTex",
+            "rankTex",
+            "brightestTex"
+          ],
           "inputs": {
             "brightestTex": "brightest",
             "preparedTex": "prepared",
@@ -12284,6 +12398,10 @@
           "program": "gatherSorted"
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "originalTex"
+          ],
           "inputs": {
             "inputTex": "sorted",
             "originalTex": "inputTex"
@@ -12306,6 +12424,13 @@
       "tags": [
         "glitch",
         "pixel"
+      ],
+      "textureOrder": [
+        "prepared",
+        "luminance",
+        "brightest",
+        "rank",
+        "sorted"
       ],
       "textures": {
         "brightest": {
@@ -12470,6 +12595,10 @@
           "program": "pwBlurV"
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "blurTex"
+          ],
           "inputs": {
             "blurTex": "_pwBlur",
             "inputTex": "inputTex"
@@ -12486,6 +12615,10 @@
         "blur",
         "edges",
         "artist"
+      ],
+      "textureOrder": [
+        "_pwBlurH",
+        "_pwBlur"
       ],
       "textures": {
         "_pwBlur": {
@@ -12936,6 +13069,10 @@
           "program": "nmReindexReduce"
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "statsTex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "statsTex": "global_stats"
@@ -12953,6 +13090,10 @@
       ],
       "tags": [
         "color"
+      ],
+      "textureOrder": [
+        "statsTiles",
+        "global_stats"
       ],
       "textures": {
         "global_stats": {
@@ -13114,6 +13255,10 @@
           "program": "rlBlurV"
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "blurTex"
+          ],
           "inputs": {
             "blurTex": "_rlBlur",
             "inputTex": "inputTex"
@@ -13130,6 +13275,10 @@
         "blur",
         "edges",
         "artist"
+      ],
+      "textureOrder": [
+        "_rlBlurH",
+        "_rlBlur"
       ],
       "textures": {
         "_rlBlur": {
@@ -13821,6 +13970,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "overlayTex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "overlayTex": "overlayTex"
@@ -14366,6 +14519,10 @@
           "program": "smoothEdge"
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "edgeTex"
+          ],
           "inputs": {
             "edgeTex": "_smoothEdges",
             "inputTex": "inputTex"
@@ -15040,6 +15197,10 @@
           "program": "stBlurV"
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "blurTex"
+          ],
           "inputs": {
             "blurTex": "_stBlur",
             "inputTex": "inputTex"
@@ -15056,6 +15217,10 @@
         "blur",
         "edges",
         "artist"
+      ],
+      "textureOrder": [
+        "_stBlurH",
+        "_stBlur"
       ],
       "textures": {
         "_stBlur": {
@@ -15312,6 +15477,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "overlayTex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "overlayTex": "overlayTex"
@@ -15450,6 +15619,10 @@
           }
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "smearTex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "smearTex": "_stkTmp"
@@ -15542,6 +15715,17 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "h7",
+            "h8"
+          ],
           "inputs": {
             "h1": "_h1",
             "h2": "_h2",
@@ -15652,6 +15836,16 @@
       "tags": [
         "color",
         "lens"
+      ],
+      "textureOrder": [
+        "_h1",
+        "_h2",
+        "_h3",
+        "_h4",
+        "_h5",
+        "_h6",
+        "_h7",
+        "_h8"
       ],
       "textures": {
         "_h1": {
@@ -16631,6 +16825,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "textTex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "textTex": "textTex"
@@ -17326,6 +17524,10 @@
           "program": "usmBlurV"
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "blurTex"
+          ],
           "inputs": {
             "blurTex": "_usmBlur",
             "inputTex": "inputTex"
@@ -17341,6 +17543,10 @@
       "tags": [
         "edges",
         "artist"
+      ],
+      "textureOrder": [
+        "_usmBlurH",
+        "_usmBlur"
       ],
       "textures": {
         "_usmBlur": {
@@ -17642,6 +17848,10 @@
           "repeat": 2
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "simplifiedTex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "simplifiedTex": "global_wc_state"
@@ -18059,6 +18269,10 @@
           }
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "accumTex"
+          ],
           "inputs": {
             "accumTex": "wormhole_accum",
             "inputTex": "inputTex"
@@ -18284,6 +18498,13 @@
       "passes": [
         {
           "drawBuffers": 3,
+          "inputOrder": [
+            "stateTex1",
+            "stateTex2",
+            "stateTex3",
+            "mixerTex",
+            "inputGeoTex"
+          ],
           "inputs": {
             "inputGeoTex": "inputGeo",
             "mixerTex": "inputTex3d",
@@ -18293,6 +18514,11 @@
           },
           "key": "filter3d/flow3d:agent",
           "name": "agent",
+          "outputOrder": [
+            "outState1",
+            "outState2",
+            "outState3"
+          ],
           "outputs": {
             "outState1": "global_flow3d_state1",
             "outState2": "global_flow3d_state2",
@@ -18324,13 +18550,11 @@
           "viewport": {
             "height": {
               "default": 1024,
-              "inputOverride": "inputTex3d",
               "param": "volumeSize",
               "power": 2
             },
             "width": {
               "default": 32,
-              "inputOverride": "inputTex3d",
               "param": "volumeSize"
             }
           }
@@ -18348,13 +18572,11 @@
           "viewport": {
             "height": {
               "default": 1024,
-              "inputOverride": "inputTex3d",
               "param": "volumeSize",
               "power": 2
             },
             "width": {
               "default": 32,
-              "inputOverride": "inputTex3d",
               "param": "volumeSize"
             }
           }
@@ -18363,6 +18585,10 @@
           "blend": true,
           "count": 262144,
           "drawMode": "points",
+          "inputOrder": [
+            "stateTex1",
+            "stateTex2"
+          ],
           "inputs": {
             "stateTex1": "global_flow3d_state1",
             "stateTex2": "global_flow3d_state2"
@@ -18380,18 +18606,20 @@
           "viewport": {
             "height": {
               "default": 1024,
-              "inputOverride": "inputTex3d",
               "param": "volumeSize",
               "power": 2
             },
             "width": {
               "default": 32,
-              "inputOverride": "inputTex3d",
               "param": "volumeSize"
             }
           }
         },
         {
+          "inputOrder": [
+            "mixerTex",
+            "trailTex"
+          ],
           "inputs": {
             "mixerTex": "inputTex3d",
             "trailTex": "global_flow3d_trail"
@@ -18408,13 +18636,11 @@
           "viewport": {
             "height": {
               "default": 1024,
-              "inputOverride": "inputTex3d",
               "param": "volumeSize",
               "power": 2
             },
             "width": {
               "default": 32,
-              "inputOverride": "inputTex3d",
               "param": "volumeSize"
             }
           }
@@ -18423,6 +18649,15 @@
       "tags": [
         "3d",
         "sim"
+      ],
+      "textureOrder": [
+        "volumeCache",
+        "geoBuffer",
+        "global_flow3d_state1",
+        "global_flow3d_state2",
+        "global_flow3d_state3",
+        "global_flow3d_trail",
+        "global_flow3d_blended"
       ],
       "textures": {
         "geoBuffer": {
@@ -18660,13 +18895,11 @@
           "viewport": {
             "height": {
               "default": 4096,
-              "inputOverride": "inputTex3d",
               "param": "volumeSize",
               "power": 2
             },
             "width": {
               "default": 64,
-              "inputOverride": "inputTex3d",
               "param": "volumeSize"
             }
           }
@@ -18754,6 +18987,11 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex",
+            "baseTex"
+          ],
           "inputs": {
             "baseTex": "baseTex",
             "inputTex": "inputTex",
@@ -18827,6 +19065,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "tex": "tex"
@@ -18911,6 +19153,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "tex": "tex"
@@ -19032,6 +19278,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "tex": "tex"
@@ -19142,6 +19392,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "tex": "tex"
@@ -19239,6 +19493,11 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "rTex",
+            "gTex",
+            "bTex"
+          ],
           "inputs": {
             "bTex": "bTex",
             "gTex": "gTex",
@@ -19383,6 +19642,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "tex": "tex"
@@ -19478,6 +19741,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "tex": "tex"
@@ -19582,6 +19849,17 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "source",
+            "layer0_tex",
+            "layer1_tex",
+            "layer2_tex",
+            "layer3_tex",
+            "layer4_tex",
+            "layer5_tex",
+            "layer6_tex",
+            "layer7_tex"
+          ],
           "inputs": {
             "layer0_tex": "layer0_tex",
             "layer1_tex": "layer1_tex",
@@ -19714,6 +19992,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "tex": "tex"
@@ -19892,6 +20174,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "tex": "tex"
@@ -20048,6 +20334,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "tex": "tex"
@@ -20159,6 +20449,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "tex": "tex"
@@ -20374,6 +20668,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "tex": "tex"
@@ -20485,6 +20783,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "tex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "tex": "tex"
@@ -20592,6 +20894,13 @@
       "passes": [
         {
           "drawBuffers": 4,
+          "inputOrder": [
+            "xyzTex",
+            "velTex",
+            "rgbaTex",
+            "diffuseTex",
+            "baseColorTex"
+          ],
           "inputs": {
             "baseColorTex": "global_attractor_base_color",
             "diffuseTex": "diffuseTex",
@@ -20601,6 +20910,12 @@
           },
           "key": "points/attractor:agent",
           "name": "agent",
+          "outputOrder": [
+            "outXYZ",
+            "outVel",
+            "outRGBA",
+            "outBaseColor"
+          ],
           "outputs": {
             "outBaseColor": "global_attractor_base_color",
             "outRGBA": "global_rgba",
@@ -20782,6 +21097,13 @@
       "passes": [
         {
           "drawBuffers": 4,
+          "inputOrder": [
+            "xyzTex",
+            "velTex",
+            "rgbaTex",
+            "diffuseTex",
+            "baseColorTex"
+          ],
           "inputs": {
             "baseColorTex": "global_buddhabrot_base_color",
             "diffuseTex": "diffuseTex",
@@ -20791,6 +21113,12 @@
           },
           "key": "points/buddhabrot:agent",
           "name": "agent",
+          "outputOrder": [
+            "outXYZ",
+            "outVel",
+            "outRGBA",
+            "outBaseColor"
+          ],
           "outputs": {
             "outBaseColor": "global_buddhabrot_base_color",
             "outRGBA": "global_rgba",
@@ -20809,6 +21137,10 @@
           }
         },
         {
+          "inputOrder": [
+            "xyzTex",
+            "velTex"
+          ],
           "inputs": {
             "velTex": "global_vel",
             "xyzTex": "global_xyz"
@@ -20835,6 +21167,10 @@
       "tags": [
         "fractal",
         "sim"
+      ],
+      "textureOrder": [
+        "global_buddhabrot_base_color",
+        "global_zState"
       ],
       "textures": {
         "global_buddhabrot_base_color": {
@@ -21047,6 +21383,16 @@
         },
         {
           "drawBuffers": 4,
+          "inputOrder": [
+            "xyzTex",
+            "velTex",
+            "rgbaTex",
+            "gridTex",
+            "inputTex",
+            "heightTex",
+            "diffuseTex",
+            "baseColorTex"
+          ],
           "inputs": {
             "baseColorTex": "global_dla_base_color",
             "diffuseTex": "diffuseTex",
@@ -21059,6 +21405,12 @@
           },
           "key": "points/dla:agent",
           "name": "agent",
+          "outputOrder": [
+            "outXYZ",
+            "outVel",
+            "outRGBA",
+            "outBaseColor"
+          ],
           "outputs": {
             "outBaseColor": "global_dla_base_color",
             "outRGBA": "global_rgba",
@@ -21082,6 +21434,11 @@
           ],
           "count": "input",
           "drawMode": "points",
+          "inputOrder": [
+            "xyzTex",
+            "velTex",
+            "rgbaTex"
+          ],
           "inputs": {
             "rgbaTex": "global_rgba",
             "velTex": "global_vel",
@@ -21098,6 +21455,10 @@
           }
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "gridTex"
+          ],
           "inputs": {
             "gridTex": "global_dla_grid",
             "inputTex": "inputTex"
@@ -21115,6 +21476,10 @@
       ],
       "tags": [
         "sim"
+      ],
+      "textureOrder": [
+        "global_dla_base_color",
+        "global_dla_grid"
       ],
       "textures": {
         "global_dla_base_color": {
@@ -21317,6 +21682,14 @@
       "passes": [
         {
           "drawBuffers": 4,
+          "inputOrder": [
+            "xyzTex",
+            "velTex",
+            "rgbaTex",
+            "diffuseTex",
+            "baseColorTex",
+            "inputTex"
+          ],
           "inputs": {
             "baseColorTex": "global_flock_base_color",
             "diffuseTex": "diffuseTex",
@@ -21327,6 +21700,12 @@
           },
           "key": "points/flock:agent",
           "name": "agent",
+          "outputOrder": [
+            "outXYZ",
+            "outVel",
+            "outRGBA",
+            "outBaseColor"
+          ],
           "outputs": {
             "outBaseColor": "global_flock_base_color",
             "outRGBA": "global_rgba",
@@ -21527,6 +21906,15 @@
       "passes": [
         {
           "drawBuffers": 4,
+          "inputOrder": [
+            "xyzTex",
+            "velTex",
+            "rgbaTex",
+            "inputTex",
+            "heightTex",
+            "diffuseTex",
+            "baseColorTex"
+          ],
           "inputs": {
             "baseColorTex": "global_flow_base_color",
             "diffuseTex": "diffuseTex",
@@ -21538,6 +21926,12 @@
           },
           "key": "points/flow:agent",
           "name": "agent",
+          "outputOrder": [
+            "outXYZ",
+            "outVel",
+            "outRGBA",
+            "outBaseColor"
+          ],
           "outputs": {
             "outBaseColor": "global_flow_base_color",
             "outRGBA": "global_rgba",
@@ -21664,6 +22058,12 @@
       "passes": [
         {
           "drawBuffers": 3,
+          "inputOrder": [
+            "xyzTex",
+            "velTex",
+            "heightTex",
+            "diffuseTex"
+          ],
           "inputs": {
             "diffuseTex": "diffuseTex",
             "heightTex": "heightTex",
@@ -21672,6 +22072,11 @@
           },
           "key": "points/heightGrid:agent",
           "name": "agent",
+          "outputOrder": [
+            "outXYZ",
+            "outVel",
+            "outRGBA"
+          ],
           "outputs": {
             "outRGBA": "global_rgba",
             "outVel": "global_vel",
@@ -21717,8 +22122,8 @@
       "outputVel": "global_vel",
       "outputXyz": "global_xyz",
       "paramNames": [
-        "diffuseTex",
         "heightTex",
+        "diffuseTex",
         "stride",
         "quantize",
         "inverse",
@@ -21801,6 +22206,15 @@
       "passes": [
         {
           "drawBuffers": 4,
+          "inputOrder": [
+            "xyzTex",
+            "velTex",
+            "rgbaTex",
+            "inputTex",
+            "heightTex",
+            "diffuseTex",
+            "baseColorTex"
+          ],
           "inputs": {
             "baseColorTex": "global_hydraulic_base_color",
             "diffuseTex": "diffuseTex",
@@ -21812,6 +22226,12 @@
           },
           "key": "points/hydraulic:agent",
           "name": "agent",
+          "outputOrder": [
+            "outXYZ",
+            "outVel",
+            "outRGBA",
+            "outBaseColor"
+          ],
           "outputs": {
             "outBaseColor": "global_hydraulic_base_color",
             "outRGBA": "global_rgba",
@@ -22052,6 +22472,15 @@
         },
         {
           "drawBuffers": 4,
+          "inputOrder": [
+            "xyzTex",
+            "velTex",
+            "rgbaTex",
+            "diffuseTex",
+            "baseColorTex",
+            "inputTex",
+            "fieldTex"
+          ],
           "inputs": {
             "baseColorTex": "global_lenia_base_color",
             "diffuseTex": "diffuseTex",
@@ -22063,6 +22492,12 @@
           },
           "key": "points/lenia:agentField",
           "name": "agent",
+          "outputOrder": [
+            "outXYZ",
+            "outVel",
+            "outRGBA",
+            "outBaseColor"
+          ],
           "outputs": {
             "outBaseColor": "global_lenia_base_color",
             "outRGBA": "global_rgba",
@@ -22092,6 +22527,11 @@
       ],
       "tags": [
         "sim"
+      ],
+      "textureOrder": [
+        "global_lenia_base_color",
+        "global_lenia_density",
+        "global_lenia_field"
       ],
       "textures": {
         "global_lenia_base_color": {
@@ -22330,6 +22770,15 @@
         },
         {
           "drawBuffers": 4,
+          "inputOrder": [
+            "xyzTex",
+            "velTex",
+            "rgbaTex",
+            "dataTex",
+            "forceMatrix",
+            "inputTex",
+            "diffuseTex"
+          ],
           "inputs": {
             "dataTex": "global_life_data",
             "diffuseTex": "diffuseTex",
@@ -22341,6 +22790,12 @@
           },
           "key": "points/life:agent",
           "name": "agent",
+          "outputOrder": [
+            "outXYZ",
+            "outVel",
+            "outRGBA",
+            "outData"
+          ],
           "outputs": {
             "outData": "global_life_data",
             "outRGBA": "global_rgba",
@@ -22377,6 +22832,10 @@
       ],
       "tags": [
         "sim"
+      ],
+      "textureOrder": [
+        "global_life_data",
+        "forceMatrix"
       ],
       "textures": {
         "forceMatrix": {
@@ -22573,6 +23032,16 @@
         },
         {
           "drawBuffers": 4,
+          "inputOrder": [
+            "xyzTex",
+            "velTex",
+            "rgbaTex",
+            "trailTex",
+            "inputTex",
+            "heightTex",
+            "diffuseTex",
+            "baseColorTex"
+          ],
           "inputs": {
             "baseColorTex": "global_physarum_base_color",
             "diffuseTex": "diffuseTex",
@@ -22585,6 +23054,12 @@
           },
           "key": "points/physarum:agent",
           "name": "agent",
+          "outputOrder": [
+            "outXYZ",
+            "outVel",
+            "outRGBA",
+            "outBaseColor"
+          ],
           "outputs": {
             "outBaseColor": "global_physarum_base_color",
             "outRGBA": "global_rgba",
@@ -22617,6 +23092,10 @@
           "blend": true,
           "count": "input",
           "drawMode": "points",
+          "inputOrder": [
+            "xyzTex",
+            "rgbaTex"
+          ],
           "inputs": {
             "rgbaTex": "global_rgba",
             "xyzTex": "global_xyz"
@@ -22645,6 +23124,10 @@
       ],
       "tags": [
         "sim"
+      ],
+      "textureOrder": [
+        "global_physarum_base_color",
+        "global_physarum_pheromone"
       ],
       "textures": {
         "global_physarum_base_color": {
@@ -22799,6 +23282,14 @@
       "passes": [
         {
           "drawBuffers": 4,
+          "inputOrder": [
+            "xyzTex",
+            "velTex",
+            "rgbaTex",
+            "diffuseTex",
+            "baseColorTex",
+            "inputTex"
+          ],
           "inputs": {
             "baseColorTex": "global_physical_base_color",
             "diffuseTex": "diffuseTex",
@@ -22809,6 +23300,12 @@
           },
           "key": "points/physical:agent",
           "name": "agent",
+          "outputOrder": [
+            "outXYZ",
+            "outVel",
+            "outRGBA",
+            "outBaseColor"
+          ],
           "outputs": {
             "outBaseColor": "global_physical_base_color",
             "outRGBA": "global_rgba",
@@ -22907,6 +23404,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "inputTex",
+            "accumTex"
+          ],
           "inputs": {
             "accumTex": "global_accum",
             "inputTex": "inputTex"
@@ -22982,6 +23483,10 @@
       "params": {},
       "passes": [
         {
+          "inputOrder": [
+            "positionsTex",
+            "normalsTex"
+          ],
           "inputs": {
             "normalsTex": "global_mesh0_normals",
             "positionsTex": "global_mesh0_positions"
@@ -23362,6 +23867,11 @@
           "blend": false,
           "count": "input",
           "drawMode": "triangles",
+          "inputOrder": [
+            "inputTex",
+            "meshPositions",
+            "meshNormals"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "meshNormals": "global_mesh0_normals",
@@ -24626,6 +25136,13 @@
             "VIEW_MODE": 1
           },
           "drawMode": "billboards",
+          "inputOrder": [
+            "xyzTex",
+            "rgbaTex",
+            "orderTex",
+            "spriteTex",
+            "spriteMeanTex"
+          ],
           "inputs": {
             "orderTex": "depthOrderA",
             "rgbaTex": "global_rgba",
@@ -24695,6 +25212,13 @@
             "VIEW_MODE": 2
           },
           "drawMode": "billboards",
+          "inputOrder": [
+            "xyzTex",
+            "rgbaTex",
+            "orderTex",
+            "spriteTex",
+            "spriteMeanTex"
+          ],
           "inputs": {
             "orderTex": "depthOrderA",
             "rgbaTex": "global_rgba",
@@ -24734,6 +25258,10 @@
           }
         },
         {
+          "inputOrder": [
+            "trailTex",
+            "defocusTex"
+          ],
           "inputs": {
             "defocusTex": "defocus",
             "trailTex": "global_billboard_trail"
@@ -24783,6 +25311,13 @@
             "VIEW_MODE": 0
           },
           "drawMode": "billboards",
+          "inputOrder": [
+            "xyzTex",
+            "rgbaTex",
+            "orderTex",
+            "spriteTex",
+            "spriteMeanTex"
+          ],
           "inputs": {
             "orderTex": "depthOrderA",
             "rgbaTex": "global_rgba",
@@ -24842,6 +25377,13 @@
             "VIEW_MODE": 1
           },
           "drawMode": "billboards",
+          "inputOrder": [
+            "xyzTex",
+            "rgbaTex",
+            "orderTex",
+            "spriteTex",
+            "spriteMeanTex"
+          ],
           "inputs": {
             "orderTex": "depthOrderA",
             "rgbaTex": "global_rgba",
@@ -24901,6 +25443,13 @@
             "VIEW_MODE": 2
           },
           "drawMode": "billboards",
+          "inputOrder": [
+            "xyzTex",
+            "rgbaTex",
+            "orderTex",
+            "spriteTex",
+            "spriteMeanTex"
+          ],
           "inputs": {
             "orderTex": "depthOrderA",
             "rgbaTex": "global_rgba",
@@ -24963,6 +25512,13 @@
             "VIEW_MODE": 0
           },
           "drawMode": "billboards",
+          "inputOrder": [
+            "xyzTex",
+            "rgbaTex",
+            "orderTex",
+            "spriteTex",
+            "spriteMeanTex"
+          ],
           "inputs": {
             "orderTex": "depthOrderA",
             "rgbaTex": "global_rgba",
@@ -25025,6 +25581,13 @@
             "VIEW_MODE": 1
           },
           "drawMode": "billboards",
+          "inputOrder": [
+            "xyzTex",
+            "rgbaTex",
+            "orderTex",
+            "spriteTex",
+            "spriteMeanTex"
+          ],
           "inputs": {
             "orderTex": "depthOrderA",
             "rgbaTex": "global_rgba",
@@ -25087,6 +25650,13 @@
             "VIEW_MODE": 2
           },
           "drawMode": "billboards",
+          "inputOrder": [
+            "xyzTex",
+            "rgbaTex",
+            "orderTex",
+            "spriteTex",
+            "spriteMeanTex"
+          ],
           "inputs": {
             "orderTex": "depthOrderA",
             "rgbaTex": "global_rgba",
@@ -25126,6 +25696,10 @@
           }
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "trailTex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "trailTex": "global_billboard_trail"
@@ -25144,6 +25718,14 @@
       ],
       "tags": [
         "agents"
+      ],
+      "textureOrder": [
+        "depthOrderA",
+        "depthOrderB",
+        "spriteMeanTiles",
+        "spriteMean",
+        "defocus",
+        "global_billboard_trail"
       ],
       "textures": {
         "defocus": {
@@ -25300,6 +25882,12 @@
       "passes": [
         {
           "drawBuffers": 3,
+          "inputOrder": [
+            "xyzTex",
+            "velTex",
+            "rgbaTex",
+            "inputTex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "rgbaTex": "global_rgba",
@@ -25308,6 +25896,11 @@
           },
           "key": "render/pointsEmit:init",
           "name": "init",
+          "outputOrder": [
+            "outXYZ",
+            "outVel",
+            "outRGBA"
+          ],
           "outputs": {
             "outRGBA": "global_rgba",
             "outVel": "global_vel",
@@ -25334,6 +25927,11 @@
       ],
       "tags": [
         "agents"
+      ],
+      "textureOrder": [
+        "global_xyz",
+        "global_vel",
+        "global_rgba"
       ],
       "textures": {
         "global_rgba": {
@@ -25629,6 +26227,10 @@
             "VIEW_MODE": 0
           },
           "drawMode": "points",
+          "inputOrder": [
+            "xyzTex",
+            "rgbaTex"
+          ],
           "inputs": {
             "rgbaTex": "global_rgba",
             "xyzTex": "global_xyz"
@@ -25667,6 +26269,10 @@
             "VIEW_MODE": 1
           },
           "drawMode": "points",
+          "inputOrder": [
+            "xyzTex",
+            "rgbaTex"
+          ],
           "inputs": {
             "rgbaTex": "global_rgba",
             "xyzTex": "global_xyz"
@@ -25705,6 +26311,10 @@
             "VIEW_MODE": 2
           },
           "drawMode": "points",
+          "inputOrder": [
+            "xyzTex",
+            "rgbaTex"
+          ],
           "inputs": {
             "rgbaTex": "global_rgba",
             "xyzTex": "global_xyz"
@@ -25729,6 +26339,10 @@
           }
         },
         {
+          "inputOrder": [
+            "inputTex",
+            "trailTex"
+          ],
           "inputs": {
             "inputTex": "inputTex",
             "trailTex": "global_points_trail"
@@ -25865,11 +26479,14 @@
         {
           "drawBuffers": 2,
           "inputs": {
-            "analyticalGeo": "inputGeo",
             "volumeCache": "inputTex3d"
           },
           "key": "render/render3d:render3d",
           "name": "render",
+          "outputOrder": [
+            "fragColor",
+            "geoOut"
+          ],
           "outputs": {
             "fragColor": "outputTex",
             "geoOut": "screenGeoBuffer"
@@ -26003,11 +26620,14 @@
         {
           "drawBuffers": 2,
           "inputs": {
-            "analyticalGeo": "inputGeo",
             "volumeCache": "inputTex3d"
           },
           "key": "render/renderCubemap3d:renderCubemap3d",
           "name": "render",
+          "outputOrder": [
+            "fragColor",
+            "geoOut"
+          ],
           "outputs": {
             "fragColor": "outputTex",
             "geoOut": "screenGeoBuffer"
@@ -26138,11 +26758,14 @@
         {
           "drawBuffers": 2,
           "inputs": {
-            "analyticalGeo": "inputGeo",
             "volumeCache": "inputTex3d"
           },
           "key": "render/renderCubemapSurface:renderCubemapSurface",
           "name": "render",
+          "outputOrder": [
+            "fragColor",
+            "geoOut"
+          ],
           "outputs": {
             "fragColor": "outputTex",
             "geoOut": "screenGeoBuffer"
@@ -26496,12 +27119,20 @@
       "passes": [
         {
           "drawBuffers": 2,
+          "inputOrder": [
+            "volumeCache",
+            "analyticalGeo"
+          ],
           "inputs": {
             "analyticalGeo": "inputGeo",
             "volumeCache": "inputTex3d"
           },
           "key": "render/renderLandscape3d:landscape",
           "name": "render",
+          "outputOrder": [
+            "fragColor",
+            "geoOut"
+          ],
           "outputs": {
             "fragColor": "outputTex",
             "geoOut": "screenGeoBuffer"
@@ -26790,11 +27421,14 @@
         {
           "drawBuffers": 2,
           "inputs": {
-            "analyticalGeo": "inputGeo",
             "volumeCache": "inputTex3d"
           },
           "key": "render/renderLit3d:renderLit3d",
           "name": "render",
+          "outputOrder": [
+            "fragColor",
+            "geoOut"
+          ],
           "outputs": {
             "fragColor": "outputTex",
             "geoOut": "screenGeoBuffer"
@@ -27303,6 +27937,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "bufTex",
+            "tex"
+          ],
           "inputs": {
             "bufTex": "global_ca_state",
             "tex": "tex"
@@ -27315,6 +27953,12 @@
           "program": "caFb"
         },
         {
+          "inputOrder": [
+            "fbTex",
+            "prevFrameTex",
+            "bufTex",
+            "tex"
+          ],
           "inputs": {
             "bufTex": "global_ca_state",
             "fbTex": "global_ca_state",
@@ -29130,6 +29774,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "bufTex",
+            "seedTex"
+          ],
           "inputs": {
             "bufTex": "global_mnca_state",
             "seedTex": "tex"
@@ -29142,6 +29790,12 @@
           "program": "mncaFb"
         },
         {
+          "inputOrder": [
+            "fbTex",
+            "prevFrameTex",
+            "bufTex",
+            "seedTex"
+          ],
           "inputs": {
             "bufTex": "global_mnca_state",
             "fbTex": "global_mnca_state",
@@ -29597,6 +30251,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "bufTex",
+            "inputTex"
+          ],
           "inputs": {
             "bufTex": "global_ns_velocity",
             "inputTex": "tex"
@@ -29643,6 +30301,10 @@
           "repeat": "iterations"
         },
         {
+          "inputOrder": [
+            "velTex",
+            "pressureTex"
+          ],
           "inputs": {
             "pressureTex": "global_ns_pressure",
             "velTex": "global_ns_velocity"
@@ -29666,6 +30328,10 @@
           "program": "nsSmooth"
         },
         {
+          "inputOrder": [
+            "fbTex",
+            "inputTex"
+          ],
           "inputs": {
             "fbTex": "global_ns_smoothed",
             "inputTex": "tex"
@@ -29680,6 +30346,11 @@
       ],
       "tags": [
         "sim"
+      ],
+      "textureOrder": [
+        "global_ns_velocity",
+        "global_ns_pressure",
+        "global_ns_smoothed"
       ],
       "textures": {
         "global_ns_pressure": {
@@ -31096,6 +31767,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "bufTex",
+            "inputTex"
+          ],
           "inputs": {
             "bufTex": "global_rd_state",
             "inputTex": "tex"
@@ -31109,6 +31784,10 @@
           "repeat": "iterations"
         },
         {
+          "inputOrder": [
+            "fbTex",
+            "inputTex"
+          ],
           "inputs": {
             "fbTex": "global_rd_state",
             "inputTex": "tex"
@@ -34267,6 +34946,16 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "zone0_tex",
+            "zone1_tex",
+            "zone2_tex",
+            "zone3_tex",
+            "zone4_tex",
+            "zone5_tex",
+            "zone6_tex",
+            "zone7_tex"
+          ],
           "inputs": {
             "zone0_tex": "zone0_tex",
             "zone1_tex": "zone1_tex",
@@ -34347,6 +35036,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "feedbackTex",
+            "noteGridTex"
+          ],
           "inputs": {
             "feedbackTex": "_rollFb",
             "noteGridTex": "midiNoteGrid"
@@ -35366,6 +36059,10 @@
           "inputs": {},
           "key": "synth3d/cell3d:precompute",
           "name": "precompute",
+          "outputOrder": [
+            "fragColor",
+            "geoOut"
+          ],
           "outputs": {
             "fragColor": "volumeCache",
             "geoOut": "geoBuffer"
@@ -35387,6 +36084,10 @@
       "tags": [
         "3d",
         "noise"
+      ],
+      "textureOrder": [
+        "volumeCache",
+        "geoBuffer"
       ],
       "textures": {
         "geoBuffer": {
@@ -35595,6 +36296,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "stateTex",
+            "seedTex"
+          ],
           "inputs": {
             "seedTex": "source",
             "stateTex": "global_ca_state"
@@ -35621,6 +36326,11 @@
       "tags": [
         "3d",
         "sim"
+      ],
+      "textureOrder": [
+        "volumeCache",
+        "geoBuffer",
+        "global_ca_state"
       ],
       "textures": {
         "geoBuffer": {
@@ -35795,6 +36505,10 @@
           "inputs": {},
           "key": "synth3d/flythrough3d:precompute",
           "name": "precompute",
+          "outputOrder": [
+            "fragColor",
+            "geoOut"
+          ],
           "outputs": {
             "fragColor": "volumeCache",
             "geoOut": "geoBuffer"
@@ -35816,6 +36530,10 @@
       "tags": [
         "3d",
         "fractal"
+      ],
+      "textureOrder": [
+        "volumeCache",
+        "geoBuffer"
       ],
       "textures": {
         "geoBuffer": {
@@ -36015,6 +36733,10 @@
           "inputs": {},
           "key": "synth3d/fractal3d:precompute",
           "name": "precompute",
+          "outputOrder": [
+            "fragColor",
+            "geoOut"
+          ],
           "outputs": {
             "fragColor": "volumeCache",
             "geoOut": "geoBuffer"
@@ -36035,6 +36757,10 @@
       ],
       "tags": [
         "3d"
+      ],
+      "textureOrder": [
+        "volumeCache",
+        "geoBuffer"
       ],
       "textures": {
         "geoBuffer": {
@@ -36143,12 +36869,20 @@
       "passes": [
         {
           "drawBuffers": 2,
+          "inputOrder": [
+            "heightTex",
+            "tex"
+          ],
           "inputs": {
             "heightTex": "heightTex",
             "tex": "tex"
           },
           "key": "synth3d/heightmap3d:precompute",
           "name": "precompute",
+          "outputOrder": [
+            "fragColor",
+            "geoOut"
+          ],
           "outputs": {
             "fragColor": "volumeCache",
             "geoOut": "geoBuffer"
@@ -36170,6 +36904,10 @@
       ],
       "tags": [
         "3d"
+      ],
+      "textureOrder": [
+        "volumeCache",
+        "geoBuffer"
       ],
       "textures": {
         "geoBuffer": {
@@ -36309,6 +37047,10 @@
           "inputs": {},
           "key": "synth3d/noise3d:precompute",
           "name": "precompute",
+          "outputOrder": [
+            "fragColor",
+            "geoOut"
+          ],
           "outputs": {
             "fragColor": "volumeCache",
             "geoOut": "geoBuffer"
@@ -36330,6 +37072,10 @@
       "tags": [
         "3d",
         "noise"
+      ],
+      "textureOrder": [
+        "volumeCache",
+        "geoBuffer"
       ],
       "textures": {
         "geoBuffer": {
@@ -36549,6 +37295,10 @@
       },
       "passes": [
         {
+          "inputOrder": [
+            "stateTex",
+            "seedTex"
+          ],
           "inputs": {
             "seedTex": "source",
             "stateTex": "global_rd_state"
@@ -36576,6 +37326,11 @@
       "tags": [
         "3d",
         "sim"
+      ],
+      "textureOrder": [
+        "volumeCache",
+        "geoBuffer",
+        "global_rd_state"
       ],
       "textures": {
         "geoBuffer": {
@@ -36771,6 +37526,10 @@
           "inputs": {},
           "key": "synth3d/shape3d:precompute",
           "name": "precompute",
+          "outputOrder": [
+            "fragColor",
+            "geoOut"
+          ],
           "outputs": {
             "fragColor": "volumeCache",
             "geoOut": "geoBuffer"
@@ -36792,6 +37551,10 @@
       "tags": [
         "3d",
         "geometric"
+      ],
+      "textureOrder": [
+        "volumeCache",
+        "geoBuffer"
       ],
       "textures": {
         "geoBuffer": {
@@ -36825,10 +37588,10 @@
   "provenance": {
     "base": "https://shaders.noisedeck.app",
     "lockSource": "https://shaders.noisedeck.app",
-    "lockVersion": "1.0",
-    "paramContractRevision": "478f94eae7ebe34116dfc661ac52b373b884008b",
+    "lockVersion": "1.5.17",
+    "paramContractRevision": "5596e69fd6e3b9014e9df0f8674e10e70c332e11",
     "paramContractSource": "noisemaker-for-cpu upstream-snapshot.js",
     "source": "shaders.noisedeck.app CDN",
-    "version": "1.0"
+    "version": "1.5.17"
   }
 }

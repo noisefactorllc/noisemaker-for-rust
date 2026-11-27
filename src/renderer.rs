@@ -1,18 +1,21 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::time::{Duration, Instant};
+use std::{cell::RefCell, rc::Rc};
 
 use thiserror::Error;
 
-use crate::catalog::{CatalogError, EffectDefinition, Expression, effect_catalog, shader_bundle};
+use crate::catalog::{
+    CatalogError, EffectCatalog, EffectDefinition, Expression, effect_catalog, shader_bundle,
+};
 use crate::dsl::{DslError, RenderPlan, RenderStep, SurfaceBinding, compile_dsl};
 use crate::external_input::{ExternalInputs, MeshData, empty_mesh_data, flip_rgba_rows};
 use crate::iteration::{
-    IterationStep, compute_iteration_groups, is_particle_state_name, iteration_schedule,
+    IterationStep, compute_groups_with_catalog, is_particle_state_name, iteration_schedule,
 };
 use crate::pass_runner::{
-    RESERVED_FEEDBACK_RESOURCE, apply_pass_uniform_aliases, canonical_uniforms, execute_pass,
-    normalize_parameters, pass_enabled, repeat_count, resolve_effect_automation,
-    texture_dimensions,
+    RESERVED_FEEDBACK_RESOURCE, apply_pass_uniform_aliases, canonical_uniforms,
+    execute_pass_with_bindings, first_output, normalize_parameters, pass_enabled, repeat_count,
+    resolve_effect_automation, texture_dimensions,
 };
 use crate::{FilterMode, ParamValue, Surface, SurfaceError, TextureFormat, Value, VmError};
 
@@ -68,10 +71,12 @@ struct RenderTrace {
 struct ParticleGroupTrace {
     resources: BTreeMap<String, Surface>,
     original_allocations: BTreeMap<String, usize>,
+    // Retain the observed allocation for as long as this trace compares addresses.
+    _retained: BTreeMap<String, Surface>,
 }
 
 #[cfg(test)]
-fn trace_particle_group(shared: &BTreeMap<String, Surface>) -> ParticleGroupTrace {
+fn trace_particle_group(shared: BTreeMap<String, Surface>) -> ParticleGroupTrace {
     let original_allocations = shared
         .iter()
         .map(|(name, surface)| (name.clone(), surface.data().as_ptr() as usize))
@@ -79,6 +84,7 @@ fn trace_particle_group(shared: &BTreeMap<String, Surface>) -> ParticleGroupTrac
     ParticleGroupTrace {
         resources: shared.clone(),
         original_allocations,
+        _retained: shared,
     }
 }
 
@@ -210,12 +216,142 @@ pub enum RenderError {
     Vm(#[from] VmError),
 }
 
+const AGENT_CHANNELS: [(&str, &str); 3] = [
+    ("outputXyz", "inputXyz"),
+    ("outputVel", "inputVel"),
+    ("outputRgba", "inputRgba"),
+];
+
+// A published channel denotes a logical texture. Writing either name replaces
+// its surface, including for other names bound to this same slot.
+#[derive(Clone, Debug)]
+struct TextureBinding {
+    surface: Rc<RefCell<Surface>>,
+    format: TextureFormat,
+}
+
+impl TextureBinding {
+    fn new(surface: Surface, format: TextureFormat) -> Self {
+        Self {
+            surface: Rc::new(RefCell::new(surface)),
+            format,
+        }
+    }
+}
+
+type Bindings = BTreeMap<String, TextureBinding>;
+
+#[derive(Clone, Copy, Default, PartialEq)]
+enum StepMode {
+    #[default]
+    Ordinary,
+    Iterated,
+    Direct,
+}
+
+#[derive(Clone, Default)]
+struct StepResources {
+    mode: StepMode,
+    particle_targets: BTreeMap<String, ParticleTarget>,
+    surfaces: BTreeMap<String, Surface>,
+    bindings: Bindings,
+}
+
+struct StorageTarget<'a> {
+    owner: &'a EffectDefinition,
+    params: BTreeMap<String, ParamValue>,
+    users: BTreeSet<String>,
+    binding: Option<TextureBinding>,
+}
+
+type ChainStorage<'a> = Vec<(String, StorageTarget<'a>)>;
+
+fn chain_storage<'a>(steps: &[RenderStep], catalog: &'a EffectCatalog) -> ChainStorage<'a> {
+    let effects: Vec<_> = steps
+        .iter()
+        .filter_map(|step| match step {
+            RenderStep::Effect {
+                effect_id, params, ..
+            } => catalog
+                .effects
+                .get(effect_id)
+                .map(|effect| (effect_id, params, effect)),
+            _ => None,
+        })
+        .collect();
+    let mut storage = ChainStorage::new();
+    for (id, params, effect) in &effects {
+        for pass in &effect.passes {
+            let Some(targets) = pass
+                .execution
+                .get("storageTextures")
+                .and_then(serde_json::Value::as_object)
+            else {
+                continue;
+            };
+            for key in ordered_keys(pass.execution.get("storageTextureOrder"), targets.keys()) {
+                let Some(name) = targets.get(key).and_then(serde_json::Value::as_str) else {
+                    continue;
+                };
+                if !name.starts_with("global_")
+                    || is_particle_state_name(name)
+                    || name == "global_accum"
+                {
+                    continue;
+                }
+                let writer = StorageTarget {
+                    owner: effect,
+                    params: (*params).clone(),
+                    users: BTreeSet::from([(*id).clone()]),
+                    binding: None,
+                };
+                if let Some((_, target)) = storage.iter_mut().find(|(target, _)| target == name) {
+                    *target = writer;
+                } else {
+                    storage.push((name.to_owned(), writer));
+                }
+            }
+        }
+    }
+    for (name, target) in &mut storage {
+        for (id, params, effect) in &effects {
+            if effect.textures.contains_key(name) {
+                target.owner = effect;
+                target.params = (*params).clone();
+            } else if !effect.passes.iter().any(|pass| {
+                pass.inputs
+                    .values()
+                    .chain(pass.outputs.values())
+                    .any(|value| value == name)
+            }) && ![
+                &effect.output_tex,
+                &effect.output_tex3d,
+                &effect.output_geo,
+                &effect.output_xyz,
+                &effect.output_vel,
+                &effect.output_rgba,
+            ]
+            .into_iter()
+            .any(|field| field.as_ref() == Some(name))
+            {
+                continue;
+            }
+            target.users.insert((*id).clone());
+        }
+    }
+    storage.retain(|(_, target)| target.users.len() > 1);
+    storage
+}
+
 #[derive(Clone, Debug, Default)]
 pub(crate) struct ChainBundle {
     pub image: Option<Surface>,
     pub volume: Option<Surface>,
     pub geometry: Option<Surface>,
     pub volume_size: Option<u32>,
+    agents: Bindings,
+    typed: bool,
+    image_binding: Option<TextureBinding>,
 }
 
 pub struct CpuRenderer {
@@ -304,12 +440,13 @@ impl CpuRenderer {
         plan: RenderPlan,
         options: &RenderOptions,
         started: Instant,
-        mut observe_particle_group: impl FnMut(&BTreeMap<String, Surface>),
+        mut observe_particle_group: impl FnMut(BTreeMap<String, Surface>),
     ) -> Result<RenderResult, RenderError> {
         let mut surfaces = BTreeMap::<String, Surface>::new();
         for chain in &plan.chains {
             self.execute_steps(
                 &chain.steps,
+                effect_catalog()?,
                 &mut surfaces,
                 options,
                 &mut observe_particle_group,
@@ -337,9 +474,10 @@ impl CpuRenderer {
     fn execute_steps(
         &mut self,
         steps: &[RenderStep],
+        catalog: &EffectCatalog,
         surfaces: &mut BTreeMap<String, Surface>,
         options: &RenderOptions,
-        observe_particle_group: &mut dyn FnMut(&BTreeMap<String, Surface>),
+        observe_particle_group: &mut dyn FnMut(BTreeMap<String, Surface>),
     ) -> Result<ChainBundle, RenderError> {
         // Current image/volume/geometry state is deliberately local to a
         // chain. Only an explicit write/read crosses a chain boundary.
@@ -349,9 +487,7 @@ impl CpuRenderer {
         // chain-scoped shared globals. Each inline chain argument is its own
         // chain scope (a fresh accumulator inside the recursive call).
         let mut chain_accum = Option::<Surface>::None;
-        // Retain shared states across the plan so earlier particle owner
-        // allocations remain live, preventing allocator address reuse across chains.
-        let mut retained_shared = Vec::new();
+        let mut storage = chain_storage(steps, catalog);
         let grouping_steps = steps
             .iter()
             .map(|step| match step {
@@ -367,7 +503,7 @@ impl CpuRenderer {
                 },
             })
             .collect::<Vec<_>>();
-        let groups = compute_iteration_groups(&grouping_steps).map_err(|error| {
+        let groups = compute_groups_with_catalog(&grouping_steps, catalog).map_err(|error| {
             RenderError::InvalidGraph {
                 message: error.to_string(),
             }
@@ -399,6 +535,7 @@ impl CpuRenderer {
                     for inline in inline_chains {
                         let value = self.execute_steps(
                             &inline.chain.steps,
+                            catalog,
                             surfaces,
                             options,
                             observe_particle_group,
@@ -416,22 +553,23 @@ impl CpuRenderer {
             if group.iterated {
                 let execution = execute_iteration_group(
                     group_steps,
+                    catalog,
                     &bundle,
                     surfaces,
                     options,
                     &mut self.cpu_texture_cache,
                     chain_accum.take(),
+                    &mut storage,
                 )?;
                 if execution
                     .shared
                     .keys()
                     .any(|name| is_particle_state_name(name))
                 {
-                    observe_particle_group(&execution.shared);
+                    observe_particle_group(execution.shared);
                 }
                 bundle = execution.bundle;
                 chain_accum = execution.chain_accum;
-                retained_shared.push(execution.shared);
                 continue;
             }
             for step in group_steps {
@@ -487,12 +625,16 @@ impl CpuRenderer {
                             };
                             inputs.insert(parameter.clone(), input);
                         }
-                        bundle = execute_effect_bundle_with_cache(
+                        bundle = execute_effect_bundle_with_state(
+                            &catalog.effects[effect_id],
                             effect_id,
                             &params,
                             &inputs,
                             &bundle,
                             options,
+                            &mut StepResources::default(),
+                            &mut storage,
+                            surface_params,
                             &mut self.cpu_texture_cache,
                         )?;
                     }
@@ -525,6 +667,7 @@ fn run_surface_io_step(
                 volume: None,
                 geometry: None,
                 volume_size: None,
+                ..ChainBundle::default()
             })
         }
         RenderStep::Write { surface, .. } => {
@@ -568,6 +711,8 @@ fn run_surface_io_step(
                 volume: Some(volume_surface),
                 geometry: surfaces.get(geometry).cloned(),
                 volume_size: Some(volume_size),
+                typed: true,
+                ..ChainBundle::default()
             })
         }
         RenderStep::Effect { .. } => Err(RenderError::InvalidGraph {
@@ -587,6 +732,19 @@ pub fn render_effect(
         volume: inputs.get("inputTex3d").cloned(),
         geometry: inputs.get("inputGeo").cloned(),
         volume_size: inputs.get("inputTex3d").map(Surface::width),
+        agents: AGENT_CHANNELS
+            .iter()
+            .filter_map(|(_, name)| {
+                inputs.get(*name).map(|surface| {
+                    (
+                        (*name).to_owned(),
+                        TextureBinding::new(surface.clone(), TextureFormat::default()),
+                    )
+                })
+            })
+            .collect(),
+        image_binding: None,
+        typed: inputs.contains_key("inputTex3d") || inputs.contains_key("inputGeo"),
     };
     execute_effect_bundle(effect_id, params, inputs, &input_bundle, options)?
         .image
@@ -604,37 +762,6 @@ fn execute_effect_bundle(
     options: &RenderOptions,
 ) -> Result<ChainBundle, RenderError> {
     let mut cache = CpuTextureCache::new(64 * 1024 * 1024);
-    execute_effect_bundle_with_cache(effect_id, params, inputs, input_bundle, options, &mut cache)
-}
-
-fn execute_effect_bundle_with_cache(
-    effect_id: &str,
-    params: &BTreeMap<String, ParamValue>,
-    inputs: &BTreeMap<String, Surface>,
-    input_bundle: &ChainBundle,
-    options: &RenderOptions,
-    cache: &mut CpuTextureCache,
-) -> Result<ChainBundle, RenderError> {
-    execute_effect_bundle_with_state(
-        effect_id,
-        params,
-        inputs,
-        input_bundle,
-        options,
-        &mut BTreeMap::new(),
-        cache,
-    )
-}
-
-fn execute_effect_bundle_with_state(
-    effect_id: &str,
-    params: &BTreeMap<String, ParamValue>,
-    inputs: &BTreeMap<String, Surface>,
-    input_bundle: &ChainBundle,
-    options: &RenderOptions,
-    persistent: &mut BTreeMap<String, Surface>,
-    cache: &mut CpuTextureCache,
-) -> Result<ChainBundle, RenderError> {
     let catalog = effect_catalog()?;
     let effect = catalog
         .effects
@@ -642,8 +769,43 @@ fn execute_effect_bundle_with_state(
         .ok_or_else(|| RenderError::UnknownEffect {
             effect_id: effect_id.into(),
         })?;
+    execute_effect_bundle_with_state(
+        effect,
+        effect_id,
+        params,
+        inputs,
+        input_bundle,
+        options,
+        &mut StepResources {
+            mode: StepMode::Direct,
+            ..StepResources::default()
+        },
+        &mut ChainStorage::new(),
+        &BTreeMap::new(),
+        &mut cache,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn execute_effect_bundle_with_state(
+    effect: &EffectDefinition,
+    effect_id: &str,
+    params: &BTreeMap<String, ParamValue>,
+    inputs: &BTreeMap<String, Surface>,
+    input_bundle: &ChainBundle,
+    options: &RenderOptions,
+    persistent: &mut StepResources,
+    storage: &mut ChainStorage,
+    surface_params: &BTreeMap<String, SurfaceBinding>,
+    cache: &mut CpuTextureCache,
+) -> Result<ChainBundle, RenderError> {
     let params = resolve_effect_automation(effect, params, options.time);
-    let mut normalized = normalize_parameters(effect, &params, options.seed)?;
+    let normalizer = if persistent.mode == StepMode::Direct {
+        normalize_parameters
+    } else {
+        crate::param::normalize_graph_parameters
+    };
+    let mut normalized = normalizer(effect, &params, options.seed)?;
     // Upstream binds a surface parameter's declared `colorModeUniform` to 1
     // when the parameter carries a surface and 0 when it resolves to none
     // (buildBindings). Surface parameters carry no numeric uniform of their
@@ -658,7 +820,13 @@ fn execute_effect_bundle_with_state(
             );
         }
     }
-    inherit_volume_size(effect_id, effect, &mut normalized, input_bundle)?;
+    inherit_volume_size(
+        effect_id,
+        effect,
+        &mut normalized,
+        input_bundle,
+        persistent.mode,
+    )?;
     if effect_id == "synth/remap" {
         normalized.uniforms.insert(
             "data".into(),
@@ -684,8 +852,11 @@ fn execute_effect_bundle_with_state(
         options.delta_time,
         &normalized.uniforms,
     );
-    let mut resources = persistent.clone();
-    resources.extend(inputs.clone());
+    let mut resources = std::mem::take(&mut persistent.surfaces);
+    let bindings = &mut persistent.bindings;
+    if persistent.mode == StepMode::Direct {
+        resources.extend(inputs.clone());
+    }
     // A surface parameter that resolved to none still binds: upstream's
     // buildBindings substitutes its 1x1 `emptySurface` for a null surface value
     // (`if (value === null) surface = this.emptySurface`), so every pass input
@@ -702,7 +873,20 @@ fn execute_effect_bundle_with_state(
             );
         }
     }
-    resources.extend(options.external_textures.clone());
+    if persistent.mode == StepMode::Direct {
+        resources.extend(options.external_textures.clone());
+    } else if let Some(name) = &effect.external_texture {
+        let texture =
+            options
+                .external_textures
+                .get(name)
+                .ok_or_else(|| RenderError::InvalidGraph {
+                    message: format!("{effect_id} requires external texture {name:?}"),
+                })?;
+        let mut external_view = texture.clone();
+        external_view.set_filter_mode(FilterMode::Linear);
+        resources.insert(name.clone(), external_view);
+    }
     bind_external_input_resources(effect_id, effect, &options.external_inputs, &mut resources)?;
     if let Some(image) = &input_bundle.image {
         resources.insert("inputTex".into(), image.clone());
@@ -712,6 +896,77 @@ fn execute_effect_bundle_with_state(
     }
     if let Some(geometry) = &input_bundle.geometry {
         resources.insert("inputGeo".into(), geometry.clone());
+    }
+    // Refresh ephemeral input names every tick, especially when a new emitter
+    // opens a private particle scope. A named surface argument is a snapshot.
+    bindings.remove("inputTex");
+    if let Some(binding) = &input_bundle.image_binding {
+        bindings.insert("inputTex".into(), binding.clone());
+    }
+    for name in surface_params.keys() {
+        let texture = effect
+            .params
+            .get(name)
+            .and_then(|spec| spec.metadata.get("texture"))
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or(name);
+        if let Some(surface) = inputs.get(name) {
+            resources.insert(texture.to_owned(), surface.clone());
+        }
+        bindings.remove(texture);
+        if inputs
+            .get(name)
+            .zip(input_bundle.image.as_ref())
+            .is_some_and(|(surface, image)| surface.same_image(image))
+        {
+            if let Some(binding) = &input_bundle.image_binding {
+                bindings.insert(texture.to_owned(), binding.clone());
+            }
+        }
+    }
+    for (_, name) in AGENT_CHANNELS {
+        bindings.remove(name);
+        resources.remove(name);
+        if !effect.textures.contains_key("global_xyz") {
+            if let Some(binding) = input_bundle.agents.get(name) {
+                bindings.insert(name.into(), binding.clone());
+            }
+        }
+    }
+    for (name, binding) in bindings.iter() {
+        resources.insert(name.clone(), binding.surface.borrow().clone());
+    }
+    for (name, target) in storage
+        .iter_mut()
+        .filter(|(_, target)| target.users.contains(effect_id))
+    {
+        if target.binding.is_none() {
+            let values;
+            let (definition, parameters) = if std::ptr::eq(target.owner, effect) {
+                (effect, &normalized.values)
+            } else {
+                let owner = target.owner;
+                let params = resolve_effect_automation(owner, &target.params, options.time);
+                values = crate::param::normalize_graph_parameters(owner, &params, options.seed)?;
+                (owner, &values.values)
+            };
+            let spec = definition
+                .textures
+                .get(name)
+                .unwrap_or(&serde_json::Value::Null);
+            let (width, height) =
+                texture_dimensions(spec, parameters, options.width, options.height, &resources)?;
+            let format = spec
+                .get("format")
+                .and_then(serde_json::Value::as_str)
+                .map(texture_format)
+                .transpose()?
+                .unwrap_or_default();
+            target.binding = Some(TextureBinding::new(Surface::new(width, height)?, format));
+        }
+        let binding = target.binding.as_ref().unwrap();
+        resources.insert(name.clone(), binding.surface.borrow().clone());
+        bindings.insert(name.clone(), binding.clone());
     }
     let reserved_feedback_names = effect
         .passes
@@ -747,14 +1002,44 @@ fn execute_effect_bundle_with_state(
         &mut resources,
         options,
     )?;
-    for (name, spec) in &effect.textures {
+    let produced: BTreeSet<_> = effect
+        .passes
+        .iter()
+        .flat_map(|pass| pass.outputs.values())
+        .collect();
+    let consumed: BTreeSet<_> = effect
+        .passes
+        .iter()
+        .flat_map(|pass| pass.inputs.values())
+        .collect();
+    let empty_resources = BTreeMap::new();
+    for name in effect.texture_order.iter().chain(
+        effect
+            .textures
+            .keys()
+            .filter(|name| !effect.texture_order.contains(name)),
+    ) {
+        if persistent.mode == StepMode::Ordinary
+            && produced.contains(name)
+            && !(name.starts_with('_') && consumed.contains(name))
+        {
+            continue;
+        }
+        if persistent.mode == StepMode::Iterated && is_particle_state_name(name) {
+            continue;
+        }
+        let spec = &effect.textures[name];
         if !resources.contains_key(name) {
             let (width, height) = texture_dimensions(
                 spec,
                 &normalized.values,
                 options.width,
                 options.height,
-                &resources,
+                if persistent.mode == StepMode::Iterated {
+                    &empty_resources
+                } else {
+                    &resources
+                },
             )?;
             let surface = if name == "overlayTex"
                 && matches!(
@@ -813,6 +1098,17 @@ fn execute_effect_bundle_with_state(
             formats.entry(name.into()).or_insert(format);
         }
     }
+    formats.extend(
+        bindings
+            .iter()
+            .map(|(name, binding)| (name.clone(), binding.format)),
+    );
+    formats.extend(
+        persistent
+            .particle_targets
+            .iter()
+            .map(|(name, target)| (name.clone(), target.format)),
+    );
     let shaders = shader_bundle()?;
     let mut last_output = None;
     for render_pass in &effect.passes {
@@ -829,13 +1125,29 @@ fn execute_effect_bundle_with_state(
             .iter()
             .map(|(name, value)| (name.clone(), value.clone()))
             .collect::<BTreeMap<_, _>>();
-        let pass_uniforms = apply_pass_uniform_aliases(&uniforms, &alias_sources, &aliases);
+        let mut pass_uniforms = apply_pass_uniform_aliases(&uniforms, &alias_sources, &aliases);
+        if let Some(defines) = render_pass
+            .execution
+            .get("defines")
+            .and_then(serde_json::Value::as_object)
+        {
+            for (name, value) in defines {
+                if let Some(value) = crate::pass_runner::json_to_value(value) {
+                    pass_uniforms.insert(name.clone(), value);
+                }
+            }
+        }
+        let gate_uniforms = if persistent.mode == StepMode::Direct {
+            &pass_uniforms
+        } else {
+            &normalized.uniforms
+        };
         if !pass_enabled(
             render_pass
                 .execution
                 .get("conditions")
                 .unwrap_or(&serde_json::Value::Null),
-            &pass_uniforms,
+            gate_uniforms,
         ) {
             continue;
         }
@@ -844,12 +1156,63 @@ fn execute_effect_bundle_with_state(
                 .execution
                 .get("repeat")
                 .unwrap_or(&serde_json::Value::Null),
-            &pass_uniforms,
+            gate_uniforms,
         );
+        if repeats == 0 {
+            continue;
+        }
+        if persistent.mode != StepMode::Direct {
+            for key in ordered_keys(
+                render_pass.execution.get("inputOrder"),
+                render_pass.inputs.keys(),
+            ) {
+                if let Some(name) = render_pass.inputs.get(key) {
+                    if crate::pass_runner::resource_surface(&resources, name).is_none() {
+                        return Err(RenderError::InvalidGraph {
+                            message: format!(
+                                "{effect_id} pass {:?} requires texture {name:?}",
+                                render_pass.name
+                            ),
+                        });
+                    }
+                }
+            }
+        }
+        // The CPU allocates each write from the declaration and the per-axis
+        // viewport. Only an explicitly handed-on or group-owned texture keeps
+        // its allocation extent. Retain the old pixels separately for blending.
+        let target_size = |name: &str,
+                           resources: &BTreeMap<String, Surface>|
+         -> Result<Option<(u32, u32)>, RenderError> {
+            if let Some(target) = persistent.particle_targets.get(name) {
+                return Ok(Some(target.size));
+            }
+            if bindings.contains_key(name) {
+                return Ok(resources
+                    .get(name)
+                    .map(|surface| (surface.width(), surface.height())));
+            }
+            if persistent.mode == StepMode::Direct {
+                return Ok(None);
+            }
+            crate::pass_runner::declared_attachment_dimensions(
+                effect.textures.get(name),
+                render_pass.execution.get("viewport"),
+                &normalized.values,
+                options.width,
+                options.height,
+                resources,
+            )
+            .map(Some)
+        };
         if crate::draw_ops::is_draw_pass(render_pass) {
             let key = format!("{effect_id}:{}", render_pass.program);
             for _ in 0..repeats {
-                crate::draw_ops::execute_draw_pass_with(
+                let dimensions = first_output(render_pass)
+                    .map(|name| target_size(name, &resources))
+                    .transpose()?
+                    .flatten();
+                crate::draw_ops::execute_draw_pass_at_size(
                     &key,
                     render_pass,
                     &pass_uniforms,
@@ -858,9 +1221,14 @@ fn execute_effect_bundle_with_state(
                     options.height,
                     &formats,
                     &options.external_inputs,
+                    dimensions,
+                    persistent.mode != StepMode::Direct,
                 )?;
+                if let Some(name) = first_output(render_pass) {
+                    refresh_written_bindings(std::iter::once(name), bindings, &mut resources);
+                }
             }
-            if let Some(name) = render_pass.outputs.values().next() {
+            if let Some(name) = first_output(render_pass) {
                 last_output = Some(name.clone());
             }
             continue;
@@ -880,8 +1248,25 @@ fn execute_effect_bundle_with_state(
                 program: key.clone(),
             })?;
         let derivatives = uses_derivatives(&program.ir);
+        let graph = persistent.mode != StepMode::Direct;
+        let attachments = if !crate::pass_runner::uses_mrt(&program.ir, render_pass, graph) {
+            first_output(render_pass).into_iter().collect::<Vec<_>>()
+        } else {
+            program
+                .ir
+                .outputs
+                .iter()
+                .filter_map(|name| render_pass.outputs.get(name))
+                .collect()
+        };
         for _ in 0..repeats {
-            execute_pass(
+            let mut dimensions = BTreeMap::new();
+            for name in &attachments {
+                if let Some(size) = target_size(name, &resources)? {
+                    dimensions.insert((*name).clone(), size);
+                }
+            }
+            execute_pass_with_bindings(
                 &program.ir,
                 render_pass,
                 &pass_uniforms,
@@ -891,23 +1276,70 @@ fn execute_effect_bundle_with_state(
                 &formats,
                 effect.external_texture.as_deref(),
                 derivatives,
+                &dimensions,
+                graph,
             )?;
+            refresh_written_bindings(attachments.iter().copied(), bindings, &mut resources);
         }
-        if let Some(name) = render_pass.outputs.values().next() {
-            last_output = Some(name.clone());
+        if let Some(name) = attachments.last() {
+            last_output = Some((*name).clone());
         }
     }
     let volume_domain = matches!(
         effect.domain.as_str(),
         "volume-generator" | "volume-filter" | "volume-renderer"
     );
-    let image = resources.get("outputTex").cloned().or_else(|| {
-        if volume_domain {
-            input_bundle.image.clone()
-        } else {
-            last_output.and_then(|name| resources.get(&name).cloned())
+    let image_name = output_texture_name(
+        effect,
+        "outputTex",
+        effect.output_tex.as_deref(),
+        &resources,
+    );
+    let mut agents = Bindings::new();
+    for ((field, input_name), configured) in AGENT_CHANNELS.into_iter().zip([
+        effect.output_xyz.as_deref(),
+        effect.output_vel.as_deref(),
+        effect.output_rgba.as_deref(),
+    ]) {
+        let name = output_texture_name(effect, field, configured, &resources).unwrap_or(input_name);
+        if let Some(surface) = resources.get(name) {
+            let binding = bindings.entry(name.into()).or_insert_with(|| {
+                TextureBinding::new(
+                    surface.clone(),
+                    formats.get(name).copied().unwrap_or_default(),
+                )
+            });
+            agents.insert(input_name.into(), binding.clone());
         }
-    });
+    }
+    let (image, mut image_binding) = match image_name {
+        Some("inputGeo" | "inputTex3d") => (
+            input_bundle.image.clone(),
+            input_bundle.image_binding.clone(),
+        ),
+        Some(name) => (resources.get(name).cloned(), bindings.get(name).cloned()),
+        None if volume_domain || effect.output_tex.is_some() => (
+            input_bundle.image.clone(),
+            input_bundle.image_binding.clone(),
+        ),
+        // The implicit last attachment is its physical snapshot. A subsequent
+        // write through a shared target cannot change that snapshot.
+        None => (
+            last_output
+                .as_ref()
+                .and_then(|name| resources.get(name))
+                .cloned(),
+            None,
+        ),
+    };
+    if let (Some(image), None) = (&image, &image_binding) {
+        image_binding = agents
+            .values()
+            .find(|binding| binding.surface.borrow().same_image(image))
+            .cloned();
+    }
+    let typed =
+        input_bundle.typed || volume_domain || !agents.is_empty() || image_binding.is_some();
     let volume = bundle_output(
         effect.output_tex3d.as_deref(),
         input_bundle.volume.as_ref(),
@@ -956,12 +1388,15 @@ fn execute_effect_bundle_with_state(
     // (Surface byteFromFloat), so mirror that contract instead of rejecting
     // the surface: any downstream pass consumes the same NaN floats the
     // oracle's next pass would see.
-    *persistent = resources;
+    persistent.surfaces = resources;
     Ok(ChainBundle {
         image,
-        volume,
-        geometry,
-        volume_size,
+        image_binding,
+        agents,
+        typed,
+        volume: if typed { volume } else { None },
+        geometry: if typed { geometry } else { None },
+        volume_size: if typed { volume_size } else { None },
     })
 }
 
@@ -1162,15 +1597,17 @@ struct IterationExecution {
     chain_accum: Option<Surface>,
 }
 
+#[allow(clippy::too_many_arguments)]
 fn execute_iteration_group(
     steps: &[RenderStep],
+    catalog: &EffectCatalog,
     group_input: &ChainBundle,
     surfaces: &BTreeMap<String, Surface>,
     options: &RenderOptions,
     cache: &mut CpuTextureCache,
     mut chain_accum: Option<Surface>,
+    storage: &mut ChainStorage,
 ) -> Result<IterationExecution, RenderError> {
-    let catalog = effect_catalog()?;
     let Some(RenderStep::Effect {
         effect_id: first_id,
         params: first_params,
@@ -1255,18 +1692,40 @@ fn execute_iteration_group(
     } else {
         None
     };
-    let mut states = vec![BTreeMap::<String, Surface>::new(); steps.len()];
+    let mut states = vec![
+        StepResources {
+            mode: StepMode::Iterated,
+            ..StepResources::default()
+        };
+        steps.len()
+    ];
+    let mut shared_bindings = Bindings::new();
     let mut shared = BTreeMap::<String, Surface>::new();
     let mut declared_particle_textures = BTreeMap::new();
-    for step in steps {
-        let RenderStep::Effect { effect_id, .. } = step else {
+    for (index, step) in steps.iter().enumerate() {
+        let RenderStep::Effect {
+            effect_id, params, ..
+        } = step
+        else {
             continue;
         };
-        for (name, spec) in &catalog.effects[effect_id].textures {
-            if is_particle_state_name(name) {
-                declared_particle_textures
-                    .entry(name.clone())
-                    .or_insert_with(|| spec.clone());
+        let definition = &catalog.effects[effect_id];
+        if !definition
+            .textures
+            .keys()
+            .any(|name| is_particle_state_name(name))
+        {
+            continue;
+        }
+        let mut params = params.clone();
+        inherit_group_state_size(index, definition, owner_state_size.as_ref(), &mut params);
+        let params = resolve_effect_automation(definition, &params, options.time);
+        let normalized =
+            crate::param::normalize_graph_parameters(definition, &params, options.seed)?;
+        for (name, spec) in &definition.textures {
+            if is_particle_state_name(name) && !declared_particle_textures.contains_key(name) {
+                let target = particle_target(spec, &normalized.values, options)?;
+                declared_particle_textures.insert(name.clone(), (index, target));
             }
         }
     }
@@ -1323,17 +1782,24 @@ fn execute_iteration_group(
             // accumulated, so an automation param must read the same
             // per-iteration time the kernels receive.
             let params = resolve_effect_automation(definition, &params, frame.time);
-            let normalized = normalize_parameters(definition, &params, options.seed)?;
-            ensure_group_particle_resources(
+            let normalized =
+                crate::param::normalize_graph_parameters(definition, &params, options.seed)?;
+            for (name, (owner, target)) in &mut declared_particle_textures {
+                if *owner == index {
+                    *target =
+                        particle_target(&definition.textures[name], &normalized.values, options)?;
+                }
+            }
+            states[index].particle_targets = ensure_group_particle_resources(
                 definition,
                 &normalized.values,
                 &declared_particle_textures,
                 &mut shared,
-                options,
             )?;
             for (name, surface) in &shared {
-                states[index].insert(name.clone(), surface.clone());
+                states[index].surfaces.insert(name.clone(), surface.clone());
             }
+            states[index].bindings.extend(shared_bindings.clone());
             let mut inputs = BTreeMap::new();
             if let Some(image) = &step_input.image {
                 inputs.insert("inputTex".into(), image.clone());
@@ -1366,15 +1832,25 @@ fn execute_iteration_group(
                 ..options.clone()
             };
             step_input = execute_effect_bundle_with_state(
+                definition,
                 effect_id,
                 &params,
                 &inputs,
                 &step_input,
                 &iteration_options,
                 &mut states[index],
+                storage,
+                surface_params,
                 cache,
             )?;
-            for (name, surface) in &states[index] {
+            shared_bindings.extend(
+                states[index]
+                    .bindings
+                    .iter()
+                    .filter(|(name, _)| is_particle_state_name(name))
+                    .map(|(name, binding)| (name.clone(), binding.clone())),
+            );
+            for (name, surface) in &states[index].surfaces {
                 if is_particle_state_name(name) || name == "global_accum" {
                     shared.insert(name.clone(), surface.clone());
                 }
@@ -1461,40 +1937,67 @@ fn particle_texture_format(name: &str) -> Option<TextureFormat> {
     }
 }
 
-fn ensure_group_particle_resources(
-    effect: &crate::catalog::EffectDefinition,
+#[derive(Clone, Copy)]
+struct ParticleTarget {
+    size: (u32, u32),
+    format: TextureFormat,
+}
+
+fn particle_target(
+    spec: &serde_json::Value,
     values: &BTreeMap<String, Value>,
-    declared_textures: &BTreeMap<String, serde_json::Value>,
-    shared: &mut BTreeMap<String, Surface>,
     options: &RenderOptions,
-) -> Result<(), RenderError> {
-    let referenced = effect
+) -> Result<ParticleTarget, RenderError> {
+    let size = texture_dimensions(
+        spec,
+        values,
+        options.width,
+        options.height,
+        &BTreeMap::new(),
+    )?;
+    let format = spec
+        .get("format")
+        .and_then(serde_json::Value::as_str)
+        .map(texture_format)
+        .transpose()?
+        .unwrap_or_default();
+    Ok(ParticleTarget { size, format })
+}
+
+fn ensure_group_particle_resources(
+    effect: &EffectDefinition,
+    values: &BTreeMap<String, Value>,
+    declared_textures: &BTreeMap<String, (usize, ParticleTarget)>,
+    shared: &mut BTreeMap<String, Surface>,
+) -> Result<BTreeMap<String, ParticleTarget>, RenderError> {
+    let mut targets = BTreeMap::new();
+    for name in effect
         .passes
         .iter()
         .flat_map(|pass| pass.inputs.values().chain(pass.outputs.values()))
         .filter(|name| is_particle_state_name(name))
-        .cloned()
-        .collect::<std::collections::BTreeSet<_>>();
-    for name in referenced {
-        if shared.contains_key(&name) {
+    {
+        if targets.contains_key(name) {
             continue;
         }
-        let fallback;
-        let spec = if let Some(spec) = declared_textures.get(&name) {
-            spec
+        let target = if let Some((_, target)) = declared_textures.get(name) {
+            *target
         } else {
-            let state_size = values
+            let size = values
                 .get("stateSize")
                 .and_then(value_as_positive_u32)
                 .unwrap_or(256);
-            fallback = serde_json::json!({"width": state_size, "height": state_size});
-            &fallback
+            ParticleTarget {
+                size: (size, size),
+                format: particle_texture_format(name).unwrap(),
+            }
         };
-        let (width, height) =
-            texture_dimensions(spec, values, options.width, options.height, shared)?;
-        shared.insert(name, Surface::new(width, height)?);
+        if !shared.contains_key(name) {
+            shared.insert(name.clone(), Surface::new(target.size.0, target.size.1)?);
+        }
+        targets.insert(name.clone(), target);
     }
-    Ok(())
+    Ok(targets)
 }
 
 fn copy_reserved_feedback(
@@ -1545,6 +2048,7 @@ fn inherit_volume_size(
     effect: &crate::catalog::EffectDefinition,
     normalized: &mut crate::pass_runner::NormalizedParameters,
     input: &ChainBundle,
+    mode: StepMode,
 ) -> Result<(), RenderError> {
     let Some(volume) = &input.volume else {
         return Ok(());
@@ -1563,6 +2067,13 @@ fn inherit_volume_size(
     })?);
     normalized.values.insert("volumeSize".into(), value.clone());
     if let Some(spec) = effect.params.get("volumeSize") {
+        if mode != StepMode::Direct {
+            normalized.uniforms.insert(
+                crate::param::graph_uniform_name("volumeSize", spec).to_owned(),
+                value,
+            );
+            return Ok(());
+        }
         if let Some(uniform) = &spec.uniform {
             normalized.uniforms.insert(uniform.clone(), value.clone());
         }
@@ -1607,13 +2118,76 @@ fn value_as_positive_u32(value: &Value) -> Option<u32> {
     u32::try_from(value).ok().filter(|value| *value > 0)
 }
 
+fn ordered_keys<'a>(
+    order: Option<&'a serde_json::Value>,
+    keys: impl Iterator<Item = &'a String> + 'a,
+) -> impl Iterator<Item = &'a str> {
+    let order = order
+        .and_then(serde_json::Value::as_array)
+        .map(Vec::as_slice)
+        .unwrap_or_default();
+    order.iter().filter_map(serde_json::Value::as_str).chain(
+        keys.map(String::as_str)
+            .filter(move |key| !order.iter().any(|item| item.as_str() == Some(key))),
+    )
+}
+
+fn output_texture_name<'a>(
+    effect: &EffectDefinition,
+    field: &'a str,
+    configured: Option<&'a str>,
+    resources: &BTreeMap<String, Surface>,
+) -> Option<&'a str> {
+    if resources.contains_key(field)
+        && ((field == "outputTex" && configured.is_none())
+            || effect
+                .passes
+                .iter()
+                .any(|pass| pass.outputs.values().any(|name| name == field)))
+    {
+        Some(field)
+    } else {
+        configured
+    }
+}
+
+fn refresh_written_bindings<'a>(
+    names: impl Iterator<Item = &'a String>,
+    bindings: &Bindings,
+    resources: &mut BTreeMap<String, Surface>,
+) {
+    if bindings.is_empty() {
+        return;
+    }
+    // All MRT attachments were rendered against the same pre-pass contents.
+    // Commit their values before refreshing aliases, in shader location order.
+    let mut changed = Vec::new();
+    for name in names {
+        if let Some(binding) = bindings.get(name) {
+            *binding.surface.borrow_mut() = resources[name].clone();
+            changed.push((name, binding));
+        }
+    }
+    for (name, binding) in bindings {
+        if changed
+            .iter()
+            .rev()
+            .find(|(_, updated)| Rc::ptr_eq(&updated.surface, &binding.surface))
+            .is_some_and(|(written, _)| name != *written)
+        {
+            resources.insert(name.clone(), binding.surface.borrow().clone());
+        }
+    }
+}
+
 fn bundle_output(
     name: Option<&str>,
     input: Option<&Surface>,
     resources: &BTreeMap<String, Surface>,
 ) -> Option<Surface> {
     match name {
-        None | Some("inputTex" | "inputTex3d" | "inputGeo") => input.cloned(),
+        Some("inputTex") => resources.get("inputTex").or(input).cloned(),
+        None | Some("inputTex3d" | "inputGeo") => input.cloned(),
         Some(name) => resources.get(name).cloned(),
     }
 }
@@ -1691,7 +2265,7 @@ fn zero_iteration_bundle(
     }
     if effect.domain == "volume-generator" {
         let params = resolve_effect_automation(effect, params, options.time);
-        let normalized = normalize_parameters(effect, &params, options.seed)?;
+        let normalized = crate::param::normalize_graph_parameters(effect, &params, options.seed)?;
         let resources = BTreeMap::new();
         let output = effect
             .output_tex3d
@@ -1726,6 +2300,8 @@ fn zero_iteration_bundle(
             volume: Some(volume),
             geometry,
             volume_size,
+            typed: true,
+            ..ChainBundle::default()
         });
     }
     Ok(ChainBundle {
@@ -1803,6 +2379,11 @@ mod cache_tests {
             passes: Vec::new(),
             iterated: false,
             external_texture: None,
+            texture_order: Vec::new(),
+            output_tex: None,
+            output_xyz: None,
+            output_vel: None,
+            output_rgba: None,
             output_tex3d: None,
             output_geo: None,
             loop_role: None,
@@ -1989,21 +2570,12 @@ mod cache_tests {
             }],
             "iterated": true,
             "externalTexture": null,
-            "outputTex3d": null,
-            "outputGeo": null,
             "loopRole": null
         }))
         .unwrap();
         let values = BTreeMap::from([("stateSize".into(), Value::Int(3))]);
         let mut shared = BTreeMap::new();
-        ensure_group_particle_resources(
-            &effect,
-            &values,
-            &BTreeMap::new(),
-            &mut shared,
-            &RenderOptions::default(),
-        )
-        .unwrap();
+        ensure_group_particle_resources(&effect, &values, &BTreeMap::new(), &mut shared).unwrap();
         for name in [
             "global_xyz",
             "global_vel",
@@ -2045,7 +2617,6 @@ mod cache_tests {
             &BTreeMap::from([("stateSize".into(), Value::Int(5))]),
             &BTreeMap::new(),
             &mut shared,
-            &RenderOptions::default(),
         )
         .unwrap();
         assert_eq!(shared["global_xyz"].data().as_ptr(), allocation);
@@ -2058,7 +2629,7 @@ mod cache_tests {
         let only_xyz: EffectDefinition = serde_json::from_value(serde_json::json!({
             "namespace": "points", "func": "defaultSize", "kind": "filter", "domain": "image",
             "params": {}, "paramNames": [], "textures": {}, "iterated": true,
-            "externalTexture": null, "outputTex3d": null, "outputGeo": null, "loopRole": null,
+            "externalTexture": null, "loopRole": null,
             "passes": [{"name":"agent", "program":"agent", "key":"points/defaultSize:agent",
                 "inputs":{"xyzTex":"global_xyz"}, "outputs":{}}]
         }))
@@ -2069,7 +2640,6 @@ mod cache_tests {
             &BTreeMap::new(),
             &BTreeMap::new(),
             &mut default_shared,
-            &RenderOptions::default(),
         )
         .unwrap();
         assert_eq!(
@@ -2101,11 +2671,13 @@ mod cache_tests {
         let mut cache = CpuTextureCache::new(0);
         let execution = execute_iteration_group(
             &plan.chains[0].steps[1..2],
+            effect_catalog().unwrap(),
             &group_input,
             &BTreeMap::new(),
             &options(1),
             &mut cache,
             None,
+            &mut Vec::new(),
         )
         .unwrap();
         for name in ["global_xyz", "global_vel", "global_rgba"] {
@@ -2127,31 +2699,37 @@ mod cache_tests {
         .unwrap();
         let first = execute_iteration_group(
             &emitter_plan.chains[0].steps[1..2],
+            effect_catalog().unwrap(),
             &group_input,
             &BTreeMap::new(),
             &options(1),
             &mut cache,
             None,
+            &mut Vec::new(),
         )
         .unwrap();
         let first_xyz = first.shared["global_xyz"].clone();
         let first_allocation = first.shared["global_xyz"].data().as_ptr();
         let changed = execute_iteration_group(
             &emitter_plan.chains[0].steps[1..2],
+            effect_catalog().unwrap(),
             &group_input,
             &BTreeMap::new(),
             &options(9),
             &mut cache,
             None,
+            &mut Vec::new(),
         )
         .unwrap();
         let repeated = execute_iteration_group(
             &emitter_plan.chains[0].steps[1..2],
+            effect_catalog().unwrap(),
             &group_input,
             &BTreeMap::new(),
             &options(1),
             &mut cache,
             None,
+            &mut Vec::new(),
         )
         .unwrap();
         assert_ne!(first_xyz, changed.shared["global_xyz"]);
@@ -2222,7 +2800,7 @@ mod cache_tests {
         let original = Surface::new(2, 2).unwrap();
         let original_allocation = original.data().as_ptr() as usize;
         let shared = BTreeMap::from([("global_xyz".to_owned(), original)]);
-        let trace = trace_particle_group(&shared);
+        let trace = trace_particle_group(shared);
 
         assert_eq!(
             trace.original_allocations["global_xyz"], original_allocation,
@@ -2402,5 +2980,606 @@ mod cache_tests {
         assert!(
             matches!(error, RenderError::MissingDrawOp { key, .. } if key == "points/missingScatterIter:deposit")
         );
+    }
+}
+
+#[cfg(test)]
+mod handed_on_textures {
+    use super::*;
+    use serde_json::{Value as Json, json};
+
+    // Use the shipped solid/passthrough kernels in small authored pass graphs,
+    // exercising both the normal graph scheduler and its iterated branch.
+    fn fill(name: &str, alpha: f64) -> Json {
+        json!({"name":"fill","program":"solid","key":"synth/solid:solid",
+            "uniforms":{"alpha":alpha},"outputs":{"fragColor":name}})
+    }
+    fn storage_fill(name: &str, alpha: f64) -> Json {
+        let mut pass = fill(name, alpha);
+        let outputs = pass.as_object_mut().unwrap().remove("outputs").unwrap();
+        pass["storageTextures"] = outputs;
+        pass
+    }
+    fn copy(input: &str) -> Json {
+        json!({"name":"copy","program":"passthrough","key":"render/pointsEmit:passthrough",
+            "inputs":{"inputTex":input},"outputs":{"fragColor":"outputTex"}})
+    }
+    fn run(specs: Vec<Json>, steps: &[&str]) -> Result<ChainBundle, RenderError> {
+        run_with(specs, steps, |_| {})
+    }
+    fn run_with(
+        specs: Vec<Json>,
+        steps: &[&str],
+        edit: impl FnOnce(&mut Vec<RenderStep>),
+    ) -> Result<ChainBundle, RenderError> {
+        run_with_options(
+            specs,
+            steps,
+            edit,
+            &RenderOptions {
+                width: 2,
+                height: 2,
+                ..RenderOptions::default()
+            },
+        )
+    }
+
+    fn run_with_options(
+        specs: Vec<Json>,
+        steps: &[&str],
+        edit: impl FnOnce(&mut Vec<RenderStep>),
+        options: &RenderOptions,
+    ) -> Result<ChainBundle, RenderError> {
+        let mut catalog: EffectCatalog = serde_json::from_value(json!({
+            "effects": {}, "excludedEffects": [],
+            "provenance":{"source":"","version":"","base":"","lockSource":"","lockVersion":""}
+        }))
+        .unwrap();
+        for (index, mut spec) in specs.into_iter().enumerate() {
+            let name = spec["func"].as_str().unwrap().to_owned();
+            spec["namespace"] = json!("probe");
+            spec["kind"] = json!(if index == 0 { "generator" } else { "filter" });
+            spec["domain"] = json!("image");
+            spec["params"]["color"] =
+                json!({"type":"color","default":[0.5,0.5,0.5],"uniform":"color"});
+            spec["params"]["iterationCount"] = json!({"type":"int","default":1});
+            spec["paramNames"] = json!(
+                spec["params"]
+                    .as_object()
+                    .unwrap()
+                    .keys()
+                    .collect::<Vec<_>>()
+            );
+            catalog
+                .effects
+                .insert(name, serde_json::from_value(spec).unwrap());
+        }
+        let mut steps = steps
+            .iter()
+            .map(|name| RenderStep::Effect {
+                id: None,
+                effect_id: (*name).into(),
+                params: BTreeMap::from([("iterationCount".into(), ParamValue::Int(1))]),
+                surface_params: BTreeMap::new(),
+                explicit_params: vec![],
+                inline_chains: vec![],
+                loc: crate::dsl::Location {
+                    source_name: "probe".into(),
+                    line: 1,
+                    column: 1,
+                    index: 0,
+                },
+            })
+            .collect::<Vec<_>>();
+        edit(&mut steps);
+        CpuRenderer::new()?.execute_steps(
+            &steps,
+            &catalog,
+            &mut BTreeMap::new(),
+            options,
+            &mut |_| {},
+        )
+    }
+
+    #[test]
+    fn ordinary_and_grouped_writes_update_all_published_particle_channels() {
+        for (field, input, global) in [
+            ("outputXyz", "inputXyz", "global_xyz"),
+            ("outputVel", "inputVel", "global_vel"),
+            ("outputRgba", "inputRgba", "global_rgba"),
+        ] {
+            for grouped in [false, true] {
+                let target = if grouped { global } else { "agent" };
+                let mut source = json!({"func":"emit","iterated":grouped,field:target,
+                    "textures":{target:{"width":1,"height":1,"format":"rgba32f"}},
+                    "passes":[fill(target,0.25),fill("outputTex",0.125)]});
+                if grouped {
+                    source["textures"]["global_xyz"] =
+                        json!({"width":1,"height":1,"format":"rgba32f"});
+                }
+                let written = if grouped { global } else { input };
+                let graph = vec![
+                    source,
+                    json!({"func":"edit","passes":[fill(written,0.75),fill("outputTex",0.5)]}),
+                    json!({"func":"readback","textures":{field:{}},"passes":[copy(input)]}),
+                ];
+                let result = run(graph, &["emit", "edit", "readback"]).unwrap();
+                let agent = result.agents[input].surface.borrow();
+                assert_eq!(
+                    (agent.width(), agent.height()),
+                    (1, 1),
+                    "{input} grouped={grouped}"
+                );
+                assert_eq!(agent.data()[3], 0.75);
+                assert_eq!(result.image.unwrap().data()[3], 0.75);
+            }
+        }
+    }
+
+    #[test]
+    fn shared_storage_image_and_particle_aliases_observe_writes_before_sampling() {
+        for iterated in [false, true] {
+            for with_agent in [false, true] {
+                let mut source = json!({"func":"source","iterated":iterated,"outputTex":"global_work",
+                    "textures":{"global_work":{"width":1,"height":1,"format":"rgba32f"}},
+                    "passes":[storage_fill("global_work",0.25)]});
+                let edit = if with_agent {
+                    source["outputXyz"] = json!("global_work");
+                    fill("inputXyz", 0.75)
+                } else {
+                    storage_fill("global_work", 0.75)
+                };
+                let result = run(
+                    vec![
+                        source,
+                        json!({"func":"edit","passes":[edit,copy("inputTex")]}),
+                    ],
+                    &["source", "edit"],
+                )
+                .unwrap();
+                assert_eq!(
+                    result.image.unwrap().data()[3],
+                    0.75,
+                    "iterated={iterated}, with_agent={with_agent}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn storage_shares_between_definitions_but_is_private_to_repeated_instances() {
+        let producer = json!({"func":"producer","textures":{"global_work":{"width":1,"height":1}},
+            "passes":[storage_fill("global_work",0.25), fill("outputTex",0.5)]});
+        let middle = json!({"func":"middle","passes":[fill("outputTex",0.125)]});
+        let reader = json!({"func":"reader","passes":[copy("global_work")]});
+        let result = run(
+            vec![producer.clone(), middle.clone(), reader.clone()],
+            &["producer", "middle", "reader"],
+        )
+        .unwrap();
+        assert_eq!(result.image.unwrap().data()[3], 0.25);
+        let isolated = run(vec![producer, middle, reader], &["reader"]).unwrap_err();
+        assert!(isolated.to_string().contains("global_work"));
+
+        let start = json!({"func":"start","passes":[fill("outputTex",0.125)]});
+        let mut private = json!({"func":"private","textures":{"global_work":{}},
+            "passes":[copy("global_work"),storage_fill("global_work",0.75)]});
+        let chain = ["start", "private", "private"];
+        let error = run(vec![start.clone(), private.clone()], &chain).unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("requires texture \"global_work\"")
+        );
+        private["iterated"] = json!(true);
+        assert_eq!(
+            run(vec![start, private], &chain)
+                .unwrap()
+                .image
+                .unwrap()
+                .data()[3],
+            0.
+        );
+    }
+
+    #[test]
+    fn an_ordinary_step_cannot_sample_the_unwritten_target_of_a_skipped_pass() {
+        let mut skipped = fill("scratch", 0.25);
+        skipped["conditions"] = json!({"runIf":[{"uniform":"iterationCount","equals":0}]});
+        let source = json!({"func":"skipped","textures":{"scratch":{}},
+            "passes":[skipped,copy("scratch")]});
+        let error = run(vec![source], &["skipped"]).unwrap_err();
+        assert!(error.to_string().contains("requires texture \"scratch\""));
+    }
+
+    #[test]
+    fn publishing_the_image_input_updates_both_volume_and_geometry_channels() {
+        let initial = json!({"func":"initial","outputTex3d":"aux","outputGeo":"aux","outputXyz":"aux",
+            "passes":[fill("aux",0.25),fill("outputTex",0.375)]});
+        let link = json!({"func":"link","outputTex3d":"inputTex","outputGeo":"inputTex","passes":[copy("inputTex")]});
+        let result = run(vec![initial, link], &["initial", "link"]).unwrap();
+        assert_eq!(result.volume.unwrap().data()[3], 0.375);
+        assert_eq!(result.geometry.unwrap().data()[3], 0.375);
+        assert_eq!(result.agents["inputXyz"].surface.borrow().data()[3], 0.25);
+    }
+
+    #[test]
+    fn fresh_attachments_use_each_declared_axis_and_a_matching_blend_backdrop() {
+        for iterated in [false, true] {
+            for (viewport, expected) in [
+                (json!({}), (5, 3)),
+                (json!({"w":4}), (4, 3)),
+                (json!({"width":2,"height":1}), (2, 1)),
+            ] {
+                let mut first = fill("work", 0.25);
+                first["viewport"] = json!({"width":2,"height":1});
+                let mut second = fill("work", 0.75);
+                if viewport != json!({}) {
+                    second["viewport"] = viewport;
+                }
+                second["blend"] = json!(["zero", "one"]);
+                let producer = json!({"func":"producer","iterated":iterated,"outputTex":"work",
+                    "textures":{"work":{"width":5,"height":3,"format":"rgba32f"}},"passes":[first,second]});
+                let result = run(vec![producer], &["producer"]).unwrap().image.unwrap();
+                assert_eq!((result.width(), result.height()), expected);
+                assert_eq!(
+                    result.data()[3],
+                    if expected == (2, 1) { 0.25 } else { 0.0 }
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn pass_aliases_cannot_activate_a_skipped_publisher_or_increase_its_repeat_count() {
+        let mut skipped = fill("work", 0.75);
+        skipped["uniforms"]["iterationCount"] = json!(0);
+        skipped["conditions"] = json!({"runIf":[{"uniform":"iterationCount","equals":0}]});
+        let mut repeated = fill("work", 0.125);
+        repeated["uniforms"]["iterationCount"] = json!(3);
+        repeated["repeat"] = json!("iterationCount");
+        repeated["blend"] = json!(true);
+        let producer = json!({"func":"producer","outputTex":"work","passes":[fill("work",0.25),skipped,repeated]});
+        assert_eq!(
+            run(vec![producer], &["producer"])
+                .unwrap()
+                .image
+                .unwrap()
+                .data()[3],
+            0.375
+        );
+    }
+
+    #[test]
+    fn shared_particle_targets_use_the_first_declaring_steps_parameters_and_format() {
+        let first = json!({"func":"first","iterated":true,"params":{"w":{"type":"int","default":1}},
+            "textures":{"global_xyz":{}},"outputXyz":"global_vel","passes":[copy("global_vel")]});
+        let owner = json!({"func":"owner","params":{"w":{"type":"int","default":3}},
+            "textures":{"global_vel":{"width":{"param":"w"},"height":2}},
+            "passes":[copy("global_vel")]});
+        let state = run(vec![first, owner], &["first", "owner"]).unwrap();
+        let vel = state.agents["inputXyz"].surface.borrow();
+        assert_eq!((vel.width(), vel.height()), (3, 2));
+
+        let first = json!({"func":"first","iterated":true,"textures":{"global_xyz":{},
+            "global_vel":{"width":2,"height":2,"format":"rgba8"}},"outputVel":"global_vel",
+            "passes":[fill("global_vel",0.125),fill("outputTex",0.25)]});
+        let mut update = fill("global_vel", 0.12345);
+        update["viewport"] = json!({"width":5,"height":4});
+        let behavior = json!({"func":"behavior","textures":{"global_vel":{"width":5,"height":5,"format":"rgba32f"}},
+            "passes":[update,copy("global_vel")]});
+        let state = run(vec![first, behavior], &["first", "behavior"]).unwrap();
+        let vel = state.agents["inputVel"].surface.borrow();
+        assert_eq!((vel.width(), vel.height()), (2, 2));
+        assert_eq!(state.image.unwrap().data()[3], 0.121520996);
+    }
+
+    #[test]
+    fn group_scratch_initialization_sizes_each_texture_without_other_scratch_inputs() {
+        let producer = json!({"func":"producer","iterated":true,"outputXyz":"work","textureOrder":["reference","work"],
+            "textures":{"reference":{"width":3,"height":3},"work":{"width":{"inputOverride":"reference","param":"n","default":1},"height":2}},
+            "passes":[copy("work")]});
+        let result = run(vec![producer], &["producer"]).unwrap();
+        let work = result.agents["inputXyz"].surface.borrow();
+        assert_eq!((work.width(), work.height()), (1, 2));
+    }
+
+    #[test]
+    fn named_surface_inputs_follow_only_the_current_images_physical_identity() {
+        let source = json!({"func":"source","outputTex":"work","outputXyz":"work","passes":[fill("work",0.25)]});
+        let user = json!({"func":"edit","params":{"named":{"type":"surface","default":"none","texture":"sample"}},
+            "passes":[fill("inputXyz",0.75),copy("sample")]});
+        for (new_image, read_saved, expected) in [
+            (false, false, 0.75),
+            (true, false, 0.25),
+            (false, true, 0.25),
+        ] {
+            let result = run_with(
+                vec![source.clone(), user.clone()],
+                &["source", "edit"],
+                |steps| {
+                    let loc = crate::dsl::Location {
+                        source_name: "probe".into(),
+                        line: 1,
+                        column: 1,
+                        index: 0,
+                    };
+                    let RenderStep::Effect { surface_params, .. } = &mut steps[1] else {
+                        unreachable!()
+                    };
+                    surface_params.insert("named".into(), SurfaceBinding::Surface("o1".into()));
+                    steps.insert(
+                        1,
+                        RenderStep::Write {
+                            id: None,
+                            surface: "o1".into(),
+                            loc: loc.clone(),
+                        },
+                    );
+                    if new_image {
+                        steps.insert(2, steps[0].clone());
+                    }
+                    if read_saved {
+                        steps.push(RenderStep::Read {
+                            id: None,
+                            skip: false,
+                            surface: "o1".into(),
+                            loc,
+                        });
+                    }
+                },
+            )
+            .unwrap();
+            assert_eq!(result.image.unwrap().data()[3], expected);
+        }
+        let mut unbound = user;
+        unbound["passes"] = json!([copy("named")]);
+        let error = run_with(vec![source, unbound], &["source", "edit"], |steps| {
+            let RenderStep::Effect { surface_params, .. } = &mut steps[1] else {
+                unreachable!()
+            };
+            surface_params.insert("named".into(), SurfaceBinding::Current);
+        })
+        .unwrap_err();
+        assert!(error.to_string().contains("requires texture \"named\""));
+    }
+
+    #[test]
+    fn publishing_a_typed_input_name_as_image_retains_the_incoming_image() {
+        let first = json!({"func":"initial","outputTex3d":"volume","outputGeo":"geo",
+            "passes":[fill("volume",0.25),fill("geo",0.5),fill("outputTex",0.375)]});
+        for name in ["inputTex3d", "inputGeo"] {
+            let link = json!({"func":"link","outputTex":name,"passes":[fill("side",0.875)]});
+            let result = run(vec![first.clone(), link], &["initial", "link"]).unwrap();
+            assert_eq!(result.image.unwrap().data()[3], 0.375);
+        }
+        let mut skipped = fill("outputTex", 0.75);
+        skipped["conditions"] = json!({"runIf":[{"uniform":"iterationCount","equals":0}]});
+        let link = json!({"func":"skipped","textures":{"outputTex":{}},"passes":[skipped]});
+        assert!(
+            matches!(run(vec![first,link], &["initial","skipped"]), Err(RenderError::MissingOutput{output,..}) if output=="outputTex")
+        );
+    }
+
+    #[test]
+    fn a_single_output_kernel_cannot_publish_an_unused_declared_attachment() {
+        let source = json!({"func":"source","textures":{"scratch":{}},
+            "passes":[{"name":"fill","program":"solid","key":"synth/solid:solid",
+                "outputs":{"a":"scratch","z":"first"},"outputOrder":["z","a"]},copy("scratch")]});
+        assert!(
+            run(vec![source], &["source"])
+                .unwrap_err()
+                .to_string()
+                .contains("requires texture \"scratch\"")
+        );
+    }
+
+    #[test]
+    fn implicit_last_attachment_is_the_actual_written_surface() {
+        for iterated in [false, true] {
+            for name in ["inputGeo", "inputTex3d"] {
+                let source =
+                    json!({"func":"source","iterated":iterated,"passes":[fill(name,0.625)]});
+                assert_eq!(
+                    run(vec![source], &["source"])
+                        .unwrap()
+                        .image
+                        .unwrap()
+                        .data()[3],
+                    0.625
+                );
+            }
+            for (agent, expected) in [(false, 0.25), (true, 0.75)] {
+                let mut source = json!({"func":"source","iterated":iterated,"textures":{"global_work":{}},
+                    "passes":[storage_fill("global_work",0.25)]});
+                if agent {
+                    source["outputXyz"] = json!("global_work");
+                }
+                let edit = json!({"func":"edit","passes":[storage_fill("global_work",0.75),copy("inputTex")]});
+                assert_eq!(
+                    run(vec![source, edit], &["source", "edit"])
+                        .unwrap()
+                        .image
+                        .unwrap()
+                        .data()[3],
+                    expected
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn an_image_only_step_publishes_auxiliary_outputs_in_a_typed_bundle() {
+        for with_agent in [false, true] {
+            let mut source = json!({"func":"source","outputGeo":"aux","outputTex3d":"aux",
+                "passes":[fill("aux",0.25),fill("outputTex",0.5)]});
+            if with_agent {
+                source["outputXyz"] = json!("aux");
+            }
+            let result = run(vec![source], &["source"]).unwrap();
+            assert_eq!(result.geometry.is_some(), with_agent);
+            assert_eq!(result.volume.is_some(), with_agent);
+        }
+    }
+
+    #[test]
+    fn shader_output_count_and_draw_buffers_choose_the_active_mrt_slots() {
+        for iterated in [false, true] {
+            for (mrt, expected) in [(false, [128, 128, 128, 255]), (true, [0, 255, 0, 255])] {
+                let mut pass = json!({"name":"split","program":"mrt","key":"synth3d/heightmap3d:precompute",
+                    "inputs":{"tex":"source","heightTex":"source"},
+                    "outputs":{"extra":"unused","fragColor":"color","geoOut":"geometry"},"outputOrder":["fragColor","geoOut","extra"],
+                    "uniforms":{"volumeSize":2,"baseHeight":0.5,"heightScale":1.0}});
+                if mrt {
+                    pass["drawBuffers"] = json!(2);
+                }
+                let source =
+                    json!({"func":"mrt","iterated":iterated,"passes":[fill("source",1.0),pass]});
+                let bytes = run(vec![source], &["mrt"])
+                    .unwrap()
+                    .image
+                    .unwrap()
+                    .to_rgba8();
+                assert_eq!(&bytes[..4], &expected);
+            }
+        }
+    }
+
+    #[test]
+    fn external_linear_filter_follows_the_supplied_resource_view() {
+        for (external, local, expected) in [
+            ("ext", None, 0.5),
+            ("inputTex", Some("work"), 1.0),
+            ("inputTex", Some("inputTex"), 1.0),
+        ] {
+            let texture = Surface::from_f32(2, 1, vec![0., 0., 0., 0., 1., 1., 1., 1.]).unwrap();
+            let options = RenderOptions {
+                width: 2,
+                height: 1,
+                external_textures: BTreeMap::from([(external.to_owned(), texture)]),
+                ..RenderOptions::default()
+            };
+            let mut passes = Vec::new();
+            if let Some(local) = local {
+                let mut make_local = copy(external);
+                make_local["outputs"] = json!({"fragColor":local});
+                passes.push(make_local);
+            }
+            passes.push(copy(local.unwrap_or(external)));
+            let source = json!({"func":"sample","externalTexture":external,"textures":{"outputTex":{"width":1,"height":1,"format":"rgba32f"}},"passes":passes});
+            let image = run_with_options(vec![source], &["sample"], |_| {}, &options)
+                .unwrap()
+                .image
+                .unwrap();
+            assert_eq!(
+                image.data()[3],
+                expected,
+                "external={external} local={local:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn drawing_over_an_external_texture_replaces_its_linear_sampler() {
+        let catalog: Json = serde_json::from_str(crate::generated::CATALOG_JSON).unwrap();
+        let mesh = &catalog["effects"]["render/meshRender"];
+        let draw = mesh["passes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|pass| pass["program"] == "render")
+            .unwrap();
+        let external = Surface::from_f32(2, 1, vec![0., 0., 0., 0., 1., 1., 1., 1.]).unwrap();
+        let options = RenderOptions {
+            width: 2,
+            height: 1,
+            external_textures: BTreeMap::from([("ext".into(), external)]),
+            ..RenderOptions::default()
+        };
+        for (replace, expected) in [(false, 0.5), (true, 1.)] {
+            let mut passes = Vec::new();
+            if replace {
+                // A single vertex draws no triangle. The replacement keeps the
+                // original two texels, but now uses nearest sampling.
+                passes.push(json!({"name":"draw", "program":"render", "drawMode":"triangles",
+                                   "count":1, "uniforms":draw["uniforms"], "outputs":{"color":"ext"}}));
+            }
+            passes.push(copy("ext"));
+            let source = json!({"func":"render/meshRender", "externalTexture":"ext",
+                "params":mesh["params"],
+                "textures":{"outputTex":{"width":1,"height":1,"format":"rgba32f"}}, "passes":passes});
+            let image = run_with_options(vec![source], &["render/meshRender"], |_| {}, &options)
+                .unwrap()
+                .image
+                .unwrap();
+            assert_eq!(image.data()[3], expected, "draw={replace}");
+        }
+    }
+
+    #[test]
+    fn shared_storage_dimensions_follow_authored_target_order() {
+        let first = json!({"func":"producer","textures":{
+            "global_z":{"width":3,"height":1},
+            "global_a":{"width":{"inputOverride":"global_z","param":"iterationCount"},"height":1}},
+            "passes":[{"name":"fill","program":"solid","key":"synth/solid:solid",
+                "storageTextures":{"a":"global_a","z":"global_z"},"storageTextureOrder":["z","a"]}]});
+        let reader = json!({"func":"reader","outputXyz":"global_a","outputVel":"global_z",
+            "passes":[copy("global_z"),copy("global_a")]});
+        let result = run(vec![first, reader], &["producer", "reader"]).unwrap();
+        assert_eq!(result.agents["inputVel"].surface.borrow().width(), 3);
+        assert_eq!(result.agents["inputXyz"].surface.borrow().width(), 3);
+    }
+
+    #[test]
+    fn bound_draw_target_keeps_its_size_and_format_over_a_conflicting_viewport() {
+        for iterated in [false, true] {
+            let source = json!({"func":"source","outputTex":"work","outputXyz":"work",
+                "textures":{"work":{"width":1,"height":1,"format":"rgba32f"}},"passes":[fill("work",1.0)]});
+            let draw = json!({"func":"points/dla","iterated":iterated,"outputTex":"inputXyz","passes":[{
+                "name":"draw","program":"depositGrid","drawMode":"points","uniforms":{"deposit":1},
+                "viewport":{"width":2,"height":2},"inputs":{"xyzTex":"inputXyz","velTex":"inputXyz","rgbaTex":"inputXyz"},
+                "outputs":{"fragColor":"inputXyz"}}]});
+            let image = run(vec![source, draw], &["source", "points/dla"])
+                .unwrap()
+                .image
+                .unwrap();
+            assert_eq!((image.width(), image.height()), (1, 1));
+            assert_eq!(image.data(), &[0.55, 0.55, 0.55, 1.1]);
+        }
+    }
+
+    #[test]
+    fn fallback_uses_last_mrt_shader_output_and_named_outputs_take_precedence() {
+        // CPU 170d7ba, 2x2 heightmap3d:precompute probe: color encodes
+        // [128,128,128,255], while the geometry normal encodes [0,255,0,255].
+        let mrt = json!({"name":"split","program":"mrt","key":"synth3d/heightmap3d:precompute",
+            "drawBuffers":2,"inputs":{"tex":"source","heightTex":"source"},
+            "outputs":{"fragColor":"color","geoOut":"geometry"},
+            "uniforms":{"volumeSize":2,"baseHeight":0.5,"heightScale":1.0}});
+        for iterated in [false, true] {
+            for (output, expected) in [
+                (None, [0, 255, 0, 255]),
+                (Some("color"), [128, 128, 128, 255]),
+            ] {
+                let mut spec =
+                    json!({"func":"mrt","iterated":iterated,"passes":[fill("source",1.0),mrt]});
+                if let Some(name) = output {
+                    spec["outputTex"] = json!(name);
+                }
+                let image = run(vec![spec], &["mrt"]).unwrap().image.unwrap();
+                assert_eq!(&image.to_rgba8()[..4], &expected);
+            }
+        }
+    }
+
+    #[test]
+    fn a_new_particle_emitter_clears_the_previous_emitters_unpublished_channels() {
+        let first = json!({"func":"first","iterated":true,"outputVel":"v","textures":{"global_xyz":{}},
+            "passes":[fill("v",0.75),fill("outputTex",0.125)]});
+        let next = json!({"func":"next","iterated":true,"outputXyz":"global_xyz","textures":{"global_xyz":{}},
+            "passes":[fill("global_xyz",0.25),fill("outputTex",0.5)]});
+        let reader = json!({"func":"reader","passes":[copy("inputVel")]});
+        let error = run(vec![first, next, reader], &["first", "next", "reader"]).unwrap_err();
+        assert!(error.to_string().contains("inputVel"));
     }
 }

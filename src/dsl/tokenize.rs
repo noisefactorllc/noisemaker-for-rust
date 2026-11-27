@@ -135,12 +135,12 @@ impl Scanner<'_> {
                 );
                 continue;
             }
-            if character == '"' {
+            if matches!(character, '"' | '\'') {
                 let start = self.index;
                 self.advance();
                 let mut value = String::new();
                 while let Some(next) = self.peek(0) {
-                    if next == '"' {
+                    if next == character {
                         break;
                     }
                     if next == '\n' {

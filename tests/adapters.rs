@@ -14,7 +14,7 @@ fn options() -> RenderOptions {
 }
 
 #[test]
-fn fragment_registry_is_exactly_the_six_replacement_keys() {
+fn fragment_registry_contains_the_canonical_replacement_keys() {
     assert_eq!(
         fragment_adapter_keys(),
         [
@@ -24,6 +24,7 @@ fn fragment_registry_is_exactly_the_six_replacement_keys() {
             "filter/median:median",
             "filter/palette:palette",
             "synth/julia:julia",
+            "synth/remap:remap",
         ]
     );
     assert!(!fragment_adapter_keys().contains(&"filter/palette"));
@@ -91,4 +92,91 @@ fn nonregistered_fragment_program_still_uses_generic_vm() {
         )
         .unwrap();
     assert_eq!(&result.surface.to_rgba8()[..4], &[237, 203, 169, 255]);
+}
+
+#[test]
+fn remap_matches_the_stable_non_square_reference_scene() {
+    use sha2::{Digest, Sha256};
+    // Upstream's remap parity case at CPU 170d7ba. It includes a concave zone,
+    // overlapping translucent sources, explicit bounds, and a 64-vertex zone.
+    let source = include_str!("fixtures/cpu-adapter-sync/remap.dsl");
+    for (width, height, hash) in [
+        (
+            192,
+            128,
+            "d05625c6194cdf77d26201052f082eb0d543a9d5a07eaba62cf5c8d9896328f5",
+        ),
+        (
+            19,
+            13,
+            "4a06fa59680862d3200e8eff674b80cfef329255e49935e405afde5582db628a",
+        ),
+    ] {
+        let options = RenderOptions {
+            width,
+            height,
+            ..Default::default()
+        };
+        let image = CpuRenderer::new()
+            .unwrap()
+            .render(source, &options)
+            .unwrap()
+            .surface;
+        assert_eq!(format!("{:x}", Sha256::digest(image.to_rgba8())), hash);
+    }
+}
+
+#[test]
+fn remap_preserves_edges_on_either_side_of_the_pixel_center() {
+    let options = RenderOptions {
+        width: 7,
+        height: 5,
+        ..Default::default()
+    };
+    for (right, expected) in [("0.49999999999", 0), ("0.50000000001", 255)] {
+        let source = format!(
+            "search synth\nsolid(color: #ff0000).write(o1)\n\
+            remap(smoothEdge: 0, zoneCount: 1, zone0_tex: read(o1), zone0_count: 4, \
+            zone0_v0: vec4(0,0,{right},0), zone0_v1: vec4({right},1,0,1)).write(o0)"
+        );
+        let image = CpuRenderer::new()
+            .unwrap()
+            .render(&source, &options)
+            .unwrap()
+            .surface
+            .to_rgba8();
+        assert_eq!(image[(2 * 7 + 3) * 4], expected);
+        assert_eq!(image[(2 * 7 + 2) * 4], 255);
+        assert_eq!(image[(2 * 7 + 4) * 4], 0);
+    }
+}
+
+#[test]
+fn remap_routes_all_eight_zones() {
+    let options = RenderOptions {
+        width: 8,
+        height: 5,
+        ..Default::default()
+    };
+    let mut fields = vec!["smoothEdge: 0".to_owned(), "zoneCount: 8".to_owned()];
+    for zone in 0..8 {
+        let left = f64::from(zone) / 8.0;
+        let right = f64::from(zone + 1) / 8.0;
+        fields.push(format!(
+            "zone{zone}_tex: read(o1), zone{zone}_count: 4, zone{zone}_alpha: {right}, \
+            zone{zone}_v0: vec4({left},0,{right},0), zone{zone}_v1: vec4({right},1,{left},1)"
+        ));
+    }
+    let source = format!(
+        "search synth\nsolid(color: #ff0000).write(o1)\nremap({}).write(o0)",
+        fields.join(",")
+    );
+    let image = CpuRenderer::new()
+        .unwrap()
+        .render(&source, &options)
+        .unwrap()
+        .surface
+        .to_rgba8();
+    let reds: Vec<_> = image[..32].chunks_exact(4).map(|pixel| pixel[0]).collect();
+    assert_eq!(reds, [32, 64, 96, 128, 159, 191, 223, 255]);
 }

@@ -410,12 +410,12 @@ fn require_external_texture(cli: &Cli, definition: &EffectDefinition) -> Result<
 
 fn render_source_to_png(cli: &Cli, source: &str, output: &Path) -> Result<(), String> {
     // Compile before loading unrelated texture paths so schema/DSL failures are cheap and deterministic.
-    compile_dsl(source, "<cli>").map_err(|error| error.to_string())?;
+    let plan = compile_dsl(source, "<cli>").map_err(|error| error.to_string())?;
     let mut options = options(cli, cli.width, cli.height, cli.time)?;
     options.external_textures = load_external_textures(cli)?;
     let surface = CpuRenderer::new()
         .map_err(|error| error.to_string())?
-        .render(source, &options)
+        .render_plan(plan, &options)
         .map_err(|error| error.to_string())?
         .surface;
     atomic_write(

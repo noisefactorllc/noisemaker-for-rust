@@ -885,3 +885,85 @@ fn attachment_writes_preserve_non_finite_shader_lanes_for_format_conversion() {
     .unwrap();
     assert!(resources["out"].data().iter().all(|value| value.is_nan()));
 }
+
+#[test]
+fn fullscreen_blend_uses_each_attachment_before_storage_conversion() {
+    let program = output_program(
+        &["z", "a"],
+        vec![],
+        ["z", "a"]
+            .into_iter()
+            .map(|name| {
+                (
+                    id("vec4", name, "global"),
+                    vec_construct(&[0.5, 0.25, 0.75, 0.5]),
+                )
+            })
+            .collect(),
+    );
+    let mut pass = pass(
+        BTreeMap::new(),
+        BTreeMap::from([("z".into(), "left".into()), ("a".into(), "right".into())]),
+        None,
+    );
+    pass.execution
+        .insert("blend".into(), json!(["DST_COLOR", 0]));
+    let mut resources = BTreeMap::from([
+        (
+            "left".into(),
+            Surface::from_f32(1, 1, vec![0.25, 0.5, 1.0, 0.75]).unwrap(),
+        ),
+        (
+            "right".into(),
+            Surface::from_f32(1, 1, vec![0.0, 1.0, 0.25, 0.5]).unwrap(),
+        ),
+    ]);
+    execute_pass(
+        &program,
+        &pass,
+        &BTreeMap::new(),
+        &mut resources,
+        1,
+        1,
+        &BTreeMap::new(),
+        None,
+        false,
+    )
+    .unwrap();
+    assert_eq!(resources["left"].data(), &[0.125, 0.125, 0.75, 0.375]);
+    assert_eq!(resources["right"].data(), &[0.0, 0.25, 0.1875, 0.25]);
+}
+
+#[test]
+fn single_fragment_output_uses_first_declared_binding_including_storage() {
+    let program = output_program(
+        &["fragColor"],
+        vec![],
+        vec![(id("vec4", "fragColor", "global"), vec_construct(&[0.5; 4]))],
+    );
+    for (bindings, order) in [
+        ("outputs", "outputOrder"),
+        ("storageTextures", "storageTextureOrder"),
+    ] {
+        let pass: RenderPass = serde_json::from_value(json!({
+            "name":"select","program":"select",
+            bindings: {"z":"first","a":"second"}, order:["z","a"],
+        }))
+        .unwrap();
+        let mut resources = BTreeMap::new();
+        execute_pass(
+            &program,
+            &pass,
+            &BTreeMap::new(),
+            &mut resources,
+            1,
+            1,
+            &BTreeMap::new(),
+            None,
+            false,
+        )
+        .unwrap();
+        assert_eq!(resources["first"].data(), &[0.5; 4]);
+        assert!(!resources.contains_key("second"));
+    }
+}

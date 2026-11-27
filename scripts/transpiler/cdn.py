@@ -52,6 +52,7 @@ cleanly.
 
 from __future__ import annotations
 
+import ast
 import json
 import os
 import re
@@ -60,7 +61,6 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-import json5
 
 from .computed_defs import COMPUTED_DEFS
 
@@ -353,6 +353,8 @@ def _read_literal(text: str, start: int | None, sanitize: bool = False) -> Any:
     ``sanitize`` replaces value-position bare identifiers with 0 (for the
     ``globals`` object, whose UI-metadata fields may reference minified
     constants that json5 can't parse; rendering-relevant fields are literals)."""
+    import json5
+
     if start is None or start >= len(text):
         return None
     c = text[start]
@@ -375,6 +377,62 @@ def _definition_region(bundle: str) -> str:
     matching prose in the help text or code inside GLSL/WGSL strings."""
     m = _GLSL_PROGRAM_RE.search(bundle)
     return bundle[: m.start()] if m else bundle
+
+
+_PUBLICATIONS = ("outputTex", "outputTex3d", "outputGeo", "outputXyz", "outputVel", "outputRgba")
+
+
+def published_textures(region: str) -> dict[str, str | None]:
+    """Read effect-level texture names, including lowered public class fields."""
+    names = dict.fromkeys(_PUBLICATIONS)
+    fields = "|".join(_PUBLICATIONS)
+
+    def set_name(key: str, text: str, offset: int) -> None:
+        if offset >= len(text) or text[offset] not in "\"'":
+            raise ValueError(f"{key} must name a texture")
+        literal = text[offset:_skip_string(text, offset)]
+        name = json.loads(literal) if literal.startswith('"') else ast.literal_eval(literal)
+        if not name.strip():
+            raise ValueError(f"{key} must name a non-empty texture")
+        names[key] = name
+
+    declarations = re.compile(
+        rf"""(?P<quote>["'`])|\(this\s*,\s*["'](?P<field>{fields})["']\s*,\s*|\bnew\s+[\w$]+\s*\(\s*\{{"""
+    )
+    pos = 0
+    while match := declarations.search(region, pos):
+        pos = match.end()
+        if match["quote"]:
+            pos = _skip_string(region, match.start())
+            continue
+        if match["field"]:
+            set_name(match["field"], region, pos)
+            pos = _skip_string(region, pos)
+            continue
+        i = pos
+        values = {}
+        # Skip nested values and quoted strings whole. Only a real comma at
+        # this level can introduce another definition property.
+        while i < len(region):
+            key = re.match(r"""\s*["']?([\w$]+)["']?\s*:\s*""", region[i:])
+            if key:
+                values[key[1]] = i + key.end()
+            while i < len(region) and region[i] not in ",}":
+                c = region[i]
+                if c in "{[":
+                    i += len(_extract_balanced(region, i))
+                elif c in "\"'`":
+                    i = _skip_string(region, i)
+                else:
+                    i += 1
+            if i >= len(region) or region[i] == "}":
+                break
+            i += 1
+        pos = i + 1
+        if "namespace" in values or "func" in values:
+            for key in names.keys() & values.keys():
+                set_name(key, region, values[key])
+    return names
 
 
 def _extract_programs(bundle: str) -> dict[str, str]:
@@ -445,7 +503,9 @@ def fetch_effect(effect_id: str, version: str = CDN_VERSION) -> dict:
     cache_file = _cache_dir(version) / "effects" / f"{effect_id}.json"
     if cache_file.exists():
         cached = _normalize_effect(effect_id, json.loads(cache_file.read_text(encoding="utf-8")))
-        if cached["domain"] in {"image", "loop-begin", "loop-end"} or cached.get("outputTex3d"):
+        if set(_PUBLICATIONS).issubset(cached) and (
+            cached["domain"] in {"image", "loop-begin", "loop-end"} or cached.get("outputTex3d")
+        ):
             return cached
 
     bundle = _fetch_text(f"{CDN_BASE}/{version}/effects/{effect_id}.js")
@@ -462,9 +522,6 @@ def fetch_effect(effect_id: str, version: str = CDN_VERSION) -> dict:
             "passes": override["passes"],
             "textures": override.get("textures", {}),
             "externalTexture": override.get("externalTexture"),
-            "outputTex": override.get("outputTex"),
-            "outputTex3d": override.get("outputTex3d"),
-            "outputGeo": override.get("outputGeo"),
             "programs": _extract_programs(bundle),
         }
     else:
@@ -476,11 +533,9 @@ def fetch_effect(effect_id: str, version: str = CDN_VERSION) -> dict:
             "passes": _parse_field(region, effect_id, "passes", []),
             "textures": _parse_field(region, effect_id, "textures", {}),
             "externalTexture": _parse_field(region, effect_id, "externalTexture", None),
-            "outputTex": _parse_field(region, effect_id, "outputTex", None),
-            "outputTex3d": _parse_field(region, effect_id, "outputTex3d", None),
-            "outputGeo": _parse_field(region, effect_id, "outputGeo", None),
             "programs": _extract_programs(bundle),
         }
+    result.update(published_textures(region))
     _normalize_effect(effect_id, result)
     cache_file.parent.mkdir(parents=True, exist_ok=True)
     cache_file.write_text(json.dumps(result), encoding="utf-8")

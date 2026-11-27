@@ -1,7 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
 
-use serde::Deserialize;
+use serde::de::{Error as _, MapAccess, Visitor};
+use serde::{Deserialize, Deserializer};
 use serde_json::Value;
 use thiserror::Error;
 
@@ -67,15 +68,35 @@ pub struct EffectDefinition {
     pub param_names: Vec<String>,
     #[serde(default)]
     pub textures: BTreeMap<String, Value>,
+    #[serde(default)]
+    pub texture_order: Vec<String>,
     pub passes: Vec<RenderPass>,
     #[serde(default)]
     pub iterated: bool,
     pub external_texture: Option<String>,
+    #[serde(default, deserialize_with = "published_texture")]
+    pub output_tex: Option<String>,
+    #[serde(default, deserialize_with = "published_texture")]
     pub output_tex3d: Option<String>,
+    #[serde(default, deserialize_with = "published_texture")]
     pub output_geo: Option<String>,
+    #[serde(default, deserialize_with = "published_texture")]
+    pub output_xyz: Option<String>,
+    #[serde(default, deserialize_with = "published_texture")]
+    pub output_vel: Option<String>,
+    #[serde(default, deserialize_with = "published_texture")]
+    pub output_rgba: Option<String>,
     pub loop_role: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub param_aliases: Option<BTreeMap<String, String>>,
+}
+
+fn published_texture<'de, D: Deserializer<'de>>(decoder: D) -> Result<Option<String>, D::Error> {
+    let name = String::deserialize(decoder)?;
+    if name.trim().is_empty() {
+        return Err(D::Error::custom("published texture name must be non-empty"));
+    }
+    Ok(Some(name))
 }
 
 #[derive(Debug, Deserialize)]
@@ -91,17 +112,101 @@ pub struct ParameterSpec {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(from = "PassBindings")]
 pub struct RenderPass {
     pub name: String,
     pub program: String,
     pub key: Option<String>,
-    #[serde(default)]
     pub inputs: BTreeMap<String, String>,
-    #[serde(default)]
     pub outputs: BTreeMap<String, String>,
-    #[serde(default, flatten)]
     pub execution: BTreeMap<String, Value>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PassBindings {
+    name: String,
+    program: String,
+    key: Option<String>,
+    #[serde(default)]
+    inputs: OrderedBindings,
+    #[serde(default)]
+    outputs: OrderedBindings,
+    storage_textures: Option<OrderedBindings>,
+    #[serde(flatten)]
+    execution: BTreeMap<String, Value>,
+}
+
+// Value sorts object keys. Read bindings in source order so a single-output
+// shader writes to the first authored attachment even with multiple targets.
+#[derive(Default)]
+struct OrderedBindings(Vec<(String, String)>);
+
+impl<'de> Deserialize<'de> for OrderedBindings {
+    fn deserialize<D: Deserializer<'de>>(decoder: D) -> Result<Self, D::Error> {
+        struct BindingsVisitor;
+        impl<'de> Visitor<'de> for BindingsVisitor {
+            type Value = OrderedBindings;
+
+            fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.write_str("an object mapping shader outputs to textures")
+            }
+
+            fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<Self::Value, A::Error> {
+                let mut entries = Vec::with_capacity(map.size_hint().unwrap_or(0));
+                while let Some(entry) = map.next_entry()? {
+                    entries.push(entry);
+                }
+                Ok(OrderedBindings(entries))
+            }
+        }
+        decoder.deserialize_map(BindingsVisitor)
+    }
+}
+
+impl OrderedBindings {
+    fn record_order(&self, execution: &mut BTreeMap<String, Value>, key: &str) {
+        if self.0.len() > 1 && !execution.contains_key(key) {
+            let order = self
+                .0
+                .iter()
+                .map(|(name, _)| Value::from(name.clone()))
+                .collect();
+            execution.insert(key.to_owned(), order);
+        }
+    }
+}
+
+impl From<PassBindings> for RenderPass {
+    fn from(raw: PassBindings) -> Self {
+        let mut execution = raw.execution;
+        raw.inputs.record_order(&mut execution, "inputOrder");
+        let mut outputs = raw.outputs;
+        if let Some(storage) = raw.storage_textures {
+            storage.record_order(&mut execution, "storageTextureOrder");
+            let bindings = storage
+                .0
+                .iter()
+                .map(|(key, value)| (key.clone(), Value::from(value.clone())))
+                .collect();
+            execution.insert("storageTextures".into(), Value::Object(bindings));
+            if outputs.0.is_empty() {
+                outputs = storage;
+                if let Some(order) = execution.get("storageTextureOrder").cloned() {
+                    execution.insert("outputOrder".into(), order);
+                }
+            }
+        }
+        outputs.record_order(&mut execution, "outputOrder");
+        Self {
+            name: raw.name,
+            program: raw.program,
+            key: raw.key,
+            inputs: raw.inputs.0.into_iter().collect(),
+            outputs: outputs.0.into_iter().collect(),
+            execution,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]

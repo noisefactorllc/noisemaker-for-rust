@@ -310,7 +310,7 @@ fn compiler_evaluates_values_and_partial_bindings_in_declaration_order() {
 }
 
 #[test]
-fn compiler_merges_named_and_positional_partials_and_rejects_mode_changes() {
+fn compiler_merges_named_and_positional_partials_by_slot() {
     let named =
         effect_step("search synth; let p=solid(color:#f00, alpha:.25); p(alpha:.75).write(o0)");
     assert!(
@@ -322,12 +322,10 @@ fn compiler_merges_named_and_positional_partials_and_rejects_mode_changes() {
     assert!(matches!(positional, RenderStep::Effect { ref params, .. }
         if params["color"] == ParamValue::Vector(vec![1.0,0.0,0.0])
         && params["alpha"] == ParamValue::Float(0.5)));
+    let overridden = effect_step("search synth; let p=solid(color:#f00); p(.5).write(o0)");
     assert!(
-        compile_dsl(
-            "search synth; let p=solid(color:#f00); p(.5).write(o0)",
-            "mode.dsl"
-        )
-        .is_err()
+        matches!(overridden, RenderStep::Effect { ref params, ref explicit_params, .. }
+        if params["color"] == ParamValue::Vector(vec![1.0, 0.0, 0.0]) && explicit_params.as_slice() == ["color"])
     );
     let empty_stored =
         effect_step("search synth; let p=solid(); p(color:#0f0, alpha:.5).write(o0)");
@@ -385,7 +383,6 @@ fn compiler_strictly_coerces_enums_bools_colors_vectors_ranges_and_finiteness() 
         "search synth; noise(scaleX:1/0).write(o0)",
         "search synth; solid(alpha:2).write(o0)",
         "search synth; solid(nope:1).write(o0)",
-        "search synth; solid(#fff,1,2).write(o0)",
     ] {
         assert!(compile_dsl(source, "strict.dsl").is_err(), "{source}");
     }
@@ -469,16 +466,19 @@ fn compiler_allows_surface_only_mixer_to_begin_a_chain() {
     };
     assert_eq!(surface_params.len(), 3);
     assert_eq!(surface_params["rTex"], SurfaceBinding::Surface("o0".into()));
-    let unbound = compile_dsl(
+    // These passes start without inputTex. Their optional samplers may
+    // remain unbound, as in the project's authored cellNoise and shapes3d cases.
+    for source in [
         "search mixer; channelCombine().write(o3)",
-        "surface-only.dsl",
-    )
-    .unwrap_err();
-    assert!(
-        unbound
-            .message
-            .contains("requires at least one surface input")
-    );
+        "search classicNoisedeck; cellNoise(colorMode:palette).write(o0)",
+        "search classicNoisedeck; shapes3d(colorMode:depth,spin:30,flip:20).write(o0)",
+    ] {
+        let step = effect_step(source);
+        assert!(
+            matches!(step, RenderStep::Effect { surface_params, .. } if surface_params.is_empty()),
+            "{source}"
+        );
+    }
     // External-input mesh effects begin a chain with no surface binding: their
     // pass inputs are host-fed data textures, not surface parameters.
     compile_dsl("search render; meshLoader().write(o0)", "mesh-loader.dsl").unwrap();
@@ -1145,5 +1145,274 @@ fn math_pi_evaluates_to_the_same_number_as_the_authority_parser_folds() {
     assert_eq!(
         f64::from(scale_x),
         f64::from((std::f64::consts::PI * 4.0) as f32)
+    );
+}
+
+#[test]
+fn saved_element_ids_survive_partials_inline_chains_and_io() {
+    let source = "search synth, synth3d, filter, mixer, render
+let n = noise(_id: 'base_2', seed: 1)
+n().subchain(id: 'block') { .invert(_id: 'flip') }.write(o1, _id: 'w')
+read(tex: o1, _skip: true, _id: 'r').blendMode(tex: n(_id: 'over')).write(o0)
+noise3d().write3d(vol0, geo0, _id: 'w3')
+read3d(_skip: true, _id: 'r3', tex3d: vol0, geo: geo0).render3d().write(o3)
+read3d(vol0, geo0, _id: 'v',).render3d().write(o4)
+n().write(o5)";
+    let plan = compile_dsl(source, "saved.dsl").unwrap();
+    let id = |step: &RenderStep| match step {
+        RenderStep::Effect { id, .. }
+        | RenderStep::Read { id, .. }
+        | RenderStep::Write { id, .. }
+        | RenderStep::Read3d { id, .. }
+        | RenderStep::Write3d { id, .. } => id.clone(),
+    };
+    let expected: &[&[Option<&str>]] = &[
+        &[Some("base_2"), Some("flip"), Some("w")],
+        &[Some("r"), None, None],
+        &[None, Some("w3")],
+        &[Some("r3"), None, None],
+        &[Some("v"), None, None],
+        &[Some("base_2"), None],
+    ];
+    for (chain, ids) in plan.chains.iter().zip(expected) {
+        assert_eq!(
+            chain.steps.iter().map(id).collect::<Vec<_>>(),
+            ids.iter().map(|v| v.map(str::to_owned)).collect::<Vec<_>>()
+        );
+    }
+    assert!(
+        matches!(&plan.chains[1].steps[0], RenderStep::Read { skip: true, surface, .. } if surface == "o1")
+    );
+    assert!(matches!(
+        &plan.chains[3].steps[0],
+        RenderStep::Read3d { skip: true, .. }
+    ));
+    let RenderStep::Effect { inline_chains, .. } = &plan.chains[1].steps[1] else {
+        unreachable!()
+    };
+    assert!(
+        matches!(&inline_chains[0].chain.steps[0], RenderStep::Effect { id: Some(id), params, explicit_params, .. }
+        if id == "over" && !params.contains_key("_id") && explicit_params.as_slice() == ["seed"])
+    );
+}
+
+#[test]
+fn invalid_ids_are_discarded_without_evaluating_their_values() {
+    for value in [
+        "''", "'9a'", "'_a'", "'a-b'", "'Å'", "false", "alias", "bogus()",
+    ] {
+        let source = format!(
+            "search synth; let alias='valid'; let n=noise(_id:'base'); n(_id:{value}).write(o1,_id:{value}); read(o1,_id:{value}).write(o0)"
+        );
+        let plan = compile_dsl(&source, "id.dsl").unwrap();
+        assert!(matches!(
+            plan.chains[0].steps[0],
+            RenderStep::Effect { id: None, .. }
+        ));
+        assert!(matches!(
+            plan.chains[0].steps[1],
+            RenderStep::Write { id: None, .. }
+        ));
+        assert!(matches!(
+            plan.chains[1].steps[0],
+            RenderStep::Read {
+                id: None,
+                skip: false,
+                ..
+            }
+        ));
+    }
+    for call in [
+        "noise(1,_id:'n').write(o0)",
+        "noise(_id:'n',1).write(o0)",
+        "noise(_skip:true).write(o0)",
+        "noise().write(o0,)",
+        "noise().write(o0,_id:'w',)",
+        "noise().write(surface:o0,_id:'w')",
+        "noise().write(o0,other:1)",
+        "read(o0,other:1).write(o0)",
+        "read(o0,_skip:true).write(o0)",
+        "noise3d().write3d(vol0,geo0,other:1)",
+        "noise3d().write3d(vol0,geo0,_id:'w',)",
+        "read3d(vol0,geo0,other:1).render3d().write(o0)",
+    ] {
+        assert!(
+            compile_dsl(&format!("search synth,synth3d,render; {call}"), "io.dsl").is_err(),
+            "{call}"
+        );
+    }
+    let plan = compile_dsl(
+        "search synth,mixer; noise().blendMode(tex:read(_id:'r',tex:o1,_skip:true)).write(o0)",
+        "read.dsl",
+    )
+    .unwrap();
+    assert!(
+        matches!(&plan.chains[0].steps[1], RenderStep::Effect { surface_params, .. } if surface_params["tex"] == SurfaceBinding::Surface("o1".into()))
+    );
+}
+
+#[test]
+fn trailing_commas_and_partial_arguments_keep_their_original_slots() {
+    for call in [
+        "solid(color: [1,0.25,0.5,],)",
+        "solid([1,0.25,0.5,/*end*/],)",
+        "solid(color: vec3(1,0.25,0.5,),)",
+    ] {
+        let step = effect_step(&format!("search synth; {call}.write(o0)"));
+        assert!(
+            matches!(step, RenderStep::Effect { params, .. } if params["color"] == ParamValue::Vector(vec![1.0,0.25,0.5]))
+        );
+    }
+    for call in [
+        "solid([1,,0])",
+        "solid([,1])",
+        "solid([1,0,,])",
+        "noise(,)",
+        "noise(12,,)",
+        "noise(scaleX:,)",
+        "noise(12,seed:7)",
+        "noise(seed:7,12)",
+        "noise({seed:7})",
+    ] {
+        assert!(
+            compile_dsl(&format!("search synth; {call}.write(o0)"), "list.dsl").is_err(),
+            "{call}"
+        );
+    }
+    for (source, expected) in [
+        ("let t=noise(seed:7); t(3,4,)", [3, 4, 7]),
+        ("let t=noise(3,4); t(seed:7,)", [3, 4, 7]),
+        ("let t=noise(type:11); let u=t; u(bogus(),4)", [11, 4, 1]),
+        ("let t=noise(3,4); t(type:11)", [11, 4, 1]),
+    ] {
+        let step = effect_step(&format!("search synth; {source}.write(o0)"));
+        let RenderStep::Effect {
+            params,
+            inline_chains,
+            ..
+        } = step
+        else {
+            unreachable!()
+        };
+        assert!(inline_chains.is_empty());
+        for (name, want) in ["type", "octaves", "seed"].into_iter().zip(expected) {
+            assert_eq!(params[name], ParamValue::Int(want), "{source}");
+        }
+    }
+    let plan = compile_dsl(
+        "search synth,points; let t=flow(fieldTex:o1,stride:1); noise().t(heightTex:o2).write(o0)",
+        "alias.dsl",
+    )
+    .unwrap();
+    assert!(
+        matches!(&plan.chains[0].steps[1], RenderStep::Effect { explicit_params, surface_params, .. }
+        if explicit_params.as_slice() == ["heightTex","stride"] && surface_params["heightTex"] == SurfaceBinding::Surface("o2".into()))
+    );
+    for source in [
+        "solid(#fff,1,2)",
+        "solid(#f00,1,bogus())",
+        "let t=solid(#f00); t(1,noise())",
+    ] {
+        let step = effect_step(&format!("search synth; {source}.write(o0)"));
+        assert!(
+            matches!(step, RenderStep::Effect { inline_chains, explicit_params, .. } if inline_chains.is_empty() && explicit_params.as_slice() == ["color","alpha"])
+        );
+    }
+}
+
+#[test]
+fn a_partial_captures_hex_colors_inside_its_inline_chain() {
+    let source = "search synth,filter,mixer
+let base=#f00
+let c=base
+let t=blendMode(tex:solid(color:c).invert())
+let u=t(mix:.5)
+let base=#0f0
+let c=#00f
+noise().u(_id:'mix').write(o0)";
+    let plan = compile_dsl(source, "capture.dsl").unwrap();
+    let RenderStep::Effect {
+        inline_chains,
+        params,
+        ..
+    } = &plan.chains[0].steps[1]
+    else {
+        unreachable!()
+    };
+    assert_eq!(params["mix"], ParamValue::Float(0.5));
+    assert!(
+        matches!(&inline_chains[0].chain.steps[0], RenderStep::Effect { params, .. } if params["color"] == ParamValue::Vector(vec![1.0,0.0,0.0]))
+    );
+}
+
+#[test]
+fn invalid_inline_chains_name_the_parameter_and_original_source_location() {
+    for (prefix, expr, suffix) in [
+        (
+            "noise().blendMode(tex: ",
+            "read(o1).invert()",
+            ").write(o0)",
+        ),
+        ("noise().blendMode(", "read(o1).invert()", ").write(o0)"),
+        (
+            "noise().blendMode(tex: ",
+            "noise().subchain('x') { .invert() }",
+            ").write(o0)",
+        ),
+        (
+            "let t=blendMode(tex: ",
+            "read(o1).invert()",
+            "); noise().t().write(o0)",
+        ),
+        (
+            "noise().blendMode(tex: ",
+            "read3d(vol0,geo0).render3d()",
+            ").write(o0)",
+        ),
+        (
+            "let layer = ",
+            "read(o1).invert()",
+            "; noise().blendMode(tex:layer).write(o0)",
+        ),
+    ] {
+        let source = format!("search synth,synth3d,filter,mixer,render\n{prefix}{expr}{suffix}");
+        let error = compile_dsl(&source, "bad.dsl").unwrap_err();
+        assert_eq!(
+            (error.code, error.line, error.column),
+            (Some("S001"), 2, prefix.len() + 1),
+            "{source}"
+        );
+        assert_eq!(
+            error.message,
+            "Chain for argument 'tex' in blendMode() may contain only effect calls"
+        );
+    }
+}
+
+#[test]
+fn remap_semantic_uniforms_preserve_authored_precision_and_packed_values_round_to_f32() {
+    use noisemaker_cpu::{Value, pass_runner::normalize_parameters};
+    let step = effect_step(
+        "search synth; remap(bgAlpha: 0.499999999,zone7_bounds: vec4(0.499999999,0.2,0.7,1,)).write(o0)",
+    );
+    let RenderStep::Effect { params, .. } = step else {
+        unreachable!()
+    };
+    let definition = &effect_catalog().unwrap().effects["synth/remap"];
+    let normalized = normalize_parameters(definition, &params, 1).unwrap();
+    assert_eq!(normalized.uniforms["bgAlpha"], Value::Float(0.499999999));
+    assert_eq!(normalized.values["bgAlpha"], Value::Float(0.5));
+    assert_eq!(
+        normalized.uniforms["zone7_bounds"],
+        Value::Array(
+            [0.499999999, 0.2, 0.7, 1.0]
+                .into_iter()
+                .map(Value::Float)
+                .collect()
+        )
+    );
+    assert_eq!(
+        normalized.values["zone7_bounds"],
+        Value::Vec(vec![0.5, 0.2, 0.7, 1.0])
     );
 }

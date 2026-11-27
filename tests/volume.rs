@@ -115,3 +115,56 @@ fn huge_volume_atlases_fail_before_allocation_or_integer_wrap() {
         );
     }
 }
+
+#[test]
+fn top_down_terrain_preserves_the_frame_proportions_and_uv_orientation() {
+    use sha2::{Digest, Sha256};
+
+    // RGBA8 captures of the pinned CPU's square, wide and tall terrain views.
+    // Transparent margins expose the terrain bounds; the UV pattern exposes flips.
+    let mut renderer = CpuRenderer::new().unwrap();
+    for (width, height, camera_z, expected) in [
+        (
+            128,
+            128,
+            -40,
+            "9ee2baa98364b62c424366280d4ec679c45fe336d2435909f354d45b79a69ad4",
+        ),
+        (
+            256,
+            128,
+            -40,
+            "8af4d304770d49e3f104b2aee213b28edc0b6dcff6edd8c050020e155de2a5b5",
+        ),
+        (
+            128,
+            256,
+            -120,
+            "81ab4ce8a8529ad1fec64e65989856c504791ae75f500fe0f3c29098c80ddb56",
+        ),
+    ] {
+        let program = format!(
+            "search synth, synth3d, render\n\
+             heightmap3d(heightTex: solid(color: #ffffff), tex: testPattern(pattern: uvMap), \
+             volumeSize: x16, heightScale: 1).renderLandscape3d(viewMode: perspective, \
+             rotateX: 1.5708, posZ: {camera_z}, bgAlpha: 0, ambient: 1, diffuseIntensity: 0, \
+             specularIntensity: 0).write(o0)\nrender(o0)"
+        );
+        let image = renderer
+            .render(
+                &program,
+                &RenderOptions {
+                    width,
+                    height,
+                    ..RenderOptions::default()
+                },
+            )
+            .unwrap()
+            .surface;
+        assert_eq!(
+            format!("{:x}", Sha256::digest(image.to_rgba8())),
+            expected,
+            "{width}x{height}"
+        );
+    }
+}

@@ -270,3 +270,72 @@ fn cpu_sync_crt_nonfinite_scale_and_signed_zero() {
     assert_eq!(crt_max(0.0, -0.0).to_bits(), 0);
     assert_eq!(crt_max(-0.0, 0.0).to_bits(), 0);
 }
+
+#[test]
+fn remap_tiled_geometry_samples_the_tile_local_texture() {
+    use sha2::{Digest, Sha256};
+
+    // Direct CPU 170d7ba remapFactory readback, before attachment quantization.
+    let mut u = uniforms(5, 3);
+    for (name, value) in [
+        ("zoneCount", 1.0),
+        ("zone0_count", 4.0),
+        ("zone0_active", 1.0),
+        ("zone0_alpha", 0.83),
+        ("smoothEdge", 1.25),
+        ("bgAlpha", 0.2),
+    ] {
+        u.insert(name.into(), Value::Float(value));
+    }
+    for (name, lanes) in [
+        ("fullResolution", vec![11., 7.]),
+        ("tileOffset", vec![2., 1.]),
+        ("zone0_v0", vec![0.31, 0.3, 0.69, 0.3]),
+        ("zone0_v1", vec![0.69, 0.85, 0.31, 0.85]),
+        ("bgColor", vec![0.2, 0.3, 0.4]),
+    ] {
+        u.insert(
+            name.into(),
+            Value::Array(lanes.into_iter().map(Value::Float).collect()),
+        );
+    }
+    let pass: RenderPass = serde_json::from_value(serde_json::json!({
+        "name": "remap", "program": "remap", "inputs": {"zone0_tex":"map"},
+        "outputs":{"fragColor":"out"}
+    }))
+    .unwrap();
+    for (filter, expected) in [
+        (
+            crate::FilterMode::Linear,
+            "b6221b8b94455d2dc189eab94c31ec8acc84257bb098d51df6ebd8863c301942",
+        ),
+        (
+            crate::FilterMode::Nearest,
+            "d94ede2a330e805c3c3503058f2835ddf47d3ee02d28d5995c5657d5a27fc923",
+        ),
+    ] {
+        let mut texture = Surface::from_f32(
+            3,
+            2,
+            (0..24)
+                .map(|i| (f64::from(i * 13 % 29) / 29.) as f32)
+                .collect(),
+        )
+        .unwrap();
+        texture.set_filter_mode(filter);
+        let resources = BTreeMap::from([("map".into(), texture)]);
+        let (_, image) = execute_fragment_adapter("synth/remap:remap", &pass, &u, &resources, 5, 3)
+            .unwrap()
+            .unwrap();
+        let bytes: Vec<_> = image
+            .data()
+            .iter()
+            .flat_map(|&lane| lane.to_le_bytes())
+            .collect();
+        assert_eq!(
+            format!("{:x}", Sha256::digest(bytes)),
+            expected,
+            "{filter:?}"
+        );
+    }
+}

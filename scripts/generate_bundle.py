@@ -167,11 +167,12 @@ def _runtime_defines(parameters: dict) -> dict[str, str]:
     }
 
 
-def _pass_outputs(render_pass: dict) -> list[str]:
-    names = list(render_pass.get("outputs", {}).keys()) or ["fragColor"]
-    if "color" in names and "fragColor" not in names:
-        names[names.index("color")] = "fragColor"
-    return names
+def _preserve_order(record: dict, field: str, order_field: str) -> None:
+    bindings = record.get(field, {})
+    if len(bindings) > 1:
+        order = record.setdefault(order_field, list(bindings))
+        if len(order) != len(bindings) or set(order) != set(bindings):
+            raise RuntimeError(f"{order_field} must list each key in {field} once")
 
 
 def _validate_inventory(metadata: dict, effects: dict, lock: dict) -> tuple[dict[str, dict], dict[str, str]]:
@@ -258,7 +259,11 @@ def _build(source: Path) -> tuple[dict, dict, dict]:
         definition = catalog_effects[effect_id]
         source_effect = effects[effect_id]
         defines = _runtime_defines(definition.get("params", {}))
-        passes = {render_pass.get("key"): render_pass for render_pass in definition.get("passes", [])}
+        _preserve_order(definition, "textures", "textureOrder")
+        for render_pass in definition.get("passes", []):
+            _preserve_order(render_pass, "inputs", "inputOrder")
+            _preserve_order(render_pass, "outputs", "outputOrder")
+            _preserve_order(render_pass, "storageTextures", "storageTextureOrder")
         for program_name, shader_source in sorted(source_effect.get("programs", {}).items()):
             key = f"{effect_id}:{program_name}"
             digest = hashlib.sha256(shader_source.strip().encode("utf-8")).hexdigest()
@@ -266,7 +271,6 @@ def _build(source: Path) -> tuple[dict, dict, dict]:
                 raise RuntimeError(
                     f"shader drift for {key}: expected {hashes[key]}, received {digest}"
                 )
-            render_pass = passes[key]
             program_defines = dict(defines)
             if key == "render/pointsBillboardRender:depthKeys":
                 # The reference compiles this constant per view mode. The
@@ -278,7 +282,6 @@ def _build(source: Path) -> tuple[dict, dict, dict]:
                 "sourceSha256": digest,
                 "ir": emit_typed_ir(
                     shader_source,
-                    outputs=_pass_outputs(render_pass),
                     # Vertex/fragment draw-mode pairs (render/meshRender)
                     # declare varyings; the preprocessor captures them and the
                     # typed emitter resolves the identifiers. Fragment-only

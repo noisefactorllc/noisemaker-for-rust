@@ -1,4 +1,5 @@
 use crate::SurfaceError;
+use std::sync::Arc;
 
 pub const MAX_SURFACE_PIXELS: u64 = 16_777_216;
 const CHANNELS: usize = 4;
@@ -16,6 +17,8 @@ pub struct Surface {
     width: u32,
     height: u32,
     data: Vec<f32>,
+    // Named snapshots can refer to the same rendered pixels despite deep-cloned storage.
+    identity: Arc<()>,
     filter_mode: FilterMode,
 }
 
@@ -26,6 +29,7 @@ impl Surface {
             width,
             height,
             data: vec![0.0; lane_count],
+            identity: Arc::new(()),
             filter_mode: FilterMode::Nearest,
         })
     }
@@ -43,6 +47,7 @@ impl Surface {
             width,
             height,
             data,
+            identity: Arc::new(()),
             filter_mode: FilterMode::Nearest,
         })
     }
@@ -62,6 +67,7 @@ impl Surface {
             width,
             height,
             data,
+            identity: Arc::new(()),
             filter_mode: FilterMode::Nearest,
         })
     }
@@ -81,7 +87,12 @@ impl Surface {
         &self.data
     }
 
+    pub(crate) fn same_image(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.identity, &other.identity)
+    }
+
     pub fn data_mut(&mut self) -> &mut [f32] {
+        Arc::make_mut(&mut self.identity);
         &mut self.data
     }
 
@@ -95,7 +106,7 @@ impl Surface {
     }
 
     pub fn clear(&mut self, color: [f32; CHANNELS]) -> &mut Self {
-        for pixel in self.data.chunks_exact_mut(CHANNELS) {
+        for pixel in self.data_mut().chunks_exact_mut(CHANNELS) {
             pixel.copy_from_slice(&color);
         }
         self

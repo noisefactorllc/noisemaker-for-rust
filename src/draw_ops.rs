@@ -254,6 +254,33 @@ pub fn execute_draw_pass_with(
     formats: &BTreeMap<String, TextureFormat>,
     external_inputs: &crate::external_input::ExternalInputs,
 ) -> Result<usize, RenderError> {
+    execute_draw_pass_at_size(
+        key,
+        pass,
+        uniforms,
+        resources,
+        width,
+        height,
+        formats,
+        external_inputs,
+        None,
+        false,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn execute_draw_pass_at_size(
+    key: &str,
+    pass: &RenderPass,
+    uniforms: &BTreeMap<String, Value>,
+    resources: &mut BTreeMap<String, Surface>,
+    width: u32,
+    height: u32,
+    formats: &BTreeMap<String, TextureFormat>,
+    external_inputs: &crate::external_input::ExternalInputs,
+    declared_dimensions: Option<(u32, u32)>,
+    graph_attachment: bool,
+) -> Result<usize, RenderError> {
     if !DRAW_OP_KEYS.contains(&key) {
         return Err(RenderError::MissingDrawOp {
             key: key.into(),
@@ -264,16 +291,15 @@ pub fn execute_draw_pass_with(
         .execution
         .get("viewport")
         .unwrap_or(&serde_json::Value::Null);
-    let attachment =
-        pass.outputs
-            .values()
-            .next()
-            .cloned()
-            .ok_or_else(|| RenderError::InvalidGraph {
-                message: format!("draw pass {:?} has no output", pass.name),
-            })?;
+    let attachment = crate::pass_runner::first_output(pass)
+        .cloned()
+        .ok_or_else(|| RenderError::InvalidGraph {
+            message: format!("draw pass {:?} has no output", pass.name),
+        })?;
     let fallback_dimensions = texture_dimensions(viewport, uniforms, width, height, resources)?;
-    let (pass_width, pass_height) = if pass.execution.contains_key("viewport") {
+    let (pass_width, pass_height) = if let Some(dimensions) = declared_dimensions {
+        dimensions
+    } else if pass.execution.contains_key("viewport") {
         fallback_dimensions
     } else {
         resources
@@ -281,11 +307,18 @@ pub fn execute_draw_pass_with(
             .map(|surface| (surface.width(), surface.height()))
             .unwrap_or(fallback_dimensions)
     };
-    let mut destination = resources
+    let previous = resources
         .get(&attachment)
-        .filter(|surface| surface.width() == pass_width && surface.height() == pass_height)
-        .cloned()
-        .unwrap_or(Surface::new(pass_width, pass_height)?);
+        .filter(|surface| surface.width() == pass_width && surface.height() == pass_height);
+    let mut destination = match previous {
+        // A graph draw starts a new attachment and preserves its previous pixels.
+        // The replacement receives its own texture identity and sampler.
+        Some(surface) if graph_attachment => {
+            Surface::from_f32(pass_width, pass_height, surface.data().to_vec())?
+        }
+        Some(surface) => surface.clone(),
+        None => Surface::new(pass_width, pass_height)?,
+    };
     let pixels = match key {
         "filter/wormhole:deposit" => wormhole(pass, uniforms, resources, &mut destination)?,
         "filter3d/flow3d:deposit" => flow3d(pass, uniforms, resources, &mut destination)?,
@@ -299,7 +332,7 @@ pub fn execute_draw_pass_with(
         )?,
         "points/physarum:deposit" => physarum(pass, uniforms, resources, &mut destination)?,
         "render/meshRender:render" => {
-            mesh_render_triangles(uniforms, external_inputs, &mut destination)?
+            mesh_render_triangles(pass, uniforms, resources, external_inputs, &mut destination)?
         }
         "render/pointsRender:deposit" => {
             points_render(pass, uniforms, resources, &mut destination)?
@@ -1035,6 +1068,44 @@ fn billboard(
 // render/meshRender triangle-mesh rasterizer
 // ---------------------------------------------------------------------------
 
+// drawArrays consumes complete triples from the raw position buffer. The
+// bound position texture controls the extent only for symbolic count modes.
+fn mesh_triangle_count(
+    pass: &RenderPass,
+    uniforms: &BTreeMap<String, Value>,
+    resources: &BTreeMap<String, Surface>,
+    position_lanes: usize,
+) -> usize {
+    use serde_json::Value as Json;
+
+    let uniform_count = pass
+        .execution
+        .get("countUniform")
+        .and_then(Json::as_str)
+        .and_then(|name| uniforms.get(name))
+        .and_then(|value| match value {
+            Value::Float(n) => Some(*n),
+            Value::Int(n) => Some(f64::from(*n)),
+            Value::Uint(n) => Some(f64::from(*n)),
+            _ => None,
+        })
+        .filter(|&n| n > 0.0);
+    let count = uniform_count.unwrap_or_else(|| match pass.execution.get("count") {
+        Some(Json::Number(n)) => n.as_f64().filter(|&v| v != 0.0).unwrap_or(3.0),
+        Some(Json::String(mode)) if matches!(mode.as_str(), "auto" | "input" | "screen") => {
+            ["meshPositions", "inputTex"]
+                .iter()
+                .filter_map(|&name| pass.inputs.get(name).and_then(|key| resources.get(key)))
+                .next()
+                .map_or(3.0, |s| f64::from(s.width()) * f64::from(s.height()))
+        }
+        Some(Json::String(n)) if !n.is_empty() => n.trim().parse().unwrap_or(0.0),
+        Some(Json::Bool(true)) => 1.0,
+        _ => 3.0,
+    });
+    (count as usize).min(position_lanes / 4) / 3
+}
+
 /// CPU triangle-mesh rasterizer for `drawMode: 'triangles'` passes
 /// (`render/meshRender`).
 ///
@@ -1060,7 +1131,9 @@ fn billboard(
 /// f32 operands exactly like JavaScript's `Math.*` and are rounded back to f32.
 #[allow(clippy::too_many_lines, clippy::neg_cmp_op_on_partial_ord)]
 fn mesh_render_triangles(
+    pass: &RenderPass,
     uniforms: &BTreeMap<String, Value>,
+    resources: &BTreeMap<String, Surface>,
     external_inputs: &crate::external_input::ExternalInputs,
     destination: &mut Surface,
 ) -> Result<usize, RenderError> {
@@ -1075,16 +1148,6 @@ fn mesh_render_triangles(
     };
     let positions = &mesh_data.position_data;
     let normals = &mesh_data.normal_data;
-    let tex_width = if mesh_data.tex_width == 0 {
-        256
-    } else {
-        mesh_data.tex_width
-    };
-    let tex_height = if mesh_data.tex_height == 0 {
-        256
-    } else {
-        mesh_data.tex_height
-    };
     let width = destination.width();
     let height = destination.height();
     let aspect = width as f32 / height as f32;
@@ -1094,16 +1157,12 @@ fn mesh_render_triangles(
     // Per-pixel depth buffer cleared to 1.0 (gl.clear(DEPTH_BUFFER_BIT) each pass).
     let mut depth = vec![1.0_f32; (width * height) as usize];
     let mut covered = 0_usize;
-    let vertex_count = tex_width * tex_height;
-    let triangle_count = vertex_count / 3;
+    let triangle_count = mesh_triangle_count(pass, uniforms, resources, positions.len());
     for tri in 0..triangle_count {
         let mut verts = [MeshVertex::default(); 3];
         let mut all_invalid = true;
         for (v, vert) in verts.iter_mut().enumerate() {
-            let texel = tri * 3 + v;
-            let x = texel % tex_width;
-            let y = texel / tex_width;
-            let pi = (y * tex_width + x) * 4;
+            let pi = (tri * 3 + v) * 4;
             let pos_w = positions[pi + 3];
             if pos_w != 0.0 {
                 all_invalid = false;
@@ -1477,4 +1536,119 @@ fn apply_mat3(m: &[f32; 9], v: &[f32; 3]) -> [f32; 3] {
         (m[1] * v[0]) + (m[4] * v[1]) + (m[7] * v[2]),
         (m[2] * v[0]) + (m[5] * v[1]) + (m[8] * v[2]),
     ]
+}
+
+#[cfg(test)]
+mod mesh_count_tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn count_uniform_limits_the_triangles_rasterized_from_a_bound_mesh() {
+        // The two halves and readback coordinates mirror CPU render-pass-state.test.js.
+        let positions = [
+            -1., -1., 0., 0., -1., 0., -1., 1., 0., 0., -1., 0., 1., -1., 0., 0., 1., 0.,
+        ];
+        let mesh = crate::pack_mesh_data_for_textures(
+            &positions,
+            &[0., 0., 1.].repeat(6),
+            &[0.; 12],
+            3,
+            2,
+        );
+        let external = crate::ExternalInputs {
+            mesh_data: Some(mesh),
+            ..Default::default()
+        };
+        let catalog = crate::catalog::effect_catalog().unwrap();
+        let definition = &catalog.effects["render/meshRender"];
+        let normalized =
+            crate::param::normalize_parameters(definition, &BTreeMap::new(), 1).unwrap();
+        let mut uniforms = normalized.uniforms;
+        let bindings = definition.passes[1].execution["uniforms"]
+            .as_object()
+            .unwrap();
+        for (uniform, value) in bindings {
+            if let Some(value) = value.as_str().and_then(|name| normalized.values.get(name)) {
+                uniforms.insert(uniform.clone(), value.clone());
+            }
+        }
+        let pass: RenderPass = serde_json::from_value(json!({
+            "name":"mesh", "program":"render", "inputs":{"meshPositions":"vertices"},
+            "outputs":{"fragColor":"out"}, "count":"screen", "countUniform":"limit"
+        }))
+        .unwrap();
+        for (limit, extent, right_alpha) in [(3, 6, 0.), (6, 3, 1.), (0, 3, 0.), (0, 6, 1.)] {
+            let mut resources =
+                BTreeMap::from([("vertices".into(), Surface::new(extent, 1).unwrap())]);
+            uniforms.insert("limit".into(), Value::Int(limit));
+            execute_draw_pass_with(
+                "render/meshRender:render",
+                &pass,
+                &uniforms,
+                &mut resources,
+                8,
+                8,
+                &BTreeMap::new(),
+                &external,
+            )
+            .unwrap();
+            let image = &resources["out"];
+            assert_eq!(image.data()[(5 * 8 + 1) * 4 + 3], 1.);
+            assert_eq!(image.data()[(5 * 8 + 5) * 4 + 3], right_alpha);
+        }
+    }
+
+    #[test]
+    fn mesh_count_resolves_uniform_literal_bound_extent_and_position_capacity() {
+        let resources = BTreeMap::from([
+            ("positions".into(), Surface::new(5, 2).unwrap()),
+            ("image".into(), Surface::new(5, 1).unwrap()),
+        ]);
+        let mut pass = RenderPass {
+            name: "mesh".into(),
+            program: "render".into(),
+            key: None,
+            inputs: BTreeMap::from([
+                ("meshPositions".into(), "positions".into()),
+                ("inputTex".into(), "image".into()),
+            ]),
+            outputs: BTreeMap::new(),
+            execution: BTreeMap::from([("countUniform".into(), json!("size"))]),
+        };
+        let mut uniforms = BTreeMap::new();
+        let count = |pass: &RenderPass, uniforms: &BTreeMap<String, Value>| {
+            mesh_triangle_count(pass, uniforms, &resources, 7 * 4 + 3)
+        };
+        assert_eq!(count(&pass, &uniforms), 1);
+        for mode in ["input", "auto", "screen"] {
+            pass.execution.insert("count".into(), json!(mode));
+            assert_eq!(count(&pass, &uniforms), 2);
+        }
+        pass.inputs.remove("meshPositions");
+        assert_eq!(count(&pass, &uniforms), 1);
+        pass.inputs.clear();
+        assert_eq!(count(&pass, &uniforms), 1);
+        for (literal, expected) in [
+            (json!(0), 1),
+            (json!(-6), 0),
+            (json!(6.5), 2),
+            (json!("none"), 0),
+        ] {
+            pass.execution.insert("count".into(), literal);
+            assert_eq!(count(&pass, &uniforms), expected);
+        }
+        pass.execution.insert("count".into(), json!(3));
+        for (uniform, expected) in [
+            (Value::Bool(true), 1),
+            (Value::Int(-1), 1),
+            (Value::Int(0), 1),
+            (Value::Float(2.9), 0),
+            (Value::Uint(6), 2),
+            (Value::Float(1e20), 2),
+        ] {
+            uniforms.insert("size".into(), uniform);
+            assert_eq!(count(&pass, &uniforms), expected);
+        }
+    }
 }

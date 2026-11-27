@@ -15,11 +15,36 @@ pub enum ParamValue {
     Float(f32),
     String(String),
     Vector(Vec<f32>),
+    /// Authored values retained by CPU adapters that operate in double precision.
+    Float64(f64),
+    Vector64(Vec<f64>),
     // An `osc(...)` automation value (numeric params only, matching upstream's
     // uniformSpecs contract). Kept as-is at compile time and resolved to a
     // concrete number per render before normalization, as upstream's
     // CpuRenderer.effectParams does.
     Automation(AutomationValue),
+}
+
+pub(crate) fn uses_authored_precision(effect: &EffectDefinition) -> bool {
+    effect.namespace == "synth" && effect.func == "remap"
+}
+
+impl ParamValue {
+    pub(crate) fn number(value: f64, keep_precision: bool) -> Self {
+        if keep_precision {
+            Self::Float64(value)
+        } else {
+            Self::Float(value as f32)
+        }
+    }
+
+    pub(crate) fn vector(values: Vec<f64>, keep_precision: bool) -> Self {
+        if keep_precision {
+            Self::Vector64(values)
+        } else {
+            Self::Vector(values.into_iter().map(|x| x as f32).collect())
+        }
+    }
 }
 
 impl From<bool> for ParamValue {
@@ -88,7 +113,7 @@ pub fn resolve_effect_automation(
         *value = match automation_spec {
             Some(spec) if spec.round => ParamValue::Int(number as i32),
             Some(_) if spec.parameter_type == "int" => ParamValue::Int(number as i32),
-            _ => ParamValue::Float(number as f32),
+            _ => ParamValue::number(number, uses_authored_precision(effect)),
         };
     }
     resolved
@@ -98,6 +123,39 @@ pub fn normalize_parameters(
     effect: &EffectDefinition,
     supplied: &BTreeMap<String, ParamValue>,
     render_seed: i32,
+) -> Result<NormalizedParameters, RenderError> {
+    normalize_bindings(effect, supplied, render_seed, BindingMode::Standalone)
+}
+
+// The graph binds one shader-visible key per parameter. In particular, a
+// preprocessor define replaces an ordinary uniform of the same parameter.
+pub(crate) fn graph_uniform_name<'a>(name: &'a str, spec: &'a ParameterSpec) -> &'a str {
+    spec.define
+        .as_deref()
+        .filter(|key| !key.is_empty())
+        .or(spec.uniform.as_deref())
+        .unwrap_or(name)
+}
+
+pub(crate) fn normalize_graph_parameters(
+    effect: &EffectDefinition,
+    supplied: &BTreeMap<String, ParamValue>,
+    render_seed: i32,
+) -> Result<NormalizedParameters, RenderError> {
+    normalize_bindings(effect, supplied, render_seed, BindingMode::Graph)
+}
+
+#[derive(Clone, Copy, PartialEq)]
+enum BindingMode {
+    Standalone,
+    Graph,
+}
+
+fn normalize_bindings(
+    effect: &EffectDefinition,
+    supplied: &BTreeMap<String, ParamValue>,
+    render_seed: i32,
+    mode: BindingMode,
 ) -> Result<NormalizedParameters, RenderError> {
     // A joined group step inherits the owner's stateSize even when it declares
     // no stateSize param of its own: upstream's initializeGroupStepState
@@ -125,7 +183,16 @@ pub fn normalize_parameters(
         return Err(RenderError::UnknownParameter { name: name.clone() });
     }
     let mut normalized = NormalizedParameters::default();
-    for (name, spec) in &effect.params {
+    let keep_precision = uses_authored_precision(effect);
+    // buildBindings walks the declared parameter order. If two descriptors
+    // name the same graph uniform, the later declaration supplies its value.
+    let names: &mut dyn Iterator<Item = &String> = match mode {
+        BindingMode::Graph => &mut effect.param_names.iter(),
+        BindingMode::Standalone => &mut effect.params.keys(),
+    };
+    let mut palette = None;
+    for name in names {
+        let spec = &effect.params[name];
         if matches!(
             spec.parameter_type.as_str(),
             "surface" | "volume" | "geometry"
@@ -133,16 +200,56 @@ pub fn normalize_parameters(
             continue;
         }
         let value = if name == "seed" && !supplied.contains_key(name) {
-            coerce(name, spec, Some(&ParamValue::Int(render_seed)))?
+            coerce(
+                name,
+                spec,
+                Some(&ParamValue::Int(render_seed)),
+                keep_precision,
+            )?
         } else {
-            coerce(name, spec, supplied.get(name))?
+            coerce(name, spec, supplied.get(name), keep_precision)?
         };
-        normalized.values.insert(name.clone(), value.clone());
-        if let Some(uniform) = &spec.uniform {
-            normalized.uniforms.insert(uniform.clone(), value.clone());
+        // The packed GLSL block consumes f32 values. The native remap adapter
+        // reads the semantic uniforms at the precision authored in the DSL.
+        let shader_value = if keep_precision {
+            match &value {
+                Value::Float(number) => Value::Float(f64::from(*number as f32)),
+                Value::Array(lanes) => Value::Vec(
+                    lanes
+                        .iter()
+                        .map(|lane| {
+                            let Value::Float(number) = lane else {
+                                unreachable!("numeric parameter vector")
+                            };
+                            *number as f32
+                        })
+                        .collect(),
+                ),
+                _ => value.clone(),
+            }
+        } else {
+            value.clone()
+        };
+        normalized.values.insert(name.clone(), shader_value);
+        if spec.parameter_type == "palette" && palette.is_none() {
+            if let Value::Int(index) = &value {
+                palette = Some(*index);
+            }
         }
-        if let Some(define) = &spec.define {
-            normalized.uniforms.insert(define.clone(), value);
+        match mode {
+            BindingMode::Graph => {
+                normalized
+                    .uniforms
+                    .insert(graph_uniform_name(name, spec).to_owned(), value);
+            }
+            BindingMode::Standalone => {
+                if let Some(uniform) = &spec.uniform {
+                    normalized.uniforms.insert(uniform.clone(), value.clone());
+                }
+                if let Some(define) = &spec.define {
+                    normalized.uniforms.insert(define.clone(), value);
+                }
+            }
         }
     }
     if inherits_state_size {
@@ -170,17 +277,13 @@ pub fn normalize_parameters(
         "paletteMode",
     ];
     if effect.namespace == "classicNoisedeck"
-        && CLASSIC_PALETTE_UNIFORMS
-            .iter()
-            .all(|name| effect.params.contains_key(*name))
+        && (mode == BindingMode::Graph
+            || CLASSIC_PALETTE_UNIFORMS
+                .iter()
+                .all(|name| effect.params.contains_key(*name)))
     {
-        if let Some(Value::Int(index)) = effect
-            .params
-            .iter()
-            .find(|(_, spec)| spec.parameter_type == "palette")
-            .and_then(|(name, _)| normalized.values.get(name))
-        {
-            apply_classic_palette_uniforms(*index, &mut normalized.uniforms)?;
+        if let Some(index) = palette {
+            apply_classic_palette_uniforms(index, &mut normalized.uniforms)?;
         }
     }
     Ok(normalized)
@@ -233,7 +336,7 @@ fn validate_parameter_float32(name: &str, spec: &ParameterSpec, value: f32) -> R
 pub(crate) fn validate_parameter_vector(
     name: &str,
     spec: &ParameterSpec,
-    values: &[f32],
+    values: &[f64],
 ) -> Result<(), String> {
     let width_is_valid = match spec.parameter_type.as_str() {
         "color" => matches!(values.len(), 3 | 4),
@@ -243,7 +346,7 @@ pub(crate) fn validate_parameter_vector(
         "mat3" => values.len() == 9,
         _ => false,
     };
-    if !width_is_valid || values.iter().any(|value| !value.is_finite()) {
+    if !width_is_valid || values.iter().any(|&value| !(value as f32).is_finite()) {
         return Err(format!(
             "Parameter {name:?} must be a finite {}",
             spec.parameter_type
@@ -262,6 +365,7 @@ fn coerce(
     name: &str,
     spec: &ParameterSpec,
     supplied: Option<&ParamValue>,
+    keep_precision: bool,
 ) -> Result<Value, RenderError> {
     // Validate numeric catalog defaults at their original f64 precision. A
     // round-trip through ParamValue::Float would move some decimal boundary
@@ -272,14 +376,17 @@ fn coerce(
                 "float" => {
                     validate_parameter_number(name, spec, number, false)
                         .map_err(|message| RenderError::InvalidParameter { message })?;
-                    let number = number as f32;
-                    if !number.is_finite() {
+                    if !(number as f32).is_finite() {
                         return Err(invalid_parameter(
                             name,
                             "must be representable as a finite f32 number",
                         ));
                     }
-                    Ok(Value::Float(f64::from(number)))
+                    Ok(Value::Float(if keep_precision {
+                        number
+                    } else {
+                        f64::from(number as f32)
+                    }))
                 }
                 "int" | "enum" | "member" | "palette" => {
                     validate_parameter_number(name, spec, number, true)
@@ -302,7 +409,7 @@ fn coerce(
     let value = if let Some(value) = supplied {
         value
     } else {
-        owned_default = from_json(name, &spec.default)?;
+        owned_default = from_json(name, &spec.default, keep_precision)?;
         &owned_default
     };
     let bad = || {
@@ -314,20 +421,15 @@ fn coerce(
     match spec.parameter_type.as_str() {
         "color" | "vec2" | "vec3" | "vec4" | "mat3" => {
             let values = match value {
-                ParamValue::Vector(values) => values.clone(),
+                ParamValue::Vector(values) => values.iter().copied().map(f64::from).collect(),
+                ParamValue::Vector64(values) => values.clone(),
                 ParamValue::String(value) if spec.parameter_type != "mat3" => {
                     if spec.parameter_type == "color" && value.starts_with('#') {
                         parse_hex(value).map_err(|detail| invalid_parameter(name, detail))?
                     } else {
                         value
                             .split(',')
-                            .map(|component| {
-                                component
-                                    .trim()
-                                    .parse::<f64>()
-                                    .map(|component| component as f32)
-                                    .map_err(|_| bad())
-                            })
+                            .map(|component| component.trim().parse::<f64>().map_err(|_| bad()))
                             .collect::<Result<Vec<_>, _>>()?
                     }
                 }
@@ -335,6 +437,10 @@ fn coerce(
             };
             validate_parameter_vector(name, spec, &values)
                 .map_err(|message| RenderError::InvalidParameter { message })?;
+            if keep_precision {
+                return Ok(Value::Array(values.into_iter().map(Value::Float).collect()));
+            }
+            let values = values.into_iter().map(|x| x as f32).collect();
             Ok(if spec.parameter_type == "mat3" {
                 Value::Mat {
                     dimension: 3,
@@ -351,25 +457,30 @@ fn coerce(
                         .map_err(|message| RenderError::InvalidParameter { message })?;
                     return Ok(Value::Float(f64::from(*value)));
                 }
+                ParamValue::Float64(value) => *value,
                 ParamValue::Int(value) => f64::from(*value),
                 ParamValue::String(value) => value.parse::<f64>().map_err(|_| bad())?,
                 _ => return Err(bad()),
             };
             validate_parameter_number(name, spec, number, false)
                 .map_err(|message| RenderError::InvalidParameter { message })?;
-            let number = number as f32;
-            if !number.is_finite() {
+            if !(number as f32).is_finite() {
                 return Err(invalid_parameter(
                     name,
                     "must be representable as a finite f32 number",
                 ));
             }
-            Ok(Value::Float(f64::from(number)))
+            Ok(Value::Float(if keep_precision {
+                number
+            } else {
+                f64::from(number as f32)
+            }))
         }
         "int" | "enum" | "member" | "palette" => {
             let number = match value {
                 ParamValue::Int(value) => f64::from(*value),
                 ParamValue::Float(value) => f64::from(*value),
+                ParamValue::Float64(value) => *value,
                 ParamValue::String(value) => {
                     let choices = spec.metadata.get("choices").and_then(JsonValue::as_object);
                     let short = value.rsplit('.').next().unwrap_or(value);
@@ -417,7 +528,11 @@ fn coerce(
     }
 }
 
-fn from_json(name: &str, value: &JsonValue) -> Result<ParamValue, RenderError> {
+fn from_json(
+    name: &str,
+    value: &JsonValue,
+    keep_precision: bool,
+) -> Result<ParamValue, RenderError> {
     match value {
         JsonValue::Bool(value) => Ok(ParamValue::Bool(*value)),
         JsonValue::Number(value) if value.is_i64() => {
@@ -426,25 +541,25 @@ fn from_json(name: &str, value: &JsonValue) -> Result<ParamValue, RenderError> {
                 .map(ParamValue::Int)
                 .map_err(|_| invalid_parameter(name, "integer default is outside i32"))
         }
-        JsonValue::Number(value) => {
-            Ok(ParamValue::Float(value.as_f64().unwrap_or_default() as f32))
-        }
+        JsonValue::Number(value) => Ok(ParamValue::number(
+            value.as_f64().unwrap_or_default(),
+            keep_precision,
+        )),
         JsonValue::String(value) => Ok(ParamValue::String(value.clone())),
         JsonValue::Array(values) => values
             .iter()
             .map(|value| {
                 value
                     .as_f64()
-                    .map(|value| value as f32)
                     .ok_or_else(|| invalid_parameter(name, "vector default contains a non-number"))
             })
             .collect::<Result<Vec<_>, _>>()
-            .map(ParamValue::Vector),
+            .map(|values| ParamValue::vector(values, keep_precision)),
         _ => Err(invalid_parameter(name, "has no usable default")),
     }
 }
 
-fn parse_hex(value: &str) -> Result<Vec<f32>, String> {
+fn parse_hex(value: &str) -> Result<Vec<f64>, String> {
     let mut digits = value.trim_start_matches('#').to_string();
     if matches!(digits.len(), 3 | 4) {
         digits = digits.chars().flat_map(|c| [c, c]).collect();
@@ -455,8 +570,88 @@ fn parse_hex(value: &str) -> Result<Vec<f32>, String> {
     (0..digits.len() / 2)
         .map(|index| {
             u8::from_str_radix(&digits[index * 2..index * 2 + 2], 16)
-                .map(|byte| f32::from(byte) / 255.0)
+                .map(|byte| f64::from(byte) / 255.0)
                 .map_err(|_| format!("has invalid color {value:?}"))
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::catalog::effect_catalog;
+    use crate::pass_runner::{pass_enabled, repeat_count};
+    use serde_json::json;
+
+    #[test]
+    fn graph_binds_only_the_define_or_uniform_or_parameter_name_for_pass_conditions_and_repeats() {
+        let catalog = effect_catalog().unwrap();
+        let perlin = &catalog.effects["synth/perlin"];
+        let standalone = normalize_parameters(perlin, &BTreeMap::new(), 1).unwrap();
+        let graph = normalize_graph_parameters(perlin, &BTreeMap::new(), 1).unwrap();
+        assert_eq!(standalone.uniforms["dimensions"], Value::Int(2));
+        assert_eq!(graph.values["dimensions"], Value::Int(2));
+        assert_eq!(graph.uniforms["DIMENSIONS"], Value::Int(2));
+        assert!(!graph.uniforms.contains_key("dimensions"));
+        assert!(!pass_enabled(
+            &json!({"runIf":[{"uniform":"dimensions","equals":2}]}),
+            &graph.uniforms
+        ));
+        assert!(pass_enabled(
+            &json!({"runIf":[{"uniform":"DIMENSIONS","equals":2}]}),
+            &graph.uniforms
+        ));
+        let feedback = &catalog.effects["filter/feedback"];
+        let standalone = normalize_parameters(feedback, &BTreeMap::new(), 1).unwrap();
+        let graph = normalize_graph_parameters(feedback, &BTreeMap::new(), 1).unwrap();
+        assert!(!standalone.uniforms.contains_key("iterationCount"));
+        assert_eq!(repeat_count(&json!("iterationCount"), &graph.uniforms), 60);
+    }
+
+    #[test]
+    fn graph_binding_keeps_native_remap_precision_and_applies_palette_after_parameters() {
+        let catalog = effect_catalog().unwrap();
+        let remap = &catalog.effects["synth/remap"];
+        let supplied = BTreeMap::from([(
+            "zone7_bounds".into(),
+            ParamValue::Vector64(vec![0.499999999, 0.2, 0.75, 1.0]),
+        )]);
+        let graph = normalize_graph_parameters(remap, &supplied, 1).unwrap();
+        assert_eq!(
+            graph.values["zone7_bounds"],
+            Value::Vec(vec![0.5, 0.2, 0.75, 1.0])
+        );
+        assert_eq!(
+            graph.uniforms["zone7_bounds"],
+            Value::Array(
+                [0.499999999, 0.2, 0.75, 1.0]
+                    .into_iter()
+                    .map(Value::Float)
+                    .collect()
+            )
+        );
+
+        // A classic palette supplies these five uniforms even if the effect
+        // does not also declare editable paletteAmp/Freq/Offset/Phase/Mode.
+        let with_palette: EffectDefinition = serde_json::from_value(json!({
+            "namespace":"classicNoisedeck","func":"probe","kind":"generator","domain":"image","passes":[],
+            "paramNames":["later","earlier","palette"],
+            "params":{
+                "palette":{"type":"palette","default":1},
+                "later":{"type":"int","default":1,"uniform":"shared"},
+                "earlier":{"type":"int","default":2,"uniform":"shared"}
+            }
+        })).unwrap();
+        let standalone = normalize_parameters(&with_palette, &BTreeMap::new(), 1).unwrap();
+        let graph = normalize_graph_parameters(&with_palette, &BTreeMap::new(), 1).unwrap();
+        assert_eq!(standalone.uniforms["shared"], Value::Int(1));
+        assert_eq!(graph.uniforms["shared"], Value::Int(2));
+        assert!(!standalone.uniforms.contains_key("paletteAmp"));
+        let mut palette = BTreeMap::new();
+        apply_classic_palette_uniforms(1, &mut palette).unwrap();
+        assert_eq!(palette.len(), 5);
+        for (name, value) in palette {
+            assert_eq!(graph.uniforms[&name], value);
+        }
+    }
 }

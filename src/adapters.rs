@@ -9,17 +9,20 @@ use std::collections::BTreeMap;
 use crate::catalog::{Expression, RenderPass, shader_bundle};
 use crate::{RenderError, Surface, Value};
 
-pub const FRAGMENT_ADAPTER_KEYS: [&str; 6] = [
+mod remap;
+
+pub const FRAGMENT_ADAPTER_KEYS: [&str; 7] = [
     "classicNoisedeck/fractal:fractal",
     "filter/crt:crt",
     "filter/historicPalette:historicPalette",
     "filter/median:median",
     "filter/palette:palette",
     "synth/julia:julia",
+    "synth/remap:remap",
 ];
 
 #[must_use]
-pub const fn fragment_adapter_keys() -> [&'static str; 6] {
+pub const fn fragment_adapter_keys() -> [&'static str; 7] {
     FRAGMENT_ADAPTER_KEYS
 }
 
@@ -66,14 +69,11 @@ pub(crate) fn execute_fragment_adapter(
     if !FRAGMENT_ADAPTER_KEYS.contains(&key) {
         return Ok(None);
     }
-    let output_name =
-        pass.outputs
-            .values()
-            .next()
-            .cloned()
-            .ok_or_else(|| RenderError::InvalidGraph {
-                message: format!("adapter pass {:?} has no output", pass.name),
-            })?;
+    let output_name = crate::pass_runner::first_output(pass)
+        .cloned()
+        .ok_or_else(|| RenderError::InvalidGraph {
+            message: format!("adapter pass {:?} has no output", pass.name),
+        })?;
     let mut output = Surface::new(width, height)?;
     match key {
         "classicNoisedeck/fractal:fractal" => render_fractal(uniforms, &mut output)?,
@@ -82,6 +82,7 @@ pub(crate) fn execute_fragment_adapter(
             render_palette(uniforms, resources, &mut output, true)?
         }
         "synth/julia:julia" => render_julia(uniforms, &mut output)?,
+        "synth/remap:remap" => remap::render(pass, uniforms, resources, &mut output)?,
         "filter/crt:crt" => render_crt(
             uniforms,
             semantic_input(pass, resources, "inputTex")?,
@@ -119,14 +120,11 @@ pub(crate) fn execute_semantic_fragment_adapter(
             return Ok(None);
         }
     }
-    let output_name =
-        pass.outputs
-            .values()
-            .next()
-            .cloned()
-            .ok_or_else(|| RenderError::InvalidGraph {
-                message: format!("semantic adapter pass {:?} has no output", pass.name),
-            })?;
+    let output_name = crate::pass_runner::first_output(pass)
+        .cloned()
+        .ok_or_else(|| RenderError::InvalidGraph {
+            message: format!("semantic adapter pass {:?} has no output", pass.name),
+        })?;
     let mut output = Surface::new(width, height)?;
     match key {
         "filter/snow:snow" => {
