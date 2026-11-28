@@ -212,14 +212,13 @@ default program and every compile-time choice) and the Windows cross-port
 parity run weekly and on manual dispatch. Only a weekly or manually dispatched
 run releases the export kit, after its Linux parity passes.
 
-## Current support and limits
+## Support and limits
 
-The live [compatibility report](https://github.com/noisefactorllc/noisemaker-for-rust/issues/7)
-is the current measured support: the tested source and oracle revisions, the
-platforms, and the parity counts. The
+The [compatibility report](https://github.com/noisefactorllc/noisemaker-for-rust/issues/7)
+records a dated observation of measured support: the tested source and oracle
+revisions, the platforms, and the parity counts at the time of that audit. The
 [issues labelled `gap`](https://github.com/noisefactorllc/noisemaker-for-rust/issues?q=label%3Agap)
-are the current qualification limits. Both are GitHub issues in this
-repository and are updated as results change.
+track open qualification limits in this repository.
 
 ## Contributing and security
 
